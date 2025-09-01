@@ -19,6 +19,8 @@ import {
   LocationStrategy,
   registerLocaleData,
 } from "@angular/common";
+import localePt from '@angular/common/locales/pt';
+import { DatePipe } from '@angular/common';
 import { UsuarioModule } from "./usuario/usuario.module";
 import { FornecedorModule } from "./fornecedor/fornecedor.module";
 import { EstadoModule } from "./estado/estado.module";
@@ -38,7 +40,6 @@ import { HttpClientInterceptor } from "./http-client.interceptor";
 import { LoginModule } from "./login/login.module";
 import { EmprestimoModule } from "./emprestimo/emprestimo.module";
 import { SaidaModule } from "./saida/saida.module";
-import ptBr from "@angular/common/locales/pt";
 import { MatPaginatorIntl } from "@angular/material/paginator";
 import { getDutchPaginatorIntl } from "./framework/util/dutch-paginator";
 import { CURRENCY_MASK_CONFIG } from "ng2-currency-mask";
@@ -49,13 +50,9 @@ import { LoaderService } from "./framework/loader/loader.service";
 import { LoaderModule } from "./framework/loader/loader.module";
 import { RelatorioModule } from "./relatorio/relatorio.module";
 import { SocialLoginModule } from "@abacritt/angularx-social-login";
-import {
-  GoogleLoginProvider,
-  SocialAuthServiceConfig,
-} from "@abacritt/angularx-social-login";
 import { CadastrarUsuarioModule } from "./cadastrarUsuario/cadastrarUsuario.module";
-
-registerLocaleData(ptBr);
+import {providePrimeNG} from "primeng/config";
+import {ptBR} from "../locale/pt-BR";
 
 @NgModule({
   declarations: [AppComponent],
@@ -103,16 +100,13 @@ registerLocaleData(ptBr);
     },
     {
       provide: LOCALE_ID,
-      useValue: "pt",
+      useValue: "pt-BR",
     },
     {
       provide: DEFAULT_CURRENCY_CODE,
       useValue: "BRL",
     },
-    {
-      provide: LocationStrategy,
-      useClass: HashLocationStrategy,
-    },
+    DatePipe,
     {
       provide: MatPaginatorIntl,
       useValue: getDutchPaginatorIntl(),
@@ -121,6 +115,13 @@ registerLocaleData(ptBr);
       provide: CURRENCY_MASK_CONFIG,
       useValue: CustomCurrencyMaskConfig,
     },
+    providePrimeNG({
+      theme: {
+        preset: "lara-light-indigo",
+      },
+      translation: ptBR,
+
+    }),
     // {
     //   provide: "SocialAuthServiceConfig",
     //   useValue: {
@@ -141,4 +142,8 @@ registerLocaleData(ptBr);
     provideHttpClient(withInterceptorsFromDi()),
   ],
 })
-export class AppModule {}
+export class AppModule {
+  constructor() {
+    registerLocaleData(localePt, 'pt-BR');
+  }
+}
