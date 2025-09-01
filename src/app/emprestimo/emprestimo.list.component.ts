@@ -14,9 +14,10 @@ import {UsuarioService} from '../usuario/usuario.service';
 import Swal from 'sweetalert2';
 
 @Component({
-  selector: 'app-list-emprestimo',
-  templateUrl: './emprestimo.list.component.html',
-  styleUrls: ['./emprestimo.list.component.css']
+    selector: 'app-list-emprestimo',
+    templateUrl: './emprestimo.list.component.html',
+    styleUrls: ['./emprestimo.list.component.css'],
+    standalone: false
 })
 export class EmprestimoListComponent extends CrudListComponent<Emprestimo, number> {
 
