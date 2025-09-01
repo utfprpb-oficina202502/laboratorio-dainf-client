@@ -2,12 +2,12 @@
   "name": "tcc-client",
   "engines": {
     "node": "20.11.1",
-    "npm": "8.17.0"
+    "npm": "10.x"
   },
   "version": "0.1.2",
   "scripts": {
     "ng": "ng",
-    "build": "ng build --port 80 --configuration production",
+    "build": "ng build --configuration production",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",

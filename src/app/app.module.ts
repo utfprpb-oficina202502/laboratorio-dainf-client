@@ -1,57 +1,47 @@
-import { BrowserModule } from "@angular/platform-browser";
-import { DEFAULT_CURRENCY_CODE, LOCALE_ID, NgModule } from "@angular/core";
+import {BrowserModule} from "@angular/platform-browser";
+import {DEFAULT_CURRENCY_CODE, LOCALE_ID, NgModule} from "@angular/core";
 
-import { AppRoutingModule } from "./app-routing.module";
-import { AppComponent } from "./app.component";
-import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
-import { HomeModule } from "./home/home.module";
-import { ToolbarModule } from "./toolbar/toolbar.module";
-import {
-  HTTP_INTERCEPTORS,
-  provideHttpClient,
-  withInterceptorsFromDi,
-} from "@angular/common/http";
-import { SidenavModule } from "./sidenav/sidenav.module";
-import { GrupoModule } from "./grupo/grupo.module";
-import {
-  CommonModule,
-  HashLocationStrategy,
-  LocationStrategy,
-  registerLocaleData,
-} from "@angular/common";
+import {AppRoutingModule} from "./app-routing.module";
+import {AppComponent} from "./app.component";
+import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
+import {HomeModule} from "./home/home.module";
+import {ToolbarModule} from "./toolbar/toolbar.module";
+import {HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi,} from "@angular/common/http";
+import {SidenavModule} from "./sidenav/sidenav.module";
+import {GrupoModule} from "./grupo/grupo.module";
+import {CommonModule, DatePipe, registerLocaleData} from "@angular/common";
 import localePt from '@angular/common/locales/pt';
-import { DatePipe } from '@angular/common';
-import { UsuarioModule } from "./usuario/usuario.module";
-import { FornecedorModule } from "./fornecedor/fornecedor.module";
-import { EstadoModule } from "./estado/estado.module";
-import { PaisModule } from "./pais/pais.module";
-import { CidadeModule } from "./cidade/cidade.module";
-import { ItemModule } from "./item/item.module";
-import { PageNotFoundModule } from "./pageNotFound/pageNotFound.module";
-import { NotAuthorizedModule } from "./notAuthorized/notAuthorized.module";
-import { ConfirmationService } from "primeng/api";
-import { ConfirmDialogModule } from "primeng/confirmdialog";
-import { MessageService } from "primeng/api";
-import { ScrollPanelModule } from "primeng/scrollpanel";
-import { ToastModule } from "primeng/toast";
-import { CompraModule } from "./compra/compra.module";
-import { LoginService } from "./login/login.service";
-import { HttpClientInterceptor } from "./http-client.interceptor";
-import { LoginModule } from "./login/login.module";
-import { EmprestimoModule } from "./emprestimo/emprestimo.module";
-import { SaidaModule } from "./saida/saida.module";
-import { MatPaginatorIntl } from "@angular/material/paginator";
-import { getDutchPaginatorIntl } from "./framework/util/dutch-paginator";
-import { CURRENCY_MASK_CONFIG } from "ng2-currency-mask";
-import { CustomCurrencyMaskConfig } from "./framework/util/currency.mask.config";
-import { ReservaModule } from "./reserva/reserva.module";
-import { SolicitacaoCompraModule } from "./solicitacaoCompra/solicitacaoCompra.module";
-import { LoaderService } from "./framework/loader/loader.service";
-import { LoaderModule } from "./framework/loader/loader.module";
-import { RelatorioModule } from "./relatorio/relatorio.module";
-import { SocialLoginModule } from "@abacritt/angularx-social-login";
-import { CadastrarUsuarioModule } from "./cadastrarUsuario/cadastrarUsuario.module";
+import {UsuarioModule} from "./usuario/usuario.module";
+import {FornecedorModule} from "./fornecedor/fornecedor.module";
+import {EstadoModule} from "./estado/estado.module";
+import {PaisModule} from "./pais/pais.module";
+import {CidadeModule} from "./cidade/cidade.module";
+import {ItemModule} from "./item/item.module";
+import {PageNotFoundModule} from "./pageNotFound/pageNotFound.module";
+import {NotAuthorizedModule} from "./notAuthorized/notAuthorized.module";
+import {ConfirmationService, MessageService} from "primeng/api";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {ScrollPanelModule} from "primeng/scrollpanel";
+import {ToastModule} from "primeng/toast";
+import {CompraModule} from "./compra/compra.module";
+import {LoginService} from "./login/login.service";
+import {HttpClientInterceptor} from "./http-client.interceptor";
+import {LoginModule} from "./login/login.module";
+import {EmprestimoModule} from "./emprestimo/emprestimo.module";
+import {SaidaModule} from "./saida/saida.module";
+import {MatPaginatorIntl} from "@angular/material/paginator";
+import {getDutchPaginatorIntl} from "./framework/util/dutch-paginator";
+import {CURRENCY_MASK_CONFIG} from "ng2-currency-mask";
+import {CustomCurrencyMaskConfig} from "./framework/util/currency.mask.config";
+import {ReservaModule} from "./reserva/reserva.module";
+import {SolicitacaoCompraModule} from "./solicitacaoCompra/solicitacaoCompra.module";
+import {LoaderService} from "./framework/loader/loader.service";
+import {LoaderModule} from "./framework/loader/loader.module";
+import {RelatorioModule} from "./relatorio/relatorio.module";
+import {SocialLoginModule} from "@abacritt/angularx-social-login";
+import {CadastrarUsuarioModule} from "./cadastrarUsuario/cadastrarUsuario.module";
 import {providePrimeNG} from "primeng/config";
+import Aura from '@primeuix/themes/aura'
 import {ptBR} from "../locale/pt-BR";
 
 @NgModule({
@@ -117,7 +107,7 @@ import {ptBR} from "../locale/pt-BR";
     },
     providePrimeNG({
       theme: {
-        preset: "lara-light-indigo",
+        preset: Aura,
       },
       translation: ptBR,
 
