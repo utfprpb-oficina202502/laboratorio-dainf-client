@@ -1,34 +1,21 @@
-<section>
-  <div class="row" style="min-height: 100vh">
-
-    @if (isAuthenticated) {
-      <div class="col-12">
-        <app-toolbar></app-toolbar>
-      </div>
-    }
-
-    @if (isAuthenticated) {
-      <div
-        class="col-2"
-        style="width: 250px; height: 100%; min-height: 100%"
-        id="sidenav"
-        >
-        <app-sidenav></app-sidenav>
-      </div>
-    }
-    <div
-      class="col-10"
-      [ngClass]="isAuthenticated ? 'content row' : 'only-login'"
-      id="content"
-      >
-      <p-scrollPanel
-        [style]="{ width: '100%', height: 'calc(100vh - 40px)', verticalAlign: 'top' }"
-        styleClass="scrool-table-dash"
-        >
+<section *ngIf="isAuthenticated" class="min-h-screen flex flex-col">
+  <app-toolbar></app-toolbar>
+  <div id="layout-auth" class="flex-1 flex flex-col lg:flex-row min-h-0">
+    <aside id="sidenav" class="bg-white border-r border-gray-200 w-0 lg:w-[250px] overflow-hidden sidenav-transition">
+      <app-sidenav></app-sidenav>
+    </aside>
+    <main id="content" class="flex-1 min-h-0">
+      <p-scrollPanel [style]="{ width: '100%', height: 'calc(100vh - 56px)' }" styleClass="scrool-table-dash">
         <router-outlet></router-outlet>
         <app-loader></app-loader>
       </p-scrollPanel>
-    </div>
+    </main>
+  </div>
+</section>
+<section *ngIf="!isAuthenticated" class="min-h-screen flex">
+  <div id="content" class="flex-1 only-login">
+    <router-outlet></router-outlet>
+    <app-loader></app-loader>
   </div>
 </section>
 <p-toast></p-toast>
@@ -37,5 +24,5 @@
   [closable]="true"
   [baseZIndex]="999"
   acceptLabel="Sim"
-  rejectLabel="Não"
-></p-confirmDialog>
+  rejectLabel="Não">
+</p-confirmDialog>
