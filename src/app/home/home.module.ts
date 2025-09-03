@@ -1,31 +1,30 @@
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {HomeComponent} from './home.component';
-import {AppToolbarModule} from '../toolbar/toolbar.module';
+import {ToolbarModule} from '../toolbar/toolbar.module';
 import {DialogModule} from 'primeng/dialog';
 import {TooltipModule} from 'primeng/tooltip';
 import {HomeService} from './home.service';
-import {ButtonModule} from 'primeng/button';
-import {CardModule} from 'primeng/card';
-import {PanelModule} from 'primeng/panel';
 import {FormsModule} from '@angular/forms';
 import {ValidationModule} from '../framework/validation/validation.module';
 import {ValidationService} from '../framework/validation/validation.service';
-import {DatePickerModule} from "primeng/datepicker";
-import {StatCardComponent} from '../geral/stat-card/stat-card.component';
+import {DatePickerModule} from 'primeng/datepicker';
+import {StatCardComponent} from '../components/stat-card/stat-card.component';
+import {DatePipe} from '@angular/common';
+import {PanelModule} from 'primeng/panel';
+import {ButtonModule} from 'primeng/button';
 
 @NgModule({
   imports: [
     CommonModule,
-    AppToolbarModule,
+    ToolbarModule,
     TooltipModule,
     DialogModule,
     DatePickerModule,
-    ButtonModule,
-    CardModule,
-    PanelModule,
     FormsModule,
-    ValidationModule
+    ValidationModule,
+    PanelModule,
+    ButtonModule
   ],
   declarations: [
     HomeComponent,
@@ -37,7 +36,8 @@ import {StatCardComponent} from '../geral/stat-card/stat-card.component';
   ],
   providers: [
     HomeService,
-    ValidationService
+    ValidationService,
+    DatePipe
   ]
 })
 export class HomeModule {

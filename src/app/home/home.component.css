@@ -54,30 +54,45 @@
   line-height: 1.2;
 }
 
-/* Estilos específicos para gráficos AmCharts */
-.chartdiv2,
-.chartdiv4,
-.chartdivPie1,
-.chartdivPie2 {
+/* Estilos específicos para gráficos AmCharts (IDs) */
+#chartdiv2,
+#chartdiv4 {
   width: 100%;
   height: 450px;
   background: #FFFFFF !important;
 }
 
-/* Responsividade para mobile */
+/* Opção A: Altura dos gráficos de pizza totalmente controlada via TypeScript */
+.chart-pie {
+  width: 100%;
+  background: #FFFFFF !important;
+  position: relative; /* garante posicionamento correto de labels fallback */
+  height: 600px; /* altura fixa solicitada */
+}
+
+/* Removidos: aspect-ratio, min-height, max-height e media queries que alteravam .chart-pie */
+
 @media (max-width: 768px) {
-  .card-icon {
-    font-size: 2.5rem;
-  }
+  .card-icon { font-size: 2.5rem; }
+  .card-number { font-size: 1.875rem; }
+  #chartdiv2,
+  #chartdiv4 { height: 350px; }
+  /* Nenhuma regra de altura fixa para .chart-pie aqui para não conflitar com dimensionamento dinâmico */
+}
 
-  .card-number {
-    font-size: 1.875rem;
-  }
+/* Estilos para o diálogo de filtro */
+.filtro-dialog .p-dialog-content {
+  background: #FFFFFF !important;
+  padding: 1.25rem !important;
+}
 
-  .chartdiv2,
-  .chartdiv4,
-  .chartdivPie1,
-  .chartdivPie2 {
-    height: 350px;
-  }
+.filtro-dialog .p-dialog-header {
+  background: #F1F5F9 !important;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.filtro-dialog .p-dialog-footer {
+  background: #F8FAFC !important;
+  border-top: 1px solid #E2E8F0;
+  padding: 0.75rem 1.25rem !important;
 }

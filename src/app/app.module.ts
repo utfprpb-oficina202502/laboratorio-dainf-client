@@ -1,15 +1,22 @@
 import {BrowserModule} from "@angular/platform-browser";
 import {DEFAULT_CURRENCY_CODE, LOCALE_ID, NgModule} from "@angular/core";
 
-import {AppRoutingModule} from "./app-routing.module";
-import {AppComponent} from "./app.component";
-import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
-import {HomeModule} from "./home/home.module";
-import {AppToolbarModule} from "./toolbar/toolbar.module";
-import {HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi,} from "@angular/common/http";
-import {SidenavModule} from "./sidenav/sidenav.module";
-import {GrupoModule} from "./grupo/grupo.module";
-import {CommonModule, DatePipe, registerLocaleData} from "@angular/common";
+import { AppRoutingModule } from "./app-routing.module";
+import { AppComponent } from "./app.component";
+import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
+import { HomeModule } from "./home/home.module";
+import { ToolbarModule } from "./toolbar/toolbar.module";
+import {
+  HTTP_INTERCEPTORS,
+  provideHttpClient,
+  withInterceptorsFromDi,
+} from "@angular/common/http";
+import { SidenavModule } from "./sidenav/sidenav.module";
+import { GrupoModule } from "./grupo/grupo.module";
+import {
+  CommonModule,
+  registerLocaleData,
+} from "@angular/common";
 import localePt from '@angular/common/locales/pt';
 import {UsuarioModule} from "./usuario/usuario.module";
 import {FornecedorModule} from "./fornecedor/fornecedor.module";
@@ -41,8 +48,8 @@ import {RelatorioModule} from "./relatorio/relatorio.module";
 import {SocialLoginModule} from "@abacritt/angularx-social-login";
 import {CadastrarUsuarioModule} from "./cadastrarUsuario/cadastrarUsuario.module";
 import {providePrimeNG} from "primeng/config";
-import Aura from '@primeuix/themes/aura'
 import {ptBR} from "../locale/pt-BR";
+import { DatePipe } from '@angular/common';
 
 @NgModule({
   declarations: [AppComponent],
@@ -53,7 +60,7 @@ import {ptBR} from "../locale/pt-BR";
     BrowserAnimationsModule,
     AppRoutingModule,
     HomeModule,
-    AppToolbarModule,
+    ToolbarModule,
     ToastModule,
     SidenavModule,
     GrupoModule,
@@ -107,7 +114,7 @@ import {ptBR} from "../locale/pt-BR";
     },
     providePrimeNG({
       theme: {
-        preset: Aura,
+        preset: "lara-light-indigo",
       },
       translation: ptBR,
 

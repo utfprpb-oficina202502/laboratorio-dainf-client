@@ -1,9 +1,0 @@
-<div class="stat-card" [class.clickable]="clickable" [ngStyle]="{'border-left': '4px solid ' + accentColor}" (click)="onClick()" [attr.role]="clickable ? 'button' : null" [attr.tabindex]="clickable ? '0' : null" [attr.aria-pressed]="clickable ? 'false' : null">
-  <div class="stat-card-content">
-    <i class="pi" [ngClass]="icon" [ngStyle]="{'color': accentColor}"></i>
-    <div class="stat-card-text">
-      <h6>{{ title }}</h6>
-      <p class="stat-card-number" [ngStyle]="{'color': accentColor}">{{ safeValue }}</p>
-    </div>
-  </div>
-</div>

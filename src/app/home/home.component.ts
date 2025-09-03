@@ -1,9 +1,10 @@
-import {Component, Injector, OnInit, OnDestroy} from "@angular/core";
+import {Component, OnInit, OnDestroy} from "@angular/core";
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import { DatePipe } from '@angular/common';
 import { inject } from '@angular/core';
 import { forkJoin } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 import { DashboardEmprestimoCountRange } from "./dashboard/dashboardEmprestimoCountRange";
@@ -16,10 +17,10 @@ import { LoaderService } from "../framework/loader/loader.service";
 am4core.useTheme(am4themes_animated);
 
 @Component({
-    selector: "app-home",
-    templateUrl: "./home.component.html",
-    styleUrls: ["./home.component.css"],
-    standalone: false
+  selector: "app-home",
+  templateUrl: "./home.component.html",
+  styleUrls: ["./home.component.css"],
+  standalone: false
 })
 export class HomeComponent implements OnInit, OnDestroy {
   datepipe: DatePipe = inject(DatePipe);
@@ -32,6 +33,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private chartBarRef: am4charts.XYChart;
   private chartPie1Ref: am4charts.PieChart3D;
   private chartPie2Ref: am4charts.PieChart3D;
+  showDashboardAluno = false; // adicionada para remover erros no ngOnInit e template
 
   constructor(
     private homeService: HomeService,
@@ -44,15 +46,9 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loginService.userLoggedIsAlunoOrProfessor().then((value) => {
-      if (!value) {
-        document.getElementById("container-dashboard")!.style.display = "block";
-        document.getElementById("container-dashboard-aluno")!.style.display =
-          "none";
+      this.showDashboardAluno = !!value;
+      if (!this.showDashboardAluno) {
         this.buildDashboards();
-      } else {
-        document.getElementById("container-dashboard")!.style.display = "none";
-        document.getElementById("container-dashboard-aluno")!.style.display =
-          "block";
       }
     });
   }
@@ -75,11 +71,15 @@ export class HomeComponent implements OnInit, OnDestroy {
       adquiridos: this.homeService.findItensMaisAdquiridos(ini, fim),
       saidas: this.homeService.findItensMaisSaidas(ini, fim)
     });
-    this.loaderService.track(batch).subscribe(({count, byDay, emprestados, adquiridos, saidas}) => {
+    this.loaderService.show();
+    batch.pipe(finalize(() => this.loaderService.hide())).subscribe(({count, byDay, emprestados, adquiridos, saidas}) => {
       this.dashEmprestimoCount = count;
       const byDayProcessed = this.processByDay(byDay, 'dtEmprestimo');
       this.createXYChartLine("chartdiv2", byDayProcessed, "_dtParsed", "qtde");
-      this.createXYChartBar("chartdiv4", emprestados, "item", "qtde");
+      const emprestadosTop = Array.isArray(emprestados)
+        ? [...emprestados].sort((a, b) => (b?.qtde || 0) - (a?.qtde || 0)).slice(0, 10)
+        : [];
+      this.createXYChartBar("chartdiv4", emprestadosTop, "item", "qtde");
       this.createPieChart("chartdivPie1", adquiridos, "item", "qtde");
       this.createPieChart("chartdivPie2", saidas, "item", "qtde");
     });
@@ -146,24 +146,85 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   createPieChart(elementAppend, dados, nameField, nameValue) {
-    this.disposeChart(this.chartPie1Ref);
+    // Personalização: sem labels nas fatias, legenda embaixo, hover para destacar
     if (elementAppend === 'chartdivPie1') { this.disposeChart(this.chartPie1Ref); }
     if (elementAppend === 'chartdivPie2') { this.disposeChart(this.chartPie2Ref); }
+
     const pieChart3D = am4core.create(elementAppend, am4charts.PieChart3D);
     pieChart3D.background.fill = am4core.color('#FFFFFF');
     pieChart3D.hiddenState.properties.opacity = 0;
+
+    // Legenda embaixo
     pieChart3D.legend = new am4charts.Legend();
-    pieChart3D.legend.useDefaultMarker = false;
-    pieChart3D.legend.position = "right";
-    pieChart3D.legend.labels.template.maxWidth = 100;
+    pieChart3D.legend.position = 'bottom';
+    pieChart3D.legend.useDefaultMarker = true;
+    pieChart3D.legend.labels.template.maxWidth = 160;
+    pieChart3D.legend.labels.template.truncate = false;
+    pieChart3D.legend.labels.template.wrap = true;
     pieChart3D.legend.labels.template.fill = am4core.color('#374151');
+    pieChart3D.legend.itemContainers.template.cursorOverStyle = am4core.MouseCursorStyle.pointer;
+    pieChart3D.legend.valueLabels.template.disabled = true;
+    // Removido tooltip na legenda conforme solicitação
+    pieChart3D.legend.itemContainers.template.tooltipText = '';
+
     pieChart3D.data = dados;
+
     const series = pieChart3D.series.push(new am4charts.PieSeries3D());
     series.dataFields.value = nameValue;
     series.dataFields.category = nameField;
-    series.labels.template.maxWidth = 100;
-    series.labels.template.truncate = true;
-    series.labels.template.fill = am4core.color('#374151');
+
+    // Remover labels/ticks das fatias
+    series.labels.template.disabled = true;
+    series.ticks.template.disabled = true;
+
+    // Tooltip apenas nas fatias
+    series.slices.template.tooltipText = `{${nameField}}: {${nameValue}}`;
+    series.slices.template.stroke = am4core.color('#FFFFFF');
+    series.slices.template.strokeWidth = 1;
+    series.slices.template.strokeOpacity = 1;
+
+    // Estado hover para ampliar levemente a fatia
+    const sliceHover = series.slices.template.states.getKey('hover');
+    if (sliceHover) {
+      sliceHover.properties.scale = 1.05;
+      sliceHover.properties.shiftRadius = 0.04;
+    }
+
+    // Hover na legenda destacando fatia correspondente (mantido, só sem tooltip)
+    const setLegendHover = (ev: any, flag: boolean) => {
+      const legendDataItem = ev.target.dataItem;
+      if (!legendDataItem) return;
+      const ctx = legendDataItem.dataContext;
+      const legendCategory = ctx ? ctx[nameField] : undefined;
+      if (ctx && ctx.slice) { ctx.slice.isHover = flag; return; }
+      if (legendCategory !== undefined) {
+        series.slices.each(s => {
+          if (s.dataItem && s.dataItem.dataContext && s.dataItem.dataContext[nameField] === legendCategory) {
+            s.isHover = flag;
+          }
+        });
+        return;
+      }
+      const idx = legendDataItem.index;
+      if (idx != null) {
+        const slice = series.slices.getIndex(idx);
+        if (slice) slice.isHover = flag;
+      }
+    };
+    pieChart3D.legend.itemContainers.template.events.on('over', ev => setLegendHover(ev, true));
+    pieChart3D.legend.itemContainers.template.events.on('out', ev => setLegendHover(ev, false));
+
+    // Fallback sem dados
+    const count = Array.isArray(dados) ? dados.length : 0;
+    if (count === 0) {
+      const label = pieChart3D.chartContainer.createChild(am4core.Label);
+      label.text = 'Sem dados';
+      label.align = 'center';
+      label.isMeasured = false;
+      label.y = am4core.percent(50);
+      label.fill = am4core.color('#6B7280');
+    }
+
     if (elementAppend === 'chartdivPie1') { this.chartPie1Ref = pieChart3D; }
     if (elementAppend === 'chartdivPie2') { this.chartPie2Ref = pieChart3D; }
   }
@@ -185,6 +246,28 @@ export class HomeComponent implements OnInit, OnDestroy {
     categoryAxis.renderer.labels.template.maxWidth = 120;
     categoryAxis.renderer.labels.template.fill = am4core.color('#374151');
 
+    const isSmallScreen = window && window.innerWidth < 640; // breakpoint simples
+
+    if (elementAppend === 'chartdiv4') {
+      if (!isSmallScreen) {
+        categoryAxis.renderer.labels.template.truncate = false;
+        categoryAxis.renderer.labels.template.wrap = true;
+        categoryAxis.renderer.minGridDistance = 20; // Aproxima para caber as 10 colunas
+        xyChart.paddingBottom = 30;
+        categoryAxis.renderer.labels.template.adapter.add('dy', (dy, target: any) => {
+          const index = target.dataItem && target.dataItem.index;
+          if (index == null) { return dy; }
+          return (index % 2 === 0) ? 0 : 18; // 18px para segunda "linha"
+        });
+        categoryAxis.renderer.labels.template.tooltipText = `{${nameField}}`;
+      } else {
+        // Em telas pequenas esconder labels e confiar somente no tooltip hover
+        categoryAxis.renderer.labels.template.disabled = true;
+        // Reduz padding inferior já que não há duas linhas
+        xyChart.paddingBottom = 10;
+      }
+    }
+
     const valueAxis = xyChart.yAxes.push(new am4charts.ValueAxis());
     valueAxis.renderer.minWidth = 50;
     valueAxis.renderer.labels.template.fill = am4core.color('#374151');
@@ -193,7 +276,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     series.sequencedInterpolation = true;
     series.dataFields.valueY = nameValue;
     series.dataFields.categoryX = nameField;
-    series.tooltipText = "[{categoryX}: bold]{categoryX}: {valueY}[/]";
+    series.tooltipText = isSmallScreen ? "{categoryX}: {valueY}" : "[{categoryX}: bold]{categoryX}: {valueY}[/]";
     series.columns.template.strokeWidth = 0;
     series.tooltip.pointerOrientation = "vertical";
     series.columns.template.column.cornerRadiusTopLeft = 10;
