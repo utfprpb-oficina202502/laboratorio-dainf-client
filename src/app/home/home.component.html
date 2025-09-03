@@ -1,47 +1,47 @@
-<div class="p-3" id="container-dashboard-aluno" style="display: none">
-  <h1>Bem vindo!</h1>
+<div class="p-3" id="container-dashboard-aluno" *ngIf="showDashboardAluno">
+  <h1 class="text-xl font-semibold">Bem vindo!</h1>
 </div>
-<div class="p-3" id="container-dashboard" style="display: none">
+
+<div class="p-3 space-y-6" id="container-dashboard" *ngIf="!showDashboardAluno">
 
   <p-panel styleClass="mb-3">
-    <div class="flex justify-center items-center">
-      <span class="font-bold text-center mr-2 text-lg">Dados dos dias {{this.getDateIni()}}
-        a {{this.getDateFim()}}</span>
+    <div class="flex justify-center items-center gap-2">
+      <span class="font-bold text-center text-base md:text-lg">Dados dos dias {{ getDateIni() }} a {{ getDateFim() }}</span>
       <p-button
         icon="pi pi-filter"
-        [text]="true"
+        variant="text"
         pTooltip="Filtrar"
         (onClick)="dialodFiltroData = true">
       </p-button>
     </div>
   </p-panel>
 
-  <div class="grid grid-cols-1 xs:grid-cols-2 mdp:grid-cols-4 gap-4 mt-4">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <app-stat-card
       title="Total de Empréstimos"
       [value]="dashEmprestimoCount?.total"
-      icon="pi-handshake"
+      icon="fa-handshake-o"
       accentColor="#3B82F6">
     </app-stat-card>
 
     <app-stat-card
       title="Empréstimos em Andamento"
       [value]="dashEmprestimoCount?.emAndamento"
-      icon="pi-clock"
+      icon="fa-ellipsis-h"
       accentColor="#F97316">
     </app-stat-card>
 
     <app-stat-card
       title="Empréstimos em Atraso"
       [value]="dashEmprestimoCount?.emAtraso"
-      icon="pi-exclamation-triangle"
+      icon="fa-calendar-times-o"
       accentColor="#EF4444">
     </app-stat-card>
 
     <app-stat-card
       title="Empréstimos Finalizados"
       [value]="dashEmprestimoCount?.finalizado"
-      icon="pi-check"
+      icon="fa-check"
       accentColor="#22C55E">
     </app-stat-card>
   </div>
@@ -50,23 +50,23 @@
     <ng-template pTemplate="header">
       <h6 class="font-bold text-center m-0">Total de Empréstimos Realizados por Dia</h6>
     </ng-template>
-    <div class="chartdiv2" style="height: 450px"></div>
+    <div id="chartdiv2" class="h-[450px]"></div>
   </p-panel>
 
   <p-panel styleClass="mb-3">
     <ng-template pTemplate="header">
       <h6 class="font-bold text-center m-0">Top 10 | Itens Emprestados</h6>
     </ng-template>
-    <div class="chartdiv4" style="height: 450px"></div>
+    <div id="chartdiv4" class="h-[450px]"></div>
   </p-panel>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <div>
       <p-panel>
         <ng-template pTemplate="header">
           <h6 class="font-bold text-center m-0">Top 10 | Itens Adquiridos</h6>
         </ng-template>
-        <div class="chartdivPie1" style="height: 450px"></div>
+        <div id="chartdivPie1" class="chart-pie"></div>
       </p-panel>
     </div>
 
@@ -75,41 +75,42 @@
         <ng-template pTemplate="header">
           <h6 class="font-bold text-center m-0">Top 10 | Itens com Saídas</h6>
         </ng-template>
-        <div class="chartdivPie2" style="height: 450px"></div>
+        <div id="chartdivPie2" class="chart-pie"></div>
       </p-panel>
     </div>
   </div>
-
 </div>
 
 <p-dialog header="Filtro"
+          styleClass="filtro-dialog"
           [(visible)]="dialodFiltroData"
           [style]="{minWidth: '400px'}"
           [modal]="true"
           [baseZIndex]="10000">
-
-  <form>
-    <div class="mb-4">
-      <label for="dtIni" class="block mb-2">Data Inicial</label>
-      <p-datePicker name="dtIni"
-                  id="dtIni"
-                  appendTo="body"
-                  dataType="string"
-                  dateFormat="dd/mm/yy"
-                  [(ngModel)]="dtIniFiltro"
-                  styleClass="w-full">
-      </p-datePicker>
+  <form class="space-y-4">
+    <div>
+      <label for="dtIni" class="block mb-2 font-medium">Data Inicial</label>
+      <p-datepicker name="dtIni"
+                    id="dtIni"
+                    appendTo="body"
+                    dataType="string"
+                    dateFormat="dd/mm/yy"
+                    showIcon="true"
+                    styleClass="w-full filtro-datepicker"
+                    [(ngModel)]="dtIniFiltro">
+      </p-datepicker>
     </div>
-    <div class="mb-4">
-      <label for="dtFim" class="block mb-2">Data Final</label>
-      <p-datePicker name="dtFim"
-                  id="dtFim"
-                  appendTo="body"
-                  dataType="string"
-                  dateFormat="dd/mm/yy"
-                  [(ngModel)]="dtFimFiltro"
-                  styleClass="w-full">
-      </p-datePicker>
+    <div>
+      <label for="dtFim" class="block mb-2 font-medium">Data Final</label>
+      <p-datepicker name="dtFim"
+                    id="dtFim"
+                    appendTo="body"
+                    dataType="string"
+                    dateFormat="dd/mm/yy"
+                    showIcon="true"
+                    styleClass="w-full filtro-datepicker"
+                    [(ngModel)]="dtFimFiltro">
+      </p-datepicker>
     </div>
     <ng-template pTemplate="footer">
       <div class="flex justify-end gap-2">

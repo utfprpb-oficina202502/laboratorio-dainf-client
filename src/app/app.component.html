@@ -1,23 +1,23 @@
-<section *ngIf="isAuthenticated" class="min-h-screen flex flex-col">
+<section *ngIf="isAuthenticated; else publicLayout" class="layout-auth">
   <app-toolbar></app-toolbar>
-  <div id="layout-auth" class="flex-1 flex flex-col lg:flex-row min-h-0">
-    <aside id="sidenav" class="bg-white border-r border-gray-200 w-0 lg:w-[250px] overflow-hidden sidenav-transition">
+  <div class="flex flex-row h-[calc(100vh-40px)] w-full overflow-hidden">
+    <aside id="sidenav" class="w-64 shrink-0 h-full overflow-y-auto border-r border-slate-200 bg-white">
       <app-sidenav></app-sidenav>
     </aside>
-    <main id="content" class="flex-1 min-h-0">
-      <p-scrollPanel [style]="{ width: '100%', height: 'calc(100vh - 56px)' }" styleClass="scrool-table-dash">
-        <router-outlet></router-outlet>
-        <app-loader></app-loader>
-      </p-scrollPanel>
+    <main id="content" class="flex-1 h-full overflow-y-auto px-4 pb-6 pt-4 bg-slate-50">
+      <router-outlet></router-outlet>
+      <app-loader></app-loader>
     </main>
   </div>
 </section>
-<section *ngIf="!isAuthenticated" class="min-h-screen flex">
-  <div id="content" class="flex-1 only-login">
+
+<ng-template #publicLayout>
+  <main id="content" class="only-login flex flex-col min-h-screen w-full overflow-y-auto">
     <router-outlet></router-outlet>
     <app-loader></app-loader>
-  </div>
-</section>
+  </main>
+</ng-template>
+
 <p-toast></p-toast>
 <p-confirmDialog
   [closeOnEscape]="true"

@@ -1,3 +1,7 @@
+@import "primeicons/primeicons.css";
+@import "font-awesome/css/font-awesome.min.css";
+/* Tema Lara movido para angular.json para evitar erro de resolução */
+
 /* Reativando o Tailwind CSS para corrigir problemas de posicionamento */
 @tailwind base;
 @tailwind components;
@@ -18,42 +22,8 @@ body {
   font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
-/* Garantir que o grid do Tailwind funcione corretamente */
-.grid {
-  display: grid !important;
-}
-
-/* Classes Tailwind específicas que precisamos manter */
-.grid-cols-2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-}
-
-.xl\:grid-cols-4 {
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-}
-
-.gap-4 {
-  gap: 1rem !important;
-}
-
-.flex {
-  display: flex !important;
-}
-
-.justify-center {
-  justify-content: center !important;
-}
-
-.items-center {
-  align-items: center !important;
-}
-
-.justify-end {
-  justify-content: flex-end !important;
-}
-
-.font-bold {
-  font-weight: 700 !important;
+.w-100px {
+  width: 100px !important;
 }
 
 .text-center {
@@ -280,87 +250,73 @@ legend {
 
 }
 
-/* Media queries para responsividade */
-@media (min-width: 1280px) {
-  .xl\:grid-cols-4 {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  }
+/* === Dialog Filtro (global override) === */
+.filtro-dialog.p-dialog {
+  background: #FFFFFF !important;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.filtro-dialog .p-dialog-header {
+  background: #F1F5F9 !important;
+  border-bottom: 1px solid #E2E8F0;
+  padding: 0.75rem 1rem !important;
+}
+.filtro-dialog .p-dialog-header .p-dialog-title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #1F2937;
+}
+.filtro-dialog .p-dialog-content {
+  background: #FFFFFF !important;
+  padding: 1.25rem 1.25rem 1rem 1.25rem !important;
+}
+.filtro-dialog .p-dialog-footer {
+  background: #F8FAFC !important;
+  border-top: 1px solid #E2E8F0;
+  padding: 0.75rem 1.25rem !important;
+}
+.filtro-dialog .p-dialog-footer .p-button {
+  min-width: 110px;
 }
 
-/* Classes utilitárias customizadas */
-.w-100px {
-  width: 100px !important;
+/* Ajuste para botões de ação mais próximos em telas muito pequenas */
+@media (max-width: 480px) {
+  .filtro-dialog .p-dialog-content { padding: 1rem !important; }
+  .filtro-dialog .p-dialog-footer { flex-wrap: wrap; gap: .5rem; }
 }
 
-.w-200px {
-  width: 200px !important;
+/* Estilo específico do DatePicker do filtro */
+.filtro-datepicker.p-datepicker {
+  background: #FFFFFF !important;
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 6px !important;
 }
-
-.br-25px {
-  border-radius: 25px !important;
+.filtro-datepicker .p-inputtext {
+  background: #FFFFFF !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0.6rem 0.75rem !important;
 }
-
-.mat-card {
-  border-radius: 10px !important;
+.filtro-datepicker .p-datepicker-trigger {
+  background: transparent !important;
+  border-left: 1px solid #E2E8F0 !important;
 }
-
-/* style's default modal */
-.ui-dialog {
-  border-radius: 10px !important;
+/* Painel (overlay) quando aberto */
+.p-datepicker-panel {
+  background: #FFFFFF !important;
+  border: 1px solid #CBD5E1 !important;
+  box-shadow: 0 4px 12px -2px rgba(0,0,0,0.15);
+  border-radius: 8px !important;
 }
-
-.ui-dialog-titlebar {
-  font-size: 16px;
+.p-datepicker-panel .p-datepicker-header {
+  background: #F1F5F9 !important;
+  border-bottom: 1px solid #E2E8F0 !important;
 }
-
-.ui-dialog-content {
-  overflow: hidden !important;
-  border-radius: 0 0 10px 10px;
+.p-datepicker-panel table td > span.p-highlight {
+  background: #2563EB !important;
+  color: #FFFFFF !important;
 }
-
-.ui-dialog-titlebar {
-  border-radius: 10px 10px 0 0 !important;
-  background-color: #FFFFFF !important;
+.p-datepicker-panel table td > span:hover {
+  background: #DBEAFE !important;
+  color: #1E3A8A !important;
 }
-
-.ui-dialog-footer {
-  background-color: #FFFFFF !important;
-  border-radius: 0 0 10px 10px !important;
-}
-
-/* Correções específicas para Angular Material com Tailwind */
-.mat-drawer-container {
-  position: relative !important;
-}
-
-.mat-drawer-side {
-  position: absolute !important;
-}
-
-/* Dark mode accessibility improvements (disabled as per request to force light theme)
-@media (prefers-color-scheme: dark) {
-  html, body {
-    background-color: #0f172a !important;
-    color: #f1f5f9 !important;
-  }
-  .only-login { background-image: none; background-color: #0f172a; }
-  .stat-card, .dashboard-card, .mat-card, .p-panel, .p-dialog, .p-card, .ui-dialog, .p-component {
-    background-color: #1e293b !important;
-    color: #e2e8f0 !important;
-  }
-  .p-panel .p-panel-header { background: #1e293b !important; color: #e2e8f0 !important; }
-  .p-dialog .p-dialog-header, .p-dialog .p-dialog-content, .p-dialog .p-dialog-footer { background: #1e293b !important; color: #e2e8f0 !important; }
-  .stat-card-text h6, .card-text h6 { color: #cbd5e1 !important; }
-  .mat-header-cell { color: #f1f5f9 !important; }
-  table { color: #e2e8f0; }
-  a, .text-black-50 { color: #e2e8f0 !important; }
-  .scrool-table-dash { background: transparent !important; }
-  #span-loading { color: #f1f5f9 !important; }
-  .p-inputtext, .p-dropdown, .p-calendar, .p-button.p-button-text { background-color: #334155 !important; color: #f1f5f9 !important; }
-  .p-inputtext::placeholder { color: #94a3b8 !important; }
-  .p-inputtext, .p-dropdown, .p-calendar, .p-panel { border-color: #475569 !important; }
-}
-*/
-
-/* Force browsers to stay in light color scheme */
-html { color-scheme: light; }
