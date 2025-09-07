@@ -1,5 +1,7 @@
+import { number } from '@amcharts/amcharts4/core';
 import { HttpClient } from '@angular/common/http';
 import {Observable} from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export abstract class CrudService<T, ID> {
 
@@ -20,6 +22,10 @@ export abstract class CrudService<T, ID> {
 
   findOne(id: ID): Observable<T> {
     return this.http.get<T>(this.getUrl() + id);
+  }
+
+  findAllPaged(page: number,size : number,filter: string): Observable<any> {
+    return this.http.get<any>(this.getUrl() + `page?page=${page}&size=${size}&filter=${filter}`);
   }
 
   save(t: T): Observable<T> {
