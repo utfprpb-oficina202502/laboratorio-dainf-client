@@ -30,6 +30,7 @@ export abstract class CrudListComponent<T, ID> implements OnInit {
   public bottomSheetEnabled = true;
   public hostListenerColumnEnable = true;
   public isAlunoOrProfessor = false;
+  public filterValue: string = ''; // Add this property to store the current filter value
   @ViewChild(MatPaginator, {static: true}) paginator: MatPaginator;
   @ViewChild(MatSort, {static: true}) sort: MatSort;
   objects: T[];
@@ -53,18 +54,24 @@ export abstract class CrudListComponent<T, ID> implements OnInit {
     this.displayedColumns = this.columnsTable;
   }
   onPageChange(event: PageEvent) {
-    this.service.findAllPaged(event.pageIndex,event.pageSize,'').subscribe(e => {
-        this.objects = e.content;
-        this.totalElements = e.totalElements;
-        this.pageSize = e.size;
-        this.pageIndex = e.number;
-        this.buildList();
-        this.loaderService.display(false);
-        this.postFindAll();
-      }, error => {
-        this.loaderService.display(false);
-      });
+    this.loaderService.display(true);
     this.buildColumnsTable();
+    this.service.findAllPaged(event.pageIndex, event.pageSize, this.filterValue)
+      .subscribe(
+        e => {
+          this.objects = e.content;
+          this.totalElements = e.totalElements;
+          this.pageSize = e.size;
+          this.pageIndex = e.number;
+          this.buildList();
+          this.loaderService.display(false);
+          this.postFindAll();
+        },
+        error => {
+          this.loaderService.display(false);
+          this.showError(error);
+        }
+      );
   }
   applyFilter(filterValue: string) {
     this.service.findAllPaged(this.pageIndex,this.pageSize,filterValue)

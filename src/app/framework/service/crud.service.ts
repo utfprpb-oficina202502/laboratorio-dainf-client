@@ -1,5 +1,5 @@
 import { number } from '@amcharts/amcharts4/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import {Observable} from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -24,8 +24,15 @@ export abstract class CrudService<T, ID> {
     return this.http.get<T>(this.getUrl() + id);
   }
 
-  findAllPaged(page: number,size : number,filter: string): Observable<any> {
-    return this.http.get<any>(this.getUrl() + `page?page=${page}&size=${size}&filter=${filter}`);
+  findAllPaged(page: number, size: number, filter?: string) {
+    filter = (filter === undefined || filter === null) ? '' : filter;
+    page = Math.max(0, Number(page));
+    size = Math.max(1, Number(size));
+    const params = new HttpParams()
+      .set('page', String(page)) 
+      .set('size', String(size))
+      .set('filter', filter);
+    return this.http.get<any>(`${this.url}/paged`, { params });
   }
 
   save(t: T): Observable<T> {
