@@ -51,17 +51,18 @@ export class StatCardComponent implements OnChanges {
   }
 
   get iconClasses() {
-    if (!this.icon) return [];
-    if (this.iconLibrary === 'fa') {
-      // Font Awesome 4 usa prefixo 'fa'
-      return ['background-icon', 'fa', this.icon.startsWith('fa-') ? this.icon : `fa-${this.icon}`];
-    }
-    // PrimeIcons fallback
-    return ['background-icon', 'pi', this.icon.startsWith('pi-') ? this.icon : `pi-${this.icon}`];
+    return this.iconLibrary === 'pi' ? `pi pi-${this.icon}` : `fa fa-${this.icon}`;
   }
 
   onClick() {
     if (this.clickable) {
+      this.cardClick.emit();
+    }
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (this.clickable && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
       this.cardClick.emit();
     }
   }
