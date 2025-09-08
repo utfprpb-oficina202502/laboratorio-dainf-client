@@ -16,6 +16,7 @@ import { GrupoModule } from "./grupo/grupo.module";
 import {
   CommonModule,
   registerLocaleData,
+  DatePipe,
 } from "@angular/common";
 import localePt from '@angular/common/locales/pt';
 import {UsuarioModule} from "./usuario/usuario.module";
@@ -49,7 +50,6 @@ import {SocialLoginModule} from "@abacritt/angularx-social-login";
 import {CadastrarUsuarioModule} from "./cadastrarUsuario/cadastrarUsuario.module";
 import {providePrimeNG} from "primeng/config";
 import {ptBR} from "../locale/pt-BR";
-import { DatePipe } from '@angular/common';
 
 @NgModule({
   declarations: [AppComponent],
