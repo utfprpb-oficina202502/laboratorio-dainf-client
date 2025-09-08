@@ -2,7 +2,7 @@
   "name": "tcc-client",
   "engines": {
     "node": "22.19.0",
-    "npm": "8.17.0"
+    "npm": "10.x"
   },
   "version": "0.1.2",
   "scripts": {

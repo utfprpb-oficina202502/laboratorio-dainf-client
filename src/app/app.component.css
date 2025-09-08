@@ -1,7 +1,7 @@
 /* Convertido para usar classes Tailwind quando possível */
 .only-login {
   @apply w-full h-screen;
-  background-image: url('src/assets/background.png');
+  background-image: url('/assets/background.png');
 }
 
 /* Removido cálculo fixo; layout agora usa flex */

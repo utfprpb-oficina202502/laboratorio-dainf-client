@@ -55,9 +55,13 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.disposeChart(this.chartLineRef);
+    this.chartLineRef = null;
     this.disposeChart(this.chartBarRef);
+    this.chartBarRef = null;
     this.disposeChart(this.chartPie1Ref);
+    this.chartPie1Ref = null;
     this.disposeChart(this.chartPie2Ref);
+    this.chartPie2Ref = null;
   }
 
   buildDashboards() {
@@ -77,7 +81,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       const byDayProcessed = this.processByDay(byDay, 'dtEmprestimo');
       this.createXYChartLine("chartdiv2", byDayProcessed, "_dtParsed", "qtde");
       const emprestadosTop = Array.isArray(emprestados)
-        ? [...emprestados].sort((a, b) => (b?.qtde || 0) - (a?.qtde || 0)).slice(0, 10)
+        ? emprestados.sort((a, b) => (b?.qtde || 0) - (a?.qtde || 0)).slice(0, 10)
         : [];
       this.createXYChartBar("chartdiv4", emprestadosTop, "item", "qtde");
       this.createPieChart("chartdivPie1", adquiridos, "item", "qtde");
