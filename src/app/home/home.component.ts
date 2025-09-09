@@ -3,8 +3,7 @@ import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import {DatePipe} from '@angular/common';
 import {inject} from '@angular/core';
-import {forkJoin} from 'rxjs';
-import {finalize} from 'rxjs/operators';
+import {forkJoin, finalize} from 'rxjs';
 
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 import {DashboardEmprestimoCountRange} from "./dashboard/dashboardEmprestimoCountRange";
