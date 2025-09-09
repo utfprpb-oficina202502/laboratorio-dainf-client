@@ -8,11 +8,11 @@
   "scripts": {
     "ng": "ng",
     "build": "ng build --configuration production",
+    "dev": "ng serve",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "start": "ng serve",
-    "deploy": "ng build --configuration production && node server.js"
+    "start": "node server.js",
   },
   "private": true,
   "dependencies": {
