@@ -12,7 +12,7 @@
         class="col-2"
         style="width: 250px; height: 100%; min-height: 100%"
         id="sidenav"
-        >
+      >
         <app-sidenav></app-sidenav>
       </div>
     }
@@ -20,14 +20,17 @@
       class="col-10"
       [ngClass]="isAuthenticated ? 'content row' : 'only-login'"
       id="content"
-      >
-      <p-scrollPanel
-        [style]="{ width: '100%', height: 'calc(100vh - 40px)', verticalAlign: 'top' }"
-        styleClass="scrool-table-dash"
-        >
-        <router-outlet></router-outlet>
-        <app-loader></app-loader>
-      </p-scrollPanel>
+    >
+      <!--      TODO Identificar se o p-scrollPanel serve para algo, até agora não foi identificado nada -->
+      <!--      <p-scrollPanel-->
+      <!--        [style]="{ width: '100%', height: 'calc(100vh - 40px)', verticalAlign: 'top' }"-->
+      <!--        styleClass="scrool-table-dash"-->
+      <!--        >-->
+      <!--        <router-outlet></router-outlet>-->
+      <!--        <app-loader></app-loader>-->
+      <!--      </p-scrollPanel>-->
+      <router-outlet></router-outlet>
+      <app-loader></app-loader>
     </div>
   </div>
 </section>

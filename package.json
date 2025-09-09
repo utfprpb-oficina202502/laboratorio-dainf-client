@@ -11,7 +11,8 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "start": "ng serve"
+    "start": "ng serve",
+    "deploy": "ng build --configuration production && node server.js"
   },
   "private": true,
   "dependencies": {
