@@ -116,19 +116,20 @@
                     [(ngModel)]="dtFimFiltro">
       </p-datePicker>
     </div>
-    <ng-template pTemplate="footer">
-      <div class="flex justify-end gap-2">
-        <p-button
-          label="Cancelar"
-          severity="secondary"
-          (onClick)="dialodFiltroData = false">
-        </p-button>
-        <p-button
-          label="Filtrar"
-          [disabled]="disableBtnFiltrar()"
-          (onClick)="filtrar()">
-        </p-button>
-      </div>
-    </ng-template>
   </form>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        (onClick)="dialodFiltroData = false">
+      </p-button>
+      <p-button
+        label="Filtrar"
+        [disabled]="disableBtnFiltrar()"
+        (onClick)="filtrar()">
+      </p-button>
+    </div>
+  </ng-template>
 </p-dialog>
