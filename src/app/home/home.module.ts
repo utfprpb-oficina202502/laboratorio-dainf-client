@@ -5,11 +5,14 @@ import {ToolbarModule} from '../toolbar/toolbar.module';
 import {DialogModule} from 'primeng/dialog';
 import {TooltipModule} from 'primeng/tooltip';
 import {HomeService} from './home.service';
-import {MatButtonModule} from '@angular/material/button';
 import {FormsModule} from '@angular/forms';
 import {ValidationModule} from '../framework/validation/validation.module';
 import {ValidationService} from '../framework/validation/validation.service';
-import {DatePickerModule} from "primeng/datepicker";
+import {DatePickerModule} from 'primeng/datepicker';
+import {StatCardComponent} from '../components/stat-card/stat-card.component';
+import {DatePipe} from '@angular/common';
+import {PanelModule} from 'primeng/panel';
+import {ButtonModule} from 'primeng/button';
 
 @NgModule({
   imports: [
@@ -18,19 +21,23 @@ import {DatePickerModule} from "primeng/datepicker";
     TooltipModule,
     DialogModule,
     DatePickerModule,
-    MatButtonModule,
     FormsModule,
-    ValidationModule
+    ValidationModule,
+    PanelModule,
+    ButtonModule
   ],
   declarations: [
-    HomeComponent
+    HomeComponent,
+    StatCardComponent
   ],
   exports: [
-    HomeComponent
+    HomeComponent,
+    StatCardComponent
   ],
   providers: [
     HomeService,
-    ValidationService
+    ValidationService,
+    DatePipe
   ]
 })
 export class HomeModule {
