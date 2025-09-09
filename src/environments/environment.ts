@@ -2,6 +2,8 @@
 // `ng build --prod` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 
+import { defaultChartColors } from '../app/framework/charts/chart-colors.config';
+
 export const environment = {
   production: false,
   //api_url: 'https://tcc-server-utfpr.herokuapp.com/server/'
@@ -10,6 +12,9 @@ export const environment = {
   api_url: 'https://test-labs-api.app.pb.utfpr.edu.br/',
   google_client_id: '726155933363-am0vqngulv5soqerhhprndt5kj4judtl.apps.googleusercontent.com',
   minio_url: 'http://localhost:9000/dainf-labs/',
+  charts: {
+    colors: defaultChartColors
+  }
 };
 
 /*
