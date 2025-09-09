@@ -65,7 +65,7 @@
                   <label for="telefone">Telefone</label>
                   <span class="field-required">*</span>
                   <input
-                    type="telefone"
+                    type="tel"
                     id="telefone"
                     name="telefone"
                     required
@@ -106,8 +106,7 @@
                   <div class="form-group">
                     <label for="documento">
                       {{
-                      object.permissoes &&
-                      object?.permissoes[0]?.nome.includes("ROLE_ALUNO")
+                      object?.permissoes?.[0]?.nome.includes("ROLE_ALUNO")
                       ? "RA"
                       : "SIAPE"
                       }}
