@@ -1,18 +1,19 @@
 import {Component, OnInit, OnDestroy} from "@angular/core";
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
-import { DatePipe } from '@angular/common';
-import { inject } from '@angular/core';
-import { forkJoin } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import {DatePipe} from '@angular/common';
+import {inject} from '@angular/core';
+import {forkJoin} from 'rxjs';
+import {finalize} from 'rxjs/operators';
 
 import am4themes_animated from "@amcharts/amcharts4/themes/animated";
-import { DashboardEmprestimoCountRange } from "./dashboard/dashboardEmprestimoCountRange";
-import { HomeService } from "./home.service";
-import { LoginService } from "../login/login.service";
-import { DateUtil } from "../framework/util/dateUtil";
-import { pt } from "../framework/constantes/calendarPt";
-import { LoaderService } from "../framework/loader/loader.service";
+import {DashboardEmprestimoCountRange} from "./dashboard/dashboardEmprestimoCountRange";
+import {HomeService} from "./home.service";
+import {LoginService} from "../login/login.service";
+import {DateUtil} from "../framework/util/dateUtil";
+import {pt} from "../framework/constantes/calendarPt";
+import {LoaderService} from "../framework/loader/loader.service";
+import {environment} from "../../environments/environment";
 
 am4core.useTheme(am4themes_animated);
 
@@ -33,7 +34,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private chartBarRef: am4charts.XYChart;
   private chartPie1Ref: am4charts.PieChart3D;
   private chartPie2Ref: am4charts.PieChart3D;
-  showDashboardAluno = false; // adicionada para remover erros no ngOnInit e template
+  showDashboardAluno = false;
 
   constructor(
     private homeService: HomeService,
@@ -76,7 +77,13 @@ export class HomeComponent implements OnInit, OnDestroy {
       saidas: this.homeService.findItensMaisSaidas(ini, fim)
     });
     this.loaderService.show();
-    batch.pipe(finalize(() => this.loaderService.hide())).subscribe(({count, byDay, emprestados, adquiridos, saidas}) => {
+    batch.pipe(finalize(() => this.loaderService.hide())).subscribe(({
+                                                                       count,
+                                                                       byDay,
+                                                                       emprestados,
+                                                                       adquiridos,
+                                                                       saidas
+                                                                     }) => {
       this.dashEmprestimoCount = count;
       const byDayProcessed = this.processByDay(byDay, 'dtEmprestimo');
       this.createXYChartLine("chartdiv2", byDayProcessed, "_dtParsed", "qtde");
@@ -90,30 +97,41 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private disposeChart(ref: any) {
-    try { if (ref) { ref.dispose(); } } catch { /* ignore */ }
+    try {
+      if (ref) {
+        ref.dispose();
+      }
+    } catch { /* ignore */
+    }
   }
 
   private disposeCharts() {
-    this.disposeChart(this.chartLineRef); this.chartLineRef = null;
-    this.disposeChart(this.chartBarRef); this.chartBarRef = null;
-    this.disposeChart(this.chartPie1Ref); this.chartPie1Ref = null;
-    this.disposeChart(this.chartPie2Ref); this.chartPie2Ref = null;
+    this.disposeChart(this.chartLineRef);
+    this.chartLineRef = null;
+    this.disposeChart(this.chartBarRef);
+    this.chartBarRef = null;
+    this.disposeChart(this.chartPie1Ref);
+    this.chartPie1Ref = null;
+    this.disposeChart(this.chartPie2Ref);
+    this.chartPie2Ref = null;
   }
 
   private processByDay(data: any[], dateField: string) {
-    if (!Array.isArray(data)) { return []; }
+    if (!Array.isArray(data)) {
+      return [];
+    }
     return data
       .map(d => {
         const raw = d[dateField];
         if (raw && typeof raw === 'string') {
-          const parts = raw.split('/'); // dd/MM/yyyy
+          const parts = raw.split('/');
           if (parts.length === 3) {
             const [dd, mm, yyyy] = parts;
             const parsed = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
-            return { ...d, _dtParsed: parsed };
+            return {...d, _dtParsed: parsed};
           }
         }
-        return { ...d, _dtParsed: new Date(d[dateField]) }; // fallback
+        return {...d, _dtParsed: new Date(d[dateField])};
       })
       .filter(d => !isNaN(d._dtParsed?.getTime?.()))
       .sort((a, b) => a._dtParsed.getTime() - b._dtParsed.getTime());
@@ -150,57 +168,98 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   createPieChart(elementAppend, dados, nameField, nameValue) {
-    // Personalização: sem labels nas fatias, legenda embaixo, hover para destacar
-    if (elementAppend === 'chartdivPie1') { this.disposeChart(this.chartPie1Ref); }
-    if (elementAppend === 'chartdivPie2') { this.disposeChart(this.chartPie2Ref); }
+    if (elementAppend === 'chartdivPie1') {
+      this.disposeChart(this.chartPie1Ref);
+    }
+    if (elementAppend === 'chartdivPie2') {
+      this.disposeChart(this.chartPie2Ref);
+    }
 
     const pieChart3D = am4core.create(elementAppend, am4charts.PieChart3D);
-    pieChart3D.background.fill = am4core.color('#FFFFFF');
+    pieChart3D.background.fill = am4core.color(environment.charts.colors.background);
     pieChart3D.hiddenState.properties.opacity = 0;
 
-    // Legenda embaixo
-    pieChart3D.legend = new am4charts.Legend();
-    pieChart3D.legend.position = 'bottom';
-    pieChart3D.legend.useDefaultMarker = true;
-    pieChart3D.legend.labels.template.maxWidth = 160;
-    pieChart3D.legend.labels.template.truncate = false;
-    pieChart3D.legend.labels.template.wrap = true;
-    pieChart3D.legend.labels.template.fill = am4core.color('#374151');
-    pieChart3D.legend.itemContainers.template.cursorOverStyle = am4core.MouseCursorStyle.pointer;
-    pieChart3D.legend.valueLabels.template.disabled = true;
-    // Removido tooltip na legenda conforme solicitação
-    pieChart3D.legend.itemContainers.template.tooltipText = '';
-
     pieChart3D.data = dados;
+
+    // Usar as paletas do environment - separar em amarelos e azuis
+    const fullPalette = environment.charts.colors.pie.palette;
+    const yellowColors = fullPalette.slice(0, 5); // Primeiras 5 cores (amarelos)
+    const blueColors = fullPalette.slice(5, 10); // Últimas 5 cores (azuis)
 
     const series = pieChart3D.series.push(new am4charts.PieSeries3D());
     series.dataFields.value = nameValue;
     series.dataFields.category = nameField;
 
-    // Remover labels/ticks das fatias
+    // Forçar cores alternando entre amarelo e azul usando as cores do environment
+    series.slices.template.adapter.add("fill", (fill, target) => {
+      if (target.dataItem && target.dataItem.index !== undefined) {
+        const index = target.dataItem.index;
+        const isYellow = index % 2 === 0; // Números pares = amarelo, ímpares = azul
+        const colorArrayIndex = Math.floor(index / 2) % 5; // Cicla através dos 5 tons
+
+        if (isYellow) {
+          return am4core.color(yellowColors[colorArrayIndex]);
+        } else {
+          return am4core.color(blueColors[colorArrayIndex]);
+        }
+      }
+      return fill;
+    });
+
     series.labels.template.disabled = true;
     series.ticks.template.disabled = true;
 
-    // Tooltip apenas nas fatias
     series.slices.template.tooltipText = `{${nameField}}: {${nameValue}}`;
-    series.slices.template.stroke = am4core.color('#FFFFFF');
+    series.slices.template.stroke = am4core.color(environment.charts.colors.background);
     series.slices.template.strokeWidth = 1;
     series.slices.template.strokeOpacity = 1;
 
-    // Estado hover para ampliar levemente a fatia
     const sliceHover = series.slices.template.states.getKey('hover');
     if (sliceHover) {
       sliceHover.properties.scale = 1.05;
       sliceHover.properties.shiftRadius = 0.04;
     }
 
-    // Hover na legenda destacando fatia correspondente (mantido, só sem tooltip)
+    pieChart3D.legend = new am4charts.Legend();
+    pieChart3D.legend.position = 'bottom';
+    pieChart3D.legend.useDefaultMarker = true;
+    pieChart3D.legend.labels.template.maxWidth = 160;
+    pieChart3D.legend.labels.template.truncate = false;
+    pieChart3D.legend.labels.template.wrap = true;
+    pieChart3D.legend.labels.template.fill = am4core.color(environment.charts.colors.text);
+    pieChart3D.legend.itemContainers.template.cursorOverStyle = am4core.MouseCursorStyle.pointer;
+    pieChart3D.legend.valueLabels.template.disabled = true;
+    pieChart3D.legend.itemContainers.template.tooltipText = '';
+
+    // Desabilitar o comportamento de toggle ao clicar na legenda
+    pieChart3D.legend.itemContainers.template.clickable = false;
+    pieChart3D.legend.itemContainers.template.focusable = false;
+
+    // Aplicar cores na legenda também usando as cores do environment
+    pieChart3D.legend.markers.template.adapter.add("fill", (fill, target) => {
+      if (target.dataItem && target.dataItem.index !== undefined) {
+        const index = target.dataItem.index;
+        const isYellow = index % 2 === 0;
+        const colorArrayIndex = Math.floor(index / 2) % 5;
+
+        if (isYellow) {
+          return am4core.color(yellowColors[colorArrayIndex]);
+        } else {
+          return am4core.color(blueColors[colorArrayIndex]);
+        }
+      }
+      return fill;
+    });
+
     const setLegendHover = (ev: any, flag: boolean) => {
       const legendDataItem = ev.target.dataItem;
       if (!legendDataItem) return;
       const ctx = legendDataItem.dataContext;
       const legendCategory = ctx ? ctx[nameField] : undefined;
-      if (ctx && ctx.slice) { ctx.slice.isHover = flag; return; }
+      if (ctx && ctx.slice) {
+        ctx.slice.isHover = flag;
+        return;
+      }
       if (legendCategory !== undefined) {
         series.slices.each(s => {
           if (s.dataItem && s.dataItem.dataContext && s.dataItem.dataContext[nameField] === legendCategory) {
@@ -215,10 +274,10 @@ export class HomeComponent implements OnInit, OnDestroy {
         if (slice) slice.isHover = flag;
       }
     };
+
     pieChart3D.legend.itemContainers.template.events.on('over', ev => setLegendHover(ev, true));
     pieChart3D.legend.itemContainers.template.events.on('out', ev => setLegendHover(ev, false));
 
-    // Fallback sem dados
     const count = Array.isArray(dados) ? dados.length : 0;
     if (count === 0) {
       const label = pieChart3D.chartContainer.createChild(am4core.Label);
@@ -226,19 +285,33 @@ export class HomeComponent implements OnInit, OnDestroy {
       label.align = 'center';
       label.isMeasured = false;
       label.y = am4core.percent(50);
-      label.fill = am4core.color('#6B7280');
+      label.fill = am4core.color(environment.charts.colors.text);
     }
 
-    if (elementAppend === 'chartdivPie1') { this.chartPie1Ref = pieChart3D; }
-    if (elementAppend === 'chartdivPie2') { this.chartPie2Ref = pieChart3D; }
+    if (elementAppend === 'chartdivPie1') {
+      this.chartPie1Ref = pieChart3D;
+    }
+    if (elementAppend === 'chartdivPie2') {
+      this.chartPie2Ref = pieChart3D;
+    }
   }
 
   createXYChartBar(elementAppend, dados, nameField, nameValue) {
     this.disposeChart(this.chartBarRef);
     const xyChart = am4core.create(elementAppend, am4charts.XYChart);
-    xyChart.background.fill = am4core.color('#FFFFFF');
+    xyChart.background.fill = am4core.color(environment.charts.colors.background);
+
+    // Ordenar dados por quantidade (maior para menor) para aplicar cores consistentes
+    const sortedData = Array.isArray(dados) ? [...dados].sort((a, b) => (b[nameValue] || 0) - (a[nameValue] || 0)) : [];
+
+    // Usar as paletas do environment - separar em amarelos e azuis
+    const fullPalette = environment.charts.colors.bar.palette;
+    const yellowColors = fullPalette.slice(0, 5); // Primeiras 5 cores (amarelos)
+    const blueColors = fullPalette.slice(5, 10); // Últimas 5 cores (azuis)
+
     xyChart.scrollbarX = new am4core.Scrollbar();
-    xyChart.data = dados;
+    xyChart.data = sortedData; // Usar dados ordenados
+
     const categoryAxis = xyChart.xAxes.push(new am4charts.CategoryAxis());
     categoryAxis.dataFields.category = nameField;
     categoryAxis.renderer.grid.template.location = 0;
@@ -248,33 +321,33 @@ export class HomeComponent implements OnInit, OnDestroy {
     categoryAxis.tooltip.disabled = true;
     categoryAxis.renderer.labels.template.truncate = true;
     categoryAxis.renderer.labels.template.maxWidth = 120;
-    categoryAxis.renderer.labels.template.fill = am4core.color('#374151');
+    categoryAxis.renderer.labels.template.fill = am4core.color(environment.charts.colors.text);
 
-    const isSmallScreen = window && window.innerWidth < 640; // breakpoint simples
+    const isSmallScreen = window && window.innerWidth < 640;
 
     if (elementAppend === 'chartdiv4') {
       if (!isSmallScreen) {
         categoryAxis.renderer.labels.template.truncate = false;
         categoryAxis.renderer.labels.template.wrap = true;
-        categoryAxis.renderer.minGridDistance = 20; // Aproxima para caber as 10 colunas
+        categoryAxis.renderer.minGridDistance = 20;
         xyChart.paddingBottom = 30;
         categoryAxis.renderer.labels.template.adapter.add('dy', (dy, target: any) => {
           const index = target.dataItem && target.dataItem.index;
-          if (index == null) { return dy; }
-          return (index % 2 === 0) ? 0 : 18; // 18px para segunda "linha"
+          if (index == null) {
+            return dy;
+          }
+          return (index % 2 === 0) ? 0 : 18;
         });
         categoryAxis.renderer.labels.template.tooltipText = `{${nameField}}`;
       } else {
-        // Em telas pequenas esconder labels e confiar somente no tooltip hover
         categoryAxis.renderer.labels.template.disabled = true;
-        // Reduz padding inferior já que não há duas linhas
         xyChart.paddingBottom = 10;
       }
     }
 
     const valueAxis = xyChart.yAxes.push(new am4charts.ValueAxis());
     valueAxis.renderer.minWidth = 50;
-    valueAxis.renderer.labels.template.fill = am4core.color('#374151');
+    valueAxis.renderer.labels.template.fill = am4core.color(environment.charts.colors.text);
 
     const series = xyChart.series.push(new am4charts.ColumnSeries());
     series.sequencedInterpolation = true;
@@ -292,9 +365,22 @@ export class HomeComponent implements OnInit, OnDestroy {
     hoverState.properties.cornerRadiusTopRight = 0;
     hoverState.properties.fillOpacity = 1;
 
+    // Forçar cores alternando entre amarelo e azul usando as cores do environment
     series.columns.template.adapter.add("fill", (fill, target) => {
-      return xyChart.colors.getIndex(target.dataItem.index);
+      if (target.dataItem && target.dataItem.index !== undefined) {
+        const index = target.dataItem.index;
+        const isYellow = index % 2 === 0; // Números pares = amarelo, ímpares = azul
+        const colorArrayIndex = Math.floor(index / 2) % 5; // Cicla através dos 5 tons
+
+        if (isYellow) {
+          return am4core.color(yellowColors[colorArrayIndex]);
+        } else {
+          return am4core.color(blueColors[colorArrayIndex]);
+        }
+      }
+      return fill;
     });
+
     xyChart.cursor = new am4charts.XYCursor();
     this.chartBarRef = xyChart;
   }
@@ -302,25 +388,30 @@ export class HomeComponent implements OnInit, OnDestroy {
   createXYChartLine(elementAppend, dados, dateX, valueY) {
     this.disposeChart(this.chartLineRef);
     const chartLine = am4core.create(elementAppend, am4charts.XYChart);
-    chartLine.background.fill = am4core.color('#FFFFFF');
+    chartLine.background.fill = am4core.color(environment.charts.colors.background);
     chartLine.data = dados;
     const dateAxis = chartLine.xAxes.push(new am4charts.DateAxis());
-    dateAxis.baseInterval = { timeUnit: 'day', count: 1 };
+    dateAxis.baseInterval = {timeUnit: 'day', count: 1};
     dateAxis.skipEmptyPeriods = true;
-    dateAxis.renderer.labels.template.fill = am4core.color('#374151');
+    dateAxis.renderer.labels.template.fill = am4core.color(environment.charts.colors.text);
+    dateAxis.renderer.grid.template.stroke = am4core.color(environment.charts.colors.gridLines);
     const valueAxis = chartLine.yAxes.push(new am4charts.ValueAxis());
-    valueAxis.renderer.labels.template.fill = am4core.color('#374151');
+
+    valueAxis.renderer.labels.template.fill = am4core.color(environment.charts.colors.text);
+    valueAxis.renderer.grid.template.stroke = am4core.color(environment.charts.colors.gridLines);
 
     const series = chartLine.series.push(new am4charts.LineSeries());
     series.dataFields.valueY = valueY;
     series.dataFields.dateX = dateX;
     series.tooltipText = "{valueY}";
     series.strokeWidth = 2;
-    series.stroke = am4core.color('#2563EB');
-    series.fill = am4core.color('#2563EB');
+    series.stroke = am4core.color(environment.charts.colors.line.stroke);
+    series.fill = am4core.color(environment.charts.colors.line.fill);
     series.minBulletDistance = 15;
     series.tooltip.background.cornerRadius = 20;
     series.tooltip.background.strokeOpacity = 0;
+    series.tooltip.background.fill = am4core.color(environment.charts.colors.tooltip.background);
+    series.tooltip.label.fill = am4core.color(environment.charts.colors.tooltip.text);
     series.tooltip.pointerOrientation = "vertical";
     series.tooltip.label.minWidth = 40;
     series.tooltip.label.minHeight = 40;
@@ -330,8 +421,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     const bullet = series.bullets.push(new am4charts.CircleBullet());
     bullet.circle.strokeWidth = 2;
     bullet.circle.radius = 4;
-    bullet.circle.fill = am4core.color('#fff');
-    bullet.circle.stroke = am4core.color('#2563EB');
+    bullet.circle.fill = am4core.color(environment.charts.colors.background);
+    bullet.circle.stroke = am4core.color(environment.charts.colors.line.stroke);
 
     const bullethover = bullet.states.create("hover");
     bullethover.properties.scale = 1.3;
