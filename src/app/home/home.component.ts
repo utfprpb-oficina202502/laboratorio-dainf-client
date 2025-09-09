@@ -13,6 +13,7 @@ import {DateUtil} from "../framework/util/dateUtil";
 import {pt} from "../framework/constantes/calendarPt";
 import {LoaderService} from "../framework/loader/loader.service";
 import {environment} from "../../environments/environment";
+import {getAlternatingColor} from "../framework/charts/chart-colors.config";
 
 am4core.useTheme(am4themes_animated);
 
@@ -180,27 +181,15 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     pieChart3D.data = dados;
 
-    // Usar as paletas do environment - separar em amarelos e azuis
-    const fullPalette = environment.charts.colors.pie.palette;
-    const yellowColors = fullPalette.slice(0, 5); // Primeiras 5 cores (amarelos)
-    const blueColors = fullPalette.slice(5, 10); // Últimas 5 cores (azuis)
-
     const series = pieChart3D.series.push(new am4charts.PieSeries3D());
     series.dataFields.value = nameValue;
     series.dataFields.category = nameField;
 
-    // Forçar cores alternando entre amarelo e azul usando as cores do environment
+    // Usar função utilitária para cores alternadas
     series.slices.template.adapter.add("fill", (fill, target) => {
       if (target.dataItem && target.dataItem.index !== undefined) {
-        const index = target.dataItem.index;
-        const isYellow = index % 2 === 0; // Números pares = amarelo, ímpares = azul
-        const colorArrayIndex = Math.floor(index / 2) % 5; // Cicla através dos 5 tons
-
-        if (isYellow) {
-          return am4core.color(yellowColors[colorArrayIndex]);
-        } else {
-          return am4core.color(blueColors[colorArrayIndex]);
-        }
+        const color = getAlternatingColor(target.dataItem.index, environment.charts.colors.pie.palette);
+        return am4core.color(color);
       }
       return fill;
     });
@@ -226,47 +215,31 @@ export class HomeComponent implements OnInit, OnDestroy {
     pieChart3D.legend.labels.template.truncate = false;
     pieChart3D.legend.labels.template.wrap = true;
     pieChart3D.legend.labels.template.fill = am4core.color(environment.charts.colors.text);
-    pieChart3D.legend.itemContainers.template.cursorOverStyle = am4core.MouseCursorStyle.pointer;
     pieChart3D.legend.valueLabels.template.disabled = true;
     pieChart3D.legend.itemContainers.template.tooltipText = '';
 
-    // Desabilitar o comportamento de toggle ao clicar na legenda
+    // CORREÇÃO: Desabilitar completamente o comportamento de toggle/hide na legenda
     pieChart3D.legend.itemContainers.template.clickable = false;
     pieChart3D.legend.itemContainers.template.focusable = false;
+    pieChart3D.legend.itemContainers.template.cursorOverStyle = am4core.MouseCursorStyle.default;
 
-    // Aplicar cores na legenda também usando as cores do environment
+    // Desabilitar eventos de clique que poderiam ocultar fatias
+    pieChart3D.legend.itemContainers.template.events.disableType("hit");
+
+    // Aplicar cores na legenda usando função utilitária
     pieChart3D.legend.markers.template.adapter.add("fill", (fill, target) => {
       if (target.dataItem && target.dataItem.index !== undefined) {
-        const index = target.dataItem.index;
-        const isYellow = index % 2 === 0;
-        const colorArrayIndex = Math.floor(index / 2) % 5;
-
-        if (isYellow) {
-          return am4core.color(yellowColors[colorArrayIndex]);
-        } else {
-          return am4core.color(blueColors[colorArrayIndex]);
-        }
+        const color = getAlternatingColor(target.dataItem.index, environment.charts.colors.pie.palette);
+        return am4core.color(color);
       }
       return fill;
     });
 
+    // Manter apenas hover visual na legenda (sem funcionalidade de toggle)
     const setLegendHover = (ev: any, flag: boolean) => {
       const legendDataItem = ev.target.dataItem;
       if (!legendDataItem) return;
-      const ctx = legendDataItem.dataContext;
-      const legendCategory = ctx ? ctx[nameField] : undefined;
-      if (ctx && ctx.slice) {
-        ctx.slice.isHover = flag;
-        return;
-      }
-      if (legendCategory !== undefined) {
-        series.slices.each(s => {
-          if (s.dataItem && s.dataItem.dataContext && s.dataItem.dataContext[nameField] === legendCategory) {
-            s.isHover = flag;
-          }
-        });
-        return;
-      }
+
       const idx = legendDataItem.index;
       if (idx != null) {
         const slice = series.slices.getIndex(idx);
@@ -303,13 +276,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     // Ordenar dados por quantidade (maior para menor) para aplicar cores consistentes
     const sortedData = Array.isArray(dados) ? [...dados].sort((a, b) => (b[nameValue] || 0) - (a[nameValue] || 0)) : [];
 
-    // Usar as paletas do environment - separar em amarelos e azuis
-    const fullPalette = environment.charts.colors.bar.palette;
-    const yellowColors = fullPalette.slice(0, 5); // Primeiras 5 cores (amarelos)
-    const blueColors = fullPalette.slice(5, 10); // Últimas 5 cores (azuis)
-
     xyChart.scrollbarX = new am4core.Scrollbar();
-    xyChart.data = sortedData; // Usar dados ordenados
+    xyChart.data = sortedData;
 
     const categoryAxis = xyChart.xAxes.push(new am4charts.CategoryAxis());
     categoryAxis.dataFields.category = nameField;
@@ -364,18 +332,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     hoverState.properties.cornerRadiusTopRight = 0;
     hoverState.properties.fillOpacity = 1;
 
-    // Forçar cores alternando entre amarelo e azul usando as cores do environment
+    // Usar função utilitária para cores alternadas
     series.columns.template.adapter.add("fill", (fill, target) => {
       if (target.dataItem && target.dataItem.index !== undefined) {
-        const index = target.dataItem.index;
-        const isYellow = index % 2 === 0; // Números pares = amarelo, ímpares = azul
-        const colorArrayIndex = Math.floor(index / 2) % 5; // Cicla através dos 5 tons
-
-        if (isYellow) {
-          return am4core.color(yellowColors[colorArrayIndex]);
-        } else {
-          return am4core.color(blueColors[colorArrayIndex]);
-        }
+        const color = getAlternatingColor(target.dataItem.index, environment.charts.colors.bar.palette);
+        return am4core.color(color);
       }
       return fill;
     });
