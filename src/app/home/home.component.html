@@ -4,7 +4,7 @@
 
 <div class="p-3 space-y-6" id="container-dashboard" *ngIf="!showDashboardAluno">
 
-  <p-panel styleClass="mb-3">
+  <p-panel class="mb-3">
     <div class="flex justify-center items-center gap-2">
       <span class="font-bold text-center text-base md:text-lg">Dados dos dias {{ getDateIni() }} a {{ getDateFim() }}</span>
       <p-button
@@ -50,14 +50,14 @@
     </app-stat-card>
   </div>
 
-  <p-panel styleClass="mb-3">
+  <p-panel class="mb-3">
     <ng-template pTemplate="header">
       <h6 class="font-bold text-center m-0">Total de Empréstimos Realizados por Dia</h6>
     </ng-template>
     <div id="chartdiv2" class="h-[450px]"></div>
   </p-panel>
 
-  <p-panel styleClass="mb-3">
+  <p-panel class="mb-3">
     <ng-template pTemplate="header">
       <h6 class="font-bold text-center m-0">Top 10 | Itens Emprestados</h6>
     </ng-template>
@@ -86,7 +86,7 @@
 </div>
 
 <p-dialog header="Filtro"
-          styleClass="filtro-dialog"
+          class="filtro-dialog"
           [(visible)]="dialodFiltroData"
           [style]="{minWidth: '400px'}"
           [modal]="true"
@@ -100,7 +100,7 @@
                     dataType="string"
                     dateFormat="dd/mm/yy"
                     showIcon="true"
-                    styleClass="w-full filtro-datepicker"
+                    class="w-full filtro-datepicker"
                     [(ngModel)]="dtIniFiltro">
       </p-datePicker>
     </div>
@@ -112,7 +112,7 @@
                     dataType="string"
                     dateFormat="dd/mm/yy"
                     showIcon="true"
-                    styleClass="w-full filtro-datepicker"
+                    class="w-full filtro-datepicker"
                     [(ngModel)]="dtFimFiltro">
       </p-datePicker>
     </div>
