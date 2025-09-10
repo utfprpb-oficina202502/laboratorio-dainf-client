@@ -5,6 +5,7 @@ const fs = require('fs');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
+const apiUrl = process.env.API_URL || 'http://localhost:8080';
 
 const app = express();
 const port = process.env.PORT || 4200;
@@ -41,7 +42,14 @@ console.log(`✅ Serving files from: ${outputPath}`);
 app.set('trust proxy', 1);
 app.use(compression());
 app.disable('x-powered-by');
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "connect-src": ["'self'", apiUrl],
+    },
+  },
+}));
 
 app.use(express.static(outputPath,
   {index: false, maxAge: '1y', immutable: true, etag: true}));
