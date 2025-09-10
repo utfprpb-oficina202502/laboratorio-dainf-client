@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-
-const envFilePath = path.join(__dirname, 'src/environments/environment.prod.ts');
+const envFilePath = path.join(__dirname,
+  'src/environments/environment.prod.ts');
 const apiUrl = process.env.API_URL;
 
 if (!apiUrl) {
@@ -10,15 +10,26 @@ if (!apiUrl) {
   process.exit(1);
 }
 
-console.log(`-- Configurando a API URL para: ${apiUrl} --`);
+let normalizedApiUrl;
+try {
+  normalizedApiUrl = new URL(apiUrl).href;
+} catch {
+  console.error(
+    '❌ ERRO: API_URL inválida. Exemplo esperado: https://api.exemplo.com/');
+  process.exit(1);
+}
+console.log(`-- Configurando a API URL para: ${normalizedApiUrl} --`);
 
 try {
-  // Lê o conteúdo do arquivo de ambiente
   let envFileContent = fs.readFileSync(envFilePath, 'utf8');
   const regex = /(api_url:\s*['"])([^'"]*)(['"],?)/;
-  envFileContent = envFileContent.replace(regex, `$1${apiUrl}$3`);
-  fs.writeFileSync(envFilePath, envFileContent, 'utf8');
-  console.log('✅ Arquivo environment.prod.ts atualizado com sucesso.');
+  const replaced = envFileContent.replace(regex, `$1${normalizedApiUrl}$3`);
+  if (replaced === envFileContent) {
+    console.error(
+      '❌ ERRO: Não foi possível localizar a propriedade api_url em environment.prod.ts.');
+    process.exit(1);
+  }
+  fs.writeFileSync(envFilePath, replaced, 'utf8');
 } catch (err) {
   console.error('❌ ERRO ao tentar modificar o arquivo de ambiente:', err);
   process.exit(1);

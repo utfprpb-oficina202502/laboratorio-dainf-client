@@ -5,7 +5,14 @@ const fs = require('fs');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
-const apiUrl = process.env.API_URL || 'http://localhost:8080';
+
+const rawApiUrl = process.env.API_URL || 'http://localhost:8080';
+let apiUrl;
+try {
+  apiUrl = new URL(rawApiUrl).origin;
+} catch {
+  apiUrl = rawApiUrl.replace(/\/+$/, '');
+}
 
 const app = express();
 const port = process.env.PORT || 4200;
@@ -47,6 +54,8 @@ app.use(helmet({
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
       "connect-src": ["'self'", apiUrl],
+      "img-src": ["'self'", "data:", "https://minio.app.pb.utfpr.edu.br"],
+      "media-src": ["'self'", "https://minio.app.pb.utfpr.edu.br"],
     },
   },
 }));

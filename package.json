@@ -13,7 +13,7 @@
     "lint": "ng lint",
     "e2e": "ng e2e",
     "start": "node server.js",
-    "heroku-postbuild": "node set-env.js && ng build --configuration production"
+    "heroku-postbuild": "node set-env.js && npm run build"
   },
   "private": true,
   "dependencies": {
