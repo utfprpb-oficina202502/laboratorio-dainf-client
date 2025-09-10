@@ -14,14 +14,18 @@ const candidatePaths = [
   process.env.OUTPUT_PATH,
   path.join(distRoot, appName, 'browser'),
   path.join(distRoot, appName),
+  path.join(distRoot, 'browser'),
   distRoot
 ].filter(Boolean);
 
-const outputPath = candidatePaths.find(p => fs.existsSync(p));
+const outputPath = candidatePaths.find(p =>
+  fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html'))
+);
 
 if (!outputPath) {
-  console.error('❌ ERROR: Could not find the Angular build output directory.');
-  console.error('Checked the following paths:', candidatePaths);
+  console.error(
+    '❌ ERRO: Não foi possível localizar o diretório de build com um index.html válido.');
+  console.error('Caminhos verificados:', candidatePaths);
   process.exit(1);
 }
 console.log(`✅ Serving files from: ${outputPath}`);
@@ -33,11 +37,11 @@ const limiter = rateLimit({
   legacyHeaders: false, // Desabilita o header `X-RateLimit-*`
 });
 
-app.use(limiter);
+app.set('trust proxy', 1);
 app.use(compression());
-app.use(express.static(outputPath));
+app.use(express.static(outputPath, { index: false, maxAge: '1y', immutable: true, etag: true }));
 
-app.get('/*', function(req, res) {
+app.get('/*', function (req, res) {
   res.sendFile(path.join(outputPath, 'index.html'));
 });
 
