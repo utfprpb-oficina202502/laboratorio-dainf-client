@@ -6,7 +6,14 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 
-const apiUrl = (process.env.API_URL || 'http://localhost:8080').trim();
+const rawApiUrl = (process.env.API_URL || 'http://localhost:8080').trim();
+let apiOrigin;
+try {
+  apiOrigin = new URL(rawApiUrl).origin;
+} catch {
+  apiOrigin = null;
+}
+const connectSrc = ["'self'", ...(apiOrigin ? [apiOrigin] : [])];
 
 const app = express();
 const port = process.env.PORT || 4200;
@@ -45,10 +52,10 @@ app.use(compression());
 app.disable('x-powered-by');
 app.use(helmet({
   contentSecurityPolicy: {
+    'useDefaults': true,
     directives: {
-      frameAncestors: 'none',
-      useDefaults: true,
-      "connect-src": ["'self'", apiUrl],
+      "frameAncestors": ["'none'"],
+      "connect-src": connectSrc,
       "img-src": ["'self'", "blob:", "https://minio.app.pb.utfpr.edu.br"],
       "media-src": ["'self'", "blob:", "https://minio.app.pb.utfpr.edu.br"],
     },
