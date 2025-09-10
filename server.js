@@ -55,9 +55,9 @@ app.use(helmet({
     'useDefaults': true,
     directives: {
       "frameAncestors": ["'none'"],
-      "connect-src": connectSrc,
-      "img-src": ["'self'", "blob:", "https://minio.app.pb.utfpr.edu.br"],
-      "media-src": ["'self'", "blob:", "https://minio.app.pb.utfpr.edu.br"],
+      "connectSrc": connectSrc,
+      "imgSrc": ["'self'", "blob:", "data:", "https://minio.app.pb.utfpr.edu.br"],
+      "mediaSrc": ["'self'", "blob:", "https://minio.app.pb.utfpr.edu.br"],
     },
   },
 }));
