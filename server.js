@@ -6,13 +6,7 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 
-const rawApiUrl = process.env.API_URL || 'http://localhost:8080';
-let apiUrl;
-try {
-  apiUrl = new URL(rawApiUrl).origin;
-} catch {
-  apiUrl = rawApiUrl.replace(/\/+$/, '');
-}
+const apiUrl = (process.env.API_URL || 'http://localhost:8080').trim();
 
 const app = express();
 const port = process.env.PORT || 4200;
@@ -29,7 +23,7 @@ const candidatePaths = [
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // limita request por IP
+  limit: 100, // limita request por IP
   standardHeaders: true, // Retorna info do rate limit no header `RateLimit-*`
   legacyHeaders: false, // Desabilita o header `X-RateLimit-*`
 });
@@ -52,10 +46,11 @@ app.disable('x-powered-by');
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
-      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      frameAncestors: 'none',
+      useDefaults: true,
       "connect-src": ["'self'", apiUrl],
-      "img-src": ["'self'", "data:", "https://minio.app.pb.utfpr.edu.br"],
-      "media-src": ["'self'", "https://minio.app.pb.utfpr.edu.br"],
+      "img-src": ["'self'", "blob:", "https://minio.app.pb.utfpr.edu.br"],
+      "media-src": ["'self'", "blob:", "https://minio.app.pb.utfpr.edu.br"],
     },
   },
 }));
