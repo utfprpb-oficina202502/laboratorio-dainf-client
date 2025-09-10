@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 
 const app = express();
 const port = process.env.PORT || 4200;
@@ -18,6 +19,13 @@ const candidatePaths = [
   distRoot
 ].filter(Boolean);
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // limita request por IP
+  standardHeaders: true, // Retorna info do rate limit no header `RateLimit-*`
+  legacyHeaders: false, // Desabilita o header `X-RateLimit-*`
+});
+
 const outputPath = candidatePaths.find(p =>
   fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html'))
 );
@@ -30,22 +38,19 @@ if (!outputPath) {
 }
 console.log(`✅ Serving files from: ${outputPath}`);
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // limita request por IP
-  standardHeaders: true, // Retorna info do rate limit no header `RateLimit-*`
-  legacyHeaders: false, // Desabilita o header `X-RateLimit-*`
-});
-
 app.set('trust proxy', 1);
 app.use(compression());
-app.use(express.static(outputPath, { index: false, maxAge: '1y', immutable: true, etag: true }));
+app.disable('x-powered-by');
+app.use(helmet());
 
-app.get('/*', function (req, res) {
+app.use(express.static(outputPath,
+  {index: false, maxAge: '1y', immutable: true, etag: true}));
+app.get('/*', limiter, function (req, res) {
+  res.set('Cache-Control', 'no-store');
   res.sendFile(path.join(outputPath, 'index.html'));
 });
 
 app.listen(port, () => {
-  console.log(`✅ Server is running on port ${port}`);
+  console.log(`✅ Server listening on ${port} | static: ${outputPath}`);
 });
 

@@ -39,6 +39,7 @@
     "express-rate-limit": "^8.1.0",
     "font-awesome": "^4.7.0",
     "fullcalendar": "^5.11.3",
+    "helmet": "^8.1.0",
     "jquery": "^3.6.1",
     "ng2-currency-mask": "^13.0.3",
     "primeicons": "^7.0.0",
