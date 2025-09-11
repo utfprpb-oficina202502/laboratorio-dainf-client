@@ -50,6 +50,7 @@ console.log(`✅ Serving files from: ${outputPath}`);
 app.set('trust proxy', 1);
 app.use(compression());
 app.disable('x-powered-by');
+console.log('✅ CSP connect-src is being set to:', connectSrc);
 app.use(helmet({
   contentSecurityPolicy: {
     'useDefaults': true,
