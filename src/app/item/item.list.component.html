@@ -33,6 +33,11 @@
             <mat-cell *matCellDef="let row" (click)="openOptions(row.id)">{{ row.patrimonio ? row.patrimonio + ' - ' : '' }} {{row.nome}}</mat-cell>
           </ng-container>
 
+          <ng-container matColumnDef="grupo">
+            <mat-header-cell *matHeaderCellDef mat-sort-header>Grupo</mat-header-cell>
+            <mat-cell *matCellDef="let row" (click)="openOptions(row.id)">{{row.grupo.descricao}}</mat-cell>
+          </ng-container>
+
           <ng-container matColumnDef="localizacao">
             <mat-header-cell *matHeaderCellDef mat-sort-header>Localização</mat-header-cell>
             <mat-cell *matCellDef="let row" (click)="openOptions(row.id)">{{row.localizacao}}</mat-cell>

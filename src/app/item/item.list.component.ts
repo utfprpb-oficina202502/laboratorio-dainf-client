@@ -30,7 +30,7 @@ export class ItemListComponent extends CrudListComponent<Item, number> {
     super(
       itemService,
       injector,
-      ["id", "imagem", "nome", "localizacao", "saldo", "actions"],
+      ["id", "imagem", "nome", "localizacao", "grupo","saldo", "actions"],
       "item/form"
     );
     this.minioUrl = environment.minio_url;
