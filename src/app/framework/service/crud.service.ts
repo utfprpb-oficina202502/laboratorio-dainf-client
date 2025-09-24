@@ -32,7 +32,7 @@ export abstract class CrudService<T, ID> {
       .set('page', String(page))
       .set('size', String(size))
       .set('filter', filter);
-    return this.http.get<any>(`${this.url}paged`, { params });
+    return this.http.get<any>(`${this.url}page`, { params });
   }
 
   save(t: T): Observable<T> {
