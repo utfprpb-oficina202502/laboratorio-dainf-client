@@ -50,6 +50,7 @@ import {SocialLoginModule} from "@abacritt/angularx-social-login";
 import {CadastrarUsuarioModule} from "./cadastrarUsuario/cadastrarUsuario.module";
 import {providePrimeNG} from "primeng/config";
 import {ptBR} from "../locale/pt-BR";
+import { NadaConstaModule } from './nada-consta/nada-consta.module';
 
 @NgModule({
   declarations: [AppComponent],
@@ -84,6 +85,7 @@ import {ptBR} from "../locale/pt-BR";
     RelatorioModule,
     SocialLoginModule,
     CadastrarUsuarioModule,
+    NadaConstaModule,
   ],
   providers: [
     MessageService,

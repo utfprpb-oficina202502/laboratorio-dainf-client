@@ -1,0 +1,31 @@
+<div class="container my-4">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Consulta Nada Consta</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form (ngSubmit)="consultar()" #form="ngForm">
+        <mat-form-field appearance="fill">
+          <mat-label>ID do Aluno</mat-label>
+          <input matInput type="number" [(ngModel)]="alunoId" name="alunoId" placeholder="Digite o ID do aluno" required>
+        </mat-form-field>
+        <button mat-raised-button color="primary" type="submit" [disabled]="carregando || form.invalid">Consultar</button>
+      </form>
+      <mat-progress-bar *ngIf="carregando" mode="indeterminate"></mat-progress-bar>
+      <div *ngIf="erro" class="erro">{{ erro }}</div>
+      <div *ngIf="resultado">
+        <h3>Resultado</h3>
+        <p><strong>Aluno:</strong> {{ resultado.nome }} (ID: {{ resultado.alunoId }})</p>
+        <p *ngIf="resultado.nadaConsta" class="ok">Nada consta para este aluno.</p>
+        <div *ngIf="!resultado.nadaConsta">
+          <p class="pendencia">Pendências encontradas:</p>
+          <ul>
+            <li *ngFor="let p of resultado.pendencias">
+              <strong>{{ p.tipo }}:</strong> {{ p.descricao }}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

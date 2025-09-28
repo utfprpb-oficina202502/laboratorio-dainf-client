@@ -1,0 +1,4 @@
+.erro { color: red; margin-top: 10px; }
+.ok { color: green; font-weight: bold; }
+.pendencia { color: orange; font-weight: bold; }
+mat-form-field { width: 200px; margin-right: 16px; }

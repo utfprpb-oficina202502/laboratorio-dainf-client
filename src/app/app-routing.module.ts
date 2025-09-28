@@ -39,6 +39,8 @@ import { ReenviarEmailConfirmacaoUsuarioComponent } from './cadastrarUsuario/ree
 import { RecuperarSenhaComponent } from './cadastrarUsuario/recuperarSenha.component';
 import { ConfirmarEmailComponent } from './cadastrarUsuario/confirmarEmail.component';
 import { ItemViewComponent } from './item/item.view.component';
+import { NadaConstaVisualizarComponent } from './nada-consta/nada-consta-visualizar.component';
+import { NadaConstaListComponent } from './nada-consta/list/nada-consta-list.component';
 
 const routes: Routes = [
   {path: 'login', component: LoginComponent},
@@ -93,6 +95,8 @@ const routes: Routes = [
   {path: 'relatorio/form', canActivate: [LoginService], component: RelatorioFormComponent},
   {path: 'relatorio/form/:id', canActivate: [LoginService], component: RelatorioFormComponent},
   {path: 'relatorio/view/:id', canActivate: [LoginService], component: RelatorioViewerComponent},
+  { path: 'nada-consta', component: NadaConstaListComponent },
+  { path: 'nada-consta/adicionar', component: NadaConstaVisualizarComponent },
   {path: '403', component: NotAuthorizedComponent},
   {path: '**', component: PageNotFoundComponent}
 ];

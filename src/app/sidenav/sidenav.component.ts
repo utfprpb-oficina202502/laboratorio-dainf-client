@@ -108,6 +108,13 @@ export const MENU_ITEM: MenuItem[] = [
     roles: ["ADMINISTRADOR", "LABORATORISTA"],
     group: "ITEM",
   },
+  {
+    path: "/nada-consta",
+    title: "Nada Consta",
+    icon: "file-text-o",
+    id: "nada-consta",
+    group: "ITEM",
+  },
 ];
 
 @Component({
