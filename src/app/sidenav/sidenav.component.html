@@ -1,41 +1,66 @@
-<mat-drawer-container class="example-sidenav" style="height: calc(100vh - 50px)">
-  <mat-drawer #drawer id="drawer" [opened]="true" mode="side" style="width: 100%" [disableClose]="true" class="drawer float-drawer">
-    <mat-nav-list id="link-menu">
-      @for (menuItem of menuItems; track menuItem) {
-        <a mat-list-item [id]="[menuItem.id]" [routerLink]="[menuItem.path]"
-          routerLinkActive="active" class="text-white fcolor" style="height: 50px; font-size: 0.7rem !important;">
-          <i class="fa fa-{{menuItem.icon}} mr-2 color-icons" mat-list-icon></i>
-          {{menuItem.title}}
-          <mat-divider style="background-color: rgba(255, 255, 255, 0.2) !important;"></mat-divider>
-        </a>
-      }
+<p-drawer
+  #drawer
+  [(visible)]="sidebarVisible"
+  position="left"
+  [modal]="false"
+  closable="false"
+  [dismissible]="false"
+  styleClass="custom-drawer"
+  [blockScroll]="false">
 
-      @if (showCadastros) {
-        <a mat-list-item (click)="toggleSubMenuCadastro()" class="text-white fcolor" style="height: 50px; font-size: 0.7rem !important;">
-          <i class="fa fa-pencil mr-2 color-icons" mat-list-icon></i>
-          Cadastros
-          @if (!showSubMenuCadastro) {
-            <mat-icon>chevron_right</mat-icon>
-          }
-          @if (showSubMenuCadastro) {
-            <mat-icon>chevron_right</mat-icon>
-          }
-        </a>
-      }
+  <ng-template pTemplate="content">
+    <div class="sidebar-content">
+      <!-- Main menu items -->
+      <nav class="sidebar-nav">
+        @for (menuItem of menuItems; track menuItem.id) {
+          <a
+            [id]="menuItem.id"
+            [routerLink]="menuItem.routerLink"
+            routerLinkActive="active-menu-item"
+            class="sidebar-menu-item">
+            <i [class]="menuItem.icon" class="sidebar-menu-icon"></i>
+            <span class="sidebar-menu-label">{{ menuItem.label }}</span>
+          </a>
+        }
 
-      @if (showSubMenuCadastro) {
-        <mat-nav-list class="sidenav-submenu" style="margin-left: 25px !important;">
-          @for (menuItem of menuCadastros; track menuItem) {
-            <a mat-list-item [id]="[menuItem.id]" [routerLink]="[menuItem.path]"
-              routerLinkActive="active" class="text-white fcolor" style="height: 50px; font-size: 0.7rem !important;">
-              <i class="fa fa-{{menuItem.icon}} mr-2 color-icons" mat-list-icon></i>
-              {{menuItem.title}}
-              <mat-divider style="background-color: rgba(255, 255, 255, 0.2) !important;"></mat-divider>
+        <!-- Cadastros submenu -->
+        @if (showCadastros) {
+          <div class="cadastros-section">
+            <a
+              class="sidebar-menu-item submenu-toggle"
+              (click)="toggleSubMenuCadastro()">
+              <i class="fa fa-pencil sidebar-menu-icon"></i>
+              <span class="sidebar-menu-label">Cadastros</span>
+              <i [class]="showSubMenuCadastro ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+                 class="submenu-arrow"></i>
             </a>
-          }
-        </mat-nav-list>
-      }
 
-    </mat-nav-list>
-  </mat-drawer>
-</mat-drawer-container>
+            @if (showSubMenuCadastro) {
+              <div class="submenu-content">
+                @for (menuItem of menuCadastros; track menuItem.id) {
+                  <a
+                    [id]="menuItem.id"
+                    [routerLink]="menuItem.routerLink"
+                    routerLinkActive="active-menu-item"
+                    class="sidebar-menu-item submenu-item">
+                    <i [class]="menuItem.icon" class="sidebar-menu-icon"></i>
+                    <span class="sidebar-menu-label">{{ menuItem.label }}</span>
+                  </a>
+                }
+              </div>
+            }
+          </div>
+        }
+      </nav>
+
+      <!-- Theme Toggle at bottom -->
+      <div class="theme-toggle-section">
+        <div class="theme-toggle-divider"></div>
+        <div class="theme-toggle-container">
+          <span class="theme-toggle-label">Tema</span>
+          <app-theme-toggle></app-theme-toggle>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+</p-drawer>
