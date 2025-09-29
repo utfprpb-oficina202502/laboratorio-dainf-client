@@ -50,6 +50,7 @@ import {SocialLoginModule} from "@abacritt/angularx-social-login";
 import {CadastrarUsuarioModule} from "./cadastrarUsuario/cadastrarUsuario.module";
 import {providePrimeNG} from "primeng/config";
 import {ptBR} from "../locale/pt-BR";
+import { NadaConstaModule } from './nada-consta/nada-consta.module';
 import PrimeUTFPRPreset from "./theme/prime-utfpr-theme-preset";
 
 @NgModule({
@@ -85,6 +86,7 @@ import PrimeUTFPRPreset from "./theme/prime-utfpr-theme-preset";
     RelatorioModule,
     SocialLoginModule,
     CadastrarUsuarioModule,
+    NadaConstaModule,
   ],
   providers: [
     MessageService,
