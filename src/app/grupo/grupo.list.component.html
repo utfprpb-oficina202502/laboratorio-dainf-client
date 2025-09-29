@@ -1,60 +1,199 @@
 <div class="container-fluid my-3">
-  <mat-card>
-    <mat-card-title>
-      <div class="d-flex align-items-center justify-content-between">
-        <h4 class="m-0">Grupo</h4>
-        <app-novo (onClick)="openForm()"></app-novo>
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="flex items-center justify-between p-3">
+        <span class="text-xl font-bold">Grupos</span>
       </div>
-    </mat-card-title>
-    <mat-card-content>
-      <mat-form-field>
-        <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Filtro">
-      </mat-form-field>
+    </ng-template>
 
-      <div class="mat-elevation-z8">
-        <mat-table [dataSource]="dataSource" matSort>
+    <ng-template pTemplate="content">
+      <!-- PrimeNG Toolbar -->
+      <p-toolbar
+        class="mb-3"
+        aria-label="Barra de ferramentas para gerenciar grupos">
+        <ng-template pTemplate="start">
+          @if (canCreate) {
+            <p-button
+              label="Adicionar"
+              icon="pi pi-plus"
+              class="me-2"
+              (onClick)="openForm()"
+              pTooltip="Criar novo grupo"
+              tooltipPosition="bottom"
+              aria-label="Adicionar novo grupo">
+            </p-button>
+          }
+          @if (canDelete) {
+            <p-button
+              severity="danger"
+              label="Deletar"
+              icon="pi pi-trash"
+              [outlined]="true"
+              (onClick)="deleteSelectedItems()"
+              [disabled]="!selectedItems || !selectedItems.length"
+              pTooltip="Deletar grupos selecionados"
+              tooltipPosition="bottom"
+              [aria-label]="'Deletar ' + (selectedItems?.length || 0) + ' grupo(s) selecionado(s)'">
+            </p-button>
+          }
+        </ng-template>
 
-          <ng-container matColumnDef="id">
-            <mat-header-cell *matHeaderCellDef mat-sort-header>Código</mat-header-cell>
-            <mat-cell *matCellDef="let row" (click)="openBottomSheet(row.id)">{{row.id}}</mat-cell>
-          </ng-container>
+        <ng-template pTemplate="end">
+          @if (canExport) {
+            <p-button
+              label="Excel"
+              icon="pi pi-file-excel"
+              severity="success"
+              [outlined]="true"
+              (onClick)="exportExcel()"
+              class="me-2"
+              pTooltip="Exportar para Excel"
+              tooltipPosition="bottom"
+              aria-label="Exportar dados para arquivo Excel">
+            </p-button>
+          }
+          @if (canExport) {
+            <p-button
+              label="CSV"
+              icon="pi pi-upload"
+              severity="secondary"
+              [outlined]="true"
+              (onClick)="exportCSV(dt)"
+              pTooltip="Exportar para CSV"
+              tooltipPosition="bottom"
+              aria-label="Exportar dados para arquivo CSV">
+            </p-button>
+          }
+        </ng-template>
+      </p-toolbar>
 
-          <ng-container matColumnDef="descricao">
-            <mat-header-cell *matHeaderCellDef mat-sort-header>Descrição</mat-header-cell>
-            <mat-cell *matCellDef="let row" (click)="openBottomSheet(row.id)">{{row.descricao}}</mat-cell>
-          </ng-container>
+      <p-table
+        #dt
+        [value]="objects"
+        [rows]="rows"
+        [totalRecords]="totalElements"
+        [paginator]="true"
+        [rowsPerPageOptions]="[5, 10, 25, 50, 100]"
+        (onPage)="onPageChange($event)"
+        (onSort)="onSort($event)"
+        [first]="first"
+        [lazy]="true"
+        [(selection)]="selectedItems"
+        dataKey="id"
+        [resizableColumns]="true"
+        [rowHover]="true"
+        currentPageReportTemplate="Mostrando {first} até {last} de {totalRecords} registros"
+        [showCurrentPageReport]="true"
+        styleClass="p-datatable-striped"
+        aria-label="Tabela de grupos"
+        [ariaLabel]="'Lista de grupos com ' + totalElements + ' registro(s)'">
 
-          <ng-container matColumnDef="actions">
-            <mat-header-cell *matHeaderCellDef> Opções </mat-header-cell>
-            <mat-cell *matCellDef="let row">
-              <button class="btn btn-outline-secondary rounded mr-2"
-                      type="button"
-                      pTooltip="Editar"
-                      (click)="edit(row.id)">
-                <i class="fa fa-edit"></i>
-              </button>
-              <button class="btn btn-outline-primary rounded"
-                      type="button"
-                      pTooltip="Remover"
-                      (click)="delete(row.id)">
-                <i class="fa fa-trash-o"></i>
-              </button>
-            </mat-cell>
-          </ng-container>
+        <ng-template pTemplate="caption">
+          <div class="d-flex align-items-center justify-content-end">
+            <p-iconField iconPosition="left">
+              <p-inputIcon styleClass="pi pi-search" aria-hidden="true"></p-inputIcon>
+              <input
+                pInputText
+                type="text"
+                (input)="onGlobalFilter($any($event.target).value)"
+                placeholder="Buscar grupos..."
+                [value]="filterValue"
+                aria-label="Campo de busca para filtrar grupos"
+                autocomplete="off" />
+            </p-iconField>
+          </div>
+        </ng-template>
 
-          <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-          <mat-row *matRowDef="let row; columns: displayedColumns;">
-          </mat-row>
-        </mat-table>
+        <ng-template pTemplate="header">
+          <tr>
+            @if (!isReadOnly) {
+              <th style="width: 3rem" aria-label="Seleção de grupos">
+                <p-tableHeaderCheckbox aria-label="Selecionar todos os grupos"></p-tableHeaderCheckbox>
+              </th>
+            }
+            <th pSortableColumn="id" style="min-width: 8rem" aria-label="Código do grupo - coluna ordenável">
+              <div class="d-flex align-items-center gap-2">
+                Código
+                <p-sortIcon field="id" aria-hidden="true"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="descricao" style="min-width: 16rem" aria-label="Descrição do grupo - coluna ordenável">
+              <div class="d-flex align-items-center gap-2">
+                Descrição
+                <p-sortIcon field="descricao" aria-hidden="true"></p-sortIcon>
+              </div>
+            </th>
+            @if (displayedColumns.includes('actions')) {
+              <th style="min-width: 12rem" aria-label="Ações disponíveis">
+                Opções
+              </th>
+            }
+          </tr>
+        </ng-template>
 
-        <mat-paginator
-            [length]="totalElements"
-            [pageSize]="pageSize"
-            [pageIndex]="pageIndex"
-            [pageSizeOptions]="[5, 10, 25, 50, 100]"
-            (page)="onPageChange($event)">
-      </mat-paginator>
-      </div>
-    </mat-card-content>
-  </mat-card>
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              @if (!isReadOnly) {
+                <td style="width: 3rem">
+                  <p-tableCheckbox
+                    [value]="row"
+                    [aria-label]="'Selecionar grupo ' + row.descricao">
+                  </p-tableCheckbox>
+                </td>
+              }
+              <td
+                (click)="openBottomSheet(row.id)"
+                style="cursor: pointer;"
+                [attr.aria-label]="'Código do grupo: ' + row.id + '. Clique para ver opções'">
+                {{row.id}}
+              </td>
+              <td
+                (click)="openBottomSheet(row.id)"
+                style="cursor: pointer;"
+                [attr.aria-label]="'Descrição do grupo: ' + row.descricao + '. Clique para ver opções'">
+                {{row.descricao}}
+              </td>
+              @if (displayedColumns.includes('actions')) {
+                <td aria-label="Ações do grupo">
+                  @if (canEdit) {
+                    <p-button
+                      icon="pi pi-pencil"
+                      severity="secondary"
+                      [outlined]="true"
+                      [rounded]="true"
+                      pTooltip="Editar grupo"
+                      tooltipPosition="top"
+                      (onClick)="edit(row.id)"
+                      class="me-2"
+                      [aria-label]="'Editar grupo ' + row.descricao">
+                    </p-button>
+                  }
+                  @if (canDelete) {
+                    <p-button
+                      icon="pi pi-trash"
+                      severity="danger"
+                      [outlined]="true"
+                      [rounded]="true"
+                      pTooltip="Remover grupo"
+                      tooltipPosition="top"
+                      (onClick)="delete(row.id)"
+                      [aria-label]="'Remover grupo ' + row.descricao">
+                    </p-button>
+                  }
+                </td>
+              }
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td [attr.colspan]="displayedColumns.length + (isReadOnly ? 0 : 1)" class="text-center p-4">
+                <i class="pi pi-search" style="font-size: 3rem; color: #dee2e6;"></i>
+                <p class="mt-3 mb-0">Nenhum grupo encontrado.</p>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+    </ng-template>
+  </p-card>
 </div>
