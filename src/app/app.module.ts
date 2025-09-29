@@ -46,7 +46,6 @@ import {SolicitacaoCompraModule} from "./solicitacaoCompra/solicitacaoCompra.mod
 import {LoaderService} from "./framework/loader/loader.service";
 import {LoaderModule} from "./framework/loader/loader.module";
 import {RelatorioModule} from "./relatorio/relatorio.module";
-import {SocialLoginModule} from "@abacritt/angularx-social-login";
 import {CadastrarUsuarioModule} from "./cadastrarUsuario/cadastrarUsuario.module";
 import {providePrimeNG} from "primeng/config";
 import {ptBR} from "../locale/pt-BR";
@@ -83,7 +82,6 @@ import PrimeUTFPRPreset from "./theme/prime-utfpr-theme-preset";
     SolicitacaoCompraModule,
     LoaderModule,
     RelatorioModule,
-    SocialLoginModule,
     CadastrarUsuarioModule,
   ],
   providers: [

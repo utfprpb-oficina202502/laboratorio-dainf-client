@@ -2,7 +2,6 @@ import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 
-import {SocialLoginModule} from '@abacritt/angularx-social-login';
 import {ButtonModule} from 'primeng/button';
 import {InputTextModule} from 'primeng/inputtext';
 import {ProgressBarModule} from 'primeng/progressbar';
@@ -17,7 +16,6 @@ import {LoginService} from './login.service';
     ButtonModule,
     InputTextModule,
     ProgressBarModule,
-    SocialLoginModule,
     LoginComponent
   ],
   exports: [LoginComponent],
