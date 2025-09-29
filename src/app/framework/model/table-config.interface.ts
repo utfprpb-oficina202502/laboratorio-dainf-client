@@ -66,6 +66,9 @@ export interface TableColumn {
 
   /** Whether column can be reordered */
   reorderable?: boolean;
+
+  /** Allow this column to be toggled via column manager */
+  toggleable?: boolean;
 }
 
 /**
@@ -140,6 +143,47 @@ export interface TableConfiguration {
 
   /** Auto-layout table columns */
   autoLayout?: boolean;
+
+  /** Enable Prime table state persistence */
+  stateful?: boolean;
+
+  /** Storage key for persisted state */
+  stateKey?: string;
+
+  /** Storage strategy for table state */
+  stateStorage?: 'local' | 'session';
+
+  /** Fine tune which parts of the state should be persisted */
+  stateProps?: {
+    columns?: boolean;
+    filters?: boolean;
+    sort?: boolean;
+    pagination?: boolean;
+    selection?: boolean;
+    expandedRows?: boolean;
+  };
+
+  /** Display column chooser for users */
+  columnToggle?: boolean;
+
+  /** Enable row expansion support */
+  expandable?: boolean;
+  expandMode?: 'single' | 'multiple';
+  rowExpansionKey?: string;
+
+  /** Column resizing behaviour */
+  resizableColumns?: boolean;
+  columnResizeMode?: 'fit' | 'expand';
+
+  /** Lazy loading hooks */
+  lazy?: boolean;
+  lazyLoadOnInit?: boolean;
+
+  /** Skip the automatic initial load when false */
+  preloadData?: boolean;
+
+  /** Toggle built-in keyboard shortcuts */
+  keyboardShortcuts?: boolean;
 }
 
 /**

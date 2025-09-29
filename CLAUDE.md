@@ -47,6 +47,45 @@ This application is currently being migrated from Angular 18 to Angular 20+ patt
 
 ### Key Architectural Components
 
+## PrimeNG List Migration
+
+When migrating legacy Angular Material list screens (`CrudListComponent`) to the new PrimeNG stack (`PrimeCrudListComponent`), follow these practices so code stays consistent and reusable across the app.
+
+1. **Assess before editing**
+   - Confirm the feature really needs the migration (touching CRUD flows or UI refresh).
+   - Capture current behaviors: displayed columns, filters, bottom-sheet actions, custom formatters.
+   - Check for shared CSS or services referenced by the Material table so they can be reused or retired.
+
+2. **Refactor TypeScript first**
+   - Replace the `CrudListComponent` inheritance with `PrimeCrudListComponent`.
+   - Provide the required entity metadata (`getEntityName`, `getEntityPluralName`) and export naming overrides.
+   - Build a `tableConfig` (columns, permissions, state settings, global filter fields) instead of manipulating `displayedColumns` directly.
+   - Remove `MatTableDataSource`, `MatPaginator`, `MatSort`, and associated imports/events. Tie pagination/sorting into the Prime base calls (`onPageChange`, `onSort`, `applyFilter`).
+   - Enable optional features intentionally: column toggles, expansion rows, localStorage state, keyboard shortcuts. Do not turn them on by default unless the UX requires it.
+
+3. **Rebuild the template with PrimeNG widgets**
+   - Swap `<mat-card>`, `<mat-table>`, `<mat-paginator>` etc. for their Prime equivalents (`p-card`, `p-table`, `p-toolbar`, built-in paginator).
+   - Use Prime control-flow ready markup: leverage `p-toolbar`, `p-button`, `p-iconField`, `p-tableCheckbox`, etc.
+   - Keep the structure accessible: add `aria-label`s, current page summaries, and keyboard-friendly buttons (see the new base component helpers).
+   - Adopt column templates via `getVisibleColumns()` and the table config instead of hard-coded `<td>` order.
+   - When Prime features aren’t needed (row expansion, column toggler), leave them out—`PrimeCrudListComponent` has sensible defaults.
+
+4. **Clean dependencies**
+   - Drop Angular Material modules that the component no longer needs (module imports, styles, providers).
+   - Ensure PrimeNG modules are pulled in once, preferably through the standalone component `imports` array.
+   - Remove legacy CSS that targeted `.mat-` classes. Replace with Prime-friendly utility classes or scoped styles.
+
+5. **Verify behaviour**
+   - Exercise pagination, sorting, filtering, bulk delete, and bottom-sheet actions after the migration.
+   - Test keyboard shortcuts (Ctrl+Alt+F/N/E/C/L) if the component enables them.
+   - Confirm persisted state works when `stateful` is true (reload the page to check column visibility, filters, expansion).
+   - Update or add unit/integration tests so the Prime-based component is covered.
+
+6. **Roll out incrementally**
+   - Keep PRs focused: migrate one list at a time.
+   - Share new patterns in documentation/examples so other lists can follow the same approach.
+   - When the Prime base gains new capabilities, retrofit earlier migrations to stay consistent.
+
 **Module Organization**: The application follows a feature-based module structure where each business domain has its own module:
 - `grupo` (groups), `usuario` (users), `item` (items), `compra` (purchases)
 - `emprestimo` (loans), `reserva` (reservations), `relatorio` (reports)
@@ -153,7 +192,7 @@ export class {{ClassName}} {
 </section>
 ```
 
-When you update a component, be sure to put the logic in the ts file, the styles in the css file and the html template in the html file.
+When you update a component, be sure to put the logic in the ts file, the styles in the css file, and the html template in the html file.
 
 ## Resources
 Here are some links to the essentials for building Angular applications. Use these to get an understanding of how some of the core functionality works
@@ -229,9 +268,15 @@ Here is a link to the most recent Angular style guide https://angular.dev/style-
 - Keep templates simple and avoid complex logic
 - Use native control flow (`@if`, `@for`, `@switch`) instead of `*ngIf`, `*ngFor`, `*ngSwitch`
 - Use the async pipe to handle observables
-- Use built in pipes and import pipes when being used in a template, learn more https://angular.dev/guide/templates/pipes#
+- Use built-in pipes and import pipes when being used in a template, learn more https://angular.dev/guide/templates/pipes#
 
 ### Services
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+### Prime Table Toolbar
+- Use PrimeCrudToolbarComponent for list toolbars: `<app-prime-crud-toolbar [table]='dt' [list]='self'></app-prime-crud-toolbar>`.
+- PrimeCrudListComponent exposes `self` so toolbar can accept the instance.
+- Toolbar injects list optionally; ensure list components register provider: `providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => GrupoListComponent) }]`.
+- Toolbar includes defaults for create/delete/export, column toggle, expand/collapse with keyboard-friendly buttons.
+- For custom toolbars, supply templates via `toolbarStartTemplate`/`toolbarEndTemplate`.

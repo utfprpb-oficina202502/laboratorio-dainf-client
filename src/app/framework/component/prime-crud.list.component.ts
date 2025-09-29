@@ -1,7 +1,9 @@
-import { HostListener, Injector, OnInit, Directive, Input, ContentChild, TemplateRef, OnDestroy } from '@angular/core';
+import { HostListener, Injector, OnInit, Directive, Input, ContentChild, TemplateRef, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import {Router} from '@angular/router';
 import {CrudService} from '../service/crud.service';
 import {ConfirmationService, MessageService} from 'primeng/api';
+import {Table} from 'primeng/table';
+import {MultiSelect} from 'primeng/multiselect';
 
 import {BottomSheetComponent} from '../../geral/bottomScheet/bottomSheet.component';
 import {MatBottomSheet} from '@angular/material/bottom-sheet';
@@ -40,7 +42,18 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     rowHover: true,
     striped: true,
     responsive: true,
-    autoLayout: false
+    autoLayout: false,
+    stateful: true,
+    stateStorage: 'local',
+    columnToggle: true,
+    expandable: false,
+    expandMode: 'single',
+    resizableColumns: true,
+    columnResizeMode: 'fit',
+    lazy: true,
+    lazyLoadOnInit: true,
+    preloadData: true,
+    keyboardShortcuts: true
   };
 
   // Template overrides for flexibility
@@ -50,6 +63,11 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   @ContentChild('emptyMessageTemplate') emptyMessageTemplate?: TemplateRef<any>;
   @ContentChild('loadingTemplate') loadingTemplate?: TemplateRef<any>;
   @ContentChild('captionTemplate') captionTemplate?: TemplateRef<any>;
+  @ContentChild('rowExpansionTemplate') rowExpansionTemplate?: TemplateRef<any>;
+
+  @ViewChild('dt') public dataTable?: Table;
+  @ViewChild('globalFilterInput') globalFilterInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('columnToggleRef') columnToggleComponent?: MultiSelect;
 
   // Legacy properties (for backward compatibility)
   public displayedColumns: string[];
@@ -76,6 +94,10 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   public sortOrder: number = 1;
   public selectedItems: T[] = [];
   public objects: T[] = [];
+  public expandedRows: { [key: string]: boolean } = {};
+  public columnToggleModel: string[] = [];
+  public columnToggleOptions: { label: string; value: string }[] = [];
+  public readonly self = this as PrimeCrudListComponent<T, ID>;
 
   // Advanced features
   protected columnFilters: { [key: string]: any } = {};
@@ -83,6 +105,11 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   protected destroy$ = new Subject<void>();
   private filterSubject = new Subject<string>();
   private columnTemplates = new Map<string, TemplateRef<any>>();
+  private keyboardShortcutHandlers: Array<{ predicate: (event: KeyboardEvent) => boolean; action: () => void; preventDefault?: boolean }> = [];
+  private pendingSelectedKeys: any[] = [];
+  private defaultStateKey: string;
+  private stateKey: string;
+  private stateStorageRef?: Storage;
 
   // Performance optimizations
   trackByFn = (index: number, item: T): any => {
@@ -95,8 +122,18 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   protected abstract getEntityPluralName(): string;
 
   ngOnInit(): void {
+    this.applyTableDefaults();
+    this.initializeColumnHandling();
+    this.initializeStateStorage();
+    this.restoreTableState();
+    this.initializeKeyboardShortcuts();
     this.setupUserPermissions();
-    this.findAll();
+
+    if (this.tableConfig.preloadData !== false) {
+      this.findAll();
+    } else {
+      this.buildColumnsTable();
+    }
   }
 
   constructor(protected service: CrudService<T, ID>,
@@ -112,6 +149,8 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.permissionService = injector.get(PermissionService);
     this.displayedColumns = this.columnsTable;
     this.rows = this.pageSize;
+    this.defaultStateKey = this.buildDefaultStateKey();
+    this.stateKey = this.defaultStateKey;
 
     // Setup debounced filtering
     this.setupDebouncedFiltering();
@@ -120,12 +159,13 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.saveTableState();
   }
 
   // Setup debounced filtering for better performance
   private setupDebouncedFiltering(): void {
     this.filterSubject.pipe(
-      debounceTime(300),
+      debounceTime(600),
       distinctUntilChanged(),
       takeUntil(this.destroy$)
     ).subscribe(filterValue => {
@@ -133,16 +173,475 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     });
   }
 
+  protected applyTableDefaults(): void {
+    this.tableConfig.striped = this.tableConfig.striped !== false;
+    this.tableConfig.rowHover = this.tableConfig.rowHover !== false;
+    const resizableColumns = this.tableConfig.resizableColumns !== false && this.tableConfig.resizable !== false;
+    this.tableConfig.resizableColumns = resizableColumns;
+    this.tableConfig.columnResizeMode = this.tableConfig.columnResizeMode || 'fit';
+    this.tableConfig.lazy = this.tableConfig.lazy !== false;
+    this.tableConfig.lazyLoadOnInit = this.tableConfig.lazyLoadOnInit !== false;
+    this.tableConfig.preloadData = this.tableConfig.preloadData !== false;
+    this.tableConfig.columnToggle = this.tableConfig.columnToggle !== false;
+    this.tableConfig.keyboardShortcuts = this.tableConfig.keyboardShortcuts !== false;
+    this.tableConfig.stateful = this.tableConfig.stateful !== false;
+    this.tableConfig.stateStorage = this.tableConfig.stateStorage || 'local';
+    this.tableConfig.expandable = this.tableConfig.expandable === true;
+    if (this.tableConfig.expandable) {
+      this.tableConfig.expandMode = this.tableConfig.expandMode || 'single';
+      this.tableConfig.rowExpansionKey = this.tableConfig.rowExpansionKey || this.tableConfig.trackByField || 'id';
+    }
+    this.tableConfig.stateKey = this.tableConfig.stateKey || this.defaultStateKey;
+    this.tableConfig.pageSize = this.tableConfig.pageSize || this.pageSize;
+    this.tableConfig.pageSizeOptions = this.tableConfig.pageSizeOptions || [5, 10, 25, 50, 100];
+    this.tableConfig.globalFilter = this.tableConfig.globalFilter !== false;
+    this.pageSize = this.tableConfig.pageSize || 10;
+    this.rows = this.pageSize;
+  }
+
+  private buildDefaultStateKey(): string {
+    const cleaned = this.urlForm ? this.urlForm.replace(/\//g, '-') : 'default';
+    return 'prime-crud-' + cleaned;
+  }
+
+  private initializeColumnHandling(): void {
+    if (!this.tableConfig.columns) {
+      this.tableConfig.columns = [];
+    }
+
+    if (this.tableConfig.columns.length === 0 && this.columnsTable?.length) {
+      this.tableConfig.columns = this.columnsTable.map(field => ({
+        field,
+        header: field,
+        sortable: true,
+        filterable: true,
+        toggleable: field !== 'actions'
+      }));
+    }
+
+    this.columnToggleOptions = this.tableConfig.columns
+      .filter(col => col.toggleable !== false && col.field !== 'actions')
+      .map(col => ({ label: col.header, value: col.field }));
+
+    if (this.columnToggleModel.length === 0) {
+      this.columnToggleModel = this.tableConfig.columns
+        .filter(col => col.toggleable !== false && col.visible !== false && col.field !== 'actions')
+        .map(col => col.field);
+    }
+
+    this.updateDisplayedColumns();
+    this.updateGlobalFilterFields();
+  }
+
+  private initializeStateStorage(): void {
+    if (!this.tableConfig.stateful) {
+      this.stateStorageRef = undefined;
+      return;
+    }
+
+    if (typeof window === 'undefined') {
+      this.stateStorageRef = undefined;
+      return;
+    }
+
+    try {
+      this.stateKey = this.tableConfig.stateKey || this.defaultStateKey;
+      this.stateStorageRef = this.tableConfig.stateStorage === 'session' ? window.sessionStorage : window.localStorage;
+    } catch (error) {
+      console.warn('Table state storage unavailable', error);
+      this.stateStorageRef = undefined;
+    }
+  }
+
+  private initializeKeyboardShortcuts(): void {
+    if (this.tableConfig.keyboardShortcuts === false) {
+      this.keyboardShortcutHandlers = [];
+      return;
+    }
+
+    this.keyboardShortcutHandlers = [
+      {
+        predicate: (event: KeyboardEvent) => event.ctrlKey && event.altKey && event.key.toLowerCase() === 'f',
+        action: () => this.focusGlobalFilter(),
+        preventDefault: true
+      },
+      {
+        predicate: (event: KeyboardEvent) => event.ctrlKey && event.altKey && event.key.toLowerCase() === 'n',
+        action: () => { if (this.canCreate && !this.isReadOnly) { this.openForm(); } },
+        preventDefault: true
+      },
+      {
+        predicate: (event: KeyboardEvent) => event.ctrlKey && event.altKey && event.key.toLowerCase() === 'e',
+        action: () => { if (this.canExport) { this.exportExcel(); } },
+        preventDefault: true
+      },
+      {
+        predicate: (event: KeyboardEvent) => event.ctrlKey && event.altKey && event.key.toLowerCase() === 'c',
+        action: () => this.openColumnTogglePanel(),
+        preventDefault: true
+      },
+      {
+        predicate: (event: KeyboardEvent) => event.ctrlKey && event.altKey && event.key.toLowerCase() === 'l',
+        action: () => this.clearGlobalFilter(),
+        preventDefault: true
+      },
+      {
+        predicate: (event: KeyboardEvent) => !event.ctrlKey && !event.altKey && event.key === 'Delete',
+        action: () => { if (this.canDelete && this.selectedItems?.length) { this.deleteSelectedItems(); } },
+        preventDefault: true
+      }
+    ];
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  handleKeyboardInteractions(event: KeyboardEvent): void {
+    if (this.tableConfig.keyboardShortcuts === false) {
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+    const tagName = (target?.tagName || '').toLowerCase();
+    if (['input', 'textarea'].includes(tagName) && !(event.ctrlKey || event.altKey)) {
+      return;
+    }
+
+    for (const shortcut of this.keyboardShortcutHandlers) {
+      if (shortcut.predicate(event)) {
+        if (shortcut.preventDefault) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        shortcut.action();
+        break;
+      }
+    }
+  }
+
+  protected saveTableState(): void {
+    if (!this.stateStorageRef || !this.tableConfig.stateful) {
+      return;
+    }
+
+    const defaults = { columns: true, filters: true, sort: true, pagination: true, selection: true, expandedRows: true };
+    const props = { ...defaults, ...(this.tableConfig.stateProps || {}) } as { [key: string]: boolean };
+
+    const state: any = {};
+
+    if (props.filters) {
+      state.filterValue = this.filterValue;
+    }
+
+    if (props.sort) {
+      state.sortField = this.sortField;
+      state.sortOrder = this.sortOrder;
+    }
+
+    if (props.pagination) {
+      state.pageSize = this.pageSize;
+      state.pageIndex = this.pageIndex;
+    }
+
+    if (props.columns) {
+      state.columns = this.tableConfig.columns?.map(col => ({ field: col.field, visible: col.visible !== false })) || [];
+      state.columnToggleModel = this.columnToggleModel;
+    }
+
+    if (props.expandedRows) {
+      state.expandedRowKeys = Object.keys(this.expandedRows || {}).filter(key => this.expandedRows[key]);
+    }
+
+    if (props.selection) {
+      state.selectedKeys = this.getSelectionKeys();
+    }
+
+    if (Object.keys(state).length === 0) {
+      return;
+    }
+
+    try {
+      this.stateStorageRef.setItem(this.stateKey, JSON.stringify(state));
+    } catch (error) {
+      console.warn('Table state could not be saved', error);
+    }
+  }
+
+  private restoreTableState(): void {
+    if (!this.stateStorageRef || !this.tableConfig.stateful) {
+      return;
+    }
+
+    const defaults = { columns: true, filters: true, sort: true, pagination: true, selection: true, expandedRows: true };
+    const props = { ...defaults, ...(this.tableConfig.stateProps || {}) } as { [key: string]: boolean };
+
+    try {
+      const raw = this.stateStorageRef.getItem(this.stateKey);
+      if (!raw) {
+        return;
+      }
+
+      const state = JSON.parse(raw);
+
+      if (props.columns && Array.isArray(state.columns) && this.tableConfig.columns) {
+        state.columns.forEach((saved: any) => {
+          const column = this.tableConfig.columns.find(col => col.field === saved.field);
+          if (column) {
+            column.visible = saved.visible !== false;
+          }
+        });
+        if (Array.isArray(state.columnToggleModel)) {
+          this.columnToggleModel = state.columnToggleModel;
+        }
+      }
+
+      if (props.filters && typeof state.filterValue === 'string') {
+        this.filterValue = state.filterValue;
+      }
+
+      if (props.sort && typeof state.sortField === 'string') {
+        this.sortField = state.sortField;
+      }
+
+      if (props.sort && typeof state.sortOrder === 'number') {
+        this.sortOrder = state.sortOrder;
+      }
+
+      if (props.pagination && typeof state.pageSize === 'number') {
+        this.pageSize = state.pageSize;
+        this.rows = this.pageSize;
+      }
+
+      if (props.pagination && typeof state.pageIndex === 'number') {
+        this.pageIndex = state.pageIndex;
+        this.first = this.pageIndex * this.pageSize;
+      }
+
+      if (props.expandedRows && Array.isArray(state.expandedRowKeys)) {
+        this.expandedRows = state.expandedRowKeys.reduce((acc: { [key: string]: boolean }, key: string) => {
+          acc[key] = true;
+          return acc;
+        }, {} as { [key: string]: boolean });
+      }
+
+      if (props.selection && Array.isArray(state.selectedKeys)) {
+        this.pendingSelectedKeys = state.selectedKeys;
+      }
+
+      this.updateDisplayedColumns();
+    } catch (error) {
+      console.warn('Table state could not be restored', error);
+    }
+  }
+
+  private getSelectionKeys(): any[] {
+    if (!this.selectedItems?.length) {
+      return [];
+    }
+    const keyField = this.tableConfig.trackByField || 'id';
+    return this.selectedItems
+      .map(item => (item as any)?.[keyField])
+      .filter(key => key !== undefined && key !== null);
+  }
+
+  private restoreSelectionFromKeys(): void {
+    if (!this.pendingSelectedKeys.length || !this.objects?.length) {
+      return;
+    }
+    const keyField = this.tableConfig.trackByField || 'id';
+    const keySet = new Set(this.pendingSelectedKeys);
+    this.selectedItems = this.objects.filter(item => keySet.has((item as any)?.[keyField]));
+    this.pendingSelectedKeys = [];
+  }
+
+  protected updateDisplayedColumns(): void {
+    if (!this.tableConfig.columns) {
+      this.columnsTable = [];
+      this.displayedColumns = [];
+      return;
+    }
+
+    const visibleColumns = this.tableConfig.columns.filter(col => col.visible !== false);
+    this.columnsTable = visibleColumns.map(col => col.field);
+    this.buildColumnsTable();
+  }
+
+  private updateGlobalFilterFields(): void {
+    if (this.tableConfig.globalFilterFields?.length) {
+      return;
+    }
+    if (!this.tableConfig.columns) {
+      return;
+    }
+    this.tableConfig.globalFilterFields = this.tableConfig.columns
+      .filter(col => col.field !== 'actions' && col.filterable !== false)
+      .map(col => col.field);
+  }
+
+  onColumnToggleChange(selectedFields: string[]): void {
+    if (!this.tableConfig.columns) {
+      return;
+    }
+
+    if (!selectedFields || selectedFields.length === 0) {
+      const fallback = this.tableConfig.columns.find(col => col.toggleable !== false && col.field !== 'actions');
+      if (fallback) {
+        selectedFields = [fallback.field];
+      }
+    }
+
+    const selectedSet = new Set(selectedFields);
+    this.tableConfig.columns.forEach(column => {
+      if (column.toggleable === false || column.field === 'actions') {
+        return;
+      }
+      column.visible = selectedSet.has(column.field);
+    });
+
+    this.columnToggleModel = selectedFields;
+    this.updateDisplayedColumns();
+    this.saveTableState();
+  }
+
+  onSelectionChange(selection: T[]): void {
+    this.selectedItems = selection || [];
+    this.saveTableState();
+  }
+
+  protected getRowKey(row: T): string {
+    const keyField = this.tableConfig.rowExpansionKey || this.tableConfig.trackByField || 'id';
+    return String((row as any)?.[keyField]);
+  }
+
+  isRowExpanded(row: T): boolean {
+    const key = this.getRowKey(row);
+    return !!this.expandedRows?.[key];
+  }
+
+  toggleRowExpansion(row: T): void {
+    const key = this.getRowKey(row);
+    if (!key) {
+      return;
+    }
+
+    if (this.tableConfig.expandMode === 'single') {
+      this.expandedRows = this.isRowExpanded(row) ? {} : { [key]: true };
+    } else {
+      const updated = { ...(this.expandedRows || {}) };
+      if (updated[key]) {
+        delete updated[key];
+      } else {
+        updated[key] = true;
+      }
+      this.expandedRows = updated;
+    }
+
+    this.saveTableState();
+  }
+
+  onRowExpand(event: any): void {
+    const row = event?.data as T;
+    if (!row) {
+      return;
+    }
+
+    if (this.tableConfig.expandMode === 'single') {
+      const key = this.getRowKey(row);
+      this.expandedRows = key ? { [key]: true } : {};
+    }
+    this.saveTableState();
+  }
+
+  onRowCollapse(event: any): void {
+    const row = event?.data as T;
+    if (!row) {
+      return;
+    }
+
+    const key = this.getRowKey(row);
+    if (key && this.expandedRows?.[key]) {
+      const updated = { ...(this.expandedRows || {}) };
+      delete updated[key];
+      this.expandedRows = updated;
+    }
+    this.saveTableState();
+  }
+
+  expandAllRows(): void {
+    if (!this.objects?.length) {
+      return;
+    }
+    const expanded: { [key: string]: boolean } = {};
+    this.objects.forEach(row => {
+      const key = this.getRowKey(row);
+      if (key) {
+        expanded[key] = true;
+      }
+    });
+    this.expandedRows = expanded;
+    this.saveTableState();
+  }
+
+  collapseAllRows(): void {
+    if (!this.expandedRows || Object.keys(this.expandedRows).length === 0) {
+      return;
+    }
+    this.expandedRows = {};
+    this.saveTableState();
+  }
+
+  private focusGlobalFilter(): void {
+    const element = this.globalFilterInput?.nativeElement;
+    if (element) {
+      element.focus({ preventScroll: true });
+      if (typeof element.select === 'function') {
+        element.select();
+      }
+    }
+  }
+
+  private openColumnTogglePanel(): void {
+    if (this.tableConfig.columnToggle === false || !this.columnToggleComponent) {
+      return;
+    }
+    if (this.columnToggleComponent.overlayVisible) {
+      this.columnToggleComponent.hide();
+    } else {
+      this.columnToggleComponent.show();
+    }
+  }
+
+  clearGlobalFilter(): void {
+    if (!this.filterValue) {
+      return;
+    }
+    this.applyFilter('');
+  }
+
+  public handleInteractiveCell(event: KeyboardEvent | MouseEvent, id: ID): void {
+    if (this.displayedColumns?.includes('actions')) {
+      return;
+    }
+
+    if (event instanceof KeyboardEvent) {
+      const key = event.key?.toLowerCase();
+      if (key === ' ' || key === 'spacebar') {
+        event.preventDefault();
+      }
+
+      if (key && key !== 'enter' && key !== ' ' && key !== 'spacebar') {
+        return;
+      }
+    }
+
+    this.openBottomSheet(id);
+  }
+
   // PrimeNG DataView pagination event handler
   onPageChange(event: any) {
     this.loaderService.display(true);
     this.buildColumnsTable();
 
-    // Update PrimeNG pagination properties
     this.first = event.first;
     this.rows = event.rows;
-
-    // Calculate page index for backend service
     this.pageIndex = Math.floor(event.first / event.rows);
     this.pageSize = event.rows;
 
@@ -154,12 +653,13 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
           this.pageSize = e.size;
           this.pageIndex = e.number;
 
-          // Update PrimeNG pagination properties
           this.rows = this.pageSize;
           this.first = this.pageIndex * this.pageSize;
 
+          this.restoreSelectionFromKeys();
           this.loaderService.display(false);
           this.postFindAll();
+          this.saveTableState();
         },
         error => {
           this.loaderService.display(false);
@@ -169,47 +669,30 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   }
 
   applyFilter(filterValue: string) {
-    this.filterValue = filterValue;
-    // Reset to first page when filtering
+    this.filterValue = (filterValue ?? '').trim();
+    // Reset to the first page when filtering
     this.pageIndex = 0;
     this.first = 0;
 
-    this.loaderService.display(true);
-    this.service.findAllPaged(this.pageIndex, this.pageSize, filterValue)
-      .subscribe(e => {
-        this.objects = e.content;
-        this.totalElements = e.totalElements;
-        this.pageSize = e.size;
-        this.pageIndex = e.number;
-
-        // Update PrimeNG pagination properties
-        this.rows = this.pageSize;
-        this.first = this.pageIndex * this.pageSize;
-
-        this.loaderService.display(false);
-        this.postFindAll();
-      }, error => {
-        this.loaderService.display(false);
-        this.showError(error);
-      });
-    this.buildColumnsTable();
+    this.loadData();
   }
 
   findAll() {
     this.loaderService.display(true);
-    this.service.findAllPaged(this.pageIndex, this.pageSize, '')
+    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue || '')
       .subscribe(e => {
         this.objects = e.content;
         this.totalElements = e.totalElements;
         this.pageSize = e.size;
         this.pageIndex = e.number;
 
-        // Update PrimeNG pagination properties
         this.rows = this.pageSize;
         this.first = this.pageIndex * this.pageSize;
 
+        this.restoreSelectionFromKeys();
         this.loaderService.display(false);
         this.postFindAll();
+        this.saveTableState();
       }, error => {
         this.loaderService.display(false);
         this.showError(error);
@@ -226,8 +709,10 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
         this.totalElements = e.length;
         this.pageIndex = 0;
         this.first = 0;
+        this.restoreSelectionFromKeys();
         this.loaderService.display(false);
         this.postFindAll();
+        this.saveTableState();
       }, error => {
         this.loaderService.display(false);
         this.showError(error);
@@ -287,17 +772,20 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
   @HostListener('window:resize', ['$event'])
   buildColumnsTable() {
-    if (this.hostListenerColumnEnable) {
-      if (window.innerWidth <= 1200) {
-        this.columnsTable.forEach((value, index) => {
-          if (value === 'actions') {
-            this.columnsTable.splice(index, 1);
-          }
-        });
-      } else if (this.columnsTable.filter(value => value === 'actions').length === 0) {
-        this.columnsTable.push('actions');
-      }
+    if (!this.hostListenerColumnEnable) {
+      this.displayedColumns = [...this.columnsTable];
+      return;
     }
+
+    let responsiveColumns = [...this.columnsTable];
+
+    if (window.innerWidth <= 1200) {
+      responsiveColumns = responsiveColumns.filter(column => column !== 'actions');
+    } else if (!responsiveColumns.includes('actions') && this.columnsTable.includes('actions')) {
+      responsiveColumns = [...responsiveColumns, 'actions'];
+    }
+
+    this.displayedColumns = responsiveColumns;
   }
 
   showError(error: any): void {
@@ -318,13 +806,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
   // Global filter handler for backend integration
   onGlobalFilter(value: string) {
-    this.filterValue = value.trim();
-
-    // Reset to first page when filtering
-    this.pageIndex = 0;
-    this.first = 0;
-
-    this.loadData();
+    this.onGlobalFilterDebounced(value);
   }
 
   // Centralized data loading method
@@ -332,8 +814,6 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.loaderService.display(true);
     this.buildColumnsTable();
 
-    // For now, we use the existing findAllPaged method
-    // In the future, this could be enhanced to pass sort parameters to backend
     this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue)
       .subscribe(
         e => {
@@ -342,11 +822,9 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
           this.pageSize = e.size;
           this.pageIndex = e.number;
 
-          // Update PrimeNG pagination properties
           this.rows = this.pageSize;
           this.first = this.pageIndex * this.pageSize;
 
-          // Apply client-side sorting if backend doesn't support it
           if (this.sortField && this.objects) {
             this.objects.sort((a: any, b: any) => {
               const aVal = a[this.sortField];
@@ -358,8 +836,10 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
             });
           }
 
+          this.restoreSelectionFromKeys();
           this.loaderService.display(false);
           this.postFindAll();
+          this.saveTableState();
         },
         error => {
           this.loaderService.display(false);
@@ -471,6 +951,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     if (currentIndex >= ids.length) {
       // All deletions completed
       this.selectedItems = [];
+      this.saveTableState();
       this.loaderService.display(false);
       Swal.fire('Sucesso!', `${total} registro(s) excluído(s) com sucesso!`, 'success');
       this.findAll();
@@ -492,8 +973,15 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   }
 
   // CSV Export using PrimeNG built-in functionality
-  exportCSV(table: any) {
-    table.exportCSV();
+  exportCSV(table?: Table | null) {
+    const target = table || this.dataTable;
+
+    if (!target) {
+      console.warn('PrimeCrudListComponent: exportCSV called without table reference.');
+      return;
+    }
+
+    target.exportCSV();
   }
 
   // Centralized permission setup using the permission service
@@ -527,18 +1015,22 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
   // Update columns based on user permissions
   private updateColumnsForPermissions(): void {
-    if (this.isReadOnly) {
-      // Remove actions column for read-only users
-      this.columnsTable = this.columnsTable.filter(col => col !== 'actions');
-    } else if (!this.columnsTable.includes('actions')) {
-      this.columnsTable.push('actions');
+    if (!this.tableConfig.columns) {
+      return;
     }
-    this.displayedColumns = [...this.columnsTable];
+
+    const actionsColumn = this.tableConfig.columns.find(col => col.field === 'actions');
+    if (actionsColumn) {
+      actionsColumn.visible = !this.isReadOnly && actionsColumn.visible !== false;
+    }
+
+    this.updateDisplayedColumns();
+    this.saveTableState();
   }
 
   // Enhanced filtering with debouncing
   onGlobalFilterDebounced(value: string): void {
-    this.filterSubject.next(value);
+    this.filterSubject.next((value ?? '').trim());
   }
 
   // Template registration for dynamic columns
@@ -627,7 +1119,10 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   getColumnCount(): number {
     let count = this.getVisibleColumns().length;
 
-    // Add selection column if enabled and user can select
+    if (this.tableConfig.expandable) {
+      count++;
+    }
+
     if (this.tableConfig.selectable && !this.isReadOnly) {
       count++;
     }
@@ -659,3 +1154,4 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     }
   }
 }
+
