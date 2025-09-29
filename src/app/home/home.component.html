@@ -50,39 +50,62 @@
     </app-stat-card>
   </div>
 
-  <p-panel class="mb-3">
-    <ng-template pTemplate="header">
-      <h6 class="font-bold text-center m-0">Total de Empréstimos Realizados por Dia</h6>
-    </ng-template>
-    <div id="chartdiv2" class="h-[450px]"></div>
-  </p-panel>
-
-  <p-panel class="mb-3">
-    <ng-template pTemplate="header">
-      <h6 class="font-bold text-center m-0">Top 10 | Itens Emprestados</h6>
-    </ng-template>
-    <div id="chartdiv4" class="h-[450px]"></div>
-  </p-panel>
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <div>
-      <p-panel>
-        <ng-template pTemplate="header">
-          <h6 class="font-bold text-center m-0">Top 10 | Itens Adquiridos</h6>
-        </ng-template>
-        <div id="chartdivPie1" class="chart-pie"></div>
-      </p-panel>
-    </div>
-
-    <div>
-      <p-panel>
-        <ng-template pTemplate="header">
-          <h6 class="font-bold text-center m-0">Top 10 | Itens com Saídas</h6>
-        </ng-template>
-        <div id="chartdivPie2" class="chart-pie"></div>
-      </p-panel>
+  <div *ngIf="!hasDashboardData" class="dashboard-empty-state">
+    <i class="pi pi-chart-line dashboard-empty-state__icon" aria-hidden="true"></i>
+    <h3 class="dashboard-empty-state__title">Nenhum dado no período selecionado</h3>
+    <p class="dashboard-empty-state__description">Ajuste o filtro de datas ou acompanhe novos empréstimos para visualizar este painel.</p>
+    <div class="dashboard-empty-state__actions">
+      <p-button
+        label="Ajustar período"
+        icon="pi pi-calendar"
+        class="dashboard-empty-state__action"
+        (onClick)="openFilterDialog()">
+      </p-button>
+      <p-button
+        label="Ver empréstimos"
+        icon="pi pi-external-link"
+        variant="text"
+        class="dashboard-empty-state__action"
+        [routerLink]="['/emprestimo']">
+      </p-button>
     </div>
   </div>
+
+  <ng-container *ngIf="hasDashboardData">
+    <p-panel class="mb-3">
+      <ng-template pTemplate="header">
+        <h6 class="font-bold text-center m-0">Total de Empréstimos Realizados por Dia</h6>
+      </ng-template>
+      <div id="chartdiv2" class="h-[450px]"></div>
+    </p-panel>
+
+    <p-panel class="mb-3">
+      <ng-template pTemplate="header">
+        <h6 class="font-bold text-center m-0">Top 10 | Itens Emprestados</h6>
+      </ng-template>
+      <div id="chartdiv4" class="h-[450px]"></div>
+    </p-panel>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div>
+        <p-panel>
+          <ng-template pTemplate="header">
+            <h6 class="font-bold text-center m-0">Top 10 | Itens Adquiridos</h6>
+          </ng-template>
+          <div id="chartdivPie1" class="chart-pie"></div>
+        </p-panel>
+      </div>
+
+      <div>
+        <p-panel>
+          <ng-template pTemplate="header">
+            <h6 class="font-bold text-center m-0">Top 10 | Itens com Saídas</h6>
+          </ng-template>
+          <div id="chartdivPie2" class="chart-pie"></div>
+        </p-panel>
+      </div>
+    </div>
+  </ng-container>
 </div>
 
 <p-dialog header="Filtro"

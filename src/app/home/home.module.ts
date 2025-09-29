@@ -12,6 +12,7 @@ import {DatePickerModule} from 'primeng/datepicker';
 import {StatCardComponent} from '../components/stat-card/stat-card.component';
 import {PanelModule} from 'primeng/panel';
 import {ButtonModule} from 'primeng/button';
+import {RouterLink} from "@angular/router";
 
 @NgModule({
   imports: [
@@ -24,7 +25,8 @@ import {ButtonModule} from 'primeng/button';
     ValidationModule,
     PanelModule,
     ButtonModule,
-    StatCardComponent
+    StatCardComponent,
+    RouterLink
   ],
   declarations: [
     HomeComponent

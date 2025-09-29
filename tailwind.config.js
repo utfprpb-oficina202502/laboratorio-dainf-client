@@ -1,4 +1,3 @@
-/** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
     "./src/**/*.{html,ts}",
@@ -6,10 +5,9 @@ module.exports = {
   theme: {
     extend: {
       screens: {
-        'xs': '426px', // custom breakpoint between base and sm
-        'mdp': '769px', // acima de 768px
+        'xs': '426px',
+        'mdp': '769px'
       },
     },
   },
-  plugins: [],
 }
