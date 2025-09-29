@@ -17,9 +17,9 @@ import {LoginService} from './login.service';
     ButtonModule,
     InputTextModule,
     ProgressBarModule,
-    SocialLoginModule
+    SocialLoginModule,
+    LoginComponent
   ],
-  declarations: [LoginComponent],
   exports: [LoginComponent],
   providers: [LoginService]
 })
