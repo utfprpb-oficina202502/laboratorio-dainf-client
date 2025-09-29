@@ -5,8 +5,17 @@
 # You can see what browsers were selected by your queries by running:
 #   npx browserslist
 
-> 0.5%
-last 2 versions
-Firefox ESR
+# Angular 20+ requires modern browsers with ES2022+ support
+last 2 Chrome versions
+last 2 Firefox versions
+last 2 Safari versions
+last 2 Edge versions
 not dead
-not IE 9-11 # For IE 9-11 support, remove 'not'.
+not IE 11
+not op_mini all
+not kaios <= 3.1
+not and_qq <= 14.9
+not and_uc <= 15.5
+not android <= 139
+not op_mob <= 80
+not samsung <= 28
