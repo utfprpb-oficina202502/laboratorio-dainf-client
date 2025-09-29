@@ -50,6 +50,7 @@ import {SocialLoginModule} from "@abacritt/angularx-social-login";
 import {CadastrarUsuarioModule} from "./cadastrarUsuario/cadastrarUsuario.module";
 import {providePrimeNG} from "primeng/config";
 import {ptBR} from "../locale/pt-BR";
+import Aura from '@primeuix/themes/aura';
 
 @NgModule({
   declarations: [AppComponent],
@@ -114,10 +115,14 @@ import {ptBR} from "../locale/pt-BR";
     },
     providePrimeNG({
       theme: {
-        preset: "lara-light-indigo",
+        preset: Aura,
+        options: {
+          prefix: 'p',
+          darkModeSelector: 'system',
+          cssLayer: false
+        }
       },
-      translation: ptBR,
-
+      translation: ptBR
     }),
     // {
     //   provide: "SocialAuthServiceConfig",
