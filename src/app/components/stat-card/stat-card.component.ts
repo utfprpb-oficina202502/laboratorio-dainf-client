@@ -1,10 +1,15 @@
 import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output, OnChanges, SimpleChanges} from '@angular/core';
+import {NgClass, NgStyle} from "@angular/common";
 
 @Component({
   selector: 'app-stat-card',
   templateUrl: './stat-card.component.html',
   styleUrls: ['./stat-card.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    NgStyle,
+    NgClass
+  ]
 })
 export class StatCardComponent implements OnChanges {
   @Input() title: string;
