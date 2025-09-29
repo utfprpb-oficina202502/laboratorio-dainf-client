@@ -23,7 +23,7 @@ export class PermissionService {
    */
   async getUserPermissions(): Promise<UserPermissions> {
     const isAlunoOrProfessor = await this.loginService.userLoggedIsAlunoOrProfessor();
-    const loggedUser = JSON.parse(localStorage.getItem('userLogged'));
+    const loggedUser = JSON.parse(localStorage.getItem('userLogged') || '{}');
 
     const permissions: UserPermissions = {
       canCreate: false,
@@ -35,7 +35,9 @@ export class PermissionService {
       isAlunoOrProfessor: isAlunoOrProfessor
     };
 
-    if (loggedUser?.authorities) {
+    // Check if user has authorities or permissoes
+    const userRoles = loggedUser?.authorities || loggedUser?.permissoes || [];
+    if (userRoles && Array.isArray(userRoles) && userRoles.length > 0) {
 
       // Admin has full access to everything
       if (this.loginService.hasAnyRole(['ROLE_ADMINISTRADOR'])) {
