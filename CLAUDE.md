@@ -51,6 +51,8 @@ This application is currently being migrated from Angular 18 to Angular 20+ patt
 
 When migrating legacy Angular Material list screens (`CrudListComponent`) to the new PrimeNG stack (`PrimeCrudListComponent`), follow these practices so code stays consistent and reusable across the app.
 
+### Migration Process Overview
+
 1. **Assess before editing**
    - Confirm the feature really needs the migration (touching CRUD flows or UI refresh).
    - Capture current behaviors: displayed columns, filters, bottom-sheet actions, custom formatters.
@@ -68,7 +70,7 @@ When migrating legacy Angular Material list screens (`CrudListComponent`) to the
    - Use Prime control-flow ready markup: leverage `p-toolbar`, `p-button`, `p-iconField`, `p-tableCheckbox`, etc.
    - Keep the structure accessible: add `aria-label`s, current page summaries, and keyboard-friendly buttons (see the new base component helpers).
    - Adopt column templates via `getVisibleColumns()` and the table config instead of hard-coded `<td>` order.
-   - When Prime features aren’t needed (row expansion, column toggler), leave them out—`PrimeCrudListComponent` has sensible defaults.
+   - When Prime features aren't needed (row expansion, column toggler), leave them out—`PrimeCrudListComponent` has sensible defaults.
 
 4. **Clean dependencies**
    - Drop Angular Material modules that the component no longer needs (module imports, styles, providers).
@@ -85,6 +87,428 @@ When migrating legacy Angular Material list screens (`CrudListComponent`) to the
    - Keep PRs focused: migrate one list at a time.
    - Share new patterns in documentation/examples so other lists can follow the same approach.
    - When the Prime base gains new capabilities, retrofit earlier migrations to stay consistent.
+
+### Complete Migration Template
+
+#### TypeScript Migration Pattern
+
+```typescript
+// 1. Update imports
+import {Component, forwardRef, Injector} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
+import {TableColumn} from '../framework/model/table-config.interface';
+
+// PrimeNG Components (customize based on component needs)
+import {CardModule} from 'primeng/card';
+import {TableModule} from 'primeng/table';
+import {MultiSelectModule} from 'primeng/multiselect';
+import {ToolbarModule} from 'primeng/toolbar';
+import {ButtonModule} from 'primeng/button';
+import {InputTextModule} from 'primeng/inputtext';
+import {IconFieldModule} from 'primeng/iconfield';
+import {InputIconModule} from 'primeng/inputicon';
+import {TooltipModule} from 'primeng/tooltip';
+import {TagModule} from 'primeng/tag';
+import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
+import {NovoModule} from '../geral/novo/novo.module';
+
+// 2. Update component decorator
+@Component({
+  selector: 'app-list-[entity]',
+  templateUrl: './[entity].list.component.html',
+  styleUrls: ['./[entity].list.component.css'],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardModule,
+    TableModule,
+    MultiSelectModule,
+    ToolbarModule,
+    ButtonModule,
+    InputTextModule,
+    IconFieldModule,
+    InputIconModule,
+    TooltipModule,
+    TagModule,
+    PrimeCrudToolbarComponent,
+    NovoModule
+  ],
+  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => EntityListComponent) }]
+})
+export class EntityListComponent extends PrimeCrudListComponent<Entity, KeyType> {
+
+  // 3. Define table columns with proper metadata
+  private readonly tableColumns: TableColumn[] = [
+    {
+      field: 'id',
+      header: 'Codigo',
+      type: 'number',
+      sortable: true,
+      filterable: true,
+      width: '8rem',
+      align: 'center'
+    },
+    {
+      field: 'nome',
+      header: 'Nome',
+      type: 'text',
+      sortable: true,
+      filterable: true,
+      minWidth: '16rem'
+    },
+    {
+      field: 'actions',
+      header: 'Opcoes',
+      type: 'custom',
+      sortable: false,
+      filterable: false,
+      exportable: false,
+      align: 'center',
+      width: '10rem',
+      toggleable: false
+    }
+  ];
+
+  constructor(protected entityService: EntityService,
+              protected injector: Injector) {
+    super(entityService, injector, ['id', 'nome', 'actions'], 'entity/form');
+    this.configureTable();
+  }
+
+  // 4. Implement required methods
+  protected override getEntityName(): string {
+    return 'Entity';
+  }
+
+  protected override getEntityPluralName(): string {
+    return 'Entities';
+  }
+
+  protected override getExportFileName(): string {
+    return 'entities';
+  }
+
+  // 5. Configure table with comprehensive settings
+  private configureTable(): void {
+    this.tableConfig = {
+      ...this.tableConfig,
+      columns: this.tableColumns,
+      globalFilterFields: ['id', 'nome'],
+      defaultSortField: 'nome',
+      defaultSortOrder: 1,
+      caption: 'Lista de Entities',
+      trackByField: 'id',
+      emptyMessage: 'Nenhuma entity encontrada.',
+      loadingMessage: 'Carregando entities...',
+      globalFilterPlaceholder: 'Buscar entities...',
+      columnToggle: true,
+      expandable: false,
+      expandMode: 'single',
+      rowExpansionKey: 'id',
+      stateful: true,
+      stateKey: 'entity-list',
+      stateStorage: 'local',
+      stateProps: {
+        columns: true,
+        filters: true,
+        sort: true,
+        pagination: true,
+        selection: true,
+        expandedRows: true
+      },
+      resizableColumns: true,
+      columnResizeMode: 'fit',
+      lazy: true,
+      lazyLoadOnInit: true,
+      preloadData: true,
+      keyboardShortcuts: true
+    };
+
+    this.columnsTable = this.tableConfig.columns.map(column => column.field);
+    this.displayedColumns = [...this.columnsTable];
+  }
+}
+```
+
+#### HTML Template Migration Pattern
+
+```html
+<div class="container-fluid my-3">
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="flex items-center justify-between p-3">
+        <span class="text-xl font-bold">Entities</span>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      <!-- Toolbar with optional custom templates -->
+      <app-prime-crud-toolbar [table]="dt" [list]="self">
+        <ng-template #toolbarStartTemplate>
+          <!-- Custom toolbar buttons go here -->
+        </ng-template>
+      </app-prime-crud-toolbar>
+
+      <!-- Main table -->
+      <p-table
+        #dt
+        [value]="objects"
+        [rows]="rows"
+        [totalRecords]="totalElements"
+        [paginator]="true"
+        [rowsPerPageOptions]="tableConfig.pageSizeOptions || [5, 10, 25, 50, 100]"
+        (onPage)="onPageChange($event)"
+        (onSort)="onSort($event)"
+        [first]="first"
+        [lazy]="tableConfig.lazy !== false"
+        [lazyLoadOnInit]="tableConfig.lazyLoadOnInit !== false"
+        [(selection)]="selectedItems"
+        (selectionChange)="onSelectionChange($event)"
+        [dataKey]="tableConfig.rowExpansionKey || 'id'"
+        [resizableColumns]="tableConfig.resizableColumns !== false"
+        [columnResizeMode]="tableConfig.columnResizeMode || 'fit'"
+        [rowHover]="tableConfig.rowHover !== false"
+        [stripedRows]="tableConfig.striped !== false"
+        [rowExpandMode]="tableConfig.expandMode || 'single'"
+        [expandedRowKeys]="expandedRows"
+        (onRowExpand)="onRowExpand($event)"
+        (onRowCollapse)="onRowCollapse($event)"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+        [showCurrentPageReport]="true"
+        [tableStyleClass]="getTableStyleClass()"
+        [attr.aria-label]="'Lista de entities com ' + totalElements + ' registro(s)'">
+
+        <!-- Search caption -->
+        <ng-template pTemplate="caption">
+          <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
+            <p-iconField iconPosition="left" class="flex-grow-1 flex-md-grow-0">
+              <p-inputIcon class="pi pi-search" aria-hidden="true"></p-inputIcon>
+              <input
+                #globalFilterInput
+                pInputText
+                type="text"
+                (input)="onGlobalFilter($any($event.target).value)"
+                [value]="filterValue"
+                [placeholder]="getGlobalFilterPlaceholder()"
+                [attr.aria-label]="'Campo de busca para filtrar entities'"
+                autocomplete="off" />
+            </p-iconField>
+            <p-button
+              type="button"
+              severity="secondary"
+              [outlined]="true"
+              (onClick)="clearGlobalFilter()"
+              [attr.aria-label]="'Limpar filtro global'">
+              <span pButtonIcon class="pi pi-filter-slash"></span>
+              <span pButtonLabel>Limpar</span>
+            </p-button>
+          </div>
+        </ng-template>
+
+        <!-- Table header -->
+        <ng-template pTemplate="header">
+          <tr>
+            @if (tableConfig.expandable) {
+              <th scope="col" style="width: 3rem" [attr.aria-label]="'Alternar detalhes'"></th>
+            }
+            @if (!isReadOnly && tableConfig.selectable !== false) {
+              <th scope="col" style="width: 3rem" [attr.aria-label]="'Selecao de entities'">
+                <p-tableHeaderCheckbox [attr.aria-label]="'Selecionar todas as entities'"></p-tableHeaderCheckbox>
+              </th>
+            }
+            @for (column of getVisibleColumns(); track column.field) {
+              <th
+                scope="col"
+                [attr.id]="'col-' + column.field"
+                [attr.data-field]="column.field"
+                [pSortableColumn]="column.sortable === false || column.field === 'actions' ? null : column.field"
+                [style.width]="column.width"
+                [style.min-width]="column.minWidth"
+                [ngClass]="column.headerClass"
+                [attr.aria-label]="column.tooltip || column.header">
+                <div class="d-flex align-items-center gap-2" [class.justify-content-center]="column.align === 'center'">
+                  {{ column.header }}
+                  @if (column.sortable !== false && column.field !== 'actions') {
+                    <p-sortIcon [field]="column.field" aria-hidden="true"></p-sortIcon>
+                  }
+                </div>
+              </th>
+            }
+          </tr>
+        </ng-template>
+
+        <!-- Table body with modern control flow -->
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            @if (tableConfig.expandable) {
+              <td style="width: 3rem">
+                <button
+                  type="button"
+                  pButton
+                  [pRowToggler]="row"
+                  class="p-button-text p-button-rounded"
+                  [attr.aria-label]="(isRowExpanded(row) ? 'Recolher' : 'Expandir') + ' detalhes da entity ' + row.nome">
+                  <span pButtonIcon [ngClass]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
+                </button>
+              </td>
+            }
+            @if (!isReadOnly && tableConfig.selectable !== false) {
+              <td style="width: 3rem">
+                <p-tableCheckbox
+                  [value]="row"
+                  [attr.aria-label]="'Selecionar entity ' + row.nome">
+                </p-tableCheckbox>
+              </td>
+            }
+            @for (column of getVisibleColumns(); track column.field) {
+              <td
+                [ngSwitch]="column.field"
+                [style.text-align]="column.align || 'left'"
+                [style.width]="column.width"
+                [style.min-width]="column.minWidth"
+                [attr.headers]="'col-' + column.field">
+                @switch (column.field) {
+                  @case ('actions') {
+                    <div class="d-flex align-items-center gap-2 justify-content-center">
+                      @if (canEdit) {
+                        <p-button
+                          severity="secondary"
+                          [outlined]="true"
+                          [rounded]="true"
+                          pTooltip="Editar entity"
+                          tooltipPosition="top"
+                          (onClick)="edit(row.id)"
+                          [attr.aria-label]="'Editar entity ' + row.nome">
+                          <span pButtonIcon class="pi pi-pencil"></span>
+                        </p-button>
+                      }
+                      @if (canDelete) {
+                        <p-button
+                          severity="danger"
+                          [outlined]="true"
+                          [rounded]="true"
+                          pTooltip="Remover entity"
+                          tooltipPosition="top"
+                          (onClick)="delete(row.id)"
+                          [attr.aria-label]="'Remover entity ' + row.nome">
+                          <span pButtonIcon class="pi pi-trash"></span>
+                        </p-button>
+                      }
+                    </div>
+                  }
+                  @default {
+                    <span
+                      [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
+                      [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
+                      [class.cursor-pointer]="!displayedColumns.includes('actions')"
+                      (click)="handleInteractiveCell($event, row.id)"
+                      (keydown.enter)="handleInteractiveCell($event, row.id)"
+                      (keydown.space)="handleInteractiveCell($event, row.id)"
+                      [attr.aria-label]="column.header + ': ' + row[column.field]">
+                      {{ row[column.field] }}
+                    </span>
+                  }
+                }
+              </td>
+            }
+          </tr>
+        </ng-template>
+
+        <!-- Row expansion template -->
+        <ng-template pTemplate="rowexpansion" let-row>
+          @if (rowExpansionTemplate) {
+            <ng-container [ngTemplateOutlet]="rowExpansionTemplate" [ngTemplateOutletContext]="{$implicit: row}"></ng-container>
+          } @else {
+            <div class="p-3">
+              <p class="mb-1"><strong>Codigo:</strong> {{ row.id }}</p>
+              <p class="mb-0"><strong>Nome:</strong> {{ row.nome }}</p>
+            </div>
+          }
+        </ng-template>
+
+        <!-- Empty state -->
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td [attr.colspan]="getColumnCount()" class="text-center p-4">
+              <i class="pi pi-search" style="font-size: 3rem; color: #dee2e6;"></i>
+              <p class="mt-3 mb-0">Nenhuma entity encontrada.</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </ng-template>
+  </p-card>
+</div>
+```
+
+### Advanced Migration Patterns
+
+#### Complex Cell Rendering
+For components with custom data formatting (like `formatGruposAcesso` in usuario.list.component):
+
+```typescript
+@case ('customField') {
+  <span
+    [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
+    [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
+    [class.cursor-pointer]="!displayedColumns.includes('actions')"
+    (click)="handleInteractiveCell($event, row.id)"
+    [attr.aria-label]="column.header + ': ' + customFormatMethod(row[column.field])">
+    {{ customFormatMethod(row[column.field]) }}
+  </span>
+}
+```
+
+#### Status Tags with PrimeNG
+For status indicators (like in emprestimo.list.component):
+
+```typescript
+@case ('status') {
+  <div class="d-flex justify-content-center">
+    @if (getStatusMethod(row) === 'ACTIVE') {
+      <p-tag value="Ativo" severity="success"></p-tag>
+    }
+    @if (getStatusMethod(row) === 'INACTIVE') {
+      <p-tag value="Inativo" severity="danger"></p-tag>
+    }
+  </div>
+}
+```
+
+#### Image Handling
+For components with image display (like item.list.component):
+
+```typescript
+@case ('imagem') {
+  <div class="d-flex justify-content-center">
+    <img
+      style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px;"
+      [src]="row.imageField?.length > 0 ? imageUrl + row.imageField[0].name : '/assets/no-image.png'"
+      [alt]="'Imagem do item ' + row.nome"
+      (click)="handleImageClick(row.id)"
+      class="cursor-pointer" />
+  </div>
+}
+```
+
+### Migration Checklist
+
+- [ ] Import `PrimeCrudListComponent` and `TableColumn`
+- [ ] Add required PrimeNG module imports
+- [ ] Update component decorator with imports and providers
+- [ ] Change inheritance from `CrudListComponent` to `PrimeCrudListComponent`
+- [ ] Define `tableColumns` array with proper metadata
+- [ ] Implement required methods: `getEntityName()`, `getEntityPluralName()`, `getExportFileName()`
+- [ ] Create `configureTable()` method with comprehensive table configuration
+- [ ] Replace `<mat-card>` with `<p-card>` and proper template structure
+- [ ] Replace `<mat-table>` with `<p-table>` using modern control flow
+- [ ] Add `<app-prime-crud-toolbar>` with proper bindings
+- [ ] Handle custom cell rendering with `@switch` statements
+- [ ] Add proper accessibility attributes and keyboard navigation
+- [ ] Test all functionality: sorting, filtering, pagination, actions
+- [ ] Remove unused Angular Material imports and dependencies
 
 **Module Organization**: The application follows a feature-based module structure where each business domain has its own module:
 - `grupo` (groups), `usuario` (users), `item` (items), `compra` (purchases)
