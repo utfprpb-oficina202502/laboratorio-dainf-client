@@ -116,6 +116,7 @@ export const MENU_ITEM: MenuItem[] = [
     icon: "file-text-o",
     id: "nada-consta",
     group: "ITEM",
+    roles: ["ADMINISTRADOR", "LABORATORISTA"],
   },
 ];
 

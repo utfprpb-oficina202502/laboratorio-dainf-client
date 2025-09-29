@@ -27,7 +27,7 @@
           <div>
             <p class="pendencia">Pendências encontradas:</p>
             <ul>
-              @for (p of resultado.pendencias; track p) {
+              @for (p of resultado.pendencias; track $index) {
                 <li>
                   <strong>{{ p.tipo }}:</strong> {{ p.descricao }}
                 </li>

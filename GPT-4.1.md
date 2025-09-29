@@ -16,7 +16,7 @@ This document provides comprehensive guidance for GPT-4.1 when working with code
 
 This project supports building for multiple environments with specific configurations:
 - **Production**: `ng build --configuration production`
-- **Robotnik**: `ng build --configuration robotnik`a
+- **Robotnik**: `ng build --configuration robotnik`
 - **Patobots**: `ng build --configuration patobots`
 - **Daele**: `ng build --configuration daele`
 
