@@ -95,8 +95,8 @@ const routes: Routes = [
   {path: 'relatorio/form', canActivate: [LoginService], component: RelatorioFormComponent},
   {path: 'relatorio/form/:id', canActivate: [LoginService], component: RelatorioFormComponent},
   {path: 'relatorio/view/:id', canActivate: [LoginService], component: RelatorioViewerComponent},
-  { path: 'nada-consta', component: NadaConstaListComponent },
-  { path: 'nada-consta/adicionar', component: NadaConstaVisualizarComponent },
+  { path: 'nada-consta', canActivate: [LoginService], component: NadaConstaListComponent },
+  { path: 'nada-consta/adicionar', canActivate: [LoginService], component: NadaConstaVisualizarComponent },
   {path: '403', component: NotAuthorizedComponent},
   {path: '**', component: PageNotFoundComponent}
 ];

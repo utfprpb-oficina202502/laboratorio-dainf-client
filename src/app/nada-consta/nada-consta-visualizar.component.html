@@ -1,17 +1,17 @@
 <div class="container my-4">
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>Consulta Nada Consta</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
+  <p-card>
+    <ng-template pTemplate="header">
+      Consulta Nada Consta
+    </ng-template>
+    <ng-template pTemplate="content">
       <form (ngSubmit)="consultar()" #form="ngForm">
-        <mat-form-field appearance="fill">
-          <mat-label>ID do Aluno</mat-label>
-          <input matInput type="number" [(ngModel)]="alunoId" name="alunoId" placeholder="Digite o ID do aluno" required>
-        </mat-form-field>
-        <button mat-raised-button color="primary" type="submit" [disabled]="carregando || form.invalid">Consultar</button>
+        <div class="p-field">
+          <label for="alunoId">ID do Aluno</label>
+          <input pInputText type="number" [(ngModel)]="alunoId" name="alunoId" id="alunoId" placeholder="Digite o ID do aluno" required />
+        </div>
+        <button pButton type="submit" label="Consultar" [disabled]="carregando || form.invalid" class="p-button-primary"></button>
       </form>
-      <mat-progress-bar *ngIf="carregando" mode="indeterminate"></mat-progress-bar>
+      <p-progressBar *ngIf="carregando" mode="indeterminate" style="height: 6px;"></p-progressBar>
       <div *ngIf="erro" class="erro">{{ erro }}</div>
       <div *ngIf="resultado">
         <h3>Resultado</h3>
@@ -26,6 +26,6 @@
           </ul>
         </div>
       </div>
-    </mat-card-content>
-  </mat-card>
+    </ng-template>
+  </p-card>
 </div>

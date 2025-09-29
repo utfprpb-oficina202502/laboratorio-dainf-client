@@ -1,34 +1,27 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
   <h2>Listagem de Nada Consta</h2>
-  <button mat-raised-button color="primary" (click)="adicionar()">Adicionar</button>
+  <button pButton type="button" label="Adicionar" class="p-button-primary" (click)="adicionar()"></button>
 </div>
 
-<table mat-table [dataSource]="dataSource" class="mat-elevation-z8" *ngIf="!carregando">
-  <ng-container matColumnDef="alunoId">
-    <th mat-header-cell *matHeaderCellDef>ID do Aluno</th>
-    <td mat-cell *matCellDef="let element">{{element.alunoId}}</td>
-  </ng-container>
+<p-table [value]="dataSource" *ngIf="!carregando">
+  <ng-template pTemplate="header">
+    <tr>
+      <th>ID do Aluno</th>
+      <th>Nome</th>
+      <th>Status</th>
+      <th>Ações</th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-element>
+    <tr>
+      <td>{{element.alunoId}}</td>
+      <td>{{element.nome}}</td>
+      <td>{{element.nadaConsta ? 'OK' : 'Com Pendências'}}</td>
+      <td>
+        <!-- Botões de ação futuros -->
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
 
-  <ng-container matColumnDef="nome">
-    <th mat-header-cell *matHeaderCellDef>Nome</th>
-    <td mat-cell *matCellDef="let element">{{element.nome}}</td>
-  </ng-container>
-
-  <ng-container matColumnDef="nadaConsta">
-    <th mat-header-cell *matHeaderCellDef>Status</th>
-    <td mat-cell *matCellDef="let element">{{element.nadaConsta ? 'OK' : 'Com Pendências'}}</td>
-  </ng-container>
-
-  <ng-container matColumnDef="acoes">
-    <th mat-header-cell *matHeaderCellDef>Ações</th>
-    <td mat-cell *matCellDef="let element">
-      <!-- Botões de ação futuros -->
-    </td>
-  </ng-container>
-
-  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-</table>
-
-<mat-progress-bar *ngIf="carregando" mode="indeterminate"></mat-progress-bar>
-
+<p-progressBar *ngIf="carregando" mode="indeterminate" style="height: 6px;"></p-progressBar>

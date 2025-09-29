@@ -1,39 +1,51 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatTableModule } from '@angular/material/table';
-import { MatButtonModule } from '@angular/material/button';
 import { Router } from '@angular/router';
 import { NadaConstaService, NadaConsta } from '../nada-consta.service';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { Subject, takeUntil } from 'rxjs';
+// PrimeNG modules
+import { TableModule } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
+import { ProgressBarModule } from 'primeng/progressbar';
 
 @Component({
   selector: 'app-nada-consta-list',
   templateUrl: './nada-consta-list.component.html',
   styleUrls: ['./nada-consta-list.component.css'],
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatButtonModule, MatProgressBarModule]
+  imports: [CommonModule, TableModule, ButtonModule, ProgressBarModule]
 })
-export class NadaConstaListComponent {
+export class NadaConstaListComponent implements OnInit, OnDestroy {
   displayedColumns = ['alunoId', 'nome', 'nadaConsta', 'acoes'];
   dataSource: NadaConsta[] = [];
   carregando = false;
+  private destroy$ = new Subject<void>();
 
-  constructor(private nadaConstaService: NadaConstaService, private router: Router) {
+  constructor(private nadaConstaService: NadaConstaService, private router: Router) {}
+
+  ngOnInit() {
     this.carregarLista();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   carregarLista() {
     this.carregando = true;
-    this.nadaConstaService.listarTodos().subscribe({
-      next: (dados) => {
-        this.dataSource = dados;
-        this.carregando = false;
-      },
-      error: () => {
-        this.dataSource = [];
-        this.carregando = false;
-      }
-    });
+    this.nadaConstaService.listarTodos()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (dados) => {
+          this.dataSource = dados;
+          this.carregando = false;
+        },
+        error: () => {
+          this.dataSource = [];
+          this.carregando = false;
+        }
+      });
   }
 
   adicionar() {
