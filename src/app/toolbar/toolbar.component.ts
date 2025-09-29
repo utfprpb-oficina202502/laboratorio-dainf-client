@@ -32,7 +32,7 @@ export class ToolbarComponent implements OnInit {
   }
 
   buildListenerCloseDrawer() {
-    document.getElementById("content").addEventListener("click", (ev) => {
+    document.getElementById("content").addEventListener("click", () => {
       if (this.widthScreen < 1200) {
         this.hideSidenav();
       }

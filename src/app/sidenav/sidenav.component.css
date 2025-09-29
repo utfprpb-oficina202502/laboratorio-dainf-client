@@ -253,12 +253,6 @@
   transition: all 0.2s ease;
 }
 
-.theme-toggle-container app-theme-toggle ::ng-deep .theme-toggle-button.p-togglebutton.p-highlight {
-  background: var(--primary-color, #3B82F6);
-  border-color: var(--primary-color, #3B82F6);
-  color: #FFFFFF;
-}
-
 .theme-toggle-container app-theme-toggle ::ng-deep .theme-toggle-button .p-button-icon-left,
 .theme-toggle-container app-theme-toggle ::ng-deep .theme-toggle-button .p-button-icon-right {
   font-size: 1rem;

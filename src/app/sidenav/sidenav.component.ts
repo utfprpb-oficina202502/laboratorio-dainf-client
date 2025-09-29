@@ -205,23 +205,6 @@ export class SidenavComponent implements OnInit {
     // PrimeNG Menu handles active state automatically via routerLink
     // No manual color changes needed
   }
-
-  private getCurrentPath(): string {
-    let current = this.router?.url || "";
-
-    if (!current) {
-      const { hash, pathname } = window.location;
-      if (hash?.startsWith("#/")) {
-        current = hash.substring(1); // remove o '#'
-      } else {
-        current = pathname || "/";
-      }
-    }
-
-    const firstSegment = (current.split("?")[0] || "").split("/")[1] || "";
-    return "/" + firstSegment;
-  }
-
   changeStylesDrawer() {
     // Responsive behavior will be handled via CSS media queries
     // and PrimeNG Sidebar responsive properties
