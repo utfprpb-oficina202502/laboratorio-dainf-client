@@ -1,60 +1,195 @@
 <div class="container-fluid my-3">
-  <mat-card>
-    <mat-card-title>
-      <div class="d-flex align-items-center justify-content-between">
-        <h4 class="m-0">Grupo</h4>
-        <app-novo (onClick)="openForm()"></app-novo>
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="flex items-center justify-between p-3">
+        <span class="text-xl font-bold">Grupos</span>
       </div>
-    </mat-card-title>
-    <mat-card-content>
-      <mat-form-field>
-        <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Filtro">
-      </mat-form-field>
+    </ng-template>
 
-      <div class="mat-elevation-z8">
-        <mat-table [dataSource]="dataSource" matSort>
+    <ng-template pTemplate="content">
+      <app-prime-crud-toolbar [table]="dt" [list]="self"></app-prime-crud-toolbar>
 
-          <ng-container matColumnDef="id">
-            <mat-header-cell *matHeaderCellDef mat-sort-header>Código</mat-header-cell>
-            <mat-cell *matCellDef="let row" (click)="openBottomSheet(row.id)">{{row.id}}</mat-cell>
-          </ng-container>
+      <p-table
+        #dt
+        [value]="objects"
+        [rows]="rows"
+        [totalRecords]="totalElements"
+        [paginator]="true"
+        [rowsPerPageOptions]="tableConfig.pageSizeOptions || [5, 10, 25, 50, 100]"
+        (onPage)="onPageChange($event)"
+        (onSort)="onSort($event)"
+        [first]="first"
+        [lazy]="tableConfig.lazy !== false"
+        [lazyLoadOnInit]="tableConfig.lazyLoadOnInit !== false"
+        [(selection)]="selectedItems"
+        (selectionChange)="onSelectionChange($event)"
+        [dataKey]="tableConfig.rowExpansionKey || 'id'"
+        [resizableColumns]="tableConfig.resizableColumns !== false"
+        [columnResizeMode]="tableConfig.columnResizeMode || 'fit'"
+        [rowHover]="tableConfig.rowHover !== false"
+        [stripedRows]="tableConfig.striped !== false"
+        [rowExpandMode]="tableConfig.expandMode || 'single'"
+        [expandedRowKeys]="expandedRows"
+        (onRowExpand)="onRowExpand($event)"
+        (onRowCollapse)="onRowCollapse($event)"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+        [showCurrentPageReport]="true"
+        [tableStyleClass]="getTableStyleClass()"
+        [attr.aria-label]="'Lista de grupos com ' + totalElements + ' registro(s)'">
 
-          <ng-container matColumnDef="descricao">
-            <mat-header-cell *matHeaderCellDef mat-sort-header>Descrição</mat-header-cell>
-            <mat-cell *matCellDef="let row" (click)="openBottomSheet(row.id)">{{row.descricao}}</mat-cell>
-          </ng-container>
+        <ng-template pTemplate="caption">
+          <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
+            <p-iconField iconPosition="left" class="flex-grow-1 flex-md-grow-0">
+              <p-inputIcon class="pi pi-search" aria-hidden="true"></p-inputIcon>
+              <input
+                #globalFilterInput
+                pInputText
+                type="text"
+                (input)="onGlobalFilter($any($event.target).value)"
+                [value]="filterValue"
+                [placeholder]="getGlobalFilterPlaceholder()"
+                [attr.aria-label]="'Campo de busca para filtrar grupos'"
+                autocomplete="off" />
+            </p-iconField>
+            <p-button
+              type="button"
+              severity="secondary"
+              [outlined]="true"
+              (onClick)="clearGlobalFilter()"
+              [attr.aria-label]="'Limpar filtro global'">
+              <span pButtonIcon class="pi pi-filter-slash"></span>
+              <span pButtonLabel>Limpar</span>
+            </p-button>
+          </div>
+        </ng-template>
 
-          <ng-container matColumnDef="actions">
-            <mat-header-cell *matHeaderCellDef> Opções </mat-header-cell>
-            <mat-cell *matCellDef="let row">
-              <button class="btn btn-outline-secondary rounded mr-2"
-                      type="button"
-                      pTooltip="Editar"
-                      (click)="edit(row.id)">
-                <i class="fa fa-edit"></i>
-              </button>
-              <button class="btn btn-outline-primary rounded"
-                      type="button"
-                      pTooltip="Remover"
-                      (click)="delete(row.id)">
-                <i class="fa fa-trash-o"></i>
-              </button>
-            </mat-cell>
-          </ng-container>
+        <ng-template pTemplate="header">
+          <tr>
+            @if (tableConfig.expandable) {
+              <th scope="col" style="width: 3rem" [attr.aria-label]="'Alternar detalhes'"></th>
+            }
+            @if (!isReadOnly && tableConfig.selectable !== false) {
+              <th scope="col" style="width: 3rem" [attr.aria-label]="'Selecao de grupos'">
+                <p-tableHeaderCheckbox [attr.aria-label]="'Selecionar todos os grupos'"></p-tableHeaderCheckbox>
+              </th>
+            }
+            @for (column of getVisibleColumns(); track column.field) {
+              <th
+                scope="col"
+                [attr.id]="'col-' + column.field"
+                [attr.data-field]="column.field"
+                [pSortableColumn]="column.sortable === false || column.field === 'actions' ? null : column.field"
+                [style.width]="column.width"
+                [style.min-width]="column.minWidth"
+                [ngClass]="column.headerClass"
+                [attr.aria-label]="column.tooltip || column.header">
+                <div class="d-flex align-items-center gap-2" [class.justify-content-center]="column.align === 'center'">
+                  {{ column.header }}
+                  @if (column.sortable !== false && column.field !== 'actions') {
+                    <p-sortIcon [field]="column.field" aria-hidden="true"></p-sortIcon>
+                  }
+                </div>
+              </th>
+            }
+          </tr>
+        </ng-template>
 
-          <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-          <mat-row *matRowDef="let row; columns: displayedColumns;">
-          </mat-row>
-        </mat-table>
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            @if (tableConfig.expandable) {
+              <td style="width: 3rem">
+                <button
+                  type="button"
+                  pButton
+                  [pRowToggler]="row"
+                  class="p-button-text p-button-rounded"
+                  [attr.aria-label]="(isRowExpanded(row) ? 'Recolher' : 'Expandir') + ' detalhes do grupo ' + row.descricao">
+                  <span pButtonIcon [ngClass]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
+                </button>
+              </td>
+            }
+            @if (!isReadOnly && tableConfig.selectable !== false) {
+              <td style="width: 3rem">
+                <p-tableCheckbox
+                  [value]="row"
+                  [attr.aria-label]="'Selecionar grupo ' + row.descricao">
+                </p-tableCheckbox>
+              </td>
+            }
+            @for (column of getVisibleColumns(); track column.field) {
+              <td
+                [ngSwitch]="column.field"
+                [style.text-align]="column.align || 'left'"
+                [style.width]="column.width"
+                [style.min-width]="column.minWidth"
+                [attr.headers]="'col-' + column.field">
+                @switch (column.field) {
+                  @case ('actions') {
+                    <div class="d-flex align-items-center gap-2 justify-content-center">
+                      @if (canEdit) {
+                        <p-button
+                          severity="secondary"
+                          [outlined]="true"
+                          [rounded]="true"
+                          pTooltip="Editar grupo"
+                          tooltipPosition="top"
+                          (onClick)="edit(row.id)"
+                          [attr.aria-label]="'Editar grupo ' + row.descricao">
+                          <span pButtonIcon class="pi pi-pencil"></span>
+                        </p-button>
+                      }
+                      @if (canDelete) {
+                        <p-button
+                          severity="danger"
+                          [outlined]="true"
+                          [rounded]="true"
+                          pTooltip="Remover grupo"
+                          tooltipPosition="top"
+                          (onClick)="delete(row.id)"
+                          [attr.aria-label]="'Remover grupo ' + row.descricao">
+                          <span pButtonIcon class="pi pi-trash"></span>
+                        </p-button>
+                      }
+                    </div>
+                  }
+                  @default {
+                    <span
+                      [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
+                      [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
+                      [class.cursor-pointer]="!displayedColumns.includes('actions')"
+                      (click)="handleInteractiveCell($event, row.id)"
+                      (keydown.enter)="handleInteractiveCell($event, row.id)"
+                      (keydown.space)="handleInteractiveCell($event, row.id)"
+                      [attr.aria-label]="column.header + ': ' + row[column.field]">
+                      {{ row[column.field] }}
+                    </span>
+                  }
+                }
+              </td>
+            }
+          </tr>
+        </ng-template>
 
-        <mat-paginator
-            [length]="totalElements"
-            [pageSize]="pageSize"
-            [pageIndex]="pageIndex"
-            [pageSizeOptions]="[5, 10, 25, 50, 100]"
-            (page)="onPageChange($event)">
-      </mat-paginator>
-      </div>
-    </mat-card-content>
-  </mat-card>
+        <ng-template pTemplate="rowexpansion" let-row>
+          @if (rowExpansionTemplate) {
+            <ng-container [ngTemplateOutlet]="rowExpansionTemplate" [ngTemplateOutletContext]="{$implicit: row}"></ng-container>
+          } @else {
+            <div class="p-3">
+              <p class="mb-1"><strong>Codigo:</strong> {{ row.id }}</p>
+              <p class="mb-0"><strong>Descricao:</strong> {{ row.descricao }}</p>
+            </div>
+          }
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td [attr.colspan]="getColumnCount()" class="text-center p-4">
+              <i class="pi pi-search" style="font-size: 3rem; color: #dee2e6;"></i>
+              <p class="mt-3 mb-0">Nenhum grupo encontrado.</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </ng-template>
+  </p-card>
 </div>

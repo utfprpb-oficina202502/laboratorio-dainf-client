@@ -1,9 +1,13 @@
-/* Convertido para usar classes Tailwind quando possível */
+/* Convertido para usar classes Tailwind quando possivel */
 .only-login {
-  @apply w-full h-screen;
-  background-image: url('../assets/background.png');
+  @apply w-full min-h-screen;
+  background: linear-gradient(135deg, var(--login-bg-gradient-start, var(--color-bg-secondary)), var(--login-bg-gradient-end, var(--color-bg-primary)));
 }
 
-/* Removido cálculo fixo; layout agora usa flex */
+.layout-content {
+  background-color: var(--layout-content-bg, var(--color-bg-secondary));
+}
+
+/* Removido calculo fixo; layout agora usa flex */
 
 .sidenav-transition { transition: width .25s ease, transform .25s ease; }

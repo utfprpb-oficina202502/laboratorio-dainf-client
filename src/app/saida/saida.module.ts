@@ -46,11 +46,9 @@ import {SelectModule} from "primeng/select";
     CancelarModule,
     SalvarModule,
     CadastroRapidoModule,
-    OnlyNumberModule
-  ],
-  declarations: [
-    SaidaFormComponent,
-    SaidaListComponent
+    OnlyNumberModule,
+    SaidaListComponent,
+    SaidaFormComponent
   ],
   exports: [
     SaidaFormComponent,

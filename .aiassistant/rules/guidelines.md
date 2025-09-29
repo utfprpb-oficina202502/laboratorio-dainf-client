@@ -105,3 +105,16 @@ Here is a link to the most recent Angular style guide https://angular.dev/style-
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+### Migrating Material lists to PrimeNG
+- Favour the new `PrimeCrudListComponent` base whenever a legacy list (`CrudListComponent`) is touched; keep Angular Material usage frozen.
+- Move behaviour into `tableConfig` (columns, permissions, state) rather than mutating `displayedColumns` or relying on `MatTableDataSource`.
+- Rebuild templates with Prime widgets (`p-card`, `p-table`, `p-toolbar`, `p-tableCheckbox`); avoid mixing Material and Prime on the same screen.
+- Keep optional Prime features opt-in: only enable row expansion, column toggles, or persisted state when the UX needs them.
+- Remove unused Material imports, providers, and CSS selectors after migration; add the corresponding PrimeNG modules to the standalone component `imports`.
+- Verify pagination, sorting, filtering, keyboard shortcuts, and state persistence after converting—update tests to cover the new behaviours.
+### Prime CRUD toolbar usage
+- The shared PrimeCrudToolbarComponent sits under each PrimeCrudListComponent and expects `[table]` and `[list]` bindings.
+- Lists should expose `self = this` (already on PrimeCrudListComponent) and reference it via `[list]='self'`.
+- For derived list components, register `providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => MyListComponent) }]` so injected toolbars resolve the base dependency.
+- Toolbar renders standard add/delete/export, column toggles, expansion controls with keyboard access built in; supply overrides through `toolbarStartTemplate`/`toolbarEndTemplate` when required.

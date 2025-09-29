@@ -9,5 +9,6 @@ export class Usuario {
   email: string;
   telefone: string;
   permissoes: Permissao[];
+  authorities?: Permissao[];
   fotoURL: string;
 }

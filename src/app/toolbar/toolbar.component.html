@@ -1,65 +1,62 @@
-<mat-toolbar
-  class="d-flex justify-content-between"
-  style="height: 50px; background-color: transparent"
-  >
-  <div class="d-flex align-items-center">
-    @if (widthScreen < 1200) {
-      <button
-        id="btn-sidenav"
-        class="btn-icon btn-sidenav"
-        (click)="toogleSidenav()"
+<p-toolbar [style.height.px]="50">
+  <ng-template pTemplate="start">
+    <div class="d-flex align-items-center gap-2">
+      @if (widthScreen < 1200) {
+        <button
+          id="btn-sidenav"
+          type="button"
+          pButton
+          class="p-button-text p-button-plain p-button-icon-only"
+          (click)="toogleSidenav()"
+          aria-label="Alternar navegação lateral"
         >
-        <i class="fa fa fa-bars text-black-50"></i>
-      </button>
-    }
-    <img src="../../assets/logo.png" alt="logo_constru" style="width: 40px" />
-    @if (widthScreen >= 600) {
-      <a
-        routerLinkActive="active"
-        routerLink="/"
-        style="margin-left: 10px"
-        class="text-black-50 text-uppercase font-poppins text-decoration-none"
-        >Sistema de Gerenciamento da Sala de Apoio do DAINF
-      </a>
-    }
-    @if (widthScreen < 600) {
-      <a
-        routerLinkActive="active"
-        routerLink="/"
-        style="margin-left: 10px"
-        class="text-black-50 text-uppercase font-poppins text-decoration-none"
-        >Lab DAINF
-      </a>
-    }
-  </div>
-  <div class="row">
-    @if (widthScreen > 768) {
-      <div>
+          <i class="pi pi-bars"></i>
+        </button>
+      }
+      <img src="../../assets/logo.png" alt="Logo Laboratório DAINF" style="width: 40px" />
+      @if (widthScreen >= 600) {
+        <a
+          routerLinkActive="active"
+          routerLink="/"
+          class="text-uppercase font-poppins text-decoration-none ms-2"
+        >Sistema de Gerenciamento da Sala de Apoio do DAINF</a>
+      }
+      @if (widthScreen < 600) {
+        <a
+          routerLinkActive="active"
+          routerLink="/"
+          class="text-uppercase font-poppins text-decoration-none ms-2"
+        >Lab DAINF</a>
+      }
+    </div>
+  </ng-template>
+  <ng-template pTemplate="end">
+    <div class="d-flex align-items-center gap-3">
+      @if (widthScreen > 768) {
         <button
           type="button"
           pButton
+          class="p-button-text p-button-plain d-flex align-items-center gap-2"
           (click)="menu.toggle($event)"
-          class="btn-sidenav text-black-50"
-          style="font-size: 18px"
-          >
-          Olá, {{ getUserLogado() }}
-          <i class="fa fa-caret-down" style="font-size: 15px"></i>
+        >
+          <span>Olá, {{ getUserLogado() }}</span>
+          <i class="pi pi-chevron-down"></i>
         </button>
         <p-tieredMenu #menu [model]="items" [popup]="true"></p-tieredMenu>
-        <img src="{{this.fotoUrl}}" alt="" style="width: 40px" />
-      </div>
-    }
-    @if (widthScreen <= 768) {
-      <div class="col-md-2">
-        <button class="btn-sidenav" pTooltip="Sair" tooltipPosition="bottom">
-          <a (click)="logout()" class="d-flex">
-            <mat-icon class="text-black-50">exit_to_app</mat-icon>
-          </a>
+      }
+      @if (widthScreen <= 768) {
+        <button
+          type="button"
+          pButton
+          class="p-button-rounded p-button-text p-button-plain p-button-icon-only"
+          pTooltip="Sair"
+          tooltipPosition="bottom"
+          (click)="logout()"
+          aria-label="Sair"
+        >
+          <i class="pi pi-sign-out"></i>
         </button>
-        <img src="{{this.fotoUrl ? this.fotoUrl : ''}}" alt="" style="width: 40px" />
-      </div>
-    }
-    <div class="col-md-1">
+      }
     </div>
-  </div>
-</mat-toolbar>
+  </ng-template>
+</p-toolbar>

@@ -65,10 +65,10 @@ import {SelectModule} from "primeng/select";
     DialogModule,
     MatMenuModule,
     CardModule,
+    EmprestimoListComponent,
   ],
   declarations: [
     EmprestimoFormComponent,
-    EmprestimoListComponent,
     EmprestimoDevolucaoComponent
   ],
   exports: [

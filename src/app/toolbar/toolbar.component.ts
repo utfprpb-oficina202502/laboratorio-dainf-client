@@ -2,9 +2,7 @@ import { Component, HostListener, OnInit } from "@angular/core";
 import { LoginService } from "../login/login.service";
 import { SidenavService } from "../sidenav/sidenav.service";
 import { MenuItem } from "primeng/api";
-// import { SocialAuthService } from "@abacritt/angularx-social-login";
 import { Router } from "@angular/router";
-import { Usuario } from "../usuario/usuario";
 
 @Component({
     selector: "app-toolbar",
@@ -16,29 +14,25 @@ export class ToolbarComponent implements OnInit {
   widthScreen: number;
   sidenavIsOpen: boolean;
   items: MenuItem[];
-  fotoUrl: string;
 
   constructor(
-    private loginService: LoginService,
-    private sidenavService: SidenavService,
-    // private socialAuthService: SocialAuthService,
-    private router: Router
+    private readonly loginService: LoginService,
+    private readonly sidenavService: SidenavService,
+    private readonly router: Router
   ) {}
 
   ngOnInit() {
     this.getScreenSize();
     this.buildListenerCloseDrawer();
     this.optionDropdown();
-    this.fotoUrl = JSON.parse(localStorage.getItem("userLogged")).fotoUrl;
   }
 
   logout() {
-    // this.socialAuthService.signOut();
     this.loginService.logout();
   }
 
   buildListenerCloseDrawer() {
-    document.getElementById("content").addEventListener("click", (ev) => {
+    document.getElementById("content").addEventListener("click", () => {
       if (this.widthScreen < 1200) {
         this.hideSidenav();
       }
