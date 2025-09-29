@@ -1,14 +1,21 @@
 import { Component, OnInit, ViewChild } from "@angular/core";
 import { LoginService } from "./login.service";
 import { Usuario } from "../usuario/usuario";
-import { NgForm } from "@angular/forms";
+import {FormsModule, NgForm} from "@angular/forms";
 import { Router } from "@angular/router";
 import { MessageService } from "primeng/api";
 import { finalize } from "rxjs/operators";
+import {ProgressBar} from "primeng/progressbar";
+import {NgOptimizedImage} from "@angular/common";
 @Component({
-    selector: "app-login",
-    templateUrl: "./login.component.html",
-    styleUrls: ["./login.component.css"],
+  selector: "app-login",
+  templateUrl: "./login.component.html",
+  styleUrls: ["./login.component.css"],
+  imports: [
+    FormsModule,
+    ProgressBar,
+    NgOptimizedImage
+  ]
 })
 export class LoginComponent implements OnInit {
   usuario: Usuario;
