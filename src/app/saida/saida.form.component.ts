@@ -5,17 +5,51 @@ import {SaidaService} from './saida.service';
 import {Item} from '../item/item';
 import {SaidaItem} from './saidaItem';
 import {ItemService} from '../item/item.service';
-import {UsuarioService} from '../usuario/usuario.service';
-import {MatTable} from '@angular/material/table';
-import {AutoComplete} from 'primeng/autocomplete';
+import {
+  MatFooterCell,
+  MatFooterCellDef,
+  MatFooterRow,
+  MatHeaderRow, MatHeaderRowDef,
+  MatRow,
+  MatTable, MatTableModule
+} from '@angular/material/table';
 import {pt} from '../framework/constantes/calendarPt';
 import { DatePipe } from '@angular/common';
+import {SalvarModule} from "../geral/salvar/salvar.module";
+import {CancelarModule} from "../geral/cancelar/cancelar.module";
+import {FormsModule} from "@angular/forms";
+import {MatCard, MatCardContent, MatCardModule, MatCardTitle} from "@angular/material/card";
+import {VoltarModule} from "../geral/voltar/voltar.module";
+import {DatePicker} from "primeng/datepicker";
+import {CadastroRapidoModule} from "../geral/cadastroRapido/cadastroRapido.module";
+import {AutoComplete, AutoCompleteModule} from "primeng/autocomplete";
+import {MatIconModule} from "@angular/material/icon";
 
 @Component({
-    selector: 'app-form-saida',
-    templateUrl: './saida.form.component.html',
-    styleUrls: ['./saida.form.component.css'],
-    standalone: false
+  selector: 'app-form-saida',
+  templateUrl: './saida.form.component.html',
+  styleUrls: ['./saida.form.component.css'],
+  imports: [
+    SalvarModule,
+    CancelarModule,
+    FormsModule,
+    MatFooterRow,
+    MatRow,
+    MatHeaderRow,
+    MatFooterCell,
+    MatFooterCellDef,
+    MatHeaderRowDef,
+    MatCardContent,
+    VoltarModule,
+    MatCard,
+    MatCardTitle,
+    DatePicker,
+    CadastroRapidoModule,
+    AutoCompleteModule,
+    MatCardModule,
+    MatTableModule,
+    MatIconModule
+  ]
 })
 export class SaidaFormComponent extends CrudFormComponent<Saida, number> {
 
@@ -31,8 +65,7 @@ export class SaidaFormComponent extends CrudFormComponent<Saida, number> {
 
   constructor(protected saidaService: SaidaService,
               protected injector: Injector,
-              private itemService: ItemService,
-              private usuarioService: UsuarioService) {
+              private readonly itemService: ItemService) {
     super(saidaService, injector, '/saida');
     this.saidaItem = new SaidaItem();
     this.localePt = pt;
@@ -56,11 +89,9 @@ export class SaidaFormComponent extends CrudFormComponent<Saida, number> {
   }
 
   setUsuarioResponsavel() {
-    const username = localStorage.getItem('username');
-    this.usuarioService.findByUsername(username)
-      .subscribe(e => {
-        this.object.usuarioResponsavel = e;
-      });
+    this.loginService.getCurrentUser().subscribe((user) => {
+      this.object.usuarioResponsavel = user;
+    });
   }
 
   findProdutos($event) {

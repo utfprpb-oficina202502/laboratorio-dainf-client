@@ -66,9 +66,10 @@ import {SelectModule} from "primeng/select";
     CarouselModule,
     CardModule,
     TagModule,
-    DataViewModule
+    DataViewModule,
+    ItemListComponent
   ],
-  declarations: [ItemFormComponent, ItemListComponent, ItemViewComponent],
+  declarations: [ItemFormComponent, ItemViewComponent],
   exports: [ItemFormComponent, ItemListComponent, ItemViewComponent],
   providers: [ItemService, ValidationService],
 })

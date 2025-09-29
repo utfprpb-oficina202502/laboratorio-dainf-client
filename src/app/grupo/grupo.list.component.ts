@@ -47,7 +47,7 @@ export class GrupoListComponent extends PrimeCrudListComponent<Grupo, number> {
   private readonly tableColumns: TableColumn[] = [
     {
       field: 'id',
-      header: 'Codigo',
+      header: 'Código',
       type: 'number',
       sortable: true,
       filterable: true,
@@ -56,7 +56,7 @@ export class GrupoListComponent extends PrimeCrudListComponent<Grupo, number> {
     },
     {
       field: 'descricao',
-      header: 'Descricao',
+      header: 'Descrição',
       type: 'text',
       sortable: true,
       filterable: true,
@@ -64,7 +64,7 @@ export class GrupoListComponent extends PrimeCrudListComponent<Grupo, number> {
     },
     {
       field: 'actions',
-      header: 'Opcoes',
+      header: 'Opções',
       type: 'custom',
       sortable: false,
       filterable: false,

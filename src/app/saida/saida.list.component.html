@@ -1,82 +1,152 @@
 <div class="container-fluid my-3">
-  <mat-card>
-    <mat-card-title>
-      <div class="d-flex align-items-center justify-content-between">
-        <h4 class="m-0">Saída</h4>
-        <button type="button"
-                (click)="openForm()"
-                pTooltip="Inserir Novo Registro"
-                mat-icon-button>
-          <mat-icon>add</mat-icon>
-        </button>
-      </div>
-    </mat-card-title>
-    <mat-card-content>
-      <mat-form-field>
-        <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Filtro">
-      </mat-form-field>
+  <p-card>
+    <ng-template pTemplate="header">
+      <app-prime-crud-toolbar [table]='dt' [list]='self'></app-prime-crud-toolbar>
+    </ng-template>
 
-      <div class="mat-elevation-z8">
-        <mat-table [dataSource]="dataSource" matSort>
+    <p-table #dt
+             [value]="objects"
+             [rows]="rows"
+             [totalRecords]="totalElements"
+             [paginator]="true"
+             [rowsPerPageOptions]="tableConfig.pageSizeOptions || [5, 10, 25, 50, 100]"
+             (onPage)="onPageChange($event)"
+             (onSort)="onSort($event)"
+             [first]="first"
+             [lazy]="tableConfig.lazy !== false"
+             [lazyLoadOnInit]="tableConfig.lazyLoadOnInit !== false"
+             [(selection)]="selectedItems"
+             (selectionChange)="onSelectionChange($event)"
+             [dataKey]="tableConfig.rowExpansionKey || 'id'"
+             [resizableColumns]="tableConfig.resizableColumns !== false"
+             [columnResizeMode]="tableConfig.columnResizeMode || 'fit'"
+             [rowHover]="tableConfig.rowHover !== false"
+             [stripedRows]="tableConfig.striped !== false"
+             [rowExpandMode]="tableConfig.expandMode || 'single'"
+             [expandedRowKeys]="expandedRows"
+             (onRowExpand)="onRowExpand($event)"
+             (onRowCollapse)="onRowCollapse($event)"
+             currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+             [showCurrentPageReport]="true"
+             [attr.aria-label]="'Lista de saidas com ' + totalElements + ' registro(s)'">
 
-          <ng-container matColumnDef="id">
-            <mat-header-cell *matHeaderCellDef mat-sort-header>Código</mat-header-cell>
-            <mat-cell *matCellDef="let row" (click)="openBottomSheet(row.id)">{{row.id}}</mat-cell>
-          </ng-container>
+      <ng-template pTemplate="caption">
+        <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
+          <p-iconField iconPosition="left" class="flex-grow-1 flex-md-grow-0">
+            <p-inputIcon class="pi pi-search" aria-hidden="true"></p-inputIcon>
+            <input
+              #globalFilterInput
+              pInputText
+              type="text"
+              (input)="onGlobalFilter($any($event.target).value)"
+              [value]="filterValue"
+              [placeholder]="'Buscar saidas...'"
+              [attr.aria-label]="'Campo de busca para filtrar saidas'"
+              autocomplete="off" />
+          </p-iconField>
+          <p-button
+            type="button"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="clearGlobalFilter()"
+            [attr.aria-label]="'Limpar filtro global'">
+            <span pButtonIcon class="pi pi-filter-slash"></span>
+            <span pButtonLabel>Limpar</span>
+          </p-button>
+        </div>
+      </ng-template>
 
-          <ng-container matColumnDef="dtSaida">
-            <mat-header-cell *matHeaderCellDef mat-sort-header>Data Saída</mat-header-cell>
-            <mat-cell *matCellDef="let row" (click)="openBottomSheet(row.id)">{{row?.dataSaida}}</mat-cell>
-          </ng-container>
+      <ng-template pTemplate="header">
+        <tr>
+          @for (column of getVisibleColumns(); track column.field) {
+            <th
+              [style.text-align]="column.align || 'left'"
+              [style.width]="column.width"
+              [style.min-width]="column.minWidth"
+              [attr.id]="'col-' + column.field">
+              {{ column.header }}
+            </th>
+          }
+        </tr>
+      </ng-template>
 
-          <ng-container matColumnDef="qtde">
-            <mat-header-cell *matHeaderCellDef mat-sort-header>Quantidade</mat-header-cell>
-            <mat-cell *matCellDef="let row"
-                      (click)="openBottomSheet(row.id)">{{getQtdeTotal(row?.saidaItem)}}</mat-cell>
-          </ng-container>
-
-          <ng-container matColumnDef="usuario">
-            <mat-header-cell *matHeaderCellDef mat-sort-header>Usuário Responsável</mat-header-cell>
-            <mat-cell *matCellDef="let row" (click)="openBottomSheet(row.id)">{{row?.usuarioResponsavel?.nome}}</mat-cell>
-          </ng-container>
-
-          <ng-container matColumnDef="observacao">
-            <mat-header-cell *matHeaderCellDef mat-sort-header>Observação</mat-header-cell>
-            <mat-cell *matCellDef="let row" (click)="openBottomSheet(row.id)">
-              <p class="abbreviate">{{row?.observacao || 'Nenhuma observação'}}</p>
-            </mat-cell>
-          </ng-container>
-
-          <ng-container matColumnDef="actions">
-            <mat-header-cell *matHeaderCellDef> Opções</mat-header-cell>
-            <mat-cell *matCellDef="let row">
-              <button class="btn btn-outline-secondary rounded mr-2"
-                      type="button"
+      <ng-template pTemplate="body" let-rowData>
+        <tr>
+          @for (column of getVisibleColumns(); track column.field) {
+            <td
+              [style.text-align]="column.align || 'left'"
+              [style.width]="column.width"
+              [style.min-width]="column.minWidth">
+              @switch (column.field) {
+                @case ('id') {
+                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.id }}</span>
+                }
+                @case ('dataSaida') {
+                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.dataSaida | date:'dd/MM/yyyy' }}</span>
+                }
+                @case ('qtde') {
+                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ getQtdeTotal(rowData?.saidaItem) }}</span>
+                }
+                @case ('usuarioResponsavel') {
+                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData?.usuarioResponsavel?.nome || 'N/A' }}</span>
+                }
+                @case ('observacao') {
+                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;" class="text-truncate d-block" [title]="rowData?.observacao">
+                    {{ rowData?.observacao || 'Nenhuma observacao' }}
+                  </span>
+                }
+                @case ('actions') {
+                  <div class="d-flex align-items-center gap-1 justify-content-center">
+                    <p-button
+                      icon="pi pi-pencil"
+                      [outlined]="true"
+                      severity="secondary"
+                      size="small"
                       pTooltip="Editar"
-                      (click)="edit(row.id)">
-                <i class="fa fa-edit"></i>
-              </button>
-              <button class="btn btn-outline-primary rounded"
-                      type="button"
+                      tooltipPosition="top"
+                      (onClick)="edit(rowData.id)">
+                    </p-button>
+                    <p-button
+                      icon="pi pi-trash"
+                      [outlined]="true"
+                      severity="danger"
+                      size="small"
                       pTooltip="Remover"
-                      (click)="preDelete(row)">
-                <i class="fa fa-trash-o"></i>
-              </button>
-            </mat-cell>
-          </ng-container>
+                      tooltipPosition="top"
+                      (onClick)="preDelete(rowData)">
+                    </p-button>
+                  </div>
+                }
+                @default {
+                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData[column.field] }}</span>
+                }
+              }
+            </td>
+          }
+        </tr>
+      </ng-template>
 
-          <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-          <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
-        </mat-table>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="getVisibleColumns().length">
+            <div class="text-center py-4">
+              <i class="pi pi-info-circle text-muted" style="font-size: 2rem;"></i>
+              <p class="text-muted mt-2 mb-0">{{tableConfig.emptyMessage}}</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
 
-        <mat-paginator
-            [length]="totalElements"
-            [pageSize]="pageSize"
-            [pageIndex]="pageIndex"
-            [pageSizeOptions]="[5, 10, 25, 50, 100]"
-            (page)="onPageChange($event)">
-      </mat-paginator>
-      </div>
-    </mat-card-content>
-  </mat-card>
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="getVisibleColumns().length">
+            <div class="text-center py-4">
+              <i class="pi pi-spin pi-spinner text-muted" style="font-size: 2rem;"></i>
+              <p class="text-muted mt-2 mb-0">{{tableConfig.loadingMessage}}</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
 </div>

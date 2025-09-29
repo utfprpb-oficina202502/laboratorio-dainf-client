@@ -40,10 +40,8 @@ import {DatePickerModule} from "primeng/datepicker";
     SalvarModule,
     InputTextModule,
     ValidationModule,
-  ],
-  declarations: [
+    SolicitacaoCompraListComponent,
     SolicitacaoCompraFormComponent,
-    SolicitacaoCompraListComponent
   ],
   exports: [
     SolicitacaoCompraFormComponent,

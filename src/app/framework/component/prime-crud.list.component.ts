@@ -103,11 +103,11 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   protected columnFilters: { [key: string]: any } = {};
   protected columnState: ColumnState[] = [];
   protected destroy$ = new Subject<void>();
-  private filterSubject = new Subject<string>();
-  private columnTemplates = new Map<string, TemplateRef<any>>();
+  private readonly filterSubject = new Subject<string>();
+  private readonly columnTemplates = new Map<string, TemplateRef<any>>();
   private keyboardShortcutHandlers: Array<{ predicate: (event: KeyboardEvent) => boolean; action: () => void; preventDefault?: boolean }> = [];
   private pendingSelectedKeys: any[] = [];
-  private defaultStateKey: string;
+  private readonly defaultStateKey: string;
   private stateKey: string;
   private stateStorageRef?: Storage;
 
@@ -733,8 +733,6 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       text: 'A ação não poderá ser desfeita.',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
       confirmButtonText: 'Sim',
       cancelButtonText: 'Não'
     }).then((result) => {
@@ -930,8 +928,6 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       text: 'A ação não poderá ser desfeita.',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
       confirmButtonText: 'Sim',
       cancelButtonText: 'Não'
     }).then((result) => {
@@ -978,10 +974,59 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
     if (!target) {
       console.warn('PrimeCrudListComponent: exportCSV called without table reference.');
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Aviso',
+        detail: 'Tabela não encontrada para exportação CSV'
+      });
       return;
     }
 
-    target.exportCSV();
+    if (!this.objects || this.objects.length === 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Aviso',
+        detail: 'Não há dados para exportar'
+      });
+      return;
+    }
+
+    try {
+      // Ensure table has columns property for PrimeNG exportCSV to work
+      const exportableColumns = this.getExportableColumns();
+      if (!exportableColumns || exportableColumns.length === 0) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Aviso',
+          detail: 'Nenhuma coluna disponível para exportação'
+        });
+        return;
+      }
+
+      // Set the columns property that PrimeNG exportCSV expects
+      (target as any).columns = exportableColumns.map(column => ({
+        field: column.field,
+        header: column.header
+      }));
+
+      // Call the native PrimeNG exportCSV method
+      target.exportCSV();
+
+      // Show success message
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Sucesso',
+        detail: `${this.getEntityPluralName()} exportados para CSV com sucesso`
+      });
+
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao exportar dados para CSV'
+      });
+    }
   }
 
   // Centralized permission setup using the permission service
