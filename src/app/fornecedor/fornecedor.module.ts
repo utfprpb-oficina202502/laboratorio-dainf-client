@@ -55,11 +55,11 @@ import {TelefoneFormatModule} from '../framework/directives/telefone/telefone.fo
     CnpjValidatorModule,
     CpfCnpjPipeModule,
     EmailValidatorModule,
-    TelefoneFormatModule
+    TelefoneFormatModule,
+    FornecedorListComponent
   ],
   declarations: [
-    FornecedorFormComponent,
-    FornecedorListComponent
+    FornecedorFormComponent
   ],
   exports: [
     FornecedorFormComponent,

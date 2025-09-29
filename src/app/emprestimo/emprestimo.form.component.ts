@@ -10,7 +10,6 @@ import {Usuario} from '../usuario/usuario';
 import {MatTable} from '@angular/material/table';
 import {SelectItem} from 'primeng/api';
 import {NgForm} from '@angular/forms';
-import {DateUtil} from '../framework/util/dateUtil';
 import {pt} from '../framework/constantes/calendarPt';
 import Swal from "sweetalert2";
 import { DatePipe } from '@angular/common';
@@ -42,12 +41,12 @@ export class EmprestimoFormComponent extends CrudFormComponent<Emprestimo, numbe
   documentoUsuario: string;
   disableForm = false;
   localePt: any;
-  minioUrl: String;
+  minioUrl: string;
 
   constructor(protected emprestimoService: EmprestimoService,
               protected injector: Injector,
-              private itemService: ItemService,
-              private usuarioService: UsuarioService) {
+              private readonly itemService: ItemService,
+              private readonly usuarioService: UsuarioService) {
     super(emprestimoService, injector, '/emprestimo');
     this.emprestimoItem = new EmprestimoItem();
     this.yesNoDropdown = [
@@ -75,11 +74,9 @@ export class EmprestimoFormComponent extends CrudFormComponent<Emprestimo, numbe
   }
 
   setUsuarioResponsavel() {
-    const username = localStorage.getItem('username');
-    this.usuarioService.findByUsername(username)
-      .subscribe(e => {
-        this.object.usuarioResponsavel = e;
-      });
+    this.loginService.getCurrentUser().subscribe((user) => {
+      this.object.usuarioResponsavel = user;
+    });
   }
 
   findProdutos($event) {
@@ -137,7 +134,6 @@ export class EmprestimoFormComponent extends CrudFormComponent<Emprestimo, numbe
 
   postInsertItemList() {
     this.emprestimoItem = new EmprestimoItem();
-    // this.setFocusInputItem();
     this.table.renderRows();
   }
 
