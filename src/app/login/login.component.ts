@@ -4,18 +4,11 @@ import { Usuario } from "../usuario/usuario";
 import { NgForm } from "@angular/forms";
 import { Router } from "@angular/router";
 import { MessageService } from "primeng/api";
-import { UsuarioService } from "../usuario/usuario.service";
-import {
-  GoogleLoginProvider,
-  SocialAuthService,
-} from "@abacritt/angularx-social-login";
-import { SocialUser } from "@abacritt/angularx-social-login";
-import { TokenDto } from "./token-dto";
+import { finalize } from "rxjs/operators";
 @Component({
     selector: "app-login",
     templateUrl: "./login.component.html",
     styleUrls: ["./login.component.css"],
-    standalone: false
 })
 export class LoginComponent implements OnInit {
   usuario: Usuario;
@@ -23,48 +16,15 @@ export class LoginComponent implements OnInit {
   @ViewChild("form", { static: true }) form: NgForm;
 
   constructor(
-    private loginService: LoginService,
-    private router: Router,
-    private messageService: MessageService,
-    private usuarioService: UsuarioService
-  ) // private socialAuthService: SocialAuthService
-  {}
+    private readonly loginService: LoginService,
+    private readonly router: Router,
+    private readonly messageService: MessageService
+  ) {
+    // private socialAuthService: SocialAuthService
+  }
 
   ngOnInit() {
     this.usuario = new Usuario();
-    /* Login com redes sociais - será implementado futuramente
-    this.socialAuthService.authState.subscribe((user: SocialUser) => {
-      if (user && user.idToken) {
-        console.log(user);
-        this.showProgress = true;
-        this.loginService.loginWithGoogle(user.idToken).subscribe({
-          next: (e: TokenDto) => {
-            localStorage.setItem("token", e.token);
-            localStorage.setItem("social", "true");
-            localStorage.setItem("username", e.email);
-            this.usuarioService.findByUsername(e.email).subscribe((user) => {
-              localStorage.setItem("userLogged", JSON.stringify(user));
-              if (user.documento !== "" && user.telefone !== "") {
-                this.router.navigate(["/"]);
-              } else {
-                this.router.navigate([`/usuario/edit/${user.id}`]);
-              }
-            });
-            this.showProgress = false;
-          },
-          error: () => {
-            this.showProgress = false;
-            this.messageService.add({
-              severity: "error",
-              summary: "Atenção",
-              detail:
-                "É necessário utilizar um email @utfpr.edu.br (@alunos, @professores ou @administrativo.utfpr.edu.br)",
-            });
-          },
-        });
-      }
-    });
-    */
   }
 
   login() {
@@ -99,12 +59,22 @@ export class LoginComponent implements OnInit {
   }
 
   setUserInLocalStorage() {
-    this.usuarioService
-      .findByUsername(this.usuario.username)
-      .subscribe((user) => {
-        localStorage.setItem("userLogged", JSON.stringify(user));
-        this.showProgress = false;
-        this.router.navigate(["/"]);
+    this.loginService
+      .refreshCurrentUser()
+      .pipe(finalize(() => (this.showProgress = false)))
+      .subscribe({
+        next: () => {
+          this.router.navigate(["/"]);
+        },
+        error: () => {
+          this.messageService.add({
+            severity: "error",
+            summary: "Atenção",
+            detail: "Não foi possível carregar os dados do usuário. Tente novamente.",
+          });
+          this.loginService.logout();
+        },
       });
   }
+
 }

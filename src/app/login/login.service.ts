@@ -1,15 +1,15 @@
 import { Injectable } from "@angular/core";
-import { HttpClient, HttpHeaders } from "@angular/common/http";
+import { HttpClient } from "@angular/common/http";
 import {
   ActivatedRouteSnapshot,
   Router,
   RouterStateSnapshot,
   UrlTree,
 } from "@angular/router";
-import { Observable, Subject, throwError } from "rxjs";
+import { BehaviorSubject, Observable, Subject, throwError, of, firstValueFrom } from "rxjs";
 import { Usuario } from "../usuario/usuario";
 import { environment } from "../../environments/environment";
-import { catchError, map } from "rxjs/operators";
+import { catchError, finalize, map, shareReplay, tap } from "rxjs/operators";
 import { UsuarioService } from "../usuario/usuario.service";
 import { Permissao } from "../usuario/permissao";
 import { TokenDto } from "./token-dto";
@@ -19,11 +19,82 @@ export class LoginService {
   url: string;
   isAuthenticated = new Subject<boolean>();
   isRunningRequest = false;
+  private readonly currentUserSubject = new BehaviorSubject<Usuario | null>(this.loadUserFromStorage());
+  private currentUserRequest$: Observable<Usuario> | null = null;
+  private authValidation$: Observable<boolean> | null = null;
+  private hasValidatedSession = false;
+
+  private loadUserFromStorage(): Usuario | null {
+    const stored = localStorage.getItem("userLogged");
+    if (!stored) {
+      return null;
+    }
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return null;
+    }
+  }
+
+  private persistUser(user: Usuario | null) {
+    if (user) {
+      localStorage.setItem("userLogged", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("userLogged");
+    }
+  }
+
+  getCurrentUser(options: { forceRefresh?: boolean } = {}): Observable<Usuario> {
+    const forceRefresh = options.forceRefresh ?? false;
+    const cached = this.currentUserSubject.value;
+
+    if (!forceRefresh && cached) {
+      return of(cached);
+    }
+
+    if (!forceRefresh && this.currentUserRequest$) {
+      return this.currentUserRequest$;
+    }
+
+    const username = localStorage.getItem("username");
+    if (!username) {
+      return throwError(() => new Error('Usuário não autenticado.'));
+    }
+
+    const request$ = this.usuarioService.findByUsername(username).pipe(
+      tap((user) => {
+        this.persistUser(user);
+        this.currentUserSubject.next(user);
+      }),
+      finalize(() => {
+        this.currentUserRequest$ = null;
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+
+    this.currentUserRequest$ = request$;
+    return request$;
+  }
+
+  refreshCurrentUser(): Observable<Usuario> {
+    return this.getCurrentUser({ forceRefresh: true });
+  }
+
+  private redirectIfProfileIncomplete(route: ActivatedRouteSnapshot) {
+    const user = this.currentUserSubject.value || this.loadUserFromStorage();
+    if (!user) {
+      return;
+    }
+    const firstSegment = route?.url?.length ? route.url[0].path || '' : '';
+    if (user.documento === '' && firstSegment && !firstSegment.includes('usuario')) {
+      this.router.navigate([`/usuario/edit/${user.id}`]);
+    }
+  }
 
   constructor(
-    private http: HttpClient,
-    private router: Router,
-    private usuarioService: UsuarioService
+    private readonly http: HttpClient,
+    private readonly router: Router,
+    private readonly usuarioService: UsuarioService
   ) {
     this.url = environment.api_url + "login";
   }
@@ -36,61 +107,78 @@ export class LoginService {
     | Promise<boolean | UrlTree>
     | boolean
     | UrlTree {
+    const hasCachedUser = !!(this.currentUserSubject.value || this.loadUserFromStorage());
+    if (this.hasValidatedSession && hasCachedUser) {
+      this.redirectIfProfileIncomplete(route);
+      return of(true);
+    }
+
+    if (this.authValidation$) {
+      return this.authValidation$;
+    }
+
     const url = `${environment.api_url}usuario/user-info`;
     this.isRunningRequest = true;
 
-    return this.http.get(url).pipe(
-      map((e) => {
-        this.isRunningRequest = false;
-        this.isAuthenticated.next(true);
-        if (JSON.parse(localStorage.getItem("userLogged")).documento === "" && !route.url[0].path.includes("usuario")) {
-          this.router.navigate([`/usuario/edit/${JSON.parse(localStorage.getItem("userLogged")).id}`]);
+    const request$ = this.http.get<Usuario>(url).pipe(
+      tap((user) => {
+        if (user) {
+          this.persistUser(user);
+          this.currentUserSubject.next(user);
         }
-        return true;
+        this.isAuthenticated.next(true);
+        this.hasValidatedSession = true;
+        this.redirectIfProfileIncomplete(route);
       }),
+      map(() => true),
       catchError((err) => {
-        this.isRunningRequest = false;
         this.logout();
-        return throwError(new Error("O usuário não está autenticado!"));
-      })
+        return throwError(() => new Error('O usuario nao esta autenticado!'));
+      }),
+      finalize(() => {
+        this.isRunningRequest = false;
+        this.authValidation$ = null;
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
     );
+
+    this.authValidation$ = request$;
+    return request$;
   }
 
-  getPermissoesUser(): Observable<Permissao[]> {
-    const username = localStorage.getItem("username");
-    return this.usuarioService.findByUsername(username).pipe(
-      map((value) => {
-        return value.permissoes;
-      })
+  getPermissoesUser(options: { forceRefresh?: boolean } = {}): Observable<Permissao[]> {
+    return this.getCurrentUser(options).pipe(
+      map((value) => value.permissoes || value.authorities || [])
     );
   }
 
   hasAnyRole(componentRoles: any) {
-    const loggedUser = JSON.parse(localStorage.getItem("userLogged"));
+    const loggedUser = this.currentUserSubject.value || this.loadUserFromStorage();
     if (loggedUser != null) {
-      let hasRole = false;
-      loggedUser.authorities.forEach((p) => {
-        if (componentRoles.includes(p.nome)) {
-          hasRole = true;
-          return false;
-        }
-      });
-      return hasRole;
-    } else {
-      this.logout();
+      const userRoles = loggedUser.authorities || loggedUser.permissoes || [];
+      if (Array.isArray(userRoles)) {
+        return userRoles.some((p: any) => componentRoles.includes(p.nome));
+      }
     }
+    this.logout();
+    return false;
   }
 
-  userLoggedIsAlunoOrProfessor(): Promise<boolean> {
-    return new Promise<boolean>((resolve) => {
-      resolve(!this.hasAnyRole(["ROLE_ADMINISTRADOR", "ROLE_LABORATORISTA"]));
-    });
+  async userLoggedIsAlunoOrProfessor(): Promise<boolean> {
+    const user = await firstValueFrom(this.getCurrentUser());
+    const userRoles = user?.authorities || user?.permissoes || [];
+    const roles = Array.isArray(userRoles) ? userRoles.map((p: any) => p.nome) : [];
+    return !roles.some((role) => role === 'ROLE_ADMINISTRADOR' || role === 'ROLE_LABORATORISTA');
   }
 
   logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
-    localStorage.removeItem("userLogged");
+    this.persistUser(null);
+    this.currentUserSubject.next(null);
+    this.currentUserRequest$ = null;
+    this.authValidation$ = null;
+    this.hasValidatedSession = false;
     this.isAuthenticated.next(false);
     this.router.navigate(["/login"]);
   }
@@ -105,17 +193,4 @@ export class LoginService {
         })
       );
   }
-
-  // loginWithGoogle(idToken: string): Observable<TokenDto> {
-  //   const url = `${environment.api_url}auth`;
-  //   const headers = {
-  //     headers: new HttpHeaders({ "Auth-Id-Token": `Bearer ${idToken}`}),
-  //   };
-
-  //   return this.http.post<TokenDto>(
-  //     url,
-  //     '',
-  //     headers
-  //   );
-  // }
 }
