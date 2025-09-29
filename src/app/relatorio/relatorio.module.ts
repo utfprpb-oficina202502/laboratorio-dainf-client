@@ -2,61 +2,91 @@ import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {RelatorioFormComponent} from './relatorio.form.component';
 import {RelatorioListComponent} from './relatorio.list.component';
-import {MatCardModule} from '@angular/material/card';
-import {NovoModule} from '../geral/novo/novo.module';
-import {MatFormFieldModule} from '@angular/material/form-field';
-import {MatTableModule} from '@angular/material/table';
-import {MatPaginatorModule} from '@angular/material/paginator';
+import {RelatorioViewerComponent} from './relatorio.viewer.component';
 import {RelatorioService} from './relatorio.service';
 import {FormsModule} from '@angular/forms';
-import {MatInputModule} from '@angular/material/input';
+import {ValidationModule} from '../framework/validation/validation.module';
+import {ValidationService} from '../framework/validation/validation.service';
+import {OnlyNumberModule} from '../framework/directives/onlyNumber/onlyNumber.module';
+
+// Legacy modules (kept for form and viewer components)
+import {NovoModule} from '../geral/novo/novo.module';
 import {VoltarModule} from '../geral/voltar/voltar.module';
 import {SalvarModule} from '../geral/salvar/salvar.module';
 import {CancelarModule} from '../geral/cancelar/cancelar.module';
+import {HelpModule} from '../geral/help/help.module';
+
+// PrimeNG Components
+import {CardModule} from 'primeng/card';
+import {TableModule} from 'primeng/table';
+import {MultiSelectModule} from 'primeng/multiselect';
+import {ToolbarModule} from 'primeng/toolbar';
+import {ButtonModule} from 'primeng/button';
+import {InputTextModule} from 'primeng/inputtext';
+import {IconFieldModule} from 'primeng/iconfield';
+import {InputIconModule} from 'primeng/inputicon';
+import {TooltipModule} from 'primeng/tooltip';
 import {DialogModule} from 'primeng/dialog';
 import {FieldsetModule} from 'primeng/fieldset';
 import {FileUploadModule} from 'primeng/fileupload';
-import {InputTextModule} from 'primeng/inputtext';
-import {TooltipModule} from 'primeng/tooltip';
-import {MatIconModule} from '@angular/material/icon';
-import {ValidationModule} from '../framework/validation/validation.module';
-import {ValidationService} from '../framework/validation/validation.service';
-import {RelatorioViewerComponent} from './relatorio.viewer.component';
-import {MatButtonModule} from '@angular/material/button';
-import {OnlyNumberModule} from '../framework/directives/onlyNumber/onlyNumber.module';
-import {HelpModule} from '../geral/help/help.module';
 import {DatePickerModule} from "primeng/datepicker";
 import {SelectModule} from "primeng/select";
+
+// Framework components
+import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
+
+// Angular Material (still needed for form and viewer components)
+import {MatCardModule} from '@angular/material/card';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {MatInputModule} from '@angular/material/input';
+import {MatTableModule} from '@angular/material/table';
+import {MatIconModule} from '@angular/material/icon';
+import {MatButtonModule} from '@angular/material/button';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatCardModule,
+    ValidationModule,
+    OnlyNumberModule,
+
+    // Legacy modules (kept for form and viewer components)
     NovoModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatButtonModule,
     VoltarModule,
     SalvarModule,
     CancelarModule,
+    HelpModule,
+
+    // PrimeNG Components
+    CardModule,
+    TableModule,
+    MultiSelectModule,
+    ToolbarModule,
+    ButtonModule,
+    InputTextModule,
+    IconFieldModule,
+    InputIconModule,
+    TooltipModule,
+    DialogModule,
+    FieldsetModule,
     FileUploadModule,
     DatePickerModule,
-    MatIconModule,
-    ValidationModule,
-    InputTextModule,
-    TooltipModule,
-    FieldsetModule,
-    DialogModule,
     SelectModule,
-    OnlyNumberModule,
-    HelpModule
+
+    // Framework components
+    PrimeCrudToolbarComponent,
+
+    // Angular Material (still needed for form and viewer components)
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatTableModule,
+    MatIconModule,
+    MatButtonModule,
+    RelatorioListComponent
   ],
   declarations: [
     RelatorioFormComponent,
-    RelatorioListComponent,
     RelatorioViewerComponent
   ],
   exports: [

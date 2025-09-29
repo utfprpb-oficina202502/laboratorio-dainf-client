@@ -25,10 +25,10 @@
             "aot": true,
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
-              "@angular/material/prebuilt-themes/indigo-pink.css",
               "primeicons/primeicons.css",
               "font-awesome/css/font-awesome.css",
               "bootstrap/dist/css/bootstrap.css",
+              "src/app/framework/styles/theme-variables.css",
               "src/styles.css",
               "src/prime-tailwind-fallback.css"
             ],

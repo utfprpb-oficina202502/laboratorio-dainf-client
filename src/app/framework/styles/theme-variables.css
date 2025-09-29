@@ -1,0 +1,96 @@
+/* Basic Theme Variables for Light/Dark Switching */
+/* Keeping only essential variables, letting PrimeNG use default Aura theme */
+
+:root {
+  /* Basic Theme Colors - Light Theme */
+  --color-bg-primary: #FFFFFF;
+  --color-bg-secondary: #F8F9FA;
+  --color-text-primary: #212529;
+  --color-text-secondary: #6C757D;
+  --color-border: #DEE2E6;
+  --color-hover: #F8F9FA;
+  --color-shadow: rgba(0, 0, 0, 0.1);
+  --color-overlay: rgba(0, 0, 0, 0.5);
+  --login-bg-gradient-start: #F8FAFC;
+  --login-bg-gradient-end: #E2E8F0;
+  --layout-content-bg: #F8FAFC;
+  --color-card-background: #FFFFFF;
+  --color-card-surface: rgba(255, 255, 255, 0.92);
+  --color-card-border: rgba(15, 23, 42, 0.08);
+  --color-card-shadow: 0 2px 1px -1px rgba(0, 0, 0, 0.2), 0 1px 1px 0 rgba(0, 0, 0, 0.14), 0 1px 3px 0 rgba(0, 0, 0, 0.12);
+  --color-card-hover-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.15), 0 3px 6px -1px rgba(0, 0, 0, 0.1), 0 0 0 3px rgba(59, 130, 246, 0.25);
+  --color-card-number-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Dark Theme Colors */
+:root.theme-dark,
+[data-theme="dark"] {
+  --color-bg-primary: #212529;
+  --color-bg-secondary: #343A40;
+  --color-text-primary: #F8F9FA;
+  --color-text-secondary: #ADB5BD;
+  --color-border: #495057;
+  --color-hover: #495057;
+  --color-shadow: rgba(0, 0, 0, 0.3);
+  --color-overlay: rgba(0, 0, 0, 0.7);
+  --login-bg-gradient-start: #0B1120;
+  --login-bg-gradient-end: #1F2933;
+  --layout-content-bg: #1A1D20;
+  --color-card-background: #1F2428;
+  --color-card-surface: rgba(31, 36, 40, 0.9);
+  --color-card-border: rgba(148, 163, 184, 0.2);
+  --color-card-shadow: 0 10px 24px -16px rgba(15, 23, 42, 0.6), 0 6px 16px -12px rgba(15, 23, 42, 0.45);
+  --color-card-hover-shadow: 0 12px 22px -10px rgba(15, 23, 42, 0.55), 0 0 0 3px rgba(59, 130, 246, 0.45);
+  --color-card-number-shadow: 0 1px 0 rgba(0, 0, 0, 0.65);
+}
+
+/* Application-wide theme application */
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+
+/* Theme transition animations */
+.theme-bg-primary,
+.theme-bg-secondary {
+  transition: background-color 0.2s ease;
+}
+
+.theme-text-primary,
+.theme-text-secondary {
+  transition: color 0.2s ease;
+}
+
+.theme-border {
+  transition: border-color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body,
+  .theme-bg-primary,
+  .theme-bg-secondary,
+  .theme-text-primary,
+  .theme-text-secondary,
+  .theme-border {
+    transition: none;
+  }
+}
+
+/* Utility classes for theme-aware components */
+.theme-bg-primary {
+  background-color: var(--color-bg-primary);
+}
+
+.theme-bg-secondary {
+  background-color: var(--color-bg-secondary);
+}
+
+.theme-text-primary {
+  color: var(--color-text-primary);
+}
+
+.theme-text-secondary {
+  color: var(--color-text-secondary);
+}

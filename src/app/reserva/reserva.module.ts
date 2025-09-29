@@ -47,11 +47,12 @@ import {DatePickerModule} from "primeng/datepicker";
     BottomSheetReservaModule,
     DialogModule,
     CarouselModule,
-    CardModule
+    CardModule,
+    ReservaListComponent,
+    ReservaFormComponent
   ],
   declarations: [
-    ReservaFormComponent,
-    ReservaListComponent
+
   ],
   exports: [
     ReservaFormComponent,

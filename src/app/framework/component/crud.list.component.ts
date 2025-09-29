@@ -1,8 +1,8 @@
 import { HostListener, Injector, OnInit, ViewChild, Directive } from '@angular/core';
 import {Router} from '@angular/router';
 import {CrudService} from '../service/crud.service';
-import {ConfirmationService} from 'primeng/api';
-import {MessageService} from 'primeng/api';
+import {ConfirmationService, MessageService} from 'primeng/api';
+
 import {MatTableDataSource} from '@angular/material/table';
 import {MatPaginator, PageEvent} from '@angular/material/paginator';
 import {MatSort} from '@angular/material/sort';
@@ -89,9 +89,6 @@ export abstract class CrudListComponent<T, ID> implements OnInit {
     this.buildColumnsTable();
   }
 
-  findAllCustom(): void {
-  }
-
   findAll() {
     this.loaderService.display(true);
     this.service.findAllPaged(this.pageIndex,this.pageSize,'')
@@ -134,6 +131,7 @@ export abstract class CrudListComponent<T, ID> implements OnInit {
   }
 
   postFindAll(): void {
+    //  caso precise editar os valores do retorno do findAll
   }
 
   delete(id: any) {
@@ -142,8 +140,6 @@ export abstract class CrudListComponent<T, ID> implements OnInit {
       text: 'A ação não poderá ser desfeita.',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
       confirmButtonText: 'Sim',
       cancelButtonText: 'Não'
     }).then((result) => {

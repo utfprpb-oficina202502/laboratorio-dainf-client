@@ -3,19 +3,52 @@ import {CrudFormComponent} from '../framework/component/crud.form.component';
 import {SolicitacaoCompra} from './solicitacaoCompra';
 import {SolicitacaoCompraService} from './solicitacaoCompra.service';
 import {SolicitacaoCompraItem} from './solicitacaoCompraItem';
-import {MatTable} from '@angular/material/table';
-import {AutoComplete} from 'primeng/autocomplete';
+import {
+  MatCell,
+  MatFooterCell,
+  MatFooterRow, MatFooterRowDef,
+  MatHeaderCell, MatHeaderRow, MatHeaderRowDef, MatRow, MatRowDef,
+  MatTable
+} from '@angular/material/table';
 import {ItemService} from '../item/item.service';
-import {UsuarioService} from '../usuario/usuario.service';
 import {Item} from '../item/item';
 import {pt} from '../framework/constantes/calendarPt';
 import { DatePipe } from '@angular/common';
+import {SalvarModule} from "../geral/salvar/salvar.module";
+import {CancelarModule} from "../geral/cancelar/cancelar.module";
+import {FormsModule} from "@angular/forms";
+import {MatCard, MatCardContent, MatCardTitle} from "@angular/material/card";
+import {VoltarModule} from "../geral/voltar/voltar.module";
+import {MatIconModule} from "@angular/material/icon";
+import {AutoComplete} from "primeng/autocomplete";
+import {CadastroRapidoModule} from "../geral/cadastroRapido/cadastroRapido.module";
 
 @Component({
-    selector: 'app-form-solicitacao-compra',
-    templateUrl: './solicitacaoCompra.form.component.html',
-    styleUrls: ['./solicitacaoCompra.form.component.css'],
-    standalone: false
+  selector: 'app-form-solicitacao-compra',
+  templateUrl: './solicitacaoCompra.form.component.html',
+  styleUrls: ['./solicitacaoCompra.form.component.css'],
+  imports: [
+    MatCell,
+    MatHeaderCell,
+    MatFooterCell,
+    SalvarModule,
+    CancelarModule,
+    FormsModule,
+    MatCardContent,
+    VoltarModule,
+    MatCardTitle,
+    MatCard,
+    MatFooterRow,
+    MatRow,
+    MatHeaderRow,
+    MatFooterRowDef,
+    MatRowDef,
+    MatHeaderRowDef,
+    MatTable,
+    MatIconModule,
+    AutoComplete,
+    CadastroRapidoModule
+  ]
 })
 export class SolicitacaoCompraFormComponent extends CrudFormComponent<SolicitacaoCompra, number> {
 
@@ -30,8 +63,7 @@ export class SolicitacaoCompraFormComponent extends CrudFormComponent<Solicitaca
 
   constructor(protected solicitacaoCompraService: SolicitacaoCompraService,
               protected injector: Injector,
-              private itemService: ItemService,
-              private usuarioService: UsuarioService) {
+              private readonly itemService: ItemService) {
     super(solicitacaoCompraService, injector, '/solicitacao-compra');
     this.localePt = pt;
     this.solicitacaoCompraItem = new SolicitacaoCompraItem();
@@ -43,11 +75,9 @@ export class SolicitacaoCompraFormComponent extends CrudFormComponent<Solicitaca
   }
 
   setUsuarioResponsavel() {
-    const username = localStorage.getItem('username');
-    this.usuarioService.findByUsername(username)
-      .subscribe(e => {
-        this.object.usuario = e;
-      });
+    this.loginService.getCurrentUser().subscribe((user) => {
+      this.object.usuario = user;
+    });
   }
 
   findProdutos($event) {
@@ -104,7 +134,6 @@ export class SolicitacaoCompraFormComponent extends CrudFormComponent<Solicitaca
   }
 
   setFocusInputItem() {
-    // this.itemToAdd.focusInput();
     this.itemToAdd.nativeElement.focus();
   }
 
