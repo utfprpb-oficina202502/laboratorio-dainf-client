@@ -189,11 +189,11 @@ export class ReservaFormComponent extends CrudFormComponent<Reserva, number> {
   }
 
   showDialogImagens() {
-    this.loaderService.display(true);
+    this.loaderService.show();
     console.log(this.reservaItem.item.imageItem[0]);
     this.itemService.findAllImagesItem(this.reservaItem.item.id)
       .subscribe(e => {
-        this.loaderService.display(false);
+        this.loaderService.hide();
         if (e.length > 0) {
           this.images = e;
           this.dialogImagens = true;
@@ -201,7 +201,7 @@ export class ReservaFormComponent extends CrudFormComponent<Reserva, number> {
           Swal.fire('Ops...', 'Esse item não possui imagens.', 'info');
         }
       }, error => {
-        this.loaderService.display(false);
+        this.loaderService.hide();
       });
   }
 }

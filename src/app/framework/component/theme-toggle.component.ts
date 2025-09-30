@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { ThemeService } from '../services/theme.service';
 import {FormsModule} from "@angular/forms";
@@ -7,10 +7,9 @@ import {FormsModule} from "@angular/forms";
 @Component({
   selector: 'app-theme-toggle',
   imports: [
-    CommonModule,
     ToggleButtonModule,
     FormsModule
-  ],
+],
   template: `
     <div class="toggle-wrapper">
       <p-toggleButton

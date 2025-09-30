@@ -28,11 +28,11 @@ export class ItemFormComponent extends CrudFormComponent<Item, number> {
   callback: Function;
   grupoList: Grupo[];
   tipoItem: SelectItem[];
-  minioUrl: String;
+  minioUrl: string;
 
   constructor(protected itemService: ItemService,
               protected injector: Injector,
-              private grupoService: GrupoService) {
+              private readonly grupoService: GrupoService) {
     super(itemService, injector, '/item');
     this.minioUrl = environment.minio_url;
     this.tipoItem = [
@@ -87,10 +87,10 @@ export class ItemFormComponent extends CrudFormComponent<Item, number> {
   }
 
   showDialogImagens() {
-    this.loaderService.display(true);
+    this.loaderService.show();
     this.itemService.findAllImagesItem(this.object.id)
       .subscribe(e => {
-        this.loaderService.display(false);
+        this.loaderService.hide();
         if (e.length > 0) {
           this.images = e;
           this.dialogImagens = true;
@@ -98,7 +98,7 @@ export class ItemFormComponent extends CrudFormComponent<Item, number> {
           Swal.fire('Ops...', 'Esse item não possui imagens.', 'info');
         }
       }, error => {
-        this.loaderService.display(false);
+        this.loaderService.hide();
       });
   }
 
@@ -114,15 +114,15 @@ export class ItemFormComponent extends CrudFormComponent<Item, number> {
       cancelButtonText: 'Não'
     }).then((result) => {
       if (result.value) {
-        this.loaderService.display(true);
+        this.loaderService.show();
         this.itemService.deleteImage(image, this.object.id)
           .subscribe(e => {
             this.deleteImageInObject(image);
-            this.loaderService.display(false);
+            this.loaderService.hide();
             this.dialogImagens = false;
             Swal.fire('Sucesso!', 'Imagem removida com sucesso!', 'success');
           }, error => {
-            this.loaderService.display(false);
+            this.loaderService.hide();
             Swal.fire('Atenção!', 'Ocorreu um erro ao remover a imagem', 'error');
           });
       }
@@ -132,7 +132,7 @@ export class ItemFormComponent extends CrudFormComponent<Item, number> {
   deleteImageInObject(image: ItemImage) {
     let index;
     this.object?.imageItem.forEach(imagem => {
-      if (image.id === image.id) {
+      if (!Number.isNaN(image.id)) {
         index = this.object.imageItem.indexOf(imagem);
       }
     });

@@ -1,5 +1,5 @@
-import {Component, forwardRef, Injector, OnInit} from '@angular/core';
-import {CommonModule, DatePipe} from '@angular/common';
+import {Component, forwardRef, Injector, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
@@ -39,7 +39,8 @@ import {NovoModule} from '../geral/novo/novo.module';
     PrimeCrudToolbarComponent,
     NovoModule
   ],
-  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => SolicitacaoCompraListComponent) }]
+  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => SolicitacaoCompraListComponent) }],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<SolicitacaoCompra, number> implements OnInit {
 

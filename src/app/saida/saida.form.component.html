@@ -45,7 +45,7 @@
                     dataType="string"
                     dateFormat="dd/mm/yy"
                     inputStyleClass="form-control"
-                    [disabled]="object.idEmprestimo"
+                    [disabled]="!!object.idEmprestimo"
                     [style]="{width: '100%'}"
                     [maxDate]="maxDate"
                     [(ngModel)]="object.dataSaida">
@@ -163,7 +163,7 @@
                       rows="1"
                       class="form-control"
                       pInputTextarea
-                      [disabled]="object.idEmprestimo"
+                      [disabled]="!!object.idEmprestimo"
                       [(ngModel)]="object.observacao"
                       autoResize="autoResize">
                     </textarea>

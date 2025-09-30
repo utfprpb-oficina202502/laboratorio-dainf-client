@@ -1,4 +1,7 @@
-import {Component, forwardRef, Injector, ViewChild} from '@angular/core';
+import {
+  Component, forwardRef, Injector, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef,
+  OnInit
+} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
@@ -14,7 +17,6 @@ import {EmprestimoFilter} from './emprestimo.filter';
 import {Usuario} from '../usuario/usuario';
 import {UsuarioService} from '../usuario/usuario.service';
 import Swal from 'sweetalert2';
-import {DatePicker} from "primeng/datepicker";
 
 // PrimeNG Components
 import {CardModule} from 'primeng/card';
@@ -29,7 +31,7 @@ import {TooltipModule} from 'primeng/tooltip';
 import {TagModule} from 'primeng/tag';
 import {DialogModule} from 'primeng/dialog';
 import {AutoCompleteModule} from 'primeng/autocomplete';
-import {DatePickerModule} from 'primeng/datepicker';
+import {DatePicker, DatePickerModule} from 'primeng/datepicker';
 import {SelectModule} from 'primeng/select';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
 import {NovoModule} from '../geral/novo/novo.module';
@@ -58,9 +60,10 @@ import {NovoModule} from '../geral/novo/novo.module';
     PrimeCrudToolbarComponent,
     NovoModule
   ],
-  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => EmprestimoListComponent) }]
+  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => EmprestimoListComponent) }],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, number> {
+export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, number> implements OnInit{
 
   @ViewChild('novaData') novaData: DatePicker;
   dialogFiltroEmprestimo = false;
@@ -121,8 +124,9 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
 
   constructor(protected emprestimoService: EmprestimoService,
               protected injector: Injector,
-              private bottomSheetOptions: MatBottomSheet,
-              private usuarioService: UsuarioService) {
+              private readonly bottomSheetOptions: MatBottomSheet,
+              private readonly usuarioService: UsuarioService,
+              private readonly cdr: ChangeDetectorRef) {
     super(emprestimoService, injector, ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status'], 'emprestimo/form');
     this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
@@ -187,6 +191,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   ngOnInit(): void {
     this.loginService.userLoggedIsAlunoOrProfessor().then(value => {
       this.isAlunoOrProfessor = value;
+      this.cdr.markForCheck();
       this.isAlunoOrProfessor ? this.findAllByUsername() : this.findAll();
     });
   }
@@ -266,7 +271,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
 
   filter() {
     this.dialogFiltroEmprestimo = false;
-    this.loaderService.display(true);
+    this.loaderService.show();
     if (this.isAlunoOrProfessor) {
       this.setUserLogadoInFilter().then(() => {
         this.findByFilter();
@@ -281,9 +286,9 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       .subscribe(e => {
         this.objects = e;
         this.totalElements = e.length;
-        this.loaderService.display(false);
+        this.loaderService.hide();
       }, error => {
-        this.loaderService.display(false);
+        this.loaderService.hide();
       });
   }
 
@@ -308,14 +313,14 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       cancelButtonText: 'Não'
     }).then((result) => {
       if (result.value) {
-        this.loaderService.display(true);
+        this.loaderService.show();
         this.emprestimoService.changePrazoDevolucao(this.idEmprestimoToChangePrazoDev, this.dtNovaData)
           .subscribe(e => {
             Swal.fire('Sucesso!', 'Prazo de devolução alterado com sucesso!', 'success');
             this.findAll();
-            this.loaderService.display(false);
+            this.loaderService.hide();
           }, error => {
-            this.loaderService.display(false);
+            this.loaderService.hide();
             Swal.fire('Atenção!', 'Ocorreu um erro ao alterar a data do prazo de devolução!', 'error');
           });
       }

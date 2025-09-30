@@ -1,9 +1,9 @@
-import {Component, forwardRef, Injector} from '@angular/core';
+import {Component, forwardRef, Injector, ChangeDetectionStrategy} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Relatorio} from './relatorio';
 import {RelatorioService} from './relatorio.service';
-import {NgClass, NgSwitch, NgTemplateOutlet} from "@angular/common";
+import { NgClass, NgTemplateOutlet } from "@angular/common";
 import {Button} from "primeng/button";
 import {TableModule} from "primeng/table";
 import {Card} from "primeng/card";
@@ -22,14 +22,14 @@ import {IconFieldModule} from "primeng/iconfield";
   imports: [
     NgTemplateOutlet,
     Button,
-    NgSwitch,
     TableModule,
     NgClass,
     Card,
     PrimeCrudToolbarComponent,
     InputIconModule,
     IconFieldModule
-  ]
+],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RelatorioListComponent extends PrimeCrudListComponent<Relatorio, number> {
 
@@ -122,7 +122,7 @@ export class RelatorioListComponent extends PrimeCrudListComponent<Relatorio, nu
   }
 
   generateReport(id: number): void {
-    this.loaderService.display(true);
+    this.loaderService.show();
     this.router.navigate(['relatorio/view', id]);
   }
 

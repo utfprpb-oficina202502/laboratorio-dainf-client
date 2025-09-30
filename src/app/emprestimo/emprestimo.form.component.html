@@ -353,7 +353,7 @@
                           <app-salvar
                             (onClick)="save()"
                             [typeButton]="'button'"
-                            [disabled]="object.dataDevolucao"
+                            [disabled]="!!object.dataDevolucao"
                           ></app-salvar>
                         </div>
                       </div>

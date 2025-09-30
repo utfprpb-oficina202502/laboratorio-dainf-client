@@ -1,27 +1,32 @@
-import {Component} from '@angular/core';
+import {Component, ChangeDetectionStrategy, ChangeDetectorRef} from '@angular/core';
 import {LoginService} from './login/login.service';
 import {Subject, Subscription} from 'rxjs';
 import {NavigationCancel, NavigationEnd, NavigationStart, NavigationError, Router} from '@angular/router';
 import {LoaderService} from './framework/loader/loader.service';
 
-export let browserChange = new Subject<boolean>();
+export const browserChange = new Subject<boolean>();
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css'],
-    standalone: false
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppComponent {
   title = 'tcc-client';
   isAuthenticated = false;
   subscription: Subscription;
 
-  constructor(private loginService: LoginService,
-              private router: Router,
-              private loaderService: LoaderService) {
+  constructor(private readonly loginService: LoginService,
+              private readonly router: Router,
+              private readonly loaderService: LoaderService,
+              private readonly cdr: ChangeDetectorRef) {
     loginService.isAuthenticated.asObservable()
-      .subscribe(e => this.isAuthenticated = e);
+      .subscribe(e => {
+        this.isAuthenticated = e;
+        this.cdr.markForCheck();
+      });
     this.buildSubscriptionEvent();
   }
 

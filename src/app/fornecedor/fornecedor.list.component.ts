@@ -1,5 +1,5 @@
-import {Component, forwardRef, Injector} from '@angular/core';
-import {CommonModule} from '@angular/common';
+import {Component, forwardRef, Injector, ChangeDetectionStrategy} from '@angular/core';
+
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
@@ -25,7 +25,6 @@ import {CpfCnpjPipeModule} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe.module";
     templateUrl: './fornecedor.list.component.html',
     styleUrls: ['./fornecedor.list.component.css'],
   imports: [
-    CommonModule,
     FormsModule,
     CardModule,
     TableModule,
@@ -39,8 +38,9 @@ import {CpfCnpjPipeModule} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe.module";
     PrimeCrudToolbarComponent,
     NovoModule,
     CpfCnpjPipeModule
-  ],
-  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => FornecedorListComponent) }]
+],
+  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => FornecedorListComponent) }],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, number> {
 

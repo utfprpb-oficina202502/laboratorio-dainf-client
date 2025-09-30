@@ -7,8 +7,9 @@
   <div>
     <div class="form-control">
       <input
+        #filtroInput
         matInput
-        (keyup)="applyFilter($event.target.value)"
+        (keyup)="applyFilter(filtroInput.value)"
         placeholder="Filtro"
         />
       </div>

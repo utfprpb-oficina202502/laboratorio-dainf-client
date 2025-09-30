@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from "@angular/core";
+import { Component, HostListener, OnInit, ViewChild, ChangeDetectionStrategy } from "@angular/core";
 import { SidenavService } from "./sidenav.service";
 import { browserChange } from "../app.component";
 import { LoginService } from "../login/login.service";
@@ -116,6 +116,7 @@ export const MENU_ITEM: MenuItem[] = [
     selector: "app-sidenav",
     templateUrl: "./sidenav.component.html",
     styleUrls: ["./sidenav.component.css"],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: false
 })
 export class SidenavComponent implements OnInit {
@@ -124,6 +125,10 @@ export class SidenavComponent implements OnInit {
   display = false;
   showSubMenuCadastro = true;
   showCadastros = true;
+  private readonly desktopBreakpoint = 1200;
+  private viewportInitialized = false;
+  private isDesktopView = true;
+  closeOnEscape = false;
   sidebarVisible = true;
   @ViewChild("drawer") drawer: Drawer;
 
@@ -137,10 +142,17 @@ export class SidenavComponent implements OnInit {
 
   ngOnInit(): void {
     this.buildMenu();
+    this.updateViewportFlags();
     this.changeStylesDrawer();
     this.changeColorMenuItem();
     this.initObservableDrawer();
     this.initObservableMenuItem();
+  }
+
+  @HostListener("window:resize")
+  onWindowResize(): void {
+    this.updateViewportFlags();
+    this.changeStylesDrawer();
   }
 
   buildMenu() {
@@ -184,7 +196,12 @@ export class SidenavComponent implements OnInit {
 
   initObservableDrawer() {
     this.sidenavService.observable().subscribe((hide) => {
-      this.sidebarVisible = !hide;
+      this.updateViewportFlags();
+      if (this.isDesktopView) {
+        this.sidebarVisible = true;
+      } else {
+        this.sidebarVisible = !hide;
+      }
       this.changeStylesDrawer();
     });
   }
@@ -199,6 +216,31 @@ export class SidenavComponent implements OnInit {
 
   toggleSubMenuCadastro() {
     this.showSubMenuCadastro = !this.showSubMenuCadastro;
+  }
+
+  private updateViewportFlags(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const width = window.innerWidth;
+    const wasDesktop = this.isDesktopView;
+    const isDesktop = width >= this.desktopBreakpoint;
+
+    this.isDesktopView = isDesktop;
+    this.closeOnEscape = !isDesktop;
+
+    if (!this.viewportInitialized) {
+      this.sidebarVisible = isDesktop;
+      this.viewportInitialized = true;
+      return;
+    }
+
+    if (!wasDesktop && isDesktop) {
+      this.sidebarVisible = true;
+    } else if (wasDesktop && !isDesktop) {
+      this.sidebarVisible = false;
+    }
   }
 
   changeColorMenuItem() {

@@ -1,4 +1,4 @@
-import {Component, forwardRef, Injector} from '@angular/core';
+import {Component, forwardRef, Injector, ChangeDetectionStrategy} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {Usuario} from './usuario';
@@ -41,7 +41,8 @@ import {NovoModule} from '../geral/novo/novo.module';
     PrimeCrudToolbarComponent,
     NovoModule
   ],
-  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => UsuarioListComponent) }]
+  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => UsuarioListComponent) }],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number> {
 

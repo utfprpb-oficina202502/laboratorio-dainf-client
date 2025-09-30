@@ -37,8 +37,6 @@ import {HttpClientInterceptor} from "./http-client.interceptor";
 import {LoginModule} from "./login/login.module";
 import {EmprestimoModule} from "./emprestimo/emprestimo.module";
 import {SaidaModule} from "./saida/saida.module";
-import {MatPaginatorIntl} from "@angular/material/paginator";
-import {getDutchPaginatorIntl} from "./framework/util/dutch-paginator";
 import {CURRENCY_MASK_CONFIG} from "ng2-currency-mask";
 import {CustomCurrencyMaskConfig} from "./framework/util/currency.mask.config";
 import {ReservaModule} from "./reserva/reserva.module";
@@ -103,10 +101,6 @@ import PrimeUTFPRPreset from "./theme/prime-utfpr-theme-preset";
       useValue: "BRL",
     },
     DatePipe,
-    {
-      provide: MatPaginatorIntl,
-      useValue: getDutchPaginatorIntl(),
-    },
     {
       provide: CURRENCY_MASK_CONFIG,
       useValue: CustomCurrencyMaskConfig,

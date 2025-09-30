@@ -1,5 +1,5 @@
-import { Component, forwardRef, Injector } from "@angular/core";
-import {CommonModule} from '@angular/common';
+import { Component, forwardRef, Injector, ChangeDetectionStrategy, ChangeDetectorRef } from "@angular/core";
+import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import { Item } from "./item";
 import { ItemService } from "./item.service";
@@ -46,8 +46,10 @@ import {NovoModule} from '../geral/novo/novo.module';
     TagModule,
     DialogModule,
     PrimeCrudToolbarComponent,
-    NovoModule
+    NovoModule,
+    NgOptimizedImage
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => ItemListComponent) }]
 })
 export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
@@ -127,7 +129,8 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
     protected itemService: ItemService,
     protected injector: Injector,
     private readonly bottomSheetOptions: MatBottomSheet,
-    private readonly reservaService: ReservaService
+    private readonly reservaService: ReservaService,
+    private readonly cdr: ChangeDetectorRef
   ) {
     super(
       itemService,
@@ -195,7 +198,10 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   postFindAll(): void {
     this.loginService
       .userLoggedIsAlunoOrProfessor()
-      .then((value) => (this.isAlunoOrProfessor = value));
+      .then((value) => {
+        this.isAlunoOrProfessor = value;
+        this.cdr.markForCheck();
+      });
   }
 
   openOptions(id): void {
@@ -214,20 +220,21 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   }
 
   findReservasItem(id) {
-    this.loaderService.display(true);
+    this.loaderService.show();
     this.reservaService.findAllByIdItem(id).subscribe(
       (e) => {
-        this.loaderService.display(false);
+        this.loaderService.hide();
         if (e.length > 0) {
           this.reservasItem = e;
           this.dialogReservaitem = true;
+          this.cdr.markForCheck();
         } else {
           Swal.fire("Ops...", "Este item não possui nenhuma reserva.", "info");
         }
       },
       (error) => {
         console.log(error);
-        this.loaderService.display(false);
+        this.loaderService.hide();
       }
     );
   }

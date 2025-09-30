@@ -95,16 +95,16 @@ export class UsuarioEditComponent extends CrudFormComponent<Usuario, number> {
   }
 
   updateUser() {
-    this.loaderService.display(true);
+    this.loaderService.show();
     if (this.isValid() && this.validExtra) {
       this.usuarioService.updateUser(this.object).subscribe({
         next: (e) => {
           localStorage.setItem("userLogged", JSON.stringify(this.object));
-          this.loaderService.display(false);
+          this.loaderService.hide();
           Swal.fire("Sucesso!", "Registro salvo com sucesso!", "success");
         },
         error: (error) => {
-          this.loaderService.display(false);
+          this.loaderService.hide();
           Swal.fire(
             "Atenção!",
             "Ocorreu um erro ao salvar o registro!",
@@ -113,7 +113,7 @@ export class UsuarioEditComponent extends CrudFormComponent<Usuario, number> {
         },
       });
     } else {
-      this.loaderService.display(false);
+      this.loaderService.hide();
       this.messageService.add({
         severity: "info",
         summary: "Atenção",

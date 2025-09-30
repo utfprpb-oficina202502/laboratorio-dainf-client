@@ -1,4 +1,4 @@
-import {Component, Injector, ViewChild} from '@angular/core';
+import {Component, Injector, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef} from '@angular/core';
 import {Fornecedor} from './fornecedor';
 import {CrudFormComponent} from '../framework/component/crud.form.component';
 import {FornecedorService} from './fornecedor.service';
@@ -12,7 +12,8 @@ import {Cidade} from '../cidade/cidade';
     selector: 'app-form-fornecedor',
     templateUrl: './fornecedor.form.component.html',
     styleUrls: ['./fornecedor.form.component.css'],
-    standalone: false
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FornecedorFormComponent extends CrudFormComponent<Fornecedor, number> {
 
@@ -23,8 +24,9 @@ export class FornecedorFormComponent extends CrudFormComponent<Fornecedor, numbe
 
   constructor(protected fornecedorService: FornecedorService,
               protected injector: Injector,
-              private cidadeService: CidadeService,
-              private estadoService: EstadoService) {
+              private readonly cidadeService: CidadeService,
+              private readonly estadoService: EstadoService,
+              private readonly cdr: ChangeDetectorRef) {
     super(fornecedorService, injector, 'fornecedor');
   }
 
@@ -32,6 +34,7 @@ export class FornecedorFormComponent extends CrudFormComponent<Fornecedor, numbe
     this.cidadeService.completeByEstado($event.query, this.object.estado)
       .subscribe(e => {
         this.cidadeList = e;
+        this.cdr.markForCheck();
       });
   }
 
@@ -39,6 +42,7 @@ export class FornecedorFormComponent extends CrudFormComponent<Fornecedor, numbe
     this.estadoService.complete($event.query)
       .subscribe(e => {
         this.estadoList = e;
+        this.cdr.markForCheck();
       });
   }
 

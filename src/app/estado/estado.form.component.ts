@@ -1,4 +1,4 @@
-import {Component, Injector, ViewChild} from '@angular/core';
+import {Component, Injector, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef} from '@angular/core';
 import {Estado} from './estado';
 import {EstadoService} from './estado.service';
 import {NgForm} from '@angular/forms';
@@ -10,7 +10,8 @@ import {PaisService} from '../pais/pais.service';
     selector: 'app-form-estado',
     templateUrl: './estado.form.component.html',
     styleUrls: ['./estado.form.component.css'],
-    standalone: false
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EstadoFormComponent extends CrudFormComponent<Estado, number> {
 
@@ -19,7 +20,8 @@ export class EstadoFormComponent extends CrudFormComponent<Estado, number> {
 
   constructor(protected estadoService: EstadoService,
               protected injector: Injector,
-              private paisService: PaisService) {
+              private readonly paisService: PaisService,
+              private readonly cdr: ChangeDetectorRef) {
     super(estadoService, injector, '/estado');
   }
 
@@ -27,6 +29,7 @@ export class EstadoFormComponent extends CrudFormComponent<Estado, number> {
     this.paisService.complete($event.query)
       .subscribe(e => {
         this.paisList = e;
+        this.cdr.markForCheck();
       });
   }
 }

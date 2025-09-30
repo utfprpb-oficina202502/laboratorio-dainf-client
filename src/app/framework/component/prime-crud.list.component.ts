@@ -4,7 +4,6 @@ import {CrudService} from '../service/crud.service';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import {Table} from 'primeng/table';
 import {MultiSelect} from 'primeng/multiselect';
-
 import {BottomSheetComponent} from '../../geral/bottomScheet/bottomSheet.component';
 import {MatBottomSheet} from '@angular/material/bottom-sheet';
 import Swal from 'sweetalert2';
@@ -616,28 +615,62 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.applyFilter('');
   }
 
-  public handleInteractiveCell(event: KeyboardEvent | MouseEvent, id: ID): void {
+  public handleInteractiveCell(event: Event, id: ID): void {
     if (this.displayedColumns?.includes('actions')) {
       return;
     }
 
-    if (event instanceof KeyboardEvent) {
-      const key = event.key?.toLowerCase();
-      if (key === ' ' || key === 'spacebar') {
-        event.preventDefault();
-      }
-
-      if (key && key !== 'enter' && key !== ' ' && key !== 'spacebar') {
-        return;
-      }
+    if (!id) {
+      console.warn('ID inválido para iteração:', id);
+      return;
     }
 
-    this.openBottomSheet(id);
+    if (!(event instanceof KeyboardEvent || event instanceof MouseEvent || event instanceof TouchEvent)){
+      console.warn('Unsupported event type for interaction:', event.type, event);
+    }
+
+    if (event instanceof KeyboardEvent) {
+      const key = event.key?.toLowerCase();
+
+      switch (key) {
+        case 'enter':
+        case ' ':
+        case 'spacebar':
+          event.preventDefault();
+          event.stopPropagation();
+          this.openBottomSheet(id);
+          break;
+        default:
+          break;
+      }
+      return;
+    }
+
+    if (event instanceof MouseEvent) {
+      switch (event.type) {
+        case 'click':
+          this.openBottomSheet(id);
+          break;
+        case 'dblclick':
+          event.preventDefault();
+          this.openBottomSheet(id);
+          break;
+        default:
+          this.openBottomSheet(id);
+          break;
+      }
+      return;
+    }
+
+    if ('TouchEvent' in window && event instanceof TouchEvent) {
+      event.preventDefault();
+      this.openBottomSheet(id);
+    }
   }
 
   // PrimeNG DataView pagination event handler
   onPageChange(event: any) {
-    this.loaderService.display(true);
+    this.loaderService.show();
     this.buildColumnsTable();
 
     this.first = event.first;
@@ -657,12 +690,12 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
           this.first = this.pageIndex * this.pageSize;
 
           this.restoreSelectionFromKeys();
-          this.loaderService.display(false);
+          this.loaderService.hide();
           this.postFindAll();
           this.saveTableState();
         },
         error => {
-          this.loaderService.display(false);
+          this.loaderService.hide();
           this.showError(error);
         }
       );
@@ -678,7 +711,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   }
 
   findAll() {
-    this.loaderService.display(true);
+    this.loaderService.show();
     this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue || '')
       .subscribe(e => {
         this.objects = e.content;
@@ -690,18 +723,18 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
         this.first = this.pageIndex * this.pageSize;
 
         this.restoreSelectionFromKeys();
-        this.loaderService.display(false);
+        this.loaderService.hide();
         this.postFindAll();
         this.saveTableState();
       }, error => {
-        this.loaderService.display(false);
+        this.loaderService.hide();
         this.showError(error);
       });
     this.buildColumnsTable();
   }
 
   findAllByUsername() {
-    this.loaderService.display(true);
+    this.loaderService.show();
     const u = localStorage.getItem('username');
     this.service.findAllByUsername(u)
       .subscribe(e => {
@@ -710,11 +743,11 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
         this.pageIndex = 0;
         this.first = 0;
         this.restoreSelectionFromKeys();
-        this.loaderService.display(false);
+        this.loaderService.hide();
         this.postFindAll();
         this.saveTableState();
       }, error => {
-        this.loaderService.display(false);
+        this.loaderService.hide();
         this.showError(error);
       });
   }
@@ -737,14 +770,14 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       cancelButtonText: 'Não'
     }).then((result) => {
       if (result.value) {
-        this.loaderService.display(true);
+        this.loaderService.show();
         this.service.delete(id)
           .subscribe(e => {
             Swal.fire('Sucesso!', 'Registro excluído com sucesso!', 'success');
             this.findAll();
-            this.loaderService.display(false);
+            this.loaderService.hide();
           }, error => {
-            this.loaderService.display(false);
+            this.loaderService.hide();
             this.showError(error);
           });
       }
@@ -809,7 +842,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
   // Centralized data loading method
   private loadData() {
-    this.loaderService.display(true);
+    this.loaderService.show();
     this.buildColumnsTable();
 
     this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue)
@@ -835,12 +868,12 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
           }
 
           this.restoreSelectionFromKeys();
-          this.loaderService.display(false);
+          this.loaderService.hide();
           this.postFindAll();
           this.saveTableState();
         },
         error => {
-          this.loaderService.display(false);
+          this.loaderService.hide();
           this.showError(error);
         }
       );
@@ -932,7 +965,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       cancelButtonText: 'Não'
     }).then((result) => {
       if (result.value) {
-        this.loaderService.display(true);
+        this.loaderService.show();
 
         // Extract IDs from selected items
         const ids = this.selectedItems.map((item: any) => item.id);
@@ -948,7 +981,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       // All deletions completed
       this.selectedItems = [];
       this.saveTableState();
-      this.loaderService.display(false);
+      this.loaderService.hide();
       Swal.fire('Sucesso!', `${total} registro(s) excluído(s) com sucesso!`, 'success');
       this.findAll();
       return;
@@ -961,7 +994,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
           this.deleteItemsSequentially(ids, currentIndex + 1, total);
         },
         error => {
-          this.loaderService.display(false);
+          this.loaderService.hide();
           this.showError(error);
           Swal.fire('Erro!', `Erro ao excluir alguns registros. ${currentIndex} de ${total} foram excluídos.`, 'error');
         }

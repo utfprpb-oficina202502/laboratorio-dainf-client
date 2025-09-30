@@ -1,5 +1,5 @@
-import {Component, forwardRef, Injector} from '@angular/core';
-import {CommonModule, DatePipe} from '@angular/common';
+import {Component, forwardRef, Injector, ChangeDetectionStrategy} from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
@@ -41,7 +41,8 @@ import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolb
     ConfirmDialogModule,
     PrimeCrudToolbarComponent
   ],
-  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => SaidaListComponent) }]
+  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => SaidaListComponent) }],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
 

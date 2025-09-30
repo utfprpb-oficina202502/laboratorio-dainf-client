@@ -1,4 +1,4 @@
-import {Component, OnInit, OnDestroy, AfterViewInit, effect, inject} from "@angular/core";
+import {Component, OnInit, OnDestroy, AfterViewInit, effect, inject, ChangeDetectionStrategy, ChangeDetectorRef} from "@angular/core";
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import {DatePipe} from '@angular/common';
@@ -17,6 +17,7 @@ import {chartColorSchemes, ChartColorsConfig, getAlternatingColor} from "../fram
   selector: "app-home",
   templateUrl: "./home.component.html",
   styleUrls: ["./home.component.css"],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: false
 })
 export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -42,7 +43,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     private readonly homeService: HomeService,
     private readonly loginService: LoginService,
-    private readonly loaderService: LoaderService
+    private readonly loaderService: LoaderService,
+    private readonly cdr: ChangeDetectorRef
   ) {
     this.dashEmprestimoCount = new DashboardEmprestimoCountRange();
     this.localePt = pt;
@@ -69,6 +71,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           this.pendingDashboardBuild = true;
         }
       }
+      this.cdr.markForCheck();
     });
   }
 
@@ -145,8 +148,11 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
       if (!this.hasDashboardData) {
         this.disposeAllCharts();
+        this.cdr.markForCheck();
         return;
       }
+
+      this.cdr.markForCheck();
 
       setTimeout(() => {
         if (this.destroyed || !this.hasDashboardData) {
@@ -703,7 +709,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         series.tooltip.label.fill = am4core.color(colors.tooltip.text);
       }
       if (series instanceof am4charts.ColumnSeries) {
-        const columnSeries = series as am4charts.ColumnSeries;
+        const columnSeries = series;
         columnSeries.columns.template.stroke = am4core.color(colors.background);
       }
     });
@@ -729,7 +735,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     });
     chart.series.each(series => {
       if (series instanceof am4charts.LineSeries) {
-        const lineSeries = series as am4charts.LineSeries;
+        const lineSeries = series;
         lineSeries.stroke = am4core.color(colors.line.stroke);
         lineSeries.fill = am4core.color(colors.line.fill);
         if (lineSeries.tooltip) {

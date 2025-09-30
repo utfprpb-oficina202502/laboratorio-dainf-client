@@ -184,7 +184,7 @@ export class EmprestimoFormComponent extends CrudFormComponent<Emprestimo, numbe
   }
 
   save() {
-    this.loaderService.display(true);
+    this.loaderService.show();
     if (!this.object.emprestimoItem || this.object.emprestimoItem.length <= 0 || typeof this.object.usuarioEmprestimo !== 'object') {
       this.validExtra = false;
     } else {
@@ -196,16 +196,16 @@ export class EmprestimoFormComponent extends CrudFormComponent<Emprestimo, numbe
         .subscribe(e => {
           this.object = e;
           this.postSave(value => {
-            this.loaderService.display(false);
+            this.loaderService.hide();
             Swal.fire('Sucesso!', 'Registro salvo com sucesso!', 'success');
             this.back();
           });
         }, error => {
-          this.loaderService.display(false);
+          this.loaderService.hide();
           Swal.fire('Atenção!', 'Ocorreu um erro ao salvar o registro!', 'error');
         });
     } else {
-      this.loaderService.display(false);
+      this.loaderService.hide();
       this.messageService.add({severity: 'info', summary: 'Atenção', detail: 'Necessário preencher todos os campos corretamente!'});
       this.validarFormulario();
     }

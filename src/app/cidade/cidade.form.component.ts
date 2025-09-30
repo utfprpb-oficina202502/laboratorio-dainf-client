@@ -1,4 +1,4 @@
-import {Component, Injector, ViewChild} from '@angular/core';
+import {Component, Injector, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef} from '@angular/core';
 import {CrudFormComponent} from '../framework/component/crud.form.component';
 import {Cidade} from './cidade';
 import {CidadeService} from './cidade.service';
@@ -10,7 +10,8 @@ import {EstadoService} from '../estado/estado.service';
     selector: 'app-form-cidade',
     templateUrl: './cidade.form.component.html',
     styleUrls: ['./cidade.form.component.css'],
-    standalone: false
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CidadeFormComponent extends CrudFormComponent<Cidade, number> {
 
@@ -20,7 +21,8 @@ export class CidadeFormComponent extends CrudFormComponent<Cidade, number> {
 
   constructor(protected cidadeService: CidadeService,
               protected injector: Injector,
-              private estadoService: EstadoService) {
+              private readonly estadoService: EstadoService,
+              private readonly cdr: ChangeDetectorRef) {
     super(cidadeService, injector, '/cidade');
   }
 
@@ -28,6 +30,7 @@ export class CidadeFormComponent extends CrudFormComponent<Cidade, number> {
     this.estadoService.complete($event.query)
       .subscribe(e => {
         this.estadosList = e;
+        this.cdr.markForCheck();
       });
   }
 }

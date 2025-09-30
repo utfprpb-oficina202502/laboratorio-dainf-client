@@ -1,4 +1,4 @@
-import {Component, forwardRef, Injector} from '@angular/core';
+import {Component, forwardRef, Injector, ChangeDetectionStrategy} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {Grupo} from './grupo';
@@ -40,7 +40,8 @@ import {NovoModule} from '../geral/novo/novo.module';
     PrimeCrudToolbarComponent,
     NovoModule
   ],
-  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => GrupoListComponent) }]
+  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => GrupoListComponent) }],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GrupoListComponent extends PrimeCrudListComponent<Grupo, number> {
 

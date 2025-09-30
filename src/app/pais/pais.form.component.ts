@@ -1,4 +1,4 @@
-import {Component, Injector, ViewChild} from '@angular/core';
+import {Component, Injector, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 import {Pais} from './pais';
 import {PaisService} from './pais.service';
 import {NgForm} from '@angular/forms';
@@ -8,7 +8,8 @@ import {CrudFormComponent} from '../framework/component/crud.form.component';
     selector: 'app-form-pais',
     templateUrl: './pais.form.component.html',
     styleUrls: ['./pais.form.component.css'],
-    standalone: false
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PaisFormComponent extends CrudFormComponent<Pais, number> {
 

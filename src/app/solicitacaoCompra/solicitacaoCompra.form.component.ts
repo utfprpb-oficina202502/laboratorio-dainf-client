@@ -4,10 +4,10 @@ import {SolicitacaoCompra} from './solicitacaoCompra';
 import {SolicitacaoCompraService} from './solicitacaoCompra.service';
 import {SolicitacaoCompraItem} from './solicitacaoCompraItem';
 import {
-  MatCell,
-  MatFooterCell,
+  MatCell, MatCellDef,
+  MatFooterCell, MatFooterCellDef,
   MatFooterRow, MatFooterRowDef,
-  MatHeaderCell, MatHeaderRow, MatHeaderRowDef, MatRow, MatRowDef,
+  MatHeaderCell, MatHeaderCellDef, MatHeaderRow, MatHeaderRowDef, MatRow, MatRowDef,
   MatTable
 } from '@angular/material/table';
 import {ItemService} from '../item/item.service';
@@ -47,7 +47,10 @@ import {CadastroRapidoModule} from "../geral/cadastroRapido/cadastroRapido.modul
     MatTable,
     MatIconModule,
     AutoComplete,
-    CadastroRapidoModule
+    CadastroRapidoModule,
+    MatHeaderCellDef,
+    MatCellDef,
+    MatFooterCellDef
   ]
 })
 export class SolicitacaoCompraFormComponent extends CrudFormComponent<SolicitacaoCompra, number> {

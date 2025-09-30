@@ -7,7 +7,6 @@ import {Relatorio} from './relatorio';
 import {pt} from '../framework/constantes/calendarPt';
 import {RelatorioParamsValue} from './relatorioParamsValue';
 import {StringUtils} from '../framework/util/string.utils';
-import {DateUtil} from '../framework/util/dateUtil';
 
 @Component({
     selector: 'app-viewer-relatorio',
@@ -23,11 +22,11 @@ export class RelatorioViewerComponent implements OnInit {
   localePt: any;
   relatorioParamValue: RelatorioParamsValue[];
 
-  constructor(private router: Router,
-              private route: ActivatedRoute,
-              private loaderService: LoaderService,
-              private sanitizer: DomSanitizer,
-              private relatorioService: RelatorioService) {
+  constructor(private readonly router: Router,
+              private readonly route: ActivatedRoute,
+              private readonly loaderService: LoaderService,
+              private readonly sanitizer: DomSanitizer,
+              private readonly relatorioService: RelatorioService) {
   }
 
   ngOnInit(): void {
@@ -61,7 +60,7 @@ export class RelatorioViewerComponent implements OnInit {
   }
 
   generateReport(id: number, params: RelatorioParamsValue[]) {
-    this.loaderService.display(true);
+    this.loaderService.show();
     const mapToSend: Map<string, any> = new Map<string, any>();
     mapToSend.set("idRel", id);
     mapToSend.set("params", params);
@@ -74,9 +73,9 @@ export class RelatorioViewerComponent implements OnInit {
     this.relatorioService.generateReport(convMap)
       .subscribe(e => {
         let file = new Blob([e], {type: 'application/pdf'});
-        var fileURL = URL.createObjectURL(file);
+        let fileURL = URL.createObjectURL(file);
         this.reportHTML = this.getSafeUrl(fileURL);
-        this.loaderService.display(false);
+        this.loaderService.hide();
       });
   }
 

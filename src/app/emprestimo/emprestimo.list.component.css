@@ -1,14 +1,5 @@
-.mat-form-field {
-  font-size: 14px;
-  width: 100%;
-}
-
 td, th {
   width: 25%;
-}
-
-mat-cell {
-  cursor: pointer;
 }
 
 ::ng-deep .ui-datepicker-touch-ui {

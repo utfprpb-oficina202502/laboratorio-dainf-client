@@ -57,135 +57,134 @@
                 [placeholder]="getGlobalFilterPlaceholder()"
                 [attr.aria-label]="'Campo de busca para filtrar relatórios'"
                 autocomplete="off" />
-            </p-iconField>
-            <p-button
-              type="button"
-              severity="secondary"
-              [outlined]="true"
-              (onClick)="clearGlobalFilter()"
-              [attr.aria-label]="'Limpar filtro global'">
-              <span pButtonIcon class="pi pi-filter-slash"></span>
-              <span pButtonLabel>Limpar</span>
-            </p-button>
-          </div>
-        </ng-template>
+              </p-iconField>
+              <p-button
+                type="button"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="clearGlobalFilter()"
+                [attr.aria-label]="'Limpar filtro global'">
+                <span pButtonIcon class="pi pi-filter-slash"></span>
+                <span pButtonLabel>Limpar</span>
+              </p-button>
+            </div>
+          </ng-template>
 
-        <!-- Table header -->
-        <ng-template pTemplate="header">
-          <tr>
-            @if (tableConfig.expandable) {
-              <th scope="col" style="width: 3rem" [attr.aria-label]="'Alternar detalhes'"></th>
-            }
-            @if (!isReadOnly && tableConfig.selectable !== false) {
-              <th scope="col" style="width: 3rem" [attr.aria-label]="'Seleção de relatórios'">
-                <p-tableHeaderCheckbox [attr.aria-label]="'Selecionar todos os relatórios'"></p-tableHeaderCheckbox>
-              </th>
-            }
-            @for (column of getVisibleColumns(); track column.field) {
-              <th
-                scope="col"
-                [attr.id]="'col-' + column.field"
-                [attr.data-field]="column.field"
-                [pSortableColumn]="column.sortable === false || column.field === 'actions' ? null : column.field"
-                [style.width]="column.width"
-                [style.min-width]="column.minWidth"
-                [ngClass]="column.headerClass"
-                [attr.aria-label]="column.tooltip || column.header">
-                <div class="d-flex align-items-center gap-2" [class.justify-content-center]="column.align === 'center'">
-                  {{ column.header }}
-                  @if (column.sortable !== false && column.field !== 'actions') {
-                    <p-sortIcon [field]="column.field" aria-hidden="true"></p-sortIcon>
-                  }
-                </div>
-              </th>
-            }
-          </tr>
-        </ng-template>
+          <!-- Table header -->
+          <ng-template pTemplate="header">
+            <tr>
+              @if (tableConfig.expandable) {
+                <th scope="col" style="width: 3rem" [attr.aria-label]="'Alternar detalhes'"></th>
+              }
+              @if (!isReadOnly && tableConfig.selectable !== false) {
+                <th scope="col" style="width: 3rem" [attr.aria-label]="'Seleção de relatórios'">
+                  <p-tableHeaderCheckbox [attr.aria-label]="'Selecionar todos os relatórios'"></p-tableHeaderCheckbox>
+                </th>
+              }
+              @for (column of getVisibleColumns(); track column.field) {
+                <th
+                  scope="col"
+                  [attr.id]="'col-' + column.field"
+                  [attr.data-field]="column.field"
+                  [pSortableColumn]="column.sortable === false || column.field === 'actions' ? null : column.field"
+                  [style.width]="column.width"
+                  [style.min-width]="column.minWidth"
+                  [ngClass]="column.headerClass"
+                  [attr.aria-label]="column.tooltip || column.header">
+                  <div class="d-flex align-items-center gap-2" [class.justify-content-center]="column.align === 'center'">
+                    {{ column.header }}
+                    @if (column.sortable !== false && column.field !== 'actions') {
+                      <p-sortIcon [field]="column.field" aria-hidden="true"></p-sortIcon>
+                    }
+                  </div>
+                </th>
+              }
+            </tr>
+          </ng-template>
 
-        <!-- Table body with modern control flow -->
-        <ng-template pTemplate="body" let-row>
-          <tr>
-            @if (tableConfig.expandable) {
-              <td style="width: 3rem">
-                <button
-                  type="button"
-                  pButton
-                  [pRowToggler]="row"
-                  class="p-button-text p-button-rounded"
-                  [attr.aria-label]="(isRowExpanded(row) ? 'Recolher' : 'Expandir') + ' detalhes do relatório ' + row.nome">
-                  <span pButtonIcon [ngClass]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
-                </button>
-              </td>
-            }
-            @if (!isReadOnly && tableConfig.selectable !== false) {
-              <td style="width: 3rem">
-                <p-tableCheckbox
-                  [value]="row"
-                  [attr.aria-label]="'Selecionar relatório ' + row.nome">
-                </p-tableCheckbox>
-              </td>
-            }
-            @for (column of getVisibleColumns(); track column.field) {
-              <td
-                [ngSwitch]="column.field"
-                [style.text-align]="column.align || 'left'"
-                [style.width]="column.width"
-                [style.min-width]="column.minWidth"
-                [attr.headers]="'col-' + column.field">
-                @switch (column.field) {
-                  @case ('actions') {
-                    <div class="d-flex align-items-center gap-2 justify-content-center">
-                      @if (canEdit) {
+          <!-- Table body with modern control flow -->
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              @if (tableConfig.expandable) {
+                <td style="width: 3rem">
+                  <button
+                    type="button"
+                    pButton
+                    [pRowToggler]="row"
+                    class="p-button-text p-button-rounded"
+                    [attr.aria-label]="(isRowExpanded(row) ? 'Recolher' : 'Expandir') + ' detalhes do relatório ' + row.nome">
+                    <span pButtonIcon [ngClass]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
+                  </button>
+                </td>
+              }
+              @if (!isReadOnly && tableConfig.selectable !== false) {
+                <td style="width: 3rem">
+                  <p-tableCheckbox
+                    [value]="row"
+                    [attr.aria-label]="'Selecionar relatório ' + row.nome">
+                  </p-tableCheckbox>
+                </td>
+              }
+              @for (column of getVisibleColumns(); track column.field) {
+                <td
+                  [style.text-align]="column.align || 'left'"
+                  [style.width]="column.width"
+                  [style.min-width]="column.minWidth"
+                  [attr.headers]="'col-' + column.field">
+                  @switch (column.field) {
+                    @case ('actions') {
+                      <div class="d-flex align-items-center gap-2 justify-content-center">
+                        @if (canEdit) {
+                          <p-button
+                            severity="secondary"
+                            [outlined]="true"
+                            [rounded]="true"
+                            pTooltip="Editar relatório"
+                            tooltipPosition="top"
+                            (onClick)="edit(row.id)"
+                            [attr.aria-label]="'Editar relatório ' + row.nome">
+                            <span pButtonIcon class="pi pi-pencil"></span>
+                          </p-button>
+                        }
+                        @if (canDelete) {
+                          <p-button
+                            severity="danger"
+                            [outlined]="true"
+                            [rounded]="true"
+                            pTooltip="Remover relatório"
+                            tooltipPosition="top"
+                            (onClick)="delete(row.id)"
+                            [attr.aria-label]="'Remover relatório ' + row.nome">
+                            <span pButtonIcon class="pi pi-trash"></span>
+                          </p-button>
+                        }
                         <p-button
-                          severity="secondary"
+                          severity="info"
                           [outlined]="true"
                           [rounded]="true"
-                          pTooltip="Editar relatório"
+                          pTooltip="Gerar relatório"
                           tooltipPosition="top"
-                          (onClick)="edit(row.id)"
-                          [attr.aria-label]="'Editar relatório ' + row.nome">
-                          <span pButtonIcon class="pi pi-pencil"></span>
+                          (onClick)="generateReport(row.id)"
+                          [attr.aria-label]="'Gerar relatório ' + row.nome">
+                          <span pButtonIcon class="pi pi-file-pdf"></span>
                         </p-button>
-                      }
-                      @if (canDelete) {
-                        <p-button
-                          severity="danger"
-                          [outlined]="true"
-                          [rounded]="true"
-                          pTooltip="Remover relatório"
-                          tooltipPosition="top"
-                          (onClick)="delete(row.id)"
-                          [attr.aria-label]="'Remover relatório ' + row.nome">
-                          <span pButtonIcon class="pi pi-trash"></span>
-                        </p-button>
-                      }
-                      <p-button
-                        severity="info"
-                        [outlined]="true"
-                        [rounded]="true"
-                        pTooltip="Gerar relatório"
-                        tooltipPosition="top"
-                        (onClick)="generateReport(row.id)"
-                        [attr.aria-label]="'Gerar relatório ' + row.nome">
-                        <span pButtonIcon class="pi pi-file-pdf"></span>
-                      </p-button>
-                    </div>
+                      </div>
+                    }
+                    @default {
+                      <span
+                        [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
+                        [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
+                        [class.cursor-pointer]="!displayedColumns.includes('actions')"
+                        (click)="handleInteractiveCell($event, row.id)"
+                        (keydown.enter)="handleInteractiveCell($event, row.id)"
+                        (keydown.space)="handleInteractiveCell($event, row.id)"
+                        [attr.aria-label]="column.header + ': ' + row[column.field]">
+                        {{ row[column.field] }}
+                      </span>
+                    }
                   }
-                  @default {
-                    <span
-                      [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
-                      [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
-                      [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                      (click)="handleInteractiveCell($event, row.id)"
-                      (keydown.enter)="handleInteractiveCell($event, row.id)"
-                      (keydown.space)="handleInteractiveCell($event, row.id)"
-                      [attr.aria-label]="column.header + ': ' + row[column.field]">
-                      {{ row[column.field] }}
-                    </span>
-                  }
-                }
-              </td>
-            }
+                </td>
+              }
           </tr>
         </ng-template>
 

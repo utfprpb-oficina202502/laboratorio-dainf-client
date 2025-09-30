@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from "@angular/core";
+import { Component, OnInit, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef } from "@angular/core";
 import { LoginService } from "./login.service";
 import { Usuario } from "../usuario/usuario";
 import {FormsModule, NgForm} from "@angular/forms";
@@ -15,7 +15,8 @@ import {NgOptimizedImage} from "@angular/common";
     FormsModule,
     ProgressBar,
     NgOptimizedImage
-  ]
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LoginComponent implements OnInit {
   usuario: Usuario;
@@ -25,7 +26,8 @@ export class LoginComponent implements OnInit {
   constructor(
     private readonly loginService: LoginService,
     private readonly router: Router,
-    private readonly messageService: MessageService
+    private readonly messageService: MessageService,
+    private readonly cdr: ChangeDetectorRef
   ) {
     // private socialAuthService: SocialAuthService
   }
@@ -36,6 +38,7 @@ export class LoginComponent implements OnInit {
 
   login() {
     this.showProgress = true;
+    this.cdr.markForCheck();
     this.loginService.login(this.usuario).subscribe({
       next: (e) => {
         localStorage.setItem("token", e);
@@ -44,6 +47,7 @@ export class LoginComponent implements OnInit {
       },
       error: (error) => {
         this.showProgress = false;
+        this.cdr.markForCheck();
         this.messageService.add({
           severity: "error",
           summary: "Atenção",
@@ -68,7 +72,10 @@ export class LoginComponent implements OnInit {
   setUserInLocalStorage() {
     this.loginService
       .refreshCurrentUser()
-      .pipe(finalize(() => (this.showProgress = false)))
+      .pipe(finalize(() => {
+        this.showProgress = false;
+        this.cdr.markForCheck();
+      }))
       .subscribe({
         next: () => {
           this.router.navigate(["/"]);

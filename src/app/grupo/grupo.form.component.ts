@@ -1,4 +1,4 @@
-import {Component, Injector} from '@angular/core';
+import {Component, Injector, ChangeDetectionStrategy, ChangeDetectorRef} from '@angular/core';
 import {Grupo} from './grupo';
 import {GrupoService} from './grupo.service';
 import {CrudFormComponent} from '../framework/component/crud.form.component';
@@ -9,7 +9,8 @@ import Swal from 'sweetalert2';
     selector: 'app-form-grupo',
     templateUrl: './grupo.form.component.html',
     styleUrls: ['./grupo.form.component.css'],
-    standalone: false
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GrupoFormComponent extends CrudFormComponent<Grupo, number> {
 
@@ -18,7 +19,8 @@ export class GrupoFormComponent extends CrudFormComponent<Grupo, number> {
   displayedColumns = ['id', 'nome'];
 
   constructor(protected grupoService: GrupoService,
-              protected injector: Injector) {
+              protected injector: Injector,
+              private readonly cdr: ChangeDetectorRef) {
     super(grupoService, injector, '/grupo');
   }
 
@@ -34,6 +36,7 @@ export class GrupoFormComponent extends CrudFormComponent<Grupo, number> {
         } else {
           this.itensVinculados = e;
           this.dialogItensRelacionados = true;
+          this.cdr.markForCheck();
         }
       });
   }
