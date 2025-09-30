@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, ViewChild, ChangeDetectionStrategy } from "@angular/core";
+import { Component, HostListener, OnInit, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef } from "@angular/core";
 import { SidenavService } from "./sidenav.service";
 import { browserChange } from "../app.component";
 import { LoginService } from "../login/login.service";
@@ -120,11 +120,11 @@ export const MENU_ITEM: MenuItem[] = [
     standalone: false
 })
 export class SidenavComponent implements OnInit {
-  public menuItems: PrimeMenuItem[] = [];
+  public menuItems: PrimeMenuItem[] = this.getDefaultMenuItems();
   public menuCadastros: PrimeMenuItem[] = [];
   display = false;
   showSubMenuCadastro = true;
-  showCadastros = true;
+  showCadastros = false;
   private readonly desktopBreakpoint = 1200;
   private viewportInitialized = false;
   private isDesktopView = true;
@@ -137,7 +137,8 @@ export class SidenavComponent implements OnInit {
     private readonly loginService: LoginService,
     private readonly usuarioService: UsuarioService,
     private readonly router: Router,
-    public readonly themeService: ThemeService
+    public readonly themeService: ThemeService,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -149,6 +150,20 @@ export class SidenavComponent implements OnInit {
     this.initObservableMenuItem();
   }
 
+  private getDefaultMenuItems(): PrimeMenuItem[] {
+    const defaultItems = MENU_ITEM.filter(item =>
+      item.group === "ITEM" && (!item.roles || item.roles.includes("ALUNO"))
+    );
+
+    return defaultItems.map(item => ({
+      label: item.title,
+      icon: `fa fa-${item.icon}`,
+      routerLink: item.path,
+      id: item.id,
+      styleClass: 'sidebar-menu-item'
+    }));
+  }
+
   @HostListener("window:resize")
   onWindowResize(): void {
     this.updateViewportFlags();
@@ -156,25 +171,23 @@ export class SidenavComponent implements OnInit {
   }
 
   buildMenu() {
-    this.menuItems = [];
-    this.menuCadastros = [];
     this.loginService.getPermissoesUser().subscribe((permissoes) => {
       const userRoles = permissoes.map((x: any) => x.nome.replace("ROLE_", ""));
-      this.showCadastros = userRoles.indexOf("ALUNO") < 0;
+      this.showCadastros = userRoles.indexOf("ADMINISTRADOR") >= 0 || userRoles.indexOf("LABORATORISTA") >= 0;
       const items = [];
 
       MENU_ITEM.forEach((menu: any) => {
         if (menu.roles != null) {
-          if (
-            menu.roles.filter((value) => -1 !== userRoles.indexOf(value))
-              .length > 0
-          ) {
+          if (menu.roles.filter((value) => -1 !== userRoles.indexOf(value)).length > 0) {
             items.push(menu);
           }
         } else {
           items.push(menu);
         }
       });
+
+      const newMenuItems: PrimeMenuItem[] = [];
+      const newMenuCadastros: PrimeMenuItem[] = [];
 
       items.forEach((value) => {
         const primeMenuItem: PrimeMenuItem = {
@@ -186,11 +199,15 @@ export class SidenavComponent implements OnInit {
         };
 
         if (value.group === "ITEM") {
-          this.menuItems.push(primeMenuItem);
+          newMenuItems.push(primeMenuItem);
         } else if (value.group === "CADASTRO") {
-          this.menuCadastros.push(primeMenuItem);
+          newMenuCadastros.push(primeMenuItem);
         }
       });
+
+      this.menuItems = newMenuItems;
+      this.menuCadastros = newMenuCadastros;
+      this.cdr.markForCheck();
     });
   }
 
@@ -203,6 +220,7 @@ export class SidenavComponent implements OnInit {
         this.sidebarVisible = !hide;
       }
       this.changeStylesDrawer();
+      this.cdr.markForCheck();
     });
   }
 
@@ -244,11 +262,8 @@ export class SidenavComponent implements OnInit {
   }
 
   changeColorMenuItem() {
-    // PrimeNG Menu handles active state automatically via routerLink
-    // No manual color changes needed
   }
+
   changeStylesDrawer() {
-    // Responsive behavior will be handled via CSS media queries
-    // and PrimeNG Sidebar responsive properties
   }
 }
