@@ -1,20 +1,14 @@
-import {Component} from '@angular/core';
-import {LoaderService} from './loader.service';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { LoaderService } from './loader.service';
 
 @Component({
-    selector: 'app-loader',
-    templateUrl: './loader.component.html',
-    styleUrls: ['./loader.component.css'],
-    standalone: false
+  selector: 'app-loader',
+  templateUrl: './loader.component.html',
+  styleUrls: ['./loader.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoaderComponent {
+  protected readonly loaderService = inject(LoaderService);
 
-  display = false;
-
-  constructor(private loaderService: LoaderService) {
-    this.loaderService.observableDisplay().subscribe(display => {
-      this.display = display;
-    });
-  }
-
+  protected readonly loading = this.loaderService.loading;
 }
