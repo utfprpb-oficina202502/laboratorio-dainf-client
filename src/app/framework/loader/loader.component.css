@@ -43,10 +43,3 @@
     opacity: 1;
   }
 }
-
-@media (min-width: 1200px) {
-  .loader-overlay {
-    left: 260px;
-    width: calc(100% - 260px);
-  }
-}
