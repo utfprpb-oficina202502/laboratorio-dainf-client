@@ -6,14 +6,18 @@
         <app-sidenav></app-sidenav>
       </aside>
       <main id="content" class="flex-1 h-full overflow-y-auto px-4 pb-6 pt-4 layout-content">
-        <router-outlet></router-outlet>
+        <div [style.opacity]="isNavigating ? '0' : '1'" [style.pointer-events]="isNavigating ? 'none' : 'auto'" style="transition: opacity 0.15s ease-in-out;">
+          <router-outlet></router-outlet>
+        </div>
         <app-loader></app-loader>
       </main>
     </div>
   </section>
 } @else {
   <main id="content" class="only-login flex flex-col min-h-screen w-full overflow-y-auto">
-    <router-outlet></router-outlet>
+    <div [style.opacity]="isNavigating ? '0' : '1'" [style.pointer-events]="isNavigating ? 'none' : 'auto'" style="transition: opacity 0.15s ease-in-out;">
+      <router-outlet></router-outlet>
+    </div>
     <app-loader></app-loader>
   </main>
 }

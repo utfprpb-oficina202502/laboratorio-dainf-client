@@ -16,6 +16,7 @@ export const browserChange = new Subject<boolean>();
 export class AppComponent {
   title = 'tcc-client';
   isAuthenticated = false;
+  isNavigating = false;
   subscription: Subscription;
 
   constructor(private readonly loginService: LoginService,
@@ -37,12 +38,16 @@ export class AppComponent {
   buildSubscriptionEvent() {
     this.subscription = this.router.events.subscribe((event) => {
       if (event instanceof NavigationStart) {
+        this.isNavigating = true;
         this.loaderService.show();
+        this.cdr.markForCheck();
       } else if (event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError) {
         if (event instanceof NavigationError) {
           console.error('[NavigationError]', event.error);
         }
+        this.isNavigating = false;
         this.loaderService.hide();
+        this.cdr.markForCheck();
         browserChange.next(true);
       }
     });
