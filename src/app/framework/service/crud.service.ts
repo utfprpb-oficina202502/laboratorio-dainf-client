@@ -29,10 +29,10 @@ export abstract class CrudService<T, ID> {
     page = Math.max(0, Number(page));
     size = Math.max(1, Number(size));
     const params = new HttpParams()
-      .set('page', String(page)) 
+      .set('page', String(page))
       .set('size', String(size))
       .set('filter', filter);
-    return this.http.get<any>(`${this.url}/paged`, { params });
+    return this.http.get<any>(`${this.url}page`, { params });
   }
 
   save(t: T): Observable<T> {

@@ -1,100 +1,65 @@
 @if (showProgress) {
-  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  <p-progressBar mode="indeterminate" class="login-progress"></p-progressBar>
 }
-<div
-  class="container w-100 h-100 d-flex justify-content-center align-items-center"
-  >
-  <div class="col-md-5">
-    <mat-card
-      style="width: 400px; height: 400px"
-      class="d-flex justify-content-between flex-column"
-      >
-      <div class="div-header">
-        <img
-          src="assets/utfpr.jpg"
-          alt="Logo UTFPR"
-          width="50px"
-          style="margin-right: 10px"
-          />
-          <span>Sistema Laboratório - Login</span>
-        </div>
-        <mat-card-content class="h-100">
-          <form #form class="d-flex flex-column justify-content-around h-100">
-            <div class="d-flex flex-column justify-content-center h-100">
-              <div class="row" style="margin: 10px 0">
-                <div class="col-md-12">
-                  <mat-form-field style="width: 100%">
-                    <mat-label for="username">Email</mat-label>
-                    <input
-                      type="text"
-                      id="username"
-                      name="username"
-                      [(ngModel)]="usuario.username"
-                      matInput
-                      />
-                    </mat-form-field>
-                  </div>
-                </div>
 
-                <div class="row" style="margin: 10px 0">
-                  <div class="col-md-12">
-                    <mat-form-field style="width: 100%">
-                      <mat-label for="password">Senha</mat-label>
-                      <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        [(ngModel)]="usuario.password"
-                        matInput
-                        />
-                      </mat-form-field>
-                    </div>
-                  </div>
-                  <a
-                    (click)="recuperarSenha()"
-                    class="text-center" style="color: #222d43; cursor: pointer"
-                    >Esqueceu sua senha?</a
-                    >
-                    <a
-                      (click)="cadastrar()"
-                      class="text-center"
-                      style="color: #222d43; cursor: pointer"
-                      >Ainda não possui cadastro? Cadastrar-se.</a
-                      >
-                      <a
-                        (click)="reenviarEmailConfirmacao()"
-                        class="text-center"
-                        style="color: #222d43; cursor: pointer"
-                        >Solicitar novo email de confirmacao.</a
-                        >
-                      </div>
-                      <div class="row justify-content-center mb-2">
-                        <div class="col-md-6 d-flex justify-content-center">
-                          <button
-                            mat-stroked-button
-                            type="submit"
-                            class="w-100 br-25px"
-                            color="primary"
-                            (click)="login()"
-                            >
-                            Acessar
-                          </button>
-                        </div>
-                      </div>
-                      <!-- <div class="row justify-content-center mb-2">
-                      <div class="col-md-6 d-flex justify-content-center">
-                        <asl-google-signin-button
-                          type="standard"
-                          theme="filled_blue"
-                          size="medium"
-                          shape="pill"
-                          locale="pt-BR"
-                          class="mx-5"
-                        ></asl-google-signin-button>
-                      </div>
-                    </div> -->
-                  </form>
-                </mat-card-content>
-              </mat-card>
-            </div>
-          </div>
+<div class="login-page">
+  <section class="login-panel">
+    <header class="login-header">
+      <img ngSrc="assets/utfpr.jpg" alt="Logo UTFPR" class="login-logo" height="117" width="335"/>
+      <span class="login-title">Sistema Laboratório - Login</span>
+    </header>
+
+    <form
+      #form="ngForm"
+      class="login-form"
+      (ngSubmit)="login()"
+      novalidate
+    >
+      <input
+        pInputText
+        type="email"
+        id="username"
+        name="username"
+        required
+        autocomplete="username"
+        placeholder="Email institucional"
+        aria-label="Email institucional"
+        [(ngModel)]="usuario.username"
+        class="login-input"
+      />
+
+      <input
+        pInputText
+        type="password"
+        id="password"
+        name="password"
+        required
+        autocomplete="current-password"
+        placeholder="Senha"
+        aria-label="Senha"
+        [(ngModel)]="usuario.password"
+        class="login-input"
+      />
+
+      <menu class="login-links" role="list">
+        <button type="button" (click)="recuperarSenha()" class="login-link">
+          Esqueceu sua senha?
+        </button>
+        <button type="button" (click)="cadastrar()" class="login-link">
+          Ainda não possui cadastro? Cadastrar-se.
+        </button>
+        <button type="button" (click)="reenviarEmailConfirmacao()" class="login-link">
+          Solicitar novo email de confirmação.
+        </button>
+      </menu>
+
+      <button
+        type="submit"
+        [disabled]="form.invalid || showProgress"
+        class="login-submit"
+      >
+        Acessar
+      </button>
+    </form>
+  </section>
+</div>

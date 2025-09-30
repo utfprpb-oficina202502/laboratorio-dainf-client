@@ -29,7 +29,7 @@ export interface ChartColorsConfig {
  * Paleta de cores padrão para todos os gráficos
  * Separada em tons de amarelo/dourado e tons de azul
  */
-export const defaultChartColors: ChartColorsConfig = {
+export const lightChartColors: ChartColorsConfig = {
   primary: '#FCBC00',
   secondary: '#00468C',
   accent: '#F59E0B',
@@ -61,6 +61,42 @@ export const defaultChartColors: ChartColorsConfig = {
     ]
   }
 };
+
+export const darkChartColors: ChartColorsConfig = {
+  primary: '#F3C400',
+  secondary: '#3B82F6',
+  accent: '#F59E0B',
+  background: '#1A1D20',
+  text: '#E5E7EB',
+  gridLines: '#2F3439',
+  tooltip: {
+    background: '#111827',
+    text: '#F9FAFB'
+  },
+  line: {
+    stroke: '#60A5FA',
+    fill: '#1D4ED8'
+  },
+  bar: {
+    palette: [
+      '#F59E0B', '#F3C400', '#FBBF24', '#FACC15', '#FDE68A',
+      '#2563EB', '#3B82F6', '#60A5FA', '#1D4ED8', '#93C5FD'
+    ]
+  },
+  pie: {
+    palette: [
+      '#F59E0B', '#F3C400', '#FBBF24', '#FACC15', '#FDE68A',
+      '#2563EB', '#3B82F6', '#60A5FA', '#1D4ED8', '#93C5FD'
+    ]
+  }
+};
+
+export const chartColorSchemes: Record<'light' | 'dark', ChartColorsConfig> = {
+  light: lightChartColors,
+  dark: darkChartColors
+};
+
+export const defaultChartColors: ChartColorsConfig = lightChartColors;
 
 /**
  * Utilitário para obter cores alternadas (amarelo/azul)

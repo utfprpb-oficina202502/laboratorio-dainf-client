@@ -41,10 +41,10 @@ import {MatSortModule} from '@angular/material/sort';
     CancelarModule,
     SalvarModule,
     NovoModule,
-    DialogModule
+    DialogModule,
+    GrupoListComponent
   ],
   declarations: [
-    GrupoListComponent,
     GrupoFormComponent
   ],
   exports: [

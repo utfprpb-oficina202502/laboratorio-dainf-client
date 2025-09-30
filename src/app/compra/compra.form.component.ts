@@ -8,8 +8,6 @@ import {ItemService} from '../item/item.service';
 import {Item} from '../item/item';
 import {CompraItem} from './compraItem';
 import {MatTable, MatTableDataSource} from '@angular/material/table';
-import {UsuarioService} from '../usuario/usuario.service';
-import {AutoComplete} from 'primeng/autocomplete';
 import {pt} from '../framework/constantes/calendarPt';
 import { DatePipe } from '@angular/common';
 
@@ -35,9 +33,8 @@ export class CompraFormComponent extends CrudFormComponent<Compra, number> {
 
   constructor(protected compraService: CompraService,
               protected injector: Injector,
-              private fornecedorService: FornecedorService,
-              private itemService: ItemService,
-              private usuarioService: UsuarioService) {
+              private readonly fornecedorService: FornecedorService,
+              private readonly itemService: ItemService) {
     super(compraService, injector, '/compra');
     this.compraItem = new CompraItem();
     this.localePt = pt;
@@ -49,13 +46,9 @@ export class CompraFormComponent extends CrudFormComponent<Compra, number> {
   }
 
   setUsuarioResponsavel() {
-    const userLogado = localStorage.getItem('username');
-    console.log(userLogado);
-    this.usuarioService.findByUsername(userLogado)
-      .subscribe(e => {
-        console.log(e);
-        this.object.usuario = e;
-      });
+    this.loginService.getCurrentUser().subscribe((user) => {
+      this.object.usuario = user;
+    });
   }
 
   findFornecedores($event) {

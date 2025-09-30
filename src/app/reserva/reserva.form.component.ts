@@ -3,23 +3,43 @@ import { CrudFormComponent } from "../framework/component/crud.form.component";
 import { Reserva } from "./reserva";
 import { ReservaService } from "./reserva.service";
 import { ReservaItem } from "./reservaItem";
-import { MatTable } from "@angular/material/table";
-import { AutoComplete } from "primeng/autocomplete";
+import {MatTable, MatTableModule} from "@angular/material/table";
 import { Item } from "../item/item";
 import { ItemService } from "../item/item.service";
-import { UsuarioService } from "../usuario/usuario.service";
 import { pt } from "../framework/constantes/calendarPt";
 import { DatePipe } from "@angular/common";
 import { Usuario } from "../usuario/usuario";
 import { ItemImage } from "../item/itemImage";
 import { environment } from "src/environments/environment";
 import Swal from "sweetalert2";
+import {Carousel} from "primeng/carousel";
+import {Dialog} from "primeng/dialog";
+import {CancelarModule} from "../geral/cancelar/cancelar.module";
+import {SalvarModule} from "../geral/salvar/salvar.module";
+import {VoltarModule} from "../geral/voltar/voltar.module";
+import {FormsModule} from "@angular/forms";
+import {Card} from "primeng/card";
+import {MatIconModule} from "@angular/material/icon";
+import {AutoComplete} from "primeng/autocomplete";
+import {CadastroRapidoModule} from "../geral/cadastroRapido/cadastroRapido.module";
 
 @Component({
-    selector: "app-form-reserva",
-    templateUrl: "./reserva.form.component.html",
-    styleUrls: ["./reserva.form.component.css"],
-    standalone: false
+  selector: "app-form-reserva",
+  templateUrl: "./reserva.form.component.html",
+  styleUrls: ["./reserva.form.component.css"],
+  imports: [
+    Carousel,
+    Dialog,
+    CancelarModule,
+    SalvarModule,
+    VoltarModule,
+    FormsModule,
+    Card,
+    MatTableModule,
+    MatIconModule,
+    AutoComplete,
+    CadastroRapidoModule
+  ]
 })
 export class ReservaFormComponent extends CrudFormComponent<Reserva, number> {
   @ViewChild("table") table: MatTable<any>;
@@ -33,14 +53,13 @@ export class ReservaFormComponent extends CrudFormComponent<Reserva, number> {
   localePt: any;
   images: ItemImage[];
   dialogImagens = false;
-  minioUrl: String;
+  minioUrl: string;
   responsiveOptions;
 
   constructor(
     protected reservaService: ReservaService,
     protected injector: Injector,
-    private itemService: ItemService,
-    private usuarioService: UsuarioService
+    private readonly itemService: ItemService
   ) {
     super(reservaService, injector, "/reserva");
     this.minioUrl = environment.minio_url;
@@ -70,9 +89,8 @@ export class ReservaFormComponent extends CrudFormComponent<Reserva, number> {
   }
 
   setUsuarioResponsavel() {
-    const username = localStorage.getItem("username");
-    this.usuarioService.findByUsername(username).subscribe((e) => {
-      this.object.usuario = e;
+    this.loginService.getCurrentUser().subscribe((user) => {
+      this.object.usuario = user;
     });
   }
 
@@ -136,7 +154,6 @@ export class ReservaFormComponent extends CrudFormComponent<Reserva, number> {
 
   postInsertItemList() {
     this.reservaItem = new ReservaItem();
-    // this.setFocusInputItem();
     this.table.renderRows();
   }
 

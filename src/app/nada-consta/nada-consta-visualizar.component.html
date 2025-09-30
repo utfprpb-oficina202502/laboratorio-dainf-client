@@ -1,0 +1,41 @@
+<div class="container my-4">
+  <p-card>
+    <ng-template pTemplate="header">
+      Consulta Nada Consta
+    </ng-template>
+    <ng-template pTemplate="content">
+      <form (ngSubmit)="consultar()" #form="ngForm">
+        <div class="p-field">
+          <label for="alunoId">ID do Aluno</label>
+          <input pInputText type="number" [(ngModel)]="alunoId" name="alunoId" id="alunoId" placeholder="Digite o ID do aluno" required />
+        </div>
+        <button pButton type="submit" label="Consultar" [disabled]="carregando || form.invalid" class="p-button-primary"></button>
+      </form>
+      @if (carregando) {
+        <p-progressBar mode="indeterminate" style="height: 6px;"></p-progressBar>
+      }
+      @if (erro) {
+        <div class="erro">{{ erro }}</div>
+      }
+      @if (resultado) {
+        <h3>Resultado</h3>
+        <p><strong>Aluno:</strong> {{ resultado.nome }} (ID: {{ resultado.alunoId }})</p>
+        @if (resultado.nadaConsta) {
+          <p class="ok">Nada consta para este aluno.</p>
+        }
+        @if (!resultado.nadaConsta) {
+          <div>
+            <p class="pendencia">Pendências encontradas:</p>
+            <ul>
+              @for (p of resultado.pendencias; track $index) {
+                <li>
+                  <strong>{{ p.tipo }}:</strong> {{ p.descricao }}
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      }
+    </ng-template>
+  </p-card>
+</div>

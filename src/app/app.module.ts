@@ -50,6 +50,8 @@ import {SocialLoginModule} from "@abacritt/angularx-social-login";
 import {CadastrarUsuarioModule} from "./cadastrarUsuario/cadastrarUsuario.module";
 import {providePrimeNG} from "primeng/config";
 import {ptBR} from "../locale/pt-BR";
+import { NadaConstaModule } from './nada-consta/nada-consta.module';
+import PrimeUTFPRPreset from "./theme/prime-utfpr-theme-preset";
 
 @NgModule({
   declarations: [AppComponent],
@@ -84,6 +86,7 @@ import {ptBR} from "../locale/pt-BR";
     RelatorioModule,
     SocialLoginModule,
     CadastrarUsuarioModule,
+    NadaConstaModule,
   ],
   providers: [
     MessageService,
@@ -114,28 +117,15 @@ import {ptBR} from "../locale/pt-BR";
     },
     providePrimeNG({
       theme: {
-        preset: "lara-light-indigo",
+        preset: PrimeUTFPRPreset,
+        options: {
+          prefix: 'p',
+          darkModeSelector: '.theme-dark',
+          cssLayer: false
+        }
       },
-      translation: ptBR,
-
+      translation: ptBR
     }),
-    // {
-    //   provide: "SocialAuthServiceConfig",
-    //   useValue: {
-    //     autoLogin: false,
-    //     providers: [
-    //       {
-    //         id: GoogleLoginProvider.PROVIDER_ID,
-    //         provider: new GoogleLoginProvider(
-    //           "80739592554-lgpadsbj9gjql2ssdq414fu58takgfdl.apps.googleusercontent.com"
-    //         ),
-    //       },
-    //     ],
-    //     onError: (err) => {
-    //       console.error(err);
-    //     },
-    //   } as SocialAuthServiceConfig,
-    // },
     provideHttpClient(withInterceptorsFromDi()),
   ],
 })

@@ -47,11 +47,11 @@ import {DatePickerModule} from "primeng/datepicker";
     CancelarModule,
     SalvarModule,
     CadastroRapidoModule,
-    OnlyNumberModule
+    OnlyNumberModule,
+    CompraListComponent
   ],
   declarations: [
-    CompraFormComponent,
-    CompraListComponent
+    CompraFormComponent
   ],
   exports: [
     CompraFormComponent,

@@ -1,11 +1,15 @@
 import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output, OnChanges, SimpleChanges} from '@angular/core';
+import {NgClass, NgStyle} from "@angular/common";
 
 @Component({
   selector: 'app-stat-card',
   templateUrl: './stat-card.component.html',
   styleUrls: ['./stat-card.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: false
+  imports: [
+    NgStyle,
+    NgClass
+  ]
 })
 export class StatCardComponent implements OnChanges {
   @Input() title: string;
@@ -16,22 +20,25 @@ export class StatCardComponent implements OnChanges {
   @Input() iconLibrary: 'pi' | 'fa' = 'fa'; // padrão agora Font Awesome
   @Output() cardClick = new EventEmitter<void>();
 
-  private accentRgba = 'rgba(59,130,246,0.18)';
+  private accentTint = this.hexToRgba(this.accentColor, 0.18);
+  private accentMuted = this.hexToRgba(this.accentColor, 0.24);
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['accentColor']) {
-      this.updateAccentRgba();
+      this.updateAccentVariants();
     }
   }
 
-  private updateAccentRgba() {
-    this.accentRgba = this.hexToRgba(this.accentColor, 0.18);
+  private updateAccentVariants() {
+    this.accentTint = this.hexToRgba(this.accentColor, 0.18);
+    this.accentMuted = this.hexToRgba(this.accentColor, 0.24);
   }
 
   private hexToRgba(hex: string, alpha: number): string {
     if (!hex) { return `rgba(0,0,0,${alpha})`; }
     let h = hex.trim();
-    if (h.startsWith('rgba')) return h; if (h.startsWith('rgb')) return h.replace('rgb','rgba').replace(')',`,`+alpha+')');
+    if (h.startsWith('rgba')) return h;
+    if (h.startsWith('rgb')) return h.replace('rgb','rgba').replace(')',`,`+alpha+')');
     if (h.startsWith('#')) h = h.substring(1);
     if (h.length === 3) { h = h.split('').map(c=>c+c).join(''); }
     if (h.length !== 6) return `rgba(0,0,0,${alpha})`;
@@ -39,10 +46,11 @@ export class StatCardComponent implements OnChanges {
     return `rgba(${r},${g},${b},${alpha})`;
   }
 
-  get gradientStyle() {
+  get styleVariables() {
     return {
-      'border-left': '4px solid ' + this.accentColor,
-      'background': `linear-gradient(135deg, ${this.accentRgba} 0%, rgba(255,255,255,0.92) 65%)`
+      '--stat-card-accent-color': this.accentColor,
+      '--stat-card-accent-tint': this.accentTint,
+      '--stat-card-accent-muted': this.accentMuted
     };
   }
 

@@ -1,21 +1,17 @@
-import {Component, OnInit, OnDestroy} from "@angular/core";
+import {Component, OnInit, OnDestroy, AfterViewInit, effect, inject} from "@angular/core";
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import {DatePipe} from '@angular/common';
-import {inject} from '@angular/core';
 import {forkJoin, finalize} from 'rxjs';
 
-import am4themes_animated from "@amcharts/amcharts4/themes/animated";
 import {DashboardEmprestimoCountRange} from "./dashboard/dashboardEmprestimoCountRange";
 import {HomeService} from "./home.service";
 import {LoginService} from "../login/login.service";
 import {DateUtil} from "../framework/util/dateUtil";
 import {pt} from "../framework/constantes/calendarPt";
 import {LoaderService} from "../framework/loader/loader.service";
-import {environment} from "../../environments/environment";
-import {getAlternatingColor} from "../framework/charts/chart-colors.config";
-
-am4core.useTheme(am4themes_animated);
+import {ThemeService} from "../framework/services/theme.service";
+import {chartColorSchemes, ChartColorsConfig, getAlternatingColor} from "../framework/charts/chart-colors.config";
 
 @Component({
   selector: "app-home",
@@ -23,38 +19,67 @@ am4core.useTheme(am4themes_animated);
   styleUrls: ["./home.component.css"],
   standalone: false
 })
-export class HomeComponent implements OnInit, OnDestroy {
+export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   datepipe: DatePipe = inject(DatePipe);
   dashEmprestimoCount: DashboardEmprestimoCountRange;
   dialodFiltroData = false;
   dtIniFiltro: string;
   dtFimFiltro: string;
   localePt: any;
+  private readonly themeService = inject(ThemeService);
+  private chartColors: ChartColorsConfig = chartColorSchemes.light;
   private chartLineRef: am4charts.XYChart;
   private chartBarRef: am4charts.XYChart;
-  private chartPie1Ref: am4charts.PieChart3D;
-  private chartPie2Ref: am4charts.PieChart3D;
+  private chartPie1Ref: am4charts.PieChart;
+  private chartPie2Ref: am4charts.PieChart;
+  private viewInitialized = false;
+  private pendingDashboardBuild = false;
   showDashboardAluno = false;
+  private destroyed = false;
 
   constructor(
-    private homeService: HomeService,
-    private loginService: LoginService,
-    private loaderService: LoaderService
+    private readonly homeService: HomeService,
+    private readonly loginService: LoginService,
+    private readonly loaderService: LoaderService
   ) {
     this.dashEmprestimoCount = new DashboardEmprestimoCountRange();
     this.localePt = pt;
-  }
-
-  ngOnInit() {
-    this.loginService.userLoggedIsAlunoOrProfessor().then((value) => {
-      this.showDashboardAluno = !!value;
-      if (!this.showDashboardAluno) {
-        this.buildDashboards();
+    effect(() => {
+      const mode = this.themeService.themeMode();
+      const themeColors = chartColorSchemes[mode] ?? chartColorSchemes.light;
+      this.chartColors = themeColors;
+      if (!this.destroyed) {
+        this.applyThemeToExistingCharts();
       }
     });
   }
 
+  ngOnInit() {
+    this.loginService.userLoggedIsAlunoOrProfessor().then((value) => {
+      if (this.destroyed) {
+        return;
+      }
+      this.showDashboardAluno = !!value;
+      if (!this.showDashboardAluno) {
+        if (this.viewInitialized) {
+          this.buildDashboards();
+        } else {
+          this.pendingDashboardBuild = true;
+        }
+      }
+    });
+  }
+
+  ngAfterViewInit() {
+    this.viewInitialized = true;
+    if (this.pendingDashboardBuild && !this.showDashboardAluno) {
+      this.pendingDashboardBuild = false;
+      this.buildDashboards();
+    }
+  }
+
   ngOnDestroy() {
+    this.destroyed = true;
     this.disposeChart(this.chartLineRef);
     this.chartLineRef = null;
     this.disposeChart(this.chartBarRef);
@@ -66,7 +91,15 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   buildDashboards() {
-    this.disposeCharts();
+    if (this.destroyed) {
+      return;
+    }
+    if (!this.viewInitialized) {
+      this.pendingDashboardBuild = true;
+      return;
+    }
+    this.pendingDashboardBuild = false;
+
     const ini = this.getDateIni();
     const fim = this.getDateFim();
     const batch = forkJoin({
@@ -76,6 +109,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       adquiridos: this.homeService.findItensMaisAdquiridos(ini, fim),
       saidas: this.homeService.findItensMaisSaidas(ini, fim)
     });
+
     this.loaderService.show();
     batch.pipe(finalize(() => this.loaderService.hide())).subscribe(({
                                                                        count,
@@ -84,36 +118,28 @@ export class HomeComponent implements OnInit, OnDestroy {
                                                                        adquiridos,
                                                                        saidas
                                                                      }) => {
+      if (this.destroyed) {
+        return;
+      }
       this.dashEmprestimoCount = count;
       const byDayProcessed = this.processByDay(byDay, 'dtEmprestimo');
-      this.createXYChartLine("chartdiv2", byDayProcessed, "_dtParsed", "qtde");
+      this.updateXYChartLine("chartdiv2", byDayProcessed, "_dtParsed", "qtde");
       const emprestadosTop = Array.isArray(emprestados)
-        ? emprestados.sort((a, b) => (b?.qtde || 0) - (a?.qtde || 0)).slice(0, 10)
+        ? [...emprestados].sort((a, b) => (b?.qtde || 0) - (a?.qtde || 0)).slice(0, 10)
         : [];
-      this.createXYChartBar("chartdiv4", emprestadosTop, "item", "qtde");
-      this.createPieChart("chartdivPie1", adquiridos, "item", "qtde");
-      this.createPieChart("chartdivPie2", saidas, "item", "qtde");
+      this.updateXYChartBar("chartdiv4", emprestadosTop, "item", "qtde");
+      this.updatePieChart("chartdivPie1", adquiridos, "item", "qtde");
+      this.updatePieChart("chartdivPie2", saidas, "item", "qtde");
     });
   }
 
-  private disposeChart(ref: any) {
+  private disposeChart(ref: am4core.BaseObject | null | undefined) {
     try {
       if (ref) {
         ref.dispose();
       }
     } catch { /* ignore */
     }
-  }
-
-  private disposeCharts() {
-    this.disposeChart(this.chartLineRef);
-    this.chartLineRef = null;
-    this.disposeChart(this.chartBarRef);
-    this.chartBarRef = null;
-    this.disposeChart(this.chartPie1Ref);
-    this.chartPie1Ref = null;
-    this.disposeChart(this.chartPie2Ref);
-    this.chartPie2Ref = null;
   }
 
   private processByDay(data: any[], dateField: string) {
@@ -167,239 +193,331 @@ export class HomeComponent implements OnInit, OnDestroy {
     return dtFim;
   }
 
-  createPieChart(elementAppend, dados, nameField, nameValue) {
-    if (elementAppend === 'chartdivPie1') {
-      this.disposeChart(this.chartPie1Ref);
-    }
-    if (elementAppend === 'chartdivPie2') {
-      this.disposeChart(this.chartPie2Ref);
-    }
+  private updatePieChart(elementId: string, data: any[], nameField: string, nameValue: string) {
+    let pieChart = elementId === 'chartdivPie1' ? this.chartPie1Ref : this.chartPie2Ref;
 
-    const pieChart3D = am4core.create(elementAppend, am4charts.PieChart3D);
-    pieChart3D.background.fill = am4core.color(environment.charts.colors.background);
-    pieChart3D.hiddenState.properties.opacity = 0;
+    if (!pieChart || pieChart.isDisposed()) {
+      pieChart = am4core.create(elementId, am4charts.PieChart);
+      pieChart.background.fill = am4core.color(this.chartColors.background);
+      pieChart.hiddenState.properties.opacity = 0;
 
-    pieChart3D.data = dados;
+      const series = pieChart.series.push(new am4charts.PieSeries());
+      series.dataFields.value = nameValue;
+      series.dataFields.category = nameField;
+      series.labels.template.disabled = true;
+      series.ticks.template.disabled = true;
+      series.slices.template.tooltipText = `{${nameField}}: {${nameValue}}`;
+      series.slices.template.strokeWidth = 1;
+      series.slices.template.strokeOpacity = 1;
+      series.slices.template.adapter.add("fill", (fill, target) => {
+        if (target.dataItem?.index !== undefined) {
+          const color = getAlternatingColor(target.dataItem.index, this.chartColors.pie.palette);
+          return am4core.color(color);
+        }
+        return fill;
+      });
 
-    const series = pieChart3D.series.push(new am4charts.PieSeries3D());
-    series.dataFields.value = nameValue;
-    series.dataFields.category = nameField;
-
-    // Usar função utilitária para cores alternadas
-    series.slices.template.adapter.add("fill", (fill, target) => {
-      if (target.dataItem && target.dataItem.index !== undefined) {
-        const color = getAlternatingColor(target.dataItem.index, environment.charts.colors.pie.palette);
-        return am4core.color(color);
-      }
-      return fill;
-    });
-
-    series.labels.template.disabled = true;
-    series.ticks.template.disabled = true;
-
-    series.slices.template.tooltipText = `{${nameField}}: {${nameValue}}`;
-    series.slices.template.stroke = am4core.color(environment.charts.colors.background);
-    series.slices.template.strokeWidth = 1;
-    series.slices.template.strokeOpacity = 1;
-
-    const sliceHover = series.slices.template.states.getKey('hover');
-    if (sliceHover) {
+      const sliceHover = series.slices.template.states.getKey('hover') ?? series.slices.template.states.create('hover');
       sliceHover.properties.scale = 1.05;
       sliceHover.properties.shiftRadius = 0.04;
-    }
 
-    pieChart3D.legend = new am4charts.Legend();
-    pieChart3D.legend.position = 'bottom';
-    pieChart3D.legend.useDefaultMarker = true;
-    pieChart3D.legend.labels.template.maxWidth = 160;
-    pieChart3D.legend.labels.template.truncate = false;
-    pieChart3D.legend.labels.template.wrap = true;
-    pieChart3D.legend.labels.template.fill = am4core.color(environment.charts.colors.text);
-    pieChart3D.legend.valueLabels.template.disabled = true;
-    pieChart3D.legend.itemContainers.template.tooltipText = '';
+      pieChart.legend = new am4charts.Legend();
+      pieChart.legend.position = 'bottom';
+      pieChart.legend.useDefaultMarker = true;
+      pieChart.legend.labels.template.maxWidth = 160;
+      pieChart.legend.labels.template.truncate = false;
+      pieChart.legend.labels.template.wrap = true;
+      pieChart.legend.valueLabels.template.disabled = true;
+      pieChart.legend.itemContainers.template.tooltipText = '';
+      pieChart.legend.itemContainers.template.clickable = false;
+      pieChart.legend.itemContainers.template.focusable = false;
+      pieChart.legend.itemContainers.template.cursorOverStyle = am4core.MouseCursorStyle.default;
+      pieChart.legend.markers.template.adapter.add("fill", (fill, target) => {
+        if (target?.dataItem?.index !== undefined) {
+          const color = getAlternatingColor(target.dataItem.index, this.chartColors.pie.palette);
+          return am4core.color(color);
+        }
+        return fill;
+      });
 
-    // CORREÇÃO: Desabilitar completamente o comportamento de toggle/hide na legenda
-    pieChart3D.legend.itemContainers.template.clickable = false;
-    pieChart3D.legend.itemContainers.template.focusable = false;
-    pieChart3D.legend.itemContainers.template.cursorOverStyle = am4core.MouseCursorStyle.default;
+      const setLegendHover = (ev: any, flag: boolean) => {
+        const legendDataItem = ev.target.dataItem;
+        if (!legendDataItem) {
+          return;
+        }
+        const idx = legendDataItem.index;
+        if (idx != null) {
+          const slice = series.slices.getIndex(idx);
+          if (slice) {
+            slice.isHover = flag;
+          }
+        }
+      };
 
-    // Desabilitar eventos de clique que poderiam ocultar fatias
-    pieChart3D.legend.itemContainers.template.events.disableType("hit");
+      pieChart.legend.itemContainers.template.events.on('over', ev => setLegendHover(ev, true));
+      pieChart.legend.itemContainers.template.events.on('out', ev => setLegendHover(ev, false));
 
-    // Aplicar cores na legenda usando função utilitária
-    pieChart3D.legend.markers.template.adapter.add("fill", (fill, target) => {
-      if (target.dataItem && target.dataItem.index !== undefined) {
-        const color = getAlternatingColor(target.dataItem.index, environment.charts.colors.pie.palette);
-        return am4core.color(color);
-      }
-      return fill;
-    });
-
-    // Manter apenas hover visual na legenda (sem funcionalidade de toggle)
-    const setLegendHover = (ev: any, flag: boolean) => {
-      const legendDataItem = ev.target.dataItem;
-      if (!legendDataItem) return;
-
-      const idx = legendDataItem.index;
-      if (idx != null) {
-        const slice = series.slices.getIndex(idx);
-        if (slice) slice.isHover = flag;
-      }
-    };
-
-    pieChart3D.legend.itemContainers.template.events.on('over', ev => setLegendHover(ev, true));
-    pieChart3D.legend.itemContainers.template.events.on('out', ev => setLegendHover(ev, false));
-
-    const count = Array.isArray(dados) ? dados.length : 0;
-    if (count === 0) {
-      const label = pieChart3D.chartContainer.createChild(am4core.Label);
+      const label = pieChart.chartContainer.createChild(am4core.Label);
       label.text = 'Sem dados';
       label.align = 'center';
       label.isMeasured = false;
       label.y = am4core.percent(50);
-      label.fill = am4core.color(environment.charts.colors.text);
-    }
+      (pieChart as any).noDataLabel = label;
 
-    if (elementAppend === 'chartdivPie1') {
-      this.chartPie1Ref = pieChart3D;
-    }
-    if (elementAppend === 'chartdivPie2') {
-      this.chartPie2Ref = pieChart3D;
-    }
-  }
-
-  createXYChartBar(elementAppend, dados, nameField, nameValue) {
-    this.disposeChart(this.chartBarRef);
-    const xyChart = am4core.create(elementAppend, am4charts.XYChart);
-    xyChart.background.fill = am4core.color(environment.charts.colors.background);
-
-    // Ordenar dados por quantidade (maior para menor) para aplicar cores consistentes
-    const sortedData = Array.isArray(dados) ? [...dados].sort((a, b) => (b[nameValue] || 0) - (a[nameValue] || 0)) : [];
-
-    xyChart.scrollbarX = new am4core.Scrollbar();
-    xyChart.data = sortedData;
-
-    const categoryAxis = xyChart.xAxes.push(new am4charts.CategoryAxis());
-    categoryAxis.dataFields.category = nameField;
-    categoryAxis.renderer.grid.template.location = 0;
-    categoryAxis.renderer.minGridDistance = 30;
-    categoryAxis.renderer.labels.template.horizontalCenter = "middle";
-    categoryAxis.renderer.labels.template.verticalCenter = "middle";
-    categoryAxis.tooltip.disabled = true;
-    categoryAxis.renderer.labels.template.truncate = true;
-    categoryAxis.renderer.labels.template.maxWidth = 120;
-    categoryAxis.renderer.labels.template.fill = am4core.color(environment.charts.colors.text);
-
-    const isSmallScreen = window && window.innerWidth < 640;
-
-    if (elementAppend === 'chartdiv4') {
-      if (!isSmallScreen) {
-        categoryAxis.renderer.labels.template.truncate = false;
-        categoryAxis.renderer.labels.template.wrap = true;
-        categoryAxis.renderer.minGridDistance = 20;
-        xyChart.paddingBottom = 30;
-        categoryAxis.renderer.labels.template.adapter.add('dy', (dy, target: any) => {
-          const index = target.dataItem && target.dataItem.index;
-          if (index == null) {
-            return dy;
-          }
-          return (index % 2 === 0) ? 0 : 18;
-        });
-        categoryAxis.renderer.labels.template.tooltipText = `{${nameField}}`;
+      if (elementId === 'chartdivPie1') {
+        this.chartPie1Ref = pieChart;
       } else {
-        categoryAxis.renderer.labels.template.disabled = true;
-        xyChart.paddingBottom = 10;
+        this.chartPie2Ref = pieChart;
       }
     }
 
-    const valueAxis = xyChart.yAxes.push(new am4charts.ValueAxis());
-    valueAxis.renderer.minWidth = 50;
-    valueAxis.renderer.labels.template.fill = am4core.color(environment.charts.colors.text);
+    const safeData = Array.isArray(data) ? data : [];
+    pieChart.data = safeData;
+    const noDataLabel: am4core.Label | undefined = (pieChart as any).noDataLabel;
+    if (noDataLabel) {
+      noDataLabel.fill = am4core.color(this.chartColors.text);
+      noDataLabel.visible = safeData.length === 0;
+    }
 
-    const series = xyChart.series.push(new am4charts.ColumnSeries());
-    series.sequencedInterpolation = true;
-    series.dataFields.valueY = nameValue;
-    series.dataFields.categoryX = nameField;
-    series.tooltipText = isSmallScreen ? "{categoryX}: {valueY}" : "[{categoryX}: bold]{categoryX}: {valueY}[/]";
-    series.columns.template.strokeWidth = 0;
-    series.tooltip.pointerOrientation = "vertical";
-    series.columns.template.column.cornerRadiusTopLeft = 10;
-    series.columns.template.column.cornerRadiusTopRight = 10;
-    series.columns.template.column.fillOpacity = 0.8;
+    const pieSeries = pieChart.series.getIndex(0);
+    if (pieSeries) {
+      pieSeries.dataFields.value = nameValue;
+      pieSeries.dataFields.category = nameField;
+      pieSeries.tooltip.background.fill = am4core.color(this.chartColors.tooltip.background);
+      pieSeries.tooltip.label.fill = am4core.color(this.chartColors.tooltip.text);
+      pieSeries.slices.template.stroke = am4core.color(this.chartColors.background);
+    }
 
-    const hoverState = series.columns.template.column.states.create("hover");
-    hoverState.properties.cornerRadiusTopLeft = 0;
-    hoverState.properties.cornerRadiusTopRight = 0;
-    hoverState.properties.fillOpacity = 1;
+    this.applyThemeToPieChart(pieChart);
+    pieChart.invalidateRawData();
+  }
 
-    // Usar função utilitária para cores alternadas
-    series.columns.template.adapter.add("fill", (fill, target) => {
-      if (target.dataItem && target.dataItem.index !== undefined) {
-        const color = getAlternatingColor(target.dataItem.index, environment.charts.colors.bar.palette);
-        return am4core.color(color);
+  private updateXYChartBar(elementId: string, data: any[], nameField: string, nameValue: string) {
+    let chart = this.chartBarRef;
+
+    if (!chart || chart.isDisposed()) {
+      chart = am4core.create(elementId, am4charts.XYChart);
+      chart.background.fill = am4core.color(this.chartColors.background);
+
+      const categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis());
+      categoryAxis.dataFields.category = nameField;
+      categoryAxis.renderer.grid.template.location = 0;
+      categoryAxis.renderer.minGridDistance = 30;
+      categoryAxis.renderer.labels.template.horizontalCenter = "middle";
+      categoryAxis.renderer.labels.template.verticalCenter = "middle";
+      categoryAxis.tooltip.disabled = true;
+      categoryAxis.renderer.labels.template.truncate = true;
+      categoryAxis.renderer.labels.template.maxWidth = 120;
+
+      const valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+      valueAxis.renderer.minWidth = 50;
+
+      const series = chart.series.push(new am4charts.ColumnSeries());
+      series.sequencedInterpolation = true;
+      series.dataFields.valueY = nameValue;
+      series.dataFields.categoryX = nameField;
+      series.tooltip.pointerOrientation = "vertical";
+      series.columns.template.strokeWidth = 0;
+      series.columns.template.column.cornerRadiusTopLeft = 10;
+      series.columns.template.column.cornerRadiusTopRight = 10;
+      series.columns.template.column.fillOpacity = 0.8;
+
+      const hoverState = series.columns.template.column.states.create("hover");
+      hoverState.properties.cornerRadiusTopLeft = 0;
+      hoverState.properties.cornerRadiusTopRight = 0;
+      hoverState.properties.fillOpacity = 1;
+
+      series.columns.template.adapter.add("fill", (fill, target) => {
+        if (target.dataItem?.index !== undefined) {
+          const color = getAlternatingColor(target.dataItem.index, this.chartColors.bar.palette);
+          return am4core.color(color);
+        }
+        return fill;
+      });
+      this.chartBarRef = chart;
+    }
+
+    const sortedData = Array.isArray(data) ? [...data].sort((a, b) => (b?.[nameValue] || 0) - (a?.[nameValue] || 0)) : [];
+    chart.data = sortedData;
+
+    const isSmallScreen = this.isSmallScreen();
+    const needsInteraction = sortedData.length > 8;
+
+    const categoryAxis = chart.xAxes.getIndex(0) as am4charts.CategoryAxis;
+    if (categoryAxis) {
+      categoryAxis.renderer.labels.template.fill = am4core.color(this.chartColors.text);
+      categoryAxis.renderer.grid.template.stroke = am4core.color(this.chartColors.gridLines);
+      categoryAxis.renderer.labels.template.truncate = isSmallScreen;
+      categoryAxis.renderer.labels.template.wrap = !isSmallScreen;
+      categoryAxis.renderer.labels.template.maxWidth = isSmallScreen ? 120 : 160;
+      categoryAxis.renderer.labels.template.disabled = isSmallScreen;
+      categoryAxis.renderer.minGridDistance = isSmallScreen ? 30 : 20;
+      categoryAxis.renderer.labels.template.tooltipText = isSmallScreen ? undefined : `{${nameField}}`;
+      chart.paddingBottom = isSmallScreen ? 10 : 30;
+    }
+
+    const valueAxis = chart.yAxes.getIndex(0) as am4charts.ValueAxis;
+    if (valueAxis) {
+      valueAxis.renderer.labels.template.fill = am4core.color(this.chartColors.text);
+      valueAxis.renderer.grid.template.stroke = am4core.color(this.chartColors.gridLines);
+    }
+
+    const series = chart.series.getIndex(0) as am4charts.ColumnSeries;
+    if (series) {
+      series.dataFields.valueY = nameValue;
+      series.dataFields.categoryX = nameField;
+      series.tooltipText = isSmallScreen ? "{categoryX}: {valueY}" : "[{categoryX}: bold]{categoryX}: {valueY}[/]";
+      series.tooltip.background.fill = am4core.color(this.chartColors.tooltip.background);
+      series.tooltip.label.fill = am4core.color(this.chartColors.tooltip.text);
+      if (series.columns) {
+        series.columns.template.stroke = am4core.color(this.chartColors.background);
       }
-      return fill;
-    });
+    }
 
-    xyChart.cursor = new am4charts.XYCursor();
-    this.chartBarRef = xyChart;
+    if (needsInteraction) {
+      if (!chart.scrollbarX) {
+        chart.scrollbarX = new am4core.Scrollbar();
+      }
+      chart.scrollbarX.disabled = false;
+      if (!chart.cursor) {
+        const cursor = new am4charts.XYCursor();
+        cursor.lineY.disabled = true;
+        chart.cursor = cursor;
+      } else {
+        chart.cursor.lineY.disabled = true;
+      }
+      chart.cursor.behavior = "panX";
+    } else {
+      if (chart.scrollbarX) {
+        chart.scrollbarX = null;
+      }
+      if (chart.cursor) {
+        chart.cursor = null;
+      }
+    }
+
+    this.applyThemeToBarChart(chart);
+    chart.invalidateRawData();
   }
 
-  createXYChartLine(elementAppend, dados, dateX, valueY) {
-    this.disposeChart(this.chartLineRef);
-    const chartLine = am4core.create(elementAppend, am4charts.XYChart);
-    chartLine.background.fill = am4core.color(environment.charts.colors.background);
-    chartLine.data = dados;
-    const dateAxis = chartLine.xAxes.push(new am4charts.DateAxis());
-    dateAxis.baseInterval = {timeUnit: 'day', count: 1};
-    dateAxis.skipEmptyPeriods = true;
-    dateAxis.renderer.labels.template.fill = am4core.color(environment.charts.colors.text);
-    dateAxis.renderer.grid.template.stroke = am4core.color(environment.charts.colors.gridLines);
-    const valueAxis = chartLine.yAxes.push(new am4charts.ValueAxis());
+  private updateXYChartLine(elementId: string, data: any[], dateField: string, valueField: string) {
+    let chartLine = this.chartLineRef;
 
-    valueAxis.renderer.labels.template.fill = am4core.color(environment.charts.colors.text);
-    valueAxis.renderer.grid.template.stroke = am4core.color(environment.charts.colors.gridLines);
+    if (!chartLine || chartLine.isDisposed()) {
+      chartLine = am4core.create(elementId, am4charts.XYChart);
+      chartLine.background.fill = am4core.color(this.chartColors.background);
 
-    const series = chartLine.series.push(new am4charts.LineSeries());
-    series.dataFields.valueY = valueY;
-    series.dataFields.dateX = dateX;
-    series.tooltipText = "{valueY}";
-    series.strokeWidth = 2;
-    series.stroke = am4core.color(environment.charts.colors.line.stroke);
-    series.fill = am4core.color(environment.charts.colors.line.fill);
-    series.minBulletDistance = 15;
-    series.tooltip.background.cornerRadius = 20;
-    series.tooltip.background.strokeOpacity = 0;
-    series.tooltip.background.fill = am4core.color(environment.charts.colors.tooltip.background);
-    series.tooltip.label.fill = am4core.color(environment.charts.colors.tooltip.text);
-    series.tooltip.pointerOrientation = "vertical";
-    series.tooltip.label.minWidth = 40;
-    series.tooltip.label.minHeight = 40;
-    series.tooltip.label.textAlign = "middle";
-    series.tooltip.label.textValign = "middle";
+      const dateAxis = chartLine.xAxes.push(new am4charts.DateAxis());
+      dateAxis.baseInterval = {timeUnit: 'day', count: 1};
+      dateAxis.skipEmptyPeriods = true;
+      chartLine.yAxes.push(new am4charts.ValueAxis());
+      const series = chartLine.series.push(new am4charts.LineSeries());
+      series.dataFields.valueY = valueField;
+      series.dataFields.dateX = dateField;
+      series.tooltipText = "{valueY}";
+      series.strokeWidth = 2;
+      series.minBulletDistance = 15;
+      series.tooltip.background.cornerRadius = 20;
+      series.tooltip.background.strokeOpacity = 0;
+      series.tooltip.pointerOrientation = "vertical";
+      series.tooltip.label.minWidth = 40;
+      series.tooltip.label.minHeight = 40;
+      series.tooltip.label.textAlign = "middle";
+      series.tooltip.label.textValign = "middle";
 
-    const bullet = series.bullets.push(new am4charts.CircleBullet());
-    bullet.circle.strokeWidth = 2;
-    bullet.circle.radius = 4;
-    bullet.circle.fill = am4core.color(environment.charts.colors.background);
-    bullet.circle.stroke = am4core.color(environment.charts.colors.line.stroke);
+      const bullet = series.bullets.push(new am4charts.CircleBullet());
+      bullet.circle.strokeWidth = 2;
+      bullet.circle.radius = 4;
 
-    const bullethover = bullet.states.create("hover");
-    bullethover.properties.scale = 1.3;
+      const bullethover = bullet.states.create("hover");
+      bullethover.properties.scale = 1.3;
+      this.chartLineRef = chartLine;
+    }
 
-    chartLine.cursor = new am4charts.XYCursor();
-    chartLine.cursor.behavior = "panXY";
-    chartLine.cursor.xAxis = dateAxis;
-    chartLine.cursor.snapToSeries = series;
-    chartLine.scrollbarY = new am4core.Scrollbar();
-    chartLine.scrollbarY.parent = chartLine.leftAxesContainer;
-    chartLine.scrollbarY.toBack();
-    chartLine.scrollbarX = new am4charts.XYChartScrollbar();
-    (chartLine.scrollbarX as am4charts.XYChartScrollbar).series.push(series);
-    chartLine.scrollbarX.parent = chartLine.bottomAxesContainer;
-    this.chartLineRef = chartLine;
+    const safeData = Array.isArray(data) ? data : [];
+    chartLine.data = safeData;
+
+    const dateAxis = chartLine.xAxes.getIndex(0) as am4charts.DateAxis;
+    if (dateAxis) {
+      dateAxis.renderer.labels.template.fill = am4core.color(this.chartColors.text);
+      dateAxis.renderer.grid.template.stroke = am4core.color(this.chartColors.gridLines);
+    }
+    const valueAxis = chartLine.yAxes.getIndex(0) as am4charts.ValueAxis;
+    if (valueAxis) {
+      valueAxis.renderer.labels.template.fill = am4core.color(this.chartColors.text);
+      valueAxis.renderer.grid.template.stroke = am4core.color(this.chartColors.gridLines);
+    }
+
+    const series = chartLine.series.getIndex(0) as am4charts.LineSeries;
+    if (series) {
+      series.dataFields.valueY = valueField;
+      series.dataFields.dateX = dateField;
+      series.stroke = am4core.color(this.chartColors.line.stroke);
+      series.fill = am4core.color(this.chartColors.line.fill);
+      series.tooltip.background.fill = am4core.color(this.chartColors.tooltip.background);
+      series.tooltip.label.fill = am4core.color(this.chartColors.tooltip.text);
+      series.bullets.each(bullet => {
+        if (bullet instanceof am4charts.CircleBullet) {
+          bullet.circle.fill = am4core.color(this.chartColors.background);
+          bullet.circle.stroke = am4core.color(this.chartColors.line.stroke);
+        }
+      });
+    }
+
+    const needsPan = safeData.length > 30;
+    if (needsPan) {
+      if (!chartLine.cursor) {
+        const cursor = new am4charts.XYCursor();
+        cursor.xAxis = dateAxis;
+        cursor.snapToSeries = series;
+        cursor.lineY.disabled = true;
+        chartLine.cursor = cursor;
+      } else {
+        chartLine.cursor.xAxis = dateAxis;
+        chartLine.cursor.snapToSeries = series;
+        chartLine.cursor.lineY.disabled = true;
+      }
+      chartLine.cursor.visible = true;
+
+      if (!chartLine.scrollbarX) {
+        const scrollbarX = new am4charts.XYChartScrollbar();
+        scrollbarX.series.push(series);
+        chartLine.scrollbarX = scrollbarX;
+      }
+      if (chartLine.scrollbarX) {
+        chartLine.scrollbarX.parent = chartLine.bottomAxesContainer;
+        chartLine.scrollbarX.disabled = false;
+      }
+
+      if (!chartLine.scrollbarY) {
+        const scrollbarY = new am4core.Scrollbar();
+        scrollbarY.parent = chartLine.leftAxesContainer;
+        scrollbarY.toBack();
+        chartLine.scrollbarY = scrollbarY;
+      } else {
+        chartLine.scrollbarY.parent = chartLine.leftAxesContainer;
+        chartLine.scrollbarY.toBack();
+        chartLine.scrollbarY.disabled = false;
+      }
+    } else {
+      if (chartLine.cursor) {
+        chartLine.cursor = null;
+      }
+      if (chartLine.scrollbarX) {
+        chartLine.scrollbarX = null;
+      }
+      if (chartLine.scrollbarY) {
+        chartLine.scrollbarY = null;
+      }
+    }
+
+    this.applyThemeToLineChart(chartLine);
+    chartLine.invalidateRawData();
   }
 
+  private isSmallScreen(): boolean {
+    return typeof window !== 'undefined' && window.innerWidth < 640;
+  }
   disableBtnFiltrar() {
     return (
       this.dtIniFiltro == null ||
@@ -408,4 +526,112 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.dtFimFiltro === ""
     );
   }
+
+  private applyThemeToExistingCharts(): void {
+    if (this.destroyed) {
+      return;
+    }
+    if (this.chartPie1Ref) {
+      this.applyThemeToPieChart(this.chartPie1Ref);
+    }
+    if (this.chartPie2Ref) {
+      this.applyThemeToPieChart(this.chartPie2Ref);
+    }
+    if (this.chartBarRef) {
+      this.applyThemeToBarChart(this.chartBarRef);
+    }
+    if (this.chartLineRef) {
+      this.applyThemeToLineChart(this.chartLineRef);
+    }
+  }
+
+  private applyThemeToPieChart(pieChart: am4charts.PieChart): void {
+    const colors = this.chartColors;
+    pieChart.background.fill = am4core.color(colors.background);
+    if (pieChart.legend) {
+      pieChart.legend.labels.template.fill = am4core.color(colors.text);
+      pieChart.legend.valueLabels.template.fill = am4core.color(colors.text);
+    }
+    pieChart.series.each(series => {
+      series.labels.template.fill = am4core.color(colors.text);
+      series.ticks.template.stroke = am4core.color(colors.gridLines);
+      series.slices.template.stroke = am4core.color(colors.background);
+      if (series.tooltip) {
+        series.tooltip.background.fill = am4core.color(colors.tooltip.background);
+        series.tooltip.label.fill = am4core.color(colors.tooltip.text);
+      }
+    });
+    const noDataLabel: am4core.Label | undefined = (pieChart as any).noDataLabel;
+    if (noDataLabel) {
+      noDataLabel.fill = am4core.color(colors.text);
+    }
+  }
+
+  private applyThemeToBarChart(chart: am4charts.XYChart): void {
+    const colors = this.chartColors;
+    chart.background.fill = am4core.color(colors.background);
+    chart.xAxes.each(axis => {
+      axis.renderer.labels.template.fill = am4core.color(colors.text);
+      axis.renderer.grid.template.stroke = am4core.color(colors.gridLines);
+    });
+    chart.yAxes.each(axis => {
+      axis.renderer.labels.template.fill = am4core.color(colors.text);
+      axis.renderer.grid.template.stroke = am4core.color(colors.gridLines);
+    });
+    chart.series.each(series => {
+      if (series.tooltip) {
+        series.tooltip.background.fill = am4core.color(colors.tooltip.background);
+        series.tooltip.label.fill = am4core.color(colors.tooltip.text);
+      }
+      if (series instanceof am4charts.ColumnSeries) {
+        (series).columns.template.stroke = am4core.color(colors.background);
+      }
+    });
+    if (chart.cursor instanceof am4charts.XYCursor) {
+      chart.cursor.lineX.stroke = am4core.color(colors.text);
+      chart.cursor.lineY.stroke = am4core.color(colors.text);
+    }
+  }
+
+  private applyThemeToLineChart(chart: am4charts.XYChart): void {
+    const colors = this.chartColors;
+    chart.background.fill = am4core.color(colors.background);
+    chart.xAxes.each(axis => {
+      axis.renderer.labels.template.fill = am4core.color(colors.text);
+      axis.renderer.grid.template.stroke = am4core.color(colors.gridLines);
+    });
+    chart.yAxes.each(axis => {
+      axis.renderer.labels.template.fill = am4core.color(colors.text);
+      axis.renderer.grid.template.stroke = am4core.color(colors.gridLines);
+    });
+    chart.series.each(series => {
+      if (series instanceof am4charts.LineSeries) {
+        const lineSeries = series;
+        lineSeries.stroke = am4core.color(colors.line.stroke);
+        lineSeries.fill = am4core.color(colors.line.fill);
+        if (lineSeries.tooltip) {
+          lineSeries.tooltip.background.fill = am4core.color(colors.tooltip.background);
+          lineSeries.tooltip.label.fill = am4core.color(colors.tooltip.text);
+        }
+        lineSeries.bullets.each(bullet => {
+          if (bullet instanceof am4charts.CircleBullet) {
+            bullet.circle.fill = am4core.color(colors.background);
+            bullet.circle.stroke = am4core.color(colors.line.stroke);
+          }
+        });
+      }
+    });
+    if (chart.cursor instanceof am4charts.XYCursor) {
+      chart.cursor.lineX.stroke = am4core.color(colors.text);
+      chart.cursor.lineY.stroke = am4core.color(colors.text);
+    }
+  }
 }
+
+
+
+
+
+
+
+

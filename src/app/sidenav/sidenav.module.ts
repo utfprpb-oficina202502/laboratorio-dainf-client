@@ -2,20 +2,18 @@ import {NgModule} from '@angular/core';
 import {SidenavComponent} from './sidenav.component';
 import {RouterModule} from '@angular/router';
 import {CommonModule} from '@angular/common';
-import {MatListModule} from '@angular/material/list';
-import {MatIconModule} from '@angular/material/icon';
-import {MatSidenavModule} from '@angular/material/sidenav';
-import {MatExpansionModule} from '@angular/material/expansion';
 import {SidenavService} from './sidenav.service';
+import {ThemeToggleComponent} from '../framework/component/theme-toggle.component';
+
+// PrimeNG Components
+import {DrawerModule} from 'primeng/drawer';
 
 @NgModule({
   imports: [
     CommonModule,
-    MatListModule,
-    MatIconModule,
     RouterModule,
-    MatSidenavModule,
-    MatExpansionModule
+    DrawerModule,
+    ThemeToggleComponent
   ],
   exports: [
     SidenavComponent

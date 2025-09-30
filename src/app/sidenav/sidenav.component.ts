@@ -1,10 +1,12 @@
 import { Component, OnInit, ViewChild } from "@angular/core";
 import { SidenavService } from "./sidenav.service";
-import { MatDrawer } from "@angular/material/sidenav";
 import { browserChange } from "../app.component";
 import { LoginService } from "../login/login.service";
 import { UsuarioService } from "../usuario/usuario.service";
 import { Router } from "@angular/router";
+import { ThemeService } from "../framework/services/theme.service";
+import { MenuItem as PrimeMenuItem } from 'primeng/api';
+import { Drawer } from 'primeng/drawer';
 
 export interface MenuItem {
   path: string;
@@ -108,6 +110,14 @@ export const MENU_ITEM: MenuItem[] = [
     roles: ["ADMINISTRADOR", "LABORATORISTA"],
     group: "ITEM",
   },
+  {
+    path: "/nada-consta",
+    title: "Nada Consta",
+    icon: "file-text-o",
+    id: "nada-consta",
+    group: "ITEM",
+    roles: ["ADMINISTRADOR", "LABORATORISTA"],
+  },
 ];
 
 @Component({
@@ -117,18 +127,20 @@ export const MENU_ITEM: MenuItem[] = [
     standalone: false
 })
 export class SidenavComponent implements OnInit {
-  public menuItems: any[];
-  public menuCadastros: any[];
+  public menuItems: PrimeMenuItem[] = [];
+  public menuCadastros: PrimeMenuItem[] = [];
   display = false;
-  showSubMenuCadastro = false;
+  showSubMenuCadastro = true;
   showCadastros = true;
-  @ViewChild("drawer") drawer: MatDrawer;
+  sidebarVisible = true;
+  @ViewChild("drawer") drawer: Drawer;
 
   constructor(
     private readonly sidenavService: SidenavService,
     private readonly loginService: LoginService,
     private readonly usuarioService: UsuarioService,
-    private readonly router: Router
+    private readonly router: Router,
+    public readonly themeService: ThemeService
   ) {}
 
   ngOnInit(): void {
@@ -140,12 +152,13 @@ export class SidenavComponent implements OnInit {
   }
 
   buildMenu() {
-    this.menuItems = new Array();
-    this.menuCadastros = new Array();
+    this.menuItems = [];
+    this.menuCadastros = [];
     this.loginService.getPermissoesUser().subscribe((permissoes) => {
       const userRoles = permissoes.map((x: any) => x.nome.replace("ROLE_", ""));
       this.showCadastros = userRoles.indexOf("ALUNO") < 0;
       const items = [];
+
       MENU_ITEM.forEach((menu: any) => {
         if (menu.roles != null) {
           if (
@@ -158,11 +171,20 @@ export class SidenavComponent implements OnInit {
           items.push(menu);
         }
       });
+
       items.forEach((value) => {
+        const primeMenuItem: PrimeMenuItem = {
+          label: value.title,
+          icon: `fa fa-${value.icon}`,
+          routerLink: value.path,
+          id: value.id,
+          styleClass: 'sidebar-menu-item'
+        };
+
         if (value.group === "ITEM") {
-          this.menuItems.push(value);
+          this.menuItems.push(primeMenuItem);
         } else if (value.group === "CADASTRO") {
-          this.menuCadastros.push(value);
+          this.menuCadastros.push(primeMenuItem);
         }
       });
     });
@@ -170,14 +192,8 @@ export class SidenavComponent implements OnInit {
 
   initObservableDrawer() {
     this.sidenavService.observable().subscribe((hide) => {
-      if (this.drawer != null) {
-        if (hide) {
-          this.drawer.close();
-        } else {
-          this.drawer.open();
-        }
-        this.changeStylesDrawer();
-      }
+      this.sidebarVisible = !hide;
+      this.changeStylesDrawer();
     });
   }
 
@@ -194,59 +210,11 @@ export class SidenavComponent implements OnInit {
   }
 
   changeColorMenuItem() {
-    const that = this;
-    setTimeout(() => {
-      const pathCurrent = that.getCurrentPath();
-      if (pathCurrent !== "/login") {
-        (that.menuItems || []).forEach((menu) => {
-          that.setColorMenuItem(menu, pathCurrent);
-        });
-        if (that.showSubMenuCadastro) {
-          (that.menuCadastros || []).forEach((menu) => {
-            that.setColorMenuItem(menu, pathCurrent);
-          });
-        }
-      }
-    }, 100);
+    // PrimeNG Menu handles active state automatically via routerLink
+    // No manual color changes needed
   }
-
-  private getCurrentPath(): string {
-    let current = this.router?.url || "";
-
-    if (!current) {
-      const { hash, pathname } = window.location;
-      if (hash?.startsWith("#/")) {
-        current = hash.substring(1); // remove o '#'
-      } else {
-        current = pathname || "/";
-      }
-    }
-
-    const firstSegment = (current.split("?")[0] || "").split("/")[1] || "";
-    return "/" + firstSegment;
-  }
-
-  setColorMenuItem(menu: MenuItem, path) {
-    const el = document.getElementById(menu.id);
-    if (!el) {
-      return;
-    }
-    if (menu.path === path) {
-      el.style.backgroundColor = "#1b2231";
-    } else {
-      el.style.backgroundColor = "transparent";
-    }
-  }
-
   changeStylesDrawer() {
-    const el = document.getElementById("drawer");
-    if (!el) {
-      return;
-    }
-    if (window.innerWidth < 1200) {
-      el.classList.remove("float-drawer");
-    } else {
-      el.classList.add("float-drawer");
-    }
+    // Responsive behavior will be handled via CSS media queries
+    // and PrimeNG Sidebar responsive properties
   }
 }
