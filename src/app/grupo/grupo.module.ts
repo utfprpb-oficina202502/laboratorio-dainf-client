@@ -1,6 +1,5 @@
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {GrupoListComponent} from './grupo.list.component';
 import {GrupoFormComponent} from './grupo.form.component';
 import {GrupoService} from './grupo.service';
 import {DialogModule} from 'primeng/dialog';
@@ -41,14 +40,12 @@ import {MatSortModule} from '@angular/material/sort';
     CancelarModule,
     SalvarModule,
     NovoModule,
-    DialogModule,
-    GrupoListComponent
+    DialogModule
   ],
   declarations: [
     GrupoFormComponent
   ],
   exports: [
-    GrupoListComponent,
     GrupoFormComponent
   ],
   providers: [

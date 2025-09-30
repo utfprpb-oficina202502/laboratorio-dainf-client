@@ -1,6 +1,5 @@
 import {
-  Component, forwardRef, Injector, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef,
-  OnInit
+  Component, forwardRef, Injector, ViewChild, ChangeDetectionStrategy, OnInit
 } from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
@@ -125,8 +124,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   constructor(protected emprestimoService: EmprestimoService,
               protected injector: Injector,
               private readonly bottomSheetOptions: MatBottomSheet,
-              private readonly usuarioService: UsuarioService,
-              private readonly cdr: ChangeDetectorRef) {
+              private readonly usuarioService: UsuarioService) {
     super(emprestimoService, injector, ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status'], 'emprestimo/form');
     this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;

@@ -18,34 +18,41 @@
       </div>
     </p-panel>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <app-stat-card
-        title="Total de Empréstimos"
-        [value]="dashEmprestimoCount?.total"
-        icon="sync"
-        iconLibrary="pi"
-        accentColor="#3B82F6">
-      </app-stat-card>
-      <app-stat-card
-        title="Empréstimos em Andamento"
-        [value]="dashEmprestimoCount?.emAndamento"
-        icon="clock"
-        iconLibrary="pi"
-        accentColor="#F97316">
-      </app-stat-card>
-      <app-stat-card
-        title="Empréstimos em Atraso"
-        [value]="dashEmprestimoCount?.emAtraso"
-        icon="exclamation-triangle"
-        iconLibrary="pi"
-        accentColor="#EF4444">
-      </app-stat-card>
-      <app-stat-card
-        title="Empréstimos Finalizados"
-        [value]="dashEmprestimoCount?.finalizado"
-        icon="check"
-        iconLibrary="pi"
-        accentColor="#22C55E">
-      </app-stat-card>
+      @if (loadingStats) {
+        <app-skeleton-card></app-skeleton-card>
+        <app-skeleton-card></app-skeleton-card>
+        <app-skeleton-card></app-skeleton-card>
+        <app-skeleton-card></app-skeleton-card>
+      } @else {
+        <app-stat-card
+          title="Total de Empréstimos"
+          [value]="dashEmprestimoCount?.total"
+          icon="sync"
+          iconLibrary="pi"
+          accentColor="#3B82F6">
+        </app-stat-card>
+        <app-stat-card
+          title="Empréstimos em Andamento"
+          [value]="dashEmprestimoCount?.emAndamento"
+          icon="clock"
+          iconLibrary="pi"
+          accentColor="#F97316">
+        </app-stat-card>
+        <app-stat-card
+          title="Empréstimos em Atraso"
+          [value]="dashEmprestimoCount?.emAtraso"
+          icon="exclamation-triangle"
+          iconLibrary="pi"
+          accentColor="#EF4444">
+        </app-stat-card>
+        <app-stat-card
+          title="Empréstimos Finalizados"
+          [value]="dashEmprestimoCount?.finalizado"
+          icon="check"
+          iconLibrary="pi"
+          accentColor="#22C55E">
+        </app-stat-card>
+      }
     </div>
     @if (!hasDashboardData) {
       <div class="dashboard-empty-state">
@@ -69,7 +76,15 @@
         </div>
       </div>
     }
-    @if (hasDashboardData) {
+    @if (loadingCharts) {
+      <app-skeleton-chart type="line"></app-skeleton-chart>
+      <app-skeleton-chart type="bar"></app-skeleton-chart>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <app-skeleton-chart type="pie"></app-skeleton-chart>
+        <app-skeleton-chart type="pie"></app-skeleton-chart>
+      </div>
+    }
+    @if (hasDashboardData && !loadingCharts) {
       <p-panel class="mb-3">
         <ng-template pTemplate="header">
           <h6 class="font-bold text-center m-0">Total de Empréstimos Realizados por Dia</h6>

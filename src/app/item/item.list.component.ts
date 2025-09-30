@@ -1,4 +1,4 @@
-import { Component, forwardRef, Injector, ChangeDetectionStrategy, ChangeDetectorRef } from "@angular/core";
+import { Component, forwardRef, Injector, ChangeDetectionStrategy } from "@angular/core";
 import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import { Item } from "./item";
@@ -129,8 +129,7 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
     protected itemService: ItemService,
     protected injector: Injector,
     private readonly bottomSheetOptions: MatBottomSheet,
-    private readonly reservaService: ReservaService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly reservaService: ReservaService
   ) {
     super(
       itemService,

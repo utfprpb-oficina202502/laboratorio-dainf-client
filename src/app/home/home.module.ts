@@ -13,6 +13,8 @@ import {StatCardComponent} from '../components/stat-card/stat-card.component';
 import {PanelModule} from 'primeng/panel';
 import {ButtonModule} from 'primeng/button';
 import {RouterLink} from "@angular/router";
+import {SkeletonCardComponent} from '../framework/component/skeleton-card.component';
+import {SkeletonChartComponent} from '../framework/component/skeleton-chart.component';
 
 @NgModule({
   imports: [
@@ -26,7 +28,9 @@ import {RouterLink} from "@angular/router";
     PanelModule,
     ButtonModule,
     StatCardComponent,
-    RouterLink
+    RouterLink,
+    SkeletonCardComponent,
+    SkeletonChartComponent
   ],
   declarations: [
     HomeComponent

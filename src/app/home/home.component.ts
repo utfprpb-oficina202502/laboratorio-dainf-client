@@ -39,6 +39,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   hasDashboardData = false;
   private latestRequestToken = 0;
   private destroyed = false;
+  loadingStats = false;
+  loadingCharts = false;
 
   constructor(
     private readonly homeService: HomeService,
@@ -59,18 +61,27 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit() {
+    this.loaderService.show();
+
     this.loginService.userLoggedIsAlunoOrProfessor().then((value) => {
       if (this.destroyed) {
+        this.loaderService.hide();
         return;
       }
       this.showDashboardAluno = !!value;
+      this.cdr.markForCheck();
+
       if (!this.showDashboardAluno) {
         if (this.viewInitialized) {
           this.buildDashboards();
         } else {
           this.pendingDashboardBuild = true;
         }
+      } else {
+        this.loaderService.hide();
       }
+    }).catch(() => {
+      this.loaderService.hide();
       this.cdr.markForCheck();
     });
   }
@@ -96,11 +107,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   buildDashboards() {
-    if (this.destroyed) {
-      return;
-    }
-    if (!this.viewInitialized) {
-      this.pendingDashboardBuild = true;
+    if (this.destroyed || !this.viewInitialized) {
+      this.pendingDashboardBuild = !this.viewInitialized;
       return;
     }
     this.pendingDashboardBuild = false;
@@ -108,61 +116,107 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     const ini = this.getDateIni();
     const fim = this.getDateFim();
     const requestToken = ++this.latestRequestToken;
-    const batch = forkJoin({
-      count: this.homeService.findDadosEmprestimoCountInRange(ini, fim),
+
+    this.loadingStats = true;
+    this.loaderService.show();
+    this.cdr.markForCheck();
+
+    this.homeService.findDadosEmprestimoCountInRange(ini, fim)
+      .pipe(finalize(() => {
+        this.loadingStats = false;
+        this.cdr.markForCheck();
+      }))
+      .subscribe({
+        next: (count) => {
+          if (this.destroyed || requestToken !== this.latestRequestToken) {
+            return;
+          }
+          this.dashEmprestimoCount = count;
+
+          const hasStatData = (
+            (this.dashEmprestimoCount?.total ?? 0) > 0 ||
+            (this.dashEmprestimoCount?.emAndamento ?? 0) > 0 ||
+            (this.dashEmprestimoCount?.emAtraso ?? 0) > 0 ||
+            (this.dashEmprestimoCount?.finalizado ?? 0) > 0
+          );
+
+          this.cdr.markForCheck();
+
+          if (hasStatData) {
+            this.loadCharts(ini, fim, requestToken);
+          } else {
+            this.loaderService.hide();
+            this.hasDashboardData = false;
+            this.cdr.markForCheck();
+          }
+        },
+        error: () => {
+          this.loaderService.hide();
+          this.hasDashboardData = false;
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  private loadCharts(ini: string, fim: string, requestToken: number) {
+    this.loadingCharts = true;
+    const chartBatch = forkJoin({
       byDay: this.homeService.findDadosEmprestimoByDayInRange(ini, fim),
       emprestados: this.homeService.findItensMaisEmprestados(ini, fim),
       adquiridos: this.homeService.findItensMaisAdquiridos(ini, fim),
       saidas: this.homeService.findItensMaisSaidas(ini, fim)
     });
 
-    this.loaderService.show();
-    batch.pipe(finalize(() => this.loaderService.hide())).subscribe(({
-                                                                       count,
-                                                                       byDay,
-                                                                       emprestados,
-                                                                       adquiridos,
-                                                                       saidas
-                                                                     }) => {
-      if (this.destroyed) {
-        return;
-      }
-      this.dashEmprestimoCount = count;
-      const byDayProcessed = this.processByDay(byDay, 'dtEmprestimo');
-      const emprestadosTop = Array.isArray(emprestados)
-        ? [...emprestados].sort((a, b) => (b?.qtde || 0) - (a?.qtde || 0)).slice(0, 10)
-        : [];
-      const adquiridosList = Array.isArray(adquiridos) ? adquiridos : [];
-      const saidasList = Array.isArray(saidas) ? saidas : [];
-
-      this.hasDashboardData = (
-        (this.dashEmprestimoCount?.total ?? 0) > 0 ||
-        (this.dashEmprestimoCount?.emAndamento ?? 0) > 0 ||
-        (this.dashEmprestimoCount?.emAtraso ?? 0) > 0 ||
-        (this.dashEmprestimoCount?.finalizado ?? 0) > 0 ||
-        byDayProcessed.length > 0 ||
-        emprestadosTop.length > 0 ||
-        adquiridosList.length > 0 ||
-        saidasList.length > 0
-      );
-
-      if (!this.hasDashboardData) {
-        this.disposeAllCharts();
-        this.cdr.markForCheck();
-        return;
-      }
-
+    chartBatch.pipe(finalize(() => {
+      this.loadingCharts = false;
+      this.loaderService.hide();
       this.cdr.markForCheck();
-
-      setTimeout(() => {
-        if (this.destroyed || !this.hasDashboardData) {
+    })).subscribe({
+      next: ({ byDay, emprestados, adquiridos, saidas }) => {
+        if (this.destroyed || requestToken !== this.latestRequestToken) {
           return;
         }
-        this.updateXYChartLine("chartdiv2", byDayProcessed, "_dtParsed", "qtde");
-        this.updateXYChartBar("chartdiv4", emprestadosTop, "item", "qtde");
-        this.updatePieChart("chartdivPie1", adquiridosList, "item", "qtde");
-        this.updatePieChart("chartdivPie2", saidasList, "item", "qtde");
-      }, 0);
+
+        const byDayProcessed = this.processByDay(byDay, 'dtEmprestimo');
+        const emprestadosTop = Array.isArray(emprestados)
+          ? [...emprestados].sort((a, b) => (b?.qtde || 0) - (a?.qtde || 0)).slice(0, 10)
+          : [];
+        const adquiridosList = Array.isArray(adquiridos) ? adquiridos : [];
+        const saidasList = Array.isArray(saidas) ? saidas : [];
+
+        this.hasDashboardData = (
+          (this.dashEmprestimoCount?.total ?? 0) > 0 ||
+          (this.dashEmprestimoCount?.emAndamento ?? 0) > 0 ||
+          (this.dashEmprestimoCount?.emAtraso ?? 0) > 0 ||
+          (this.dashEmprestimoCount?.finalizado ?? 0) > 0 ||
+          byDayProcessed.length > 0 ||
+          emprestadosTop.length > 0 ||
+          adquiridosList.length > 0 ||
+          saidasList.length > 0
+        );
+
+        if (!this.hasDashboardData) {
+          this.disposeAllCharts();
+          this.cdr.markForCheck();
+          return;
+        }
+
+        this.cdr.markForCheck();
+
+        setTimeout(() => {
+          if (this.destroyed || !this.hasDashboardData) {
+            return;
+          }
+          this.updateXYChartLine("chartdiv2", byDayProcessed, "_dtParsed", "qtde");
+          this.updateXYChartBar("chartdiv4", emprestadosTop, "item", "qtde");
+          this.updatePieChart("chartdivPie1", adquiridosList, "item", "qtde");
+          this.updatePieChart("chartdivPie2", saidasList, "item", "qtde");
+        }, 0);
+      },
+      error: () => {
+        this.hasDashboardData = (this.dashEmprestimoCount?.total ?? 0) > 0;
+        this.cdr.markForCheck();
+      }
     });
   }
 

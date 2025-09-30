@@ -1,4 +1,4 @@
-import { HostListener, Injector, OnInit, Directive, Input, ContentChild, TemplateRef, OnDestroy, ElementRef, ViewChild } from '@angular/core';
+import { HostListener, Injector, OnInit, Directive, Input, ContentChild, TemplateRef, OnDestroy, ElementRef, ViewChild, ChangeDetectorRef } from '@angular/core';
 import {Router} from '@angular/router';
 import {CrudService} from '../service/crud.service';
 import {ConfirmationService, MessageService} from 'primeng/api';
@@ -25,6 +25,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   protected loaderService: LoaderService;
   protected loginService: LoginService;
   protected permissionService: PermissionService;
+  protected cdr: ChangeDetectorRef | null = null;
 
   // Enhanced configuration system
   @Input() tableConfig: TableConfiguration = {
@@ -128,6 +129,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.initializeKeyboardShortcuts();
     this.setupUserPermissions();
 
+    // Load data immediately - no setTimeout needed
     if (this.tableConfig.preloadData !== false) {
       this.findAll();
     } else {
@@ -146,12 +148,20 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.loaderService = injector.get(LoaderService);
     this.loginService = injector.get(LoginService);
     this.permissionService = injector.get(PermissionService);
+
+    // Get ChangeDetectorRef for OnPush components
+    try {
+      this.cdr = injector.get(ChangeDetectorRef);
+    } catch (e) {
+      this.cdr = null;
+    }
+
     this.displayedColumns = this.columnsTable;
     this.rows = this.pageSize;
     this.defaultStateKey = this.buildDefaultStateKey();
     this.stateKey = this.defaultStateKey;
 
-    // Setup debounced filtering
+    // Set up debounced filtering
     this.setupDebouncedFiltering();
   }
 
@@ -178,8 +188,9 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     const resizableColumns = this.tableConfig.resizableColumns !== false && this.tableConfig.resizable !== false;
     this.tableConfig.resizableColumns = resizableColumns;
     this.tableConfig.columnResizeMode = this.tableConfig.columnResizeMode || 'fit';
-    this.tableConfig.lazy = this.tableConfig.lazy !== false;
-    this.tableConfig.lazyLoadOnInit = this.tableConfig.lazyLoadOnInit !== false;
+    // Set lazy to false since we handle pagination manually
+    this.tableConfig.lazy = false;
+    this.tableConfig.lazyLoadOnInit = false;
     this.tableConfig.preloadData = this.tableConfig.preloadData !== false;
     this.tableConfig.columnToggle = this.tableConfig.columnToggle !== false;
     this.tableConfig.keyboardShortcuts = this.tableConfig.keyboardShortcuts !== false;
@@ -693,10 +704,20 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
           this.loaderService.hide();
           this.postFindAll();
           this.saveTableState();
+
+          // Trigger change detection for OnPush components
+          if (this.cdr) {
+            this.cdr.markForCheck();
+          }
         },
         error => {
           this.loaderService.hide();
           this.showError(error);
+
+          // Trigger change detection even on error
+          if (this.cdr) {
+            this.cdr.markForCheck();
+          }
         }
       );
   }
@@ -726,9 +747,19 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
         this.loaderService.hide();
         this.postFindAll();
         this.saveTableState();
+
+        // Trigger change detection for OnPush components
+        if (this.cdr) {
+          this.cdr.markForCheck();
+        }
       }, error => {
         this.loaderService.hide();
         this.showError(error);
+
+        // Trigger change detection even on error
+        if (this.cdr) {
+          this.cdr.markForCheck();
+        }
       });
     this.buildColumnsTable();
   }
@@ -871,10 +902,20 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
           this.loaderService.hide();
           this.postFindAll();
           this.saveTableState();
+
+          // Trigger change detection for OnPush components
+          if (this.cdr) {
+            this.cdr.markForCheck();
+          }
         },
         error => {
           this.loaderService.hide();
           this.showError(error);
+
+          // Trigger change detection even on error
+          if (this.cdr) {
+            this.cdr.markForCheck();
+          }
         }
       );
   }

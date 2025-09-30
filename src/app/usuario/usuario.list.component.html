@@ -38,8 +38,8 @@
         [attr.aria-label]="'Lista de usuarios com ' + totalElements + ' registro(s)'">
 
         <ng-template pTemplate="caption">
-          <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
-            <p-iconField iconPosition="left" class="flex-grow-1 flex-md-grow-0">
+          <div class="flex items-center justify-end gap-2 flex-wrap">
+            <p-iconField iconPosition="left" style="flex: 0 1 auto; min-width: 200px; max-width: 300px;">
               <p-inputIcon class="pi pi-search" aria-hidden="true"></p-inputIcon>
               <input
                 #globalFilterInput
@@ -84,8 +84,8 @@
                 [style.min-width]="column.minWidth"
                 [ngClass]="column.headerClass"
                 [attr.aria-label]="column.tooltip || column.header">
-                <div class="d-flex align-items-center gap-2"
-                     [class.justify-content-center]="column.align === 'center'">
+                <div class="flex items-center gap-2"
+                     [class.justify-center]="column.align === 'center'">
                   {{ column.header }}
                   @if (column.sortable !== false && column.field !== 'actions') {
                     <p-sortIcon [field]="column.field" aria-hidden="true"></p-sortIcon>
@@ -127,7 +127,7 @@
                 [attr.headers]="'col-' + column.field">
                 @switch (column.field) {
                   @case ('actions') {
-                    <div class="d-flex align-items-center gap-2 justify-content-center">
+                    <div class="flex items-center gap-2 justify-center">
                       @if (canEdit) {
                         <p-button
                           severity="secondary"
