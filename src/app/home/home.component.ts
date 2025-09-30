@@ -113,6 +113,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     this.pendingDashboardBuild = false;
 
+    // Dispose existing charts before rebuilding to prevent memory leaks
+    this.disposeAllCharts();
+
     const ini = this.getDateIni();
     const fim = this.getDateFim();
     const requestToken = ++this.latestRequestToken;

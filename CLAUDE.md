@@ -250,6 +250,270 @@ this.cdr.markForCheck(); // Essencial com OnPush
    - Mostrar loaders imediatamente quando navegação iniciar
    - Garantir transições atômicas de estado
 
+6. **Gerenciar ciclo de vida de charts corretamente**
+   - Sempre dispor charts amCharts antes de recriar instâncias
+   - Prevenir memory leaks com disposal adequado
+   - Ver seção "Chart Management" para detalhes
+
+## Chart Management (amCharts4)
+
+O projeto utiliza amCharts4 para visualização de dados. É **crítico** gerenciar corretamente o ciclo de vida dos charts para prevenir memory leaks.
+
+### Memory Leak Prevention
+
+**Problema**: amCharts cria instâncias que consomem memória e recursos. Sem disposal adequado, charts antigos permanecem na memória mesmo após recriação, gerando warnings "Chart was not disposed" e degradando performance.
+
+**Solução**: Sempre dispor charts antes de recriar instâncias:
+
+```typescript
+// home.component.ts - Padrão correto
+buildDashboards() {
+  // Dispose existing charts BEFORE rebuilding
+  this.disposeAllCharts();
+
+  const ini = this.getDateIni();
+  const fim = this.getDateFim();
+  // ... carregar dados e recriar charts
+}
+
+private disposeAllCharts(): void {
+  this.disposeChart(this.chartLineRef);
+  this.chartLineRef = null;
+  this.disposeChart(this.chartBarRef);
+  this.chartBarRef = null;
+  // ... dispor outros charts
+}
+
+private disposeChart(ref: am4core.BaseObject | null | undefined) {
+  try {
+    if (ref) {
+      ref.dispose();
+    }
+  } catch { /* ignore */ }
+}
+```
+
+### Chart Update Pattern
+
+**Padrão para atualizar charts com novos dados**:
+
+1. **Primeira renderização**: Criar chart se não existir ou estiver disposed
+2. **Atualizações subsequentes**: Reutilizar instância existente apenas atualizando `chart.data`
+3. **Rebuild completo**: Dispor charts antes de recriar (ex: mudança de filtros)
+
+```typescript
+private updateXYChartLine(elementId: string, data: any[], dateField: string, valueField: string) {
+  let chartLine = this.chartLineRef;
+
+  // Criar apenas se não existir ou foi disposed
+  if (!chartLine || chartLine.isDisposed()) {
+    chartLine = am4core.create(elementId, am4charts.XYChart);
+    // ... configurar chart ...
+    this.chartLineRef = chartLine;
+  }
+
+  // Atualizar dados na instância existente
+  chartLine.data = data;
+  chartLine.invalidateRawData();
+}
+```
+
+### Component Lifecycle Integration
+
+**ngOnDestroy**: Sempre dispor todos os charts para limpeza adequada:
+
+```typescript
+ngOnDestroy() {
+  this.destroyed = true;
+  this.disposeChart(this.chartLineRef);
+  this.chartLineRef = null;
+  // ... dispor outros charts
+}
+```
+
+**Verificação de destroyed**: Prevenir operações em componentes destruídos:
+
+```typescript
+if (this.destroyed || requestToken !== this.latestRequestToken) {
+  return; // Não processar se componente foi destruído
+}
+```
+
+## PrimeNG Dialog Best Practices
+
+### Autofocus Management
+
+PrimeNG dialogs têm autofocus automático por padrão, que pode causar conflitos com elementos já focados.
+
+**Problema**: Console warning "Autofocus processing was blocked because a document already has a focused element"
+
+**Solução**: Desabilitar autofocus quando não necessário:
+
+```html
+<p-dialog header="Filtro"
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [focusOnShow]="false">  <!-- Previne autofocus automático -->
+  <!-- conteúdo do dialog -->
+</p-dialog>
+```
+
+**Quando usar `[focusOnShow]="false"`**:
+- Dialogs abertos programaticamente
+- Quando há elementos com foco antes de abrir dialog
+- Formulários complexos onde foco manual é preferível
+
+**Quando manter `[focusOnShow]="true"`** (padrão):
+- Dialogs simples com um único input
+- Quando foco automático melhora UX
+- Modals de confirmação com botão primário
+
+### Dialog Z-Index Hierarchy
+
+Usar `[baseZIndex]` para garantir hierarquia correta de overlays:
+
+```html
+<p-dialog [baseZIndex]="10000">  <!-- Acima de outros overlays -->
+```
+
+**Hierarquia de Z-Index no projeto**:
+- Loading overlay: 9999
+- Modals/Dialogs: 10000+
+- Tooltips/Dropdowns: Gerenciados automaticamente pelo PrimeNG
+
+## PrimeNG Table & Pagination
+
+### Server-Side Pagination Configuration
+
+O projeto usa paginação server-side com Spring Data Page. Configuração correta é essencial para exibir totais corretos.
+
+**Backend Response Structure** (Spring Data Page):
+```json
+{
+  "totalPages": 10,
+  "totalElements": 95,
+  "size": 10,
+  "number": 0,
+  "content": [ /* array de dados */ ]
+}
+```
+
+**Configuração Correta da Tabela**:
+
+```html
+<p-table
+  [value]="objects"
+  [rows]="rows"
+  [totalRecords]="totalElements"  <!-- Vincula ao total do backend -->
+  [paginator]="true"
+  [lazy]="true"                    <!-- IMPORTANTE: true para server-side -->
+  (onPage)="onPageChange($event)"
+  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros">
+</p-table>
+```
+
+**Component TypeScript**:
+
+```typescript
+export class ListComponent extends PrimeCrudListComponent<T, ID> {
+  configureTable() {
+    this.tableConfig = {
+      ...this.tableConfig,
+      lazy: true,              // Habilita server-side pagination
+      lazyLoadOnInit: false,   // Previne double-load no init
+      preloadData: true        // Carrega dados manualmente no ngOnInit
+    };
+  }
+}
+```
+
+### Lazy vs Non-Lazy Modes
+
+**`[lazy]="true"`** (Server-Side - Recomendado):
+- ✅ PrimeNG respeita `[totalRecords]` binding
+- ✅ Mostra total correto de registros no paginator
+- ✅ Cada mudança de página chama `(onPage)` event
+- ✅ Componente controla carregamento de dados
+
+**`[lazy]="false"`** (Client-Side):
+- ❌ PrimeNG ignora `[totalRecords]` binding
+- ❌ Calcula total a partir de `[value]` array length
+- ❌ Assume todos os dados estão em memória
+- ⚠️ Usar apenas para conjuntos pequenos de dados
+
+### PrimeNG Translation (pt-BR)
+
+Todas as traduções PrimeNG são configuradas em `src/locale/pt-BR.ts`:
+
+```typescript
+// src/locale/pt-BR.ts
+export const ptBR = {
+  // Calendar
+  dayNames: ["Domingo", "Segunda", ...],
+  monthNames: ["Janeiro", "Fevereiro", ...],
+
+  // MultiSelect
+  emptyMessage: 'Nenhum resultado encontrado',
+  emptyFilterMessage: 'Nenhum resultado encontrado',
+  selectionMessage: '{0} itens selecionados',
+
+  // Aria labels
+  aria: {
+    selectRow: 'Linha Selecionada',
+    rowsPerPageLabel: 'Linhas por página',
+    // ... mais labels
+  }
+};
+```
+
+Aplicar no `app.module.ts`:
+
+```typescript
+providePrimeNG({
+  theme: { preset: PrimeUTFPRPreset },
+  translation: ptBR  // Aplica traduções pt-BR
+})
+```
+
+### Prime CRUD Framework
+
+**PrimeCrudListComponent** (`src/app/framework/component/prime-crud.list.component.ts`):
+- Base class abstrata para componentes de lista
+- Gerencia paginação, ordenação, filtros e seleção
+- Integrado com `OnPush` change detection
+- Stateful table com localStorage/sessionStorage
+
+**PrimeCrudToolbarComponent** (`src/app/framework/component/prime-crud-toolbar.component.ts`):
+- Toolbar reutilizável com ações CRUD
+- Column toggle multiselect com traduções pt-BR
+- Botões para adicionar, deletar, exportar (Excel/CSV)
+- Expand/collapse para tabelas expandíveis
+
+**Padrão de Uso**:
+
+```typescript
+@Component({
+  providers: [{
+    provide: PrimeCrudListComponent,
+    useExisting: forwardRef(() => MyListComponent)
+  }]
+})
+export class MyListComponent extends PrimeCrudListComponent<Entity, number> {
+  constructor(service: EntityService, injector: Injector) {
+    super(service, injector, ['id', 'nome', 'actions'], 'entity/form');
+  }
+
+  protected override getEntityName(): string { return 'Entidade'; }
+  protected override getEntityPluralName(): string { return 'Entidades'; }
+}
+```
+
+```html
+<!-- my-list.component.html -->
+<app-prime-crud-toolbar [table]="dt" [list]="self"></app-prime-crud-toolbar>
+<p-table #dt [value]="objects" ...></p-table>
+```
+
 ## Code Conventions
 
 **Naming**: Seguir convenções do Angular style guide:
