@@ -188,9 +188,9 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     const resizableColumns = this.tableConfig.resizableColumns !== false && this.tableConfig.resizable !== false;
     this.tableConfig.resizableColumns = resizableColumns;
     this.tableConfig.columnResizeMode = this.tableConfig.columnResizeMode || 'fit';
-    // Set lazy to false since we handle pagination manually
-    this.tableConfig.lazy = false;
-    this.tableConfig.lazyLoadOnInit = false;
+    // Default to true for proper server-side pagination with totalRecords
+    this.tableConfig.lazy ??= true;
+    this.tableConfig.lazyLoadOnInit ??= false;
     this.tableConfig.preloadData = this.tableConfig.preloadData !== false;
     this.tableConfig.columnToggle = this.tableConfig.columnToggle !== false;
     this.tableConfig.keyboardShortcuts = this.tableConfig.keyboardShortcuts !== false;

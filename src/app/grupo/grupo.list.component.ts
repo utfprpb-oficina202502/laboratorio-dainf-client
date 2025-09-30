@@ -125,7 +125,7 @@ export class GrupoListComponent extends PrimeCrudListComponent<Grupo, number> {
       resizableColumns: true,
       columnResizeMode: 'fit',
       lazy: true,
-      lazyLoadOnInit: true,
+      lazyLoadOnInit: false,
       preloadData: true,
       keyboardShortcuts: true
     };
