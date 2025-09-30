@@ -30,8 +30,6 @@
     "@primeuix/themes": "^1.2.3",
     "@tailwindcss/postcss": "^4.1.13",
     "@types/node": "^22.13.4",
-    "bootstrap": "^5.3.8",
-    "bootstrap-icons": "^1.13.1",
     "compression": "^1.8.1",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
