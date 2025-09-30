@@ -6,12 +6,10 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 @NgModule({
   imports: [
     CommonModule,
+    LoaderComponent,
     ProgressSpinnerModule
   ],
   exports: [
-    LoaderComponent
-  ],
-  declarations: [
     LoaderComponent
   ]
 })
