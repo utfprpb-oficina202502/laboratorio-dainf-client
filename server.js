@@ -64,7 +64,7 @@ app.use(helmet({
 
 app.use(express.static(outputPath,
   {index: false, maxAge: '1y', immutable: true, etag: true}));
-app.get('*', limiter, function (req, res) {
+app.get(/.*/, limiter, function (req, res) {
   res.set('Cache-Control', 'no-store');
   res.sendFile(path.join(outputPath, 'index.html'));
 });
