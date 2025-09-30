@@ -184,13 +184,10 @@ export class LoginService {
   }
 
   login(usuario: Usuario): Observable<string> {
-    return this.http
-      .post<string>(this.url, usuario, { responseType: "text" as "json" })
-      .pipe(
-        map((value) => {
-          this.isAuthenticated.next(true);
-          return value;
-        })
-      );
+    return this.http.post<string>(this.url, usuario, { responseType: "text" as "json" });
+  }
+
+  setAuthenticated() {
+    this.isAuthenticated.next(true);
   }
 }

@@ -78,7 +78,16 @@ export class LoginComponent implements OnInit {
       }))
       .subscribe({
         next: () => {
-          this.router.navigate(["/"]);
+          this.loginService.getPermissoesUser().subscribe({
+            next: () => {
+              this.loginService.setAuthenticated();
+              this.router.navigate(["/"]);
+            },
+            error: () => {
+              this.loginService.setAuthenticated();
+              this.router.navigate(["/"]);
+            }
+          });
         },
         error: () => {
           this.messageService.add({
