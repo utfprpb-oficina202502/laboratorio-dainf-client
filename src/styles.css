@@ -79,34 +79,6 @@ table {
   width: 100%;
 }
 
-.mat-column-actions {
-  max-width: 10% !important;
-}
-
-.mat-column-id {
-  max-width: 10% !important;
-}
-
-.mat-header-cell {
-  font-weight: bolder !important;
-}
-
-.mat-form-field {
-  font-size: 14px;
-  width: 100%;
-}
-
-mat-row:nth-child(even) {
-  background-color: var(--color-bg-secondary);
-}
-
-@media (max-width: 1200px) {
-
-  mat-cell {
-    cursor: pointer;
-  }
-}
-
 /* drawer and content responsive */
 .sidenav-drawer-on {
   width: 260px !important;
@@ -219,31 +191,6 @@ legend {
 }
 
 
-/* table responsive */
-@media (max-width: 750px) {
-
-  .mat-table {
-    overflow-x: scroll;
-  }
-
-  .mat-cell,
-  .mat-header-cell {
-    word-wrap: initial;
-    display: table-cell;
-    padding: 0 10px;
-    line-break: unset;
-    width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    vertical-align: middle;
-  }
-
-  .mat-row,
-  .mat-header-row {
-    display: table-row;
-  }
-
-}
 
 /* === Dialog Filtro (minimal override) === */
 .filtro-dialog.p-dialog {
