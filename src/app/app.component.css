@@ -11,3 +11,13 @@
 /* Removido calculo fixo; layout agora usa flex */
 
 .sidenav-transition { transition: width .25s ease, transform .25s ease; }
+
+#sidenav {
+  background-color: var(--color-bg-primary);
+  border-right: 1px solid var(--color-border);
+}
+
+:root.theme-dark #sidenav {
+  background-color: var(--color-bg-secondary);
+}
+
