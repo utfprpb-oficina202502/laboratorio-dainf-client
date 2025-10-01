@@ -1,8 +1,17 @@
-import {Component, OnInit, OnDestroy, AfterViewInit, effect, inject, ChangeDetectionStrategy, ChangeDetectorRef} from "@angular/core";
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  effect,
+  inject,
+  OnDestroy,
+  OnInit
+} from "@angular/core";
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
 import {DatePipe} from '@angular/common';
-import {forkJoin, finalize} from 'rxjs';
+import {finalize, forkJoin} from 'rxjs';
 
 import {DashboardEmprestimoCountRange} from "./dashboard/dashboardEmprestimoCountRange";
 import {HomeService} from "./home.service";
@@ -11,7 +20,11 @@ import {DateUtil} from "../framework/util/dateUtil";
 import {pt} from "../framework/constantes/calendarPt";
 import {LoaderService} from "../framework/loader/loader.service";
 import {ThemeService} from "../framework/services/theme.service";
-import {chartColorSchemes, ChartColorsConfig, getAlternatingColor} from "../framework/charts/chart-colors.config";
+import {
+  chartColorSchemes,
+  ChartColorsConfig,
+  getAlternatingColor
+} from "../framework/charts/chart-colors.config";
 
 @Component({
   selector: "app-home",
@@ -52,8 +65,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.localePt = pt;
     effect(() => {
       const mode = this.themeService.themeMode();
-      const themeColors = chartColorSchemes[mode] ?? chartColorSchemes.light;
-      this.chartColors = themeColors;
+      this.chartColors = chartColorSchemes[mode] ?? chartColorSchemes.light;
       if (!this.destroyed) {
         this.applyThemeToExistingCharts();
       }
@@ -764,8 +776,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         series.tooltip.label.fill = am4core.color(colors.tooltip.text);
       }
       if (series instanceof am4charts.ColumnSeries) {
-        const columnSeries = series;
-        columnSeries.columns.template.stroke = am4core.color(colors.background);
+        series.columns.template.stroke = am4core.color(colors.background);
       }
     });
     const noDataLabel: am4core.Label | undefined = (chart as any).noDataLabel;
