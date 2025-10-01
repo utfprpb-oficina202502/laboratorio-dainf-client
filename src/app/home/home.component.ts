@@ -127,6 +127,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.homeService.findDadosEmprestimoCountInRange(ini, fim)
       .pipe(finalize(() => {
         this.loadingStats = false;
+        this.loaderService.hide(); // Hide loader immediately after stats load
         this.cdr.markForCheck();
       }))
       .subscribe({
@@ -148,13 +149,11 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           if (hasStatData) {
             this.loadCharts(ini, fim, requestToken);
           } else {
-            this.loaderService.hide();
             this.hasDashboardData = false;
             this.cdr.markForCheck();
           }
         },
         error: () => {
-          this.loaderService.hide();
           this.hasDashboardData = false;
           this.cdr.markForCheck();
         }
@@ -172,7 +171,6 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
     chartBatch.pipe(finalize(() => {
       this.loadingCharts = false;
-      this.loaderService.hide();
       this.cdr.markForCheck();
     })).subscribe({
       next: ({ byDay, emprestados, adquiridos, saidas }) => {
