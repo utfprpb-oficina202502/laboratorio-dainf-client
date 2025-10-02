@@ -514,6 +514,407 @@ export class MyListComponent extends PrimeCrudListComponent<Entity, number> {
 <p-table #dt [value]="objects" ...></p-table>
 ```
 
+## Form Migration Guide
+
+Este guia documenta o processo de migração de forms legados (template-driven, Material Design) para forms modernos (reactive forms, PrimeNG, Angular v20 signals).
+
+### Framework de Forms Reutilizável
+
+**PrimeReactiveCrudFormComponent** (`src/app/framework/component/prime-reactive-crud.form.component.ts`):
+- Base class abstrata para todos os forms CRUD reativos
+- Gerenciamento de estado com signals
+- Lifecycle hooks para customização
+- Integrado com `LoaderService` para feedback visual
+- Suporte a validação automática
+
+**FormFieldComponent** (`src/app/framework/component/form-field.component.ts`):
+- Componente standalone reutilizável para campos de formulário
+- Exibição automática de validação e mensagens de erro
+- Suporte a labels, hints e campos obrigatórios
+- Estilização consistente com tema PrimeNG
+- Totalmente type-safe com signals
+
+### Padrão de Implementação
+
+#### 1. Component TypeScript
+
+```typescript
+import { Component, Injector, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { PrimeReactiveCrudFormComponent } from '../framework/component/prime-reactive-crud.form.component';
+
+@Component({
+  selector: 'app-form-entity',
+  templateUrl: './entity.form.component.html',
+  styleUrls: ['./entity.form.component.css'],
+  standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class EntityFormComponent extends PrimeReactiveCrudFormComponent<Entity, number> {
+  private readonly fb = this.injector.get(FormBuilder);
+
+  // Custom signals for component-specific state
+  protected readonly customSignal = signal<string>('');
+
+  // Computed signals for derived state
+  protected readonly isSpecialCase = computed(() => {
+    const obj = this.object();
+    return obj && obj.someField === 'special';
+  });
+
+  constructor(
+    protected entityService: EntityService,
+    protected injector: Injector
+  ) {
+    super(entityService, injector, '/entity', Entity);
+  }
+
+  /**
+   * Build the reactive form with validators
+   */
+  protected override buildForm(): FormGroup {
+    return this.fb.group({
+      id: [{ value: null, disabled: true }],
+      nome: ['', [Validators.required, Validators.maxLength(255)]],
+      email: ['', [Validators.email]],
+      valor: [null, [Validators.min(0)]]
+    });
+  }
+
+  /**
+   * Override to prepare form value before saving (optional)
+   */
+  protected override prepareFormValue(formValue: Partial<Entity>): Partial<Entity> {
+    const formGroup = this.form();
+    const id = formGroup?.get('id')?.value;
+
+    // Include disabled fields or transform data
+    return {
+      ...formValue,
+      ...(id && { id })
+    };
+  }
+
+  /**
+   * Override to patch form with custom logic (optional)
+   */
+  protected override patchFormWithObject(object: Entity): void {
+    const formGroup = this.form();
+    if (formGroup) {
+      formGroup.patchValue({
+        id: object.id,
+        nome: object.nome,
+        email: object.email,
+        valor: object.valor
+      });
+    }
+  }
+}
+```
+
+#### 2. Component Template
+
+```html
+<div class="container-fluid my-3">
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="flex items-center justify-between p-4">
+        <div class="flex items-center gap-3">
+          <app-voltar (onClick)="back()"></app-voltar>
+          <h2 class="text-xl font-semibold m-0">Cadastro de Entidade</h2>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      @if (form(); as formGroup) {
+        <form [formGroup]="formGroup" (ngSubmit)="save()" class="flex flex-col gap-4">
+          <div class="grid grid-cols-12 gap-4">
+            <!-- ID Field (read-only) -->
+            <div class="col-span-12 md:col-span-2">
+              <app-form-field
+                [control]="formGroup.get('id')"
+                label="Código"
+                fieldId="id">
+                <input
+                  pInputText
+                  id="id"
+                  formControlName="id"
+                  class="w-full"
+                  readonly />
+              </app-form-field>
+            </div>
+
+            <!-- Nome Field (required) -->
+            <div class="col-span-12 md:col-span-10">
+              <app-form-field
+                [control]="formGroup.get('nome')"
+                label="Nome"
+                [required]="true"
+                fieldId="nome"
+                hint="Digite o nome completo">
+                <input
+                  pInputText
+                  id="nome"
+                  formControlName="nome"
+                  class="w-full"
+                  placeholder="Ex: João Silva" />
+              </app-form-field>
+            </div>
+
+            <!-- Email Field -->
+            <div class="col-span-12 md:col-span-6">
+              <app-form-field
+                [control]="formGroup.get('email')"
+                label="E-mail"
+                fieldId="email">
+                <input
+                  pInputText
+                  id="email"
+                  type="email"
+                  formControlName="email"
+                  class="w-full"
+                  placeholder="exemplo@email.com" />
+              </app-form-field>
+            </div>
+
+            <!-- Valor Field (number) -->
+            <div class="col-span-12 md:col-span-6">
+              <app-form-field
+                [control]="formGroup.get('valor')"
+                label="Valor"
+                fieldId="valor">
+                <p-inputNumber
+                  inputId="valor"
+                  formControlName="valor"
+                  mode="currency"
+                  currency="BRL"
+                  locale="pt-BR"
+                  styleClass="w-full">
+                </p-inputNumber>
+              </app-form-field>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex justify-end gap-2 mt-4">
+            <app-cancelar (onClick)="back()"></app-cancelar>
+            <app-salvar [typeButton]="'submit'" [disabled]="isLoading()"></app-salvar>
+          </div>
+        </form>
+      }
+    </ng-template>
+  </p-card>
+</div>
+```
+
+#### 3. Module Configuration
+
+```typescript
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
+
+// PrimeNG
+import { CardModule } from 'primeng/card';
+import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
+
+// Custom components
+import { FormFieldComponent } from '../framework/component/form-field.component';
+import { VoltarModule } from '../geral/voltar/voltar.module';
+import { CancelarModule } from '../geral/cancelar/cancelar.module';
+import { SalvarModule } from '../geral/salvar/salvar.module';
+
+import { EntityFormComponent } from './entity.form.component';
+
+@NgModule({
+  declarations: [EntityFormComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    // PrimeNG
+    CardModule,
+    InputTextModule,
+    InputNumberModule,
+    ButtonModule,
+    TooltipModule,
+    // Custom
+    FormFieldComponent,
+    VoltarModule,
+    CancelarModule,
+    SalvarModule
+  ],
+  exports: [EntityFormComponent]
+})
+export class EntityFormModule { }
+```
+
+### Validação de Formulários
+
+**Validadores Built-in do Angular**:
+```typescript
+Validators.required
+Validators.minLength(n)
+Validators.maxLength(n)
+Validators.min(n)
+Validators.max(n)
+Validators.email
+Validators.pattern(/regex/)
+```
+
+**Mensagens de Erro Automáticas**:
+O `FormFieldComponent` exibe automaticamente mensagens de erro em português baseadas nos validadores:
+- `required`: "Este campo é obrigatório"
+- `minlength`: "Mínimo de X caracteres"
+- `maxlength`: "Máximo de X caracteres"
+- `email`: "E-mail inválido"
+- `pattern`: "Formato inválido"
+- `min`: "Valor mínimo: X"
+- `max`: "Valor máximo: X"
+
+### Operações Assíncronas com Cancelamento
+
+Para operações que podem demorar (ex: buscar dados relacionados), use o `LoaderService` com cancelamento:
+
+```typescript
+import { Subscription } from 'rxjs';
+
+export class EntityFormComponent extends PrimeReactiveCrudFormComponent<Entity, number> {
+  private dataSubscription?: Subscription;
+
+  loadRelatedData(): void {
+    // Cancel any existing request
+    this.cancelDataRequest();
+
+    // Show loader with cancel button
+    this.loaderService.showWithCancel(
+      () => this.cancelDataRequest(),
+      'Cancelar Busca'
+    );
+
+    this.dataSubscription = this.service.getRelatedData(id).subscribe({
+      next: (data) => {
+        this.loaderService.hide();
+        // Process data
+      },
+      error: (error) => {
+        this.loaderService.hide();
+        Swal.fire('Erro', 'Erro ao buscar dados.', 'error');
+      }
+    });
+  }
+
+  cancelDataRequest(): void {
+    if (this.dataSubscription && !this.dataSubscription.closed) {
+      this.dataSubscription.unsubscribe();
+      this.loaderService.hide();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.cancelDataRequest();
+  }
+}
+```
+
+### LoaderService API
+
+**Métodos Disponíveis**:
+```typescript
+// Show simple loader (no cancel button)
+loaderService.show();
+
+// Hide loader
+loaderService.hide();
+
+// Show loader with cancel button
+loaderService.showWithCancel(
+  () => { /* cancel callback */ },
+  'Cancel Label'  // optional, default: 'Cancelar'
+);
+
+// Track Observable automatically (show/hide loader)
+loaderService.track(observable$);
+```
+
+### Checklist de Migração
+
+Ao migrar um form existente, seguir este checklist:
+
+- [ ] **Component TypeScript**
+  - [ ] Estender `PrimeReactiveCrudFormComponent<Entity, ID>`
+  - [ ] Implementar `buildForm()` com `FormBuilder`
+  - [ ] Adicionar validadores apropriados
+  - [ ] Usar signals para estado local
+  - [ ] Definir `ChangeDetectionStrategy.OnPush`
+  - [ ] Usar `input()` e `output()` ao invés de decorators
+
+- [ ] **Template HTML**
+  - [ ] Substituir `<mat-*>` por `<p-*>` (PrimeNG)
+  - [ ] Envolver campos com `<app-form-field>`
+  - [ ] Usar `[formGroup]` e `formControlName`
+  - [ ] Usar control flow nativo (`@if`, `@for`)
+  - [ ] Usar Tailwind classes para layout
+  - [ ] Adicionar botões `<app-voltar>`, `<app-cancelar>`, `<app-salvar>`
+
+- [ ] **Module**
+  - [ ] Importar `ReactiveFormsModule`
+  - [ ] Importar módulos PrimeNG necessários
+  - [ ] Importar `FormFieldComponent`
+  - [ ] Remover imports de Material Design
+
+- [ ] **Validação**
+  - [ ] Passar `[control]` para `app-form-field`
+  - [ ] Adicionar `[required]="true"` para campos obrigatórios
+  - [ ] Adicionar `hint` para ajudar usuários
+  - [ ] Testar mensagens de erro automáticas
+
+- [ ] **Operações Assíncronas**
+  - [ ] Usar `loaderService.show()` / `hide()`
+  - [ ] Usar `showWithCancel()` para operações canceláveis
+  - [ ] Implementar `ngOnDestroy()` para cleanup
+  - [ ] Armazenar subscriptions para cancelamento
+
+- [ ] **Build & Teste**
+  - [ ] Build sem erros: `npm run build`
+  - [ ] Testar criação de novos registros
+  - [ ] Testar edição de registros existentes
+  - [ ] Testar validação de campos
+  - [ ] Testar navegação (voltar, cancelar)
+  - [ ] Testar operações assíncronas
+
+### Componentes PrimeNG Comuns em Forms
+
+| Campo | Componente PrimeNG | Import Module |
+|-------|-------------------|---------------|
+| Text input | `<input pInputText>` | `InputTextModule` |
+| Textarea | `<textarea pInputTextarea>` | `InputTextareaModule` |
+| Number | `<p-inputNumber>` | `InputNumberModule` |
+| Dropdown | `<p-dropdown>` | `DropdownModule` |
+| Multi-select | `<p-multiSelect>` | `MultiSelectModule` |
+| Calendar | `<p-calendar>` | `CalendarModule` |
+| Checkbox | `<p-checkbox>` | `CheckboxModule` |
+| Radio | `<p-radioButton>` | `RadioButtonModule` |
+| AutoComplete | `<p-autoComplete>` | `AutoCompleteModule` |
+| File Upload | `<p-fileUpload>` | `FileUploadModule` |
+
+### Exemplo Completo: Grupo Form
+
+Referência de implementação completa em:
+- **Component**: `src/app/grupo/grupo.form.component.ts`
+- **Template**: `src/app/grupo/grupo.form.component.html`
+- **Module**: `src/app/grupo/grupo.module.ts`
+
+Este exemplo demonstra:
+- Form reativo com validação
+- Dialog com dados relacionados (itens vinculados)
+- Operação assíncrona com cancelamento
+- Uso de computed signals
+- Cleanup adequado no `ngOnDestroy()`
+
 ## Code Conventions
 
 **Naming**: Seguir convenções do Angular style guide:
