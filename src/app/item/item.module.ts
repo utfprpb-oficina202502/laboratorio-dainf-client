@@ -1,76 +1,83 @@
 import { NgModule } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { FormsModule } from "@angular/forms";
+import {CommonModule, NgOptimizedImage} from "@angular/common";
+import { ReactiveFormsModule } from "@angular/forms";
+
+// PrimeNG
 import { AutoCompleteModule } from "primeng/autocomplete";
+import { ButtonModule } from "primeng/button";
+import { CardModule } from "primeng/card";
 import { CarouselModule } from "primeng/carousel";
 import { DialogModule } from "primeng/dialog";
 import { FileUploadModule } from "primeng/fileupload";
 import { InputTextModule } from "primeng/inputtext";
+import { TextareaModule } from "primeng/textarea";
+import { InputNumberModule } from "primeng/inputnumber";
+import { SelectModule } from "primeng/select";
 import { TooltipModule } from "primeng/tooltip";
-import { ItemFormComponent } from "./item.form.component";
-import { ItemListComponent } from "./item.list.component";
-import { ItemService } from "./item.service";
-import { MatFormFieldModule } from "@angular/material/form-field";
-import { MatInputModule } from "@angular/material/input";
-import { MatCardModule } from "@angular/material/card";
+import { DataViewModule } from 'primeng/dataview';
+import { TagModule } from 'primeng/tag';
+
+// Material (only for list/view components still using it)
 import { MatTableModule } from "@angular/material/table";
-import { MatButtonModule } from "@angular/material/button";
-import { MatIconModule } from "@angular/material/icon";
 import { MatPaginatorModule } from "@angular/material/paginator";
-import { ValidationService } from "../framework/validation/validation.service";
-import { ValidationModule } from "../framework/validation/validation.module";
+import { MatIconModule } from "@angular/material/icon";
+import { MatSortModule } from "@angular/material/sort";
+
+// Framework
+import { FormFieldComponent } from "../framework/component/form-field.component";
+
+// Geral components
 import { VoltarModule } from "../geral/voltar/voltar.module";
 import { CancelarModule } from "../geral/cancelar/cancelar.module";
 import { SalvarModule } from "../geral/salvar/salvar.module";
 import { NovoModule } from "../geral/novo/novo.module";
-import { GrupoModule } from "../grupo/grupo.module";
 import { CadastroRapidoModule } from "../geral/cadastroRapido/cadastroRapido.module";
-import { CurrencyMaskModule } from "ng2-currency-mask";
-import { OnlyNumberModule } from "../framework/directives/onlyNumber/onlyNumber.module";
-import { MatSortModule } from "@angular/material/sort";
-import { BottomSheetItemModule } from "./bottomScheetItem/bottomSheetItem.module";
+
+// Item components and services
+import { ItemFormComponent } from "./item.form.component";
+import { ItemListComponent } from "./item.list.component";
 import { ItemViewComponent } from "./item.view.component";
-import { CardModule } from "primeng/card";
-import { DataViewModule } from 'primeng/dataview';
-import { TagModule } from 'primeng/tag';
-import {SelectModule} from "primeng/select";
+import { ItemService } from "./item.service";
+import { BottomSheetItemModule } from "./bottomScheetItem/bottomSheetItem.module";
 
 @NgModule({
   imports: [
     CommonModule,
-    FormsModule,
-    MatFormFieldModule,
-    MatInputModule,
+    ReactiveFormsModule,
+    // PrimeNG
+    AutoCompleteModule,
+    ButtonModule,
+    CardModule,
+    CarouselModule,
+    DialogModule,
+    FileUploadModule,
+    InputTextModule,
+    TextareaModule,
+    InputNumberModule,
+    SelectModule,
+    TooltipModule,
+    DataViewModule,
+    TagModule,
+    // Material (for list/view)
     MatTableModule,
     MatPaginatorModule,
     MatIconModule,
-    MatCardModule,
-    MatButtonModule,
     MatSortModule,
-    InputTextModule,
-    TooltipModule,
-    AutoCompleteModule,
-    SelectModule,
-    ValidationModule,
+    // Framework
+    FormFieldComponent,
+    // Geral
     VoltarModule,
     CancelarModule,
     SalvarModule,
     NovoModule,
-    DialogModule,
-    GrupoModule,
     CadastroRapidoModule,
-    CurrencyMaskModule,
-    OnlyNumberModule,
+    // Item
     BottomSheetItemModule,
-    FileUploadModule,
-    CarouselModule,
-    CardModule,
-    TagModule,
-    DataViewModule,
-    ItemListComponent
+    ItemListComponent,
+    NgOptimizedImage
   ],
   declarations: [ItemFormComponent, ItemViewComponent],
   exports: [ItemFormComponent, ItemListComponent, ItemViewComponent],
-  providers: [ItemService, ValidationService],
+  providers: [ItemService],
 })
 export class ItemModule {}

@@ -1,30 +1,38 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { AutoCompleteModule } from 'primeng/autocomplete';
-import { InputTextModule } from 'primeng/inputtext';
-import { TooltipModule } from 'primeng/tooltip';
+import { ReactiveFormsModule } from '@angular/forms';
 import { CidadeFormComponent } from './cidade.form.component';
 import { CidadeListComponent } from './cidade.list.component';
 import { CidadeService } from './cidade.service';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
+
+// PrimeNG
+import { CardModule } from 'primeng/card';
+import { InputTextModule } from 'primeng/inputtext';
+import { AutoCompleteModule } from 'primeng/autocomplete';
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
+
+// Custom components
+import { FormFieldComponent } from '../framework/component/form-field.component';
+import { VoltarModule } from '../geral/voltar/voltar.module';
+import { CancelarModule } from '../geral/cancelar/cancelar.module';
+import { SalvarModule } from '../geral/salvar/salvar.module';
 
 @NgModule({
   imports: [
     CommonModule,
-    FormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatCardModule,
-    MatIconModule,
-    MatButtonModule,
+    ReactiveFormsModule,
+    // PrimeNG
+    CardModule,
     InputTextModule,
-    TooltipModule,
     AutoCompleteModule,
+    ButtonModule,
+    TooltipModule,
+    // Custom
+    FormFieldComponent,
+    VoltarModule,
+    CancelarModule,
+    SalvarModule,
     CidadeListComponent  // Import standalone component
   ],
   declarations: [

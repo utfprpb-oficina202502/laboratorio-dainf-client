@@ -1,110 +1,282 @@
-import {Component, Injector, ViewChild} from '@angular/core';
-import {NgForm} from '@angular/forms';
-import {CrudFormComponent} from '../framework/component/crud.form.component';
-import {Item} from './item';
-import {ItemService} from './item.service';
-import {Grupo} from '../grupo/grupo';
-import {GrupoService} from '../grupo/grupo.service';
-import {FileUpload} from 'primeng/fileupload';
-import {SelectItem} from 'primeng/api';
-import {environment} from '../../environments/environment';
+import {
+  Component,
+  Injector,
+  ViewChild,
+  ChangeDetectionStrategy,
+  signal,
+  computed,
+  OnDestroy
+} from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { PrimeReactiveCrudFormComponent } from '../framework/component/prime-reactive-crud.form.component';
+import { Item } from './item';
+import { ItemService } from './item.service';
+import { Grupo } from '../grupo/grupo';
+import { GrupoService } from '../grupo/grupo.service';
+import { FileUpload } from 'primeng/fileupload';
+import { environment } from '../../environments/environment';
 import Swal from 'sweetalert2';
-import {ItemImage} from './itemImage';
+import { ItemImage } from './itemImage';
+
+interface TipoItemOption {
+  label: string;
+  value: string;
+}
 
 @Component({
-    selector: 'app-form-item',
-    templateUrl: './item.form.component.html',
-    styleUrls: ['./item.form.component.css'],
-    standalone: false
+  selector: 'app-form-item',
+  templateUrl: './item.form.component.html',
+  styleUrls: ['./item.form.component.css'],
+  standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ItemFormComponent extends CrudFormComponent<Item, number> {
+export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, number> implements OnDestroy {
+  private readonly fb = this.injector.get(FormBuilder);
+  private readonly grupoService = this.injector.get(GrupoService);
+  private grupoSubscription?: Subscription;
+  private imagesSubscription?: Subscription;
 
-  @ViewChild('fileUpload') fileUpload: FileUpload;
-  @ViewChild('form', {static: true}) frm: NgForm;
-  uploadedFiles: any[] = [];
-  responsiveOptions;
-  images: ItemImage[];
-  dialogImagens = false;
-  callback: Function;
-  grupoList: Grupo[];
-  tipoItem: SelectItem[];
-  minioUrl: string;
+  @ViewChild('fileUpload') fileUpload?: FileUpload;
 
-  constructor(protected itemService: ItemService,
-              protected injector: Injector,
-              private readonly grupoService: GrupoService) {
-    super(itemService, injector, '/item');
-    this.minioUrl = environment.minio_url;
-    this.tipoItem = [
-      {label: 'Consumo', value: 'C'},
-      {label: 'Permanente', value: 'P'}
-    ];
+  // Signals for component state
+  protected readonly grupoList = signal<Grupo[]>([]);
+  protected readonly tipoItemOptions = signal<TipoItemOption[]>([
+    { label: 'Consumo', value: 'C' },
+    { label: 'Permanente', value: 'P' }
+  ]);
+  protected readonly dialogImagens = signal(false);
+  protected readonly images = signal<ItemImage[]>([]);
+  protected readonly loadingImages = signal(false);
+  protected readonly minioUrl = signal(environment.minio_url);
 
-    this.responsiveOptions = [
-      {
-        breakpoint: '768px',
-        numVisible: 2,
-        numScroll: 2
-      },
-      {
-        breakpoint: '560px',
-        numVisible: 1,
-        numScroll: 1
-      }
-    ];
+  protected readonly responsiveOptions = [
+    { breakpoint: '768px', numVisible: 2, numScroll: 2 },
+    { breakpoint: '560px', numVisible: 1, numScroll: 1 }
+  ];
+
+  // Computed signals
+  protected readonly canShowImagens = computed(() => {
+    const obj = this.object();
+    return !!(obj && 'id' in obj && obj.id);
+  });
+
+  protected readonly isPatrimonioRequired = computed(() => {
+    const formGroup = this.form();
+    return formGroup?.get('tipoItem')?.value === 'P';
+  });
+
+  protected readonly isSaldoDisabled = computed(() => {
+    const formGroup = this.form();
+    const patrimonio = formGroup?.get('patrimonio')?.value;
+    const tipoItem = formGroup?.get('tipoItem')?.value;
+    return (patrimonio != null && patrimonio !== '') || tipoItem === 'P';
+  });
+
+  private callback?: Function;
+
+  constructor(
+    protected itemService: ItemService,
+    protected injector: Injector
+  ) {
+    super(itemService, injector, '/item', Item);
   }
 
-  initializeValues(): void {
-    this.object.tipoItem = this.tipoItem[0].value;
+  /**
+   * Build the reactive form with validators
+   */
+  protected override buildForm(): FormGroup {
+    return this.fb.group({
+      id: [{ value: null, disabled: true }],
+      nome: ['', [Validators.required, Validators.maxLength(255)]],
+      patrimonio: [null],
+      siorg: [null],
+      valor: [null, [Validators.min(0)]],
+      qtdeMinima: [null, [Validators.required, Validators.min(1)]],
+      localizacao: ['', [Validators.required, Validators.maxLength(255)]],
+      tipoItem: ['C', [Validators.required]],
+      saldo: [null, [Validators.required, Validators.min(0)]],
+      descricao: ['', [Validators.maxLength(4000)]],
+      grupo: [null, [Validators.required]]
+    });
   }
 
-  postEdit(): void {
-    if (window.location.href.includes('copy')) {
-      this.editando = false;
-      this.object.id = null;
+  /**
+   * Initialize default values
+   */
+  protected override initializeValues(): void {
+    const formGroup = this.form();
+    if (formGroup) {
+      formGroup.patchValue({
+        tipoItem: 'C'
+      });
     }
   }
 
-  findGrupos($event) {
-    this.grupoService.complete($event.query)
-      .subscribe(e => {
-        this.grupoList = e;
+  /**
+   * Post edit hook for copy functionality
+   */
+  protected override postEdit(): void {
+    if (window.location.href.includes('copy')) {
+      this.isEditing.set(false);
+      const formGroup = this.form();
+      if (formGroup) {
+        formGroup.get('id')?.setValue(null);
+      }
+    }
+  }
+
+  /**
+   * Override to patch form with object including complex fields
+   */
+  protected override patchFormWithObject(object: Item): void {
+    const formGroup = this.form();
+    if (formGroup && 'id' in object) {
+      formGroup.patchValue({
+        id: object.id,
+        nome: object.nome,
+        patrimonio: object.patrimonio,
+        siorg: object.siorg,
+        valor: object.valor,
+        qtdeMinima: object.qtdeMinima,
+        localizacao: object.localizacao,
+        tipoItem: object.tipoItem,
+        saldo: object.saldo,
+        descricao: object.descricao,
+        grupo: object.grupo
       });
+
+      // Update validators based on tipoItem
+      this.updatePatrimonioValidators();
+    }
   }
 
-  onUpload($event: any) {
-    this.callback();
+  /**
+   * Override to prepare form value before saving
+   */
+  protected override prepareFormValue(formValue: Partial<Item>): Partial<Item> {
+    const formGroup = this.form();
+    const id = formGroup?.get('id')?.value;
+
+    return {
+      ...formValue,
+      ...(id && { id })
+    };
   }
 
+  /**
+   * Post save hook for file upload
+   */
+  protected override postSave(callback: Function): void {
+    if (this.fileUpload) {
+      this.fileUpload.url = this.getUrlUploadImages();
+      this.fileUpload.upload();
+      this.callback = callback;
+    } else {
+      callback();
+    }
+  }
+
+  /**
+   * Handle file upload complete
+   */
+  onUpload($event: any): void {
+    if (this.callback) {
+      this.callback();
+    }
+  }
+
+  /**
+   * Get upload URL for images
+   */
   getUrlUploadImages(): string {
-    return `${environment.api_url}item/upload-images?idItem=${this.object.id}`;
+    const obj = this.object();
+    return `${environment.api_url}item/upload-images?idItem=${obj?.id || ''}`;
   }
 
-  postSave(callback): void {
-    this.fileUpload.url = this.getUrlUploadImages();
-    this.fileUpload.upload();
-    this.callback = callback;
+  /**
+   * Find grupos for autocomplete
+   */
+  findGrupos($event: any): void {
+    this.cancelGrupoRequest();
+
+    this.grupoSubscription = this.grupoService.complete($event.query).subscribe({
+      next: (grupos) => {
+        this.grupoList.set(grupos);
+      },
+      error: (error) => {
+        console.error('Error fetching grupos:', error);
+      }
+    });
   }
 
-  showDialogImagens() {
+  /**
+   * Cancel ongoing grupo request
+   */
+  private cancelGrupoRequest(): void {
+    if (this.grupoSubscription && !this.grupoSubscription.closed) {
+      this.grupoSubscription.unsubscribe();
+    }
+  }
+
+  /**
+   * Show dialog with item images
+   */
+  showDialogImagens(): void {
+    this.findItemImages();
+  }
+
+  /**
+   * Fetch item images
+   */
+  private findItemImages(): void {
+    const obj = this.object();
+    if (!obj || !('id' in obj) || !obj.id) {
+      return;
+    }
+
+    this.cancelImagesRequest();
+
+    this.loadingImages.set(true);
     this.loaderService.show();
-    this.itemService.findAllImagesItem(this.object.id)
-      .subscribe(e => {
+
+    this.imagesSubscription = this.itemService.findAllImagesItem(obj.id).subscribe({
+      next: (images) => {
+        this.loadingImages.set(false);
         this.loaderService.hide();
-        if (e.length > 0) {
-          this.images = e;
-          this.dialogImagens = true;
+        if (images.length > 0) {
+          this.images.set(images);
+          this.dialogImagens.set(true);
         } else {
           Swal.fire('Ops...', 'Esse item não possui imagens.', 'info');
         }
-      }, error => {
+      },
+      error: (error) => {
+        this.loadingImages.set(false);
         this.loaderService.hide();
-      });
+        Swal.fire('Erro', 'Erro ao buscar imagens.', 'error');
+        console.error(error);
+      }
+    });
   }
 
-  deleteImage(image: ItemImage) {
+  /**
+   * Cancel ongoing images request
+   */
+  private cancelImagesRequest(): void {
+    if (this.imagesSubscription && !this.imagesSubscription.closed) {
+      this.imagesSubscription.unsubscribe();
+      this.loadingImages.set(false);
+      this.loaderService.hide();
+    }
+  }
+
+  /**
+   * Delete an image
+   */
+  deleteImage(image: ItemImage): void {
     Swal.fire({
-      title: `Tem certeza que deseja remover a imagem?`,
+      title: 'Tem certeza que deseja remover a imagem?',
       text: 'A ação não poderá ser desfeita.',
       icon: 'warning',
       showCancelButton: true,
@@ -114,40 +286,109 @@ export class ItemFormComponent extends CrudFormComponent<Item, number> {
       cancelButtonText: 'Não'
     }).then((result) => {
       if (result.value) {
-        this.loaderService.show();
-        this.itemService.deleteImage(image, this.object.id)
-          .subscribe(e => {
-            this.deleteImageInObject(image);
-            this.loaderService.hide();
-            this.dialogImagens = false;
-            Swal.fire('Sucesso!', 'Imagem removida com sucesso!', 'success');
-          }, error => {
-            this.loaderService.hide();
-            Swal.fire('Atenção!', 'Ocorreu um erro ao remover a imagem', 'error');
-          });
+        this.performDeleteImage(image);
       }
     });
   }
 
-  deleteImageInObject(image: ItemImage) {
-    let index;
-    this.object?.imageItem.forEach(imagem => {
-      if (!Number.isNaN(image.id)) {
-        index = this.object.imageItem.indexOf(imagem);
-      }
-    });
-    this.object.imageItem.splice(index, 1);
-  }
-
-  setSaldoDefaultItem() {
-    if (this.object.patrimonio !== null
-          && this.object.patrimonio !== undefined
-          || this.object?.tipoItem === 'P') {
-      this.object.saldo = 1;
-      this.object.qtdeMinima = 1;
-    } else {
-      this.object.saldo = null;
-      this.object.qtdeMinima = null;
+  /**
+   * Perform the actual image deletion
+   */
+  private performDeleteImage(image: ItemImage): void {
+    const obj = this.object();
+    if (!obj || !('id' in obj) || !obj.id) {
+      return;
     }
+
+    this.loaderService.show();
+    this.itemService.deleteImage(image, obj.id).subscribe({
+      next: () => {
+        this.deleteImageInObject(image);
+        this.loaderService.hide();
+        this.dialogImagens.set(false);
+        Swal.fire('Sucesso!', 'Imagem removida com sucesso!', 'success');
+      },
+      error: (error) => {
+        this.loaderService.hide();
+        Swal.fire('Atenção!', 'Ocorreu um erro ao remover a imagem', 'error');
+        console.error(error);
+      }
+    });
+  }
+
+  /**
+   * Remove image from object array
+   */
+  private deleteImageInObject(image: ItemImage): void {
+    const obj = this.object();
+    if (!obj?.imageItem) {
+      return;
+    }
+
+    const index = obj.imageItem.findIndex(img => img.id === image.id);
+    if (index !== -1) {
+      obj.imageItem.splice(index, 1);
+    }
+  }
+
+  /**
+   * Handle tipoItem change to update saldo defaults
+   */
+  onTipoItemChange(): void {
+    this.updatePatrimonioValidators();
+    this.setSaldoDefaultItem();
+  }
+
+  /**
+   * Handle patrimonio change
+   */
+  onPatrimonioChange(): void {
+    this.setSaldoDefaultItem();
+  }
+
+  /**
+   * Update patrimonio validators based on tipoItem
+   */
+  private updatePatrimonioValidators(): void {
+    const formGroup = this.form();
+    if (!formGroup) return;
+
+    const patrimonioControl = formGroup.get('patrimonio');
+    const tipoItem = formGroup.get('tipoItem')?.value;
+
+    if (tipoItem === 'P') {
+      patrimonioControl?.setValidators([Validators.required]);
+    } else {
+      patrimonioControl?.clearValidators();
+    }
+    patrimonioControl?.updateValueAndValidity();
+  }
+
+  /**
+   * Set default saldo based on patrimonio/tipoItem
+   */
+  private setSaldoDefaultItem(): void {
+    const formGroup = this.form();
+    if (!formGroup) return;
+
+    const patrimonio = formGroup.get('patrimonio')?.value;
+    const tipoItem = formGroup.get('tipoItem')?.value;
+
+    if ((patrimonio != null && patrimonio !== '') || tipoItem === 'P') {
+      formGroup.patchValue({
+        saldo: 1,
+        qtdeMinima: 1
+      });
+    } else {
+      // Don't clear values, let user manage them
+    }
+  }
+
+  /**
+   * Cleanup on component destroy
+   */
+  ngOnDestroy(): void {
+    this.cancelGrupoRequest();
+    this.cancelImagesRequest();
   }
 }

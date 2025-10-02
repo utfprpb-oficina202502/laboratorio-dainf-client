@@ -1,86 +1,123 @@
 <div class="container-fluid my-3">
-  <mat-card>
-    <mat-card-title>
-      <div class="d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center">
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="flex items-center justify-between p-4">
+        <div class="flex items-center gap-3">
           <app-voltar (onClick)="back()"></app-voltar>
-          <h4 class="m-0">Cadastro de Grupo</h4>
+          <h2 class="text-xl font-semibold m-0">Cadastro de Grupo</h2>
         </div>
-        @if (object.id) {
-          <div>
-            <button type="button"
-              (click)="showDialogItensVinculados()"
-              pTooltip="Itens Vinculados"
-              mat-icon-button>
-              <mat-icon>widgets</mat-icon>
-            </button>
-          </div>
+        @if (canShowItensVinculados()) {
+          <p-button
+            type="button"
+            [outlined]="true"
+            [rounded]="true"
+            severity="secondary"
+            pTooltip="Itens Vinculados"
+            tooltipPosition="left"
+            (onClick)="showDialogItensVinculados()"
+            [attr.aria-label]="'Ver itens vinculados ao grupo'">
+            <span pButtonIcon class="pi pi-box"></span>
+          </p-button>
         }
       </div>
-    </mat-card-title>
-    <mat-card-content>
-      <form #form="ngForm" (submit)="save()">
-        <div class="row">
-          <div class="col-md-2">
-            <div class="form-group">
-              <label for="id">Código</label>
-              <input type="text"
-                id="id"
-                name="id"
-                disabled
-                class="form-control"
-                [(ngModel)]="object.id"
-                pInputText>
-              </div>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      @if (form(); as formGroup) {
+        <form [formGroup]="formGroup" (ngSubmit)="save()" class="flex flex-col gap-4">
+          <div class="grid grid-cols-12 gap-4">
+            <!-- Código Field -->
+            <div class="col-span-12 md:col-span-2">
+              <app-form-field
+                [control]="formGroup.get('id')"
+                label="Código"
+                fieldId="id">
+                <input
+                  pInputText
+                  id="id"
+                  formControlName="id"
+                  class="w-full"
+                  readonly />
+              </app-form-field>
             </div>
 
-            <div class="col-md-10">
-              <div class="form-group">
-                <label for="descricao">Descrição</label>
-                <span class="field-required">*</span>
-                <input type="text"
+            <!-- Descrição Field -->
+            <div class="col-span-12 md:col-span-10">
+              <app-form-field
+                [control]="formGroup.get('descricao')"
+                label="Descrição"
+                [required]="true"
+                fieldId="descricao"
+                hint="Digite o nome do grupo">
+                <input
+                  pInputText
                   id="descricao"
-                  name="descricao"
-                  required
-                  validation
-                  class="form-control"
-                  [(ngModel)]="object.descricao"
-                  pInputText>
-                </div>
-              </div>
+                  formControlName="descricao"
+                  class="w-full"
+                  placeholder="Ex: Equipamentos de Rede" />
+              </app-form-field>
             </div>
-            <div class="row">
-              <div class="col-md-12 d-flex justify-content-end">
-                <app-cancelar (onClick)="back()"></app-cancelar>
-                <app-salvar [typeButton]="'submit'"></app-salvar>
-              </div>
-            </div>
-          </form>
+          </div>
 
-        </mat-card-content>
-      </mat-card>
-    </div>
+          <!-- Action Buttons -->
+          <div class="flex justify-end gap-2 mt-4">
+            <app-cancelar (onClick)="back()"></app-cancelar>
+            <app-salvar [typeButton]="'submit'" [disabled]="isLoading()"></app-salvar>
+          </div>
+        </form>
+      }
+    </ng-template>
+  </p-card>
+</div>
 
-    <p-dialog header="Itens Vinculados"
-      [modal]="true"
-      [(visible)]="dialogItensRelacionados"
-      [style]="{minWidth: '650px'}"
-      [baseZIndex]="10000">
+<!-- Itens Vinculados Dialog -->
+<p-dialog
+  header="Itens Vinculados"
+  [visible]="dialogItensVinculados()"
+  (visibleChange)="dialogItensVinculados.set($event)"
+  [modal]="true"
+  [style]="{width: '90vw', maxWidth: '800px'}"
+  [baseZIndex]="10000"
+  [focusOnShow]="false"
+  [dismissableMask]="true">
 
-      <div class="example-container mat-elevation-z8">
-        <mat-table #table="matTable"  [dataSource]="itensVinculados">
-          <ng-container matColumnDef="id">
-            <mat-header-cell *matHeaderCellDef>Cód</mat-header-cell>
-            <mat-cell *matCellDef="let item"> {{item.id}} </mat-cell>
-          </ng-container>
-
-          <ng-container matColumnDef="nome">
-            <mat-header-cell *matHeaderCellDef>Descrição</mat-header-cell>
-            <mat-cell *matCellDef="let item"> {{item.nome}} </mat-cell>
-          </ng-container>
-
-          <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
-          <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
-        </mat-table>
+  <ng-template pTemplate="content">
+    @if (loadingItensVinculados()) {
+      <div class="flex justify-center items-center py-8">
+        <p-progressSpinner [style]="{width: '64px', height: '64px'}"></p-progressSpinner>
       </div>
-    </p-dialog>
+    } @else {
+      <p-table
+        [value]="itensVinculados()"
+        [scrollable]="true"
+        scrollHeight="400px"
+        styleClass="p-datatable-sm">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 100px">Código</th>
+            <th>Descrição</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-item>
+          <tr>
+            <td>{{ item.id }}</td>
+            <td>{{ item.nome }}</td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="2" class="text-center py-4">
+              <div class="flex flex-col items-center gap-2">
+                <i class="pi pi-inbox text-4xl text-gray-400"></i>
+                <p class="text-gray-600">Nenhum item vinculado a este grupo</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  </ng-template>
+</p-dialog>

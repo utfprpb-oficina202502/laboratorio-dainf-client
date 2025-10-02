@@ -1,9 +1,1 @@
-.example-container {
-  height: auto;
-  max-height: 400px;
-  overflow: auto;
-}
-
-.ui-dialog-content {
-  padding: 0 !important;
-}
+/* No custom styles needed - using Tailwind utilities and PrimeNG theme */

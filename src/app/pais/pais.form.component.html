@@ -1,56 +1,75 @@
 <div class="container-fluid my-3">
-  <mat-card>
-    <mat-card-title>
-      <div class="d-flex align-items-center">
-        <button type="button"
-                (click)="back()"
-                mat-icon-button>
-          <mat-icon>arrow_back_ios</mat-icon>
-        </button>
-        <h4 class="m-0">Cadastro de País</h4>
-      </div>
-    </mat-card-title>
-    <mat-card-content>
-      <form #form="ngForm">
-        <div class="row">
-          <div class="col-md-2">
-            <div class="form-group">
-              <label for="id">Código</label>
-              <input type="text"
-                     id="id"
-                     name="id"
-                     disabled
-                     class="form-control"
-                     [(ngModel)]="object.id"
-                     pInputText>
-            </div>
-          </div>
-
-          <div class="col-md-9">
-            <div class="form-group">
-              <label for="nome">Nome</label>
-              <input type="text"
-                     id="nome"
-                     name="nome"
-                     class="form-control"
-                     [(ngModel)]="object.nome"
-                     pInputText>
-            </div>
-          </div>
-
-          <div class="col-md-1">
-            <div class="form-group">
-              <label for="sigla">Sigla</label>
-              <input type="text"
-                     id="sigla"
-                     name="sigla"
-                     class="form-control"
-                     [(ngModel)]="object.sigla"
-                     pInputText>
-            </div>
-          </div>
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="flex items-center justify-between p-4">
+        <div class="flex items-center gap-3">
+          <app-voltar (onClick)="back()"></app-voltar>
+          <h2 class="text-xl font-semibold m-0">Cadastro de País</h2>
         </div>
-      </form>
-    </mat-card-content>
-  </mat-card>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      @if (form(); as formGroup) {
+        <form [formGroup]="formGroup" (ngSubmit)="save()" class="flex flex-col gap-4">
+          <div class="grid grid-cols-12 gap-4">
+            <!-- ID Field (read-only) -->
+            <div class="col-span-12 md:col-span-2">
+              <app-form-field
+                [control]="formGroup.get('id')"
+                label="Código"
+                fieldId="id">
+                <input
+                  pInputText
+                  id="id"
+                  formControlName="id"
+                  class="w-full"
+                  readonly />
+              </app-form-field>
+            </div>
+
+            <!-- Nome Field (required) -->
+            <div class="col-span-12 md:col-span-9">
+              <app-form-field
+                [control]="formGroup.get('nome')"
+                label="Nome"
+                [required]="true"
+                fieldId="nome"
+                hint="Digite o nome do país">
+                <input
+                  pInputText
+                  id="nome"
+                  formControlName="nome"
+                  class="w-full"
+                  placeholder="Ex: Brasil" />
+              </app-form-field>
+            </div>
+
+            <!-- Sigla Field (required) -->
+            <div class="col-span-12 md:col-span-1">
+              <app-form-field
+                [control]="formGroup.get('sigla')"
+                label="Sigla"
+                [required]="true"
+                fieldId="sigla"
+                hint="Sigla do país">
+                <input
+                  pInputText
+                  id="sigla"
+                  formControlName="sigla"
+                  class="w-full"
+                  placeholder="Ex: BR" />
+              </app-form-field>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex justify-end gap-2 mt-4">
+            <app-cancelar (onClick)="back()"></app-cancelar>
+            <app-salvar [typeButton]="'submit'" [disabled]="isLoading()"></app-salvar>
+          </div>
+        </form>
+      }
+    </ng-template>
+  </p-card>
 </div>

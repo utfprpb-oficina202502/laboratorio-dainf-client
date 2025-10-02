@@ -1,65 +1,58 @@
-import {NgModule} from '@angular/core';
-import {UsuarioFormComponent} from './usuario.form.component';
-import {UsuarioListComponent} from './usuario.list.component';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
-import { AutoCompleteModule } from 'primeng/autocomplete';
-import { FileUploadModule } from 'primeng/fileupload';
-import { CarouselModule } from 'primeng/carousel';
-import { DialogModule } from 'primeng/dialog';
-import { TooltipModule } from 'primeng/tooltip';
-import { ButtonModule } from 'primeng/button';
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormsModule} from '@angular/forms';
+
+
+// PrimeNG
+import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
-import {UsuarioService} from './usuario.service';
-import {MatFormFieldModule} from '@angular/material/form-field';
-import {MatInputModule} from '@angular/material/input';
-import {MatTableModule} from '@angular/material/table';
-import {MatPaginatorModule} from '@angular/material/paginator';
-import {MatIconModule} from '@angular/material/icon';
-import {MatCardModule} from '@angular/material/card';
-import {MatButtonModule} from '@angular/material/button';
-import {ValidationModule} from '../framework/validation/validation.module';
-import {ValidationService} from '../framework/validation/validation.service';
-import {VoltarModule} from '../geral/voltar/voltar.module';
-import {CancelarModule} from '../geral/cancelar/cancelar.module';
-import {SalvarModule} from '../geral/salvar/salvar.module';
-import {NovoModule} from '../geral/novo/novo.module';
-import {MatSortModule} from '@angular/material/sort';
-import {EmailValidatorModule} from '../framework/validator/email/email.validator.module';
-import {TelefoneFormatModule} from '../framework/directives/telefone/telefone.format.module';
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
+import { DialogModule } from 'primeng/dialog';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { PasswordModule } from 'primeng/password';
+import { InputMaskModule } from 'primeng/inputmask';
+
+// Material (still needed for UsuarioEditComponent)
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+
+// Custom components
+import { FormFieldComponent } from '../framework/component/form-field.component';
+import { VoltarModule } from '../geral/voltar/voltar.module';
+import { CancelarModule } from '../geral/cancelar/cancelar.module';
+import { SalvarModule } from '../geral/salvar/salvar.module';
+
+// Usuario components and services
+import { UsuarioFormComponent } from './usuario.form.component';
+import { UsuarioListComponent } from './usuario.list.component';
 import { UsuarioEditComponent } from './usuario.edit.component';
-import {MultiSelectModule} from "primeng/multiselect";
-import {SelectModule} from "primeng/select";
+import { UsuarioService } from './usuario.service';
 
 @NgModule({
   imports: [
     CommonModule,
-    FormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatIconModule,
+    ReactiveFormsModule,
+    FormsModule, // Still needed for UsuarioEditComponent (template-driven forms)
+    // PrimeNG
+    CardModule,
+    InputTextModule,
+    ButtonModule,
+    TooltipModule,
+    DialogModule,
+    MultiSelectModule,
+    PasswordModule,
+    InputMaskModule,
+    // Material (still needed for UsuarioEditComponent)
     MatCardModule,
     MatButtonModule,
-    MatSortModule,
-    InputTextModule,
-    TooltipModule,
-    SelectModule,
-    DialogModule,
-    ValidationModule,
-    AutoCompleteModule,
-    FileUploadModule,
-    CarouselModule,
-    ButtonModule,
-    InputTextModule,
+    MatIconModule,
+    // Custom
+    FormFieldComponent,
     VoltarModule,
     CancelarModule,
     SalvarModule,
-    NovoModule,
-    MultiSelectModule,
-    EmailValidatorModule,
-    TelefoneFormatModule,
     UsuarioListComponent
   ],
   declarations: [
@@ -72,8 +65,7 @@ import {SelectModule} from "primeng/select";
     UsuarioEditComponent
   ],
   providers: [
-    UsuarioService,
-    ValidationService
+    UsuarioService
   ]
 })
 export class UsuarioModule {

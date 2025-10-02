@@ -1,217 +1,234 @@
 <div class="container-fluid my-3">
-  <mat-card>
-    <mat-card-title>
-      <div class="d-flex align-items-center">
-        <app-voltar (onClick)="back()"></app-voltar>
-        <h4 class="m-0">Cadastro de Fornecedor</h4>
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="flex items-center justify-between p-4">
+        <div class="flex items-center gap-3">
+          <app-voltar (onClick)="back()"></app-voltar>
+          <h2 class="text-xl font-semibold m-0">Cadastro de Fornecedor</h2>
+        </div>
       </div>
-    </mat-card-title>
-    <mat-card-content>
-      <form #form="ngForm" (submit)="save()">
-        <div class="row">
-          <div class="col-md-2">
-            <div class="form-group">
-              <label for="id">Código</label>
-              <input type="text"
-                     id="id"
-                     name="id"
-                     disabled
-                     class="form-control"
-                     [(ngModel)]="object.id"
-                     pInputText>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      @if (form(); as formGroup) {
+        <form [formGroup]="formGroup" (ngSubmit)="save()" class="flex flex-col gap-4">
+          <!-- Row 1: ID, Razão Social, Nome Fantasia -->
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-12 md:col-span-2">
+              <app-form-field
+                [control]="formGroup.get('id')"
+                label="Código"
+                fieldId="id">
+                <input
+                  pInputText
+                  id="id"
+                  formControlName="id"
+                  class="w-full"
+                  readonly />
+              </app-form-field>
+            </div>
+
+            <div class="col-span-12 md:col-span-5">
+              <app-form-field
+                [control]="formGroup.get('razaoSocial')"
+                label="Razão Social"
+                [required]="true"
+                fieldId="razaoSocial"
+                hint="Digite a razão social da empresa">
+                <input
+                  pInputText
+                  id="razaoSocial"
+                  formControlName="razaoSocial"
+                  class="w-full"
+                  placeholder="Ex: Empresa LTDA" />
+              </app-form-field>
+            </div>
+
+            <div class="col-span-12 md:col-span-5">
+              <app-form-field
+                [control]="formGroup.get('nomeFantasia')"
+                label="Nome Fantasia"
+                [required]="true"
+                fieldId="nomeFantasia"
+                hint="Digite o nome fantasia da empresa">
+                <input
+                  pInputText
+                  id="nomeFantasia"
+                  formControlName="nomeFantasia"
+                  class="w-full"
+                  placeholder="Ex: Empresa" />
+              </app-form-field>
             </div>
           </div>
 
-          <div class="col-md-5">
-            <div class="form-group">
-              <label for="razaoSocial">Razão Social</label>
-              <span class="field-required">*</span>
-              <input type="text"
-                     id="razaoSocial"
-                     name="razaoSocial"
-                     required
-                     validation
-                     class="form-control"
-                     [(ngModel)]="object.razaoSocial"
-                     pInputText>
+          <!-- Row 2: CNPJ, IE, Telefone, Email -->
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-12 md:col-span-3">
+              <app-form-field
+                [control]="formGroup.get('cnpj')"
+                label="CNPJ"
+                [required]="true"
+                fieldId="cnpj"
+                hint="Digite apenas números (14 dígitos)">
+                <input
+                  pInputText
+                  id="cnpj"
+                  formControlName="cnpj"
+                  onlyNumber
+                  formatCnpj
+                  maxlength="14"
+                  class="w-full"
+                  placeholder="00000000000000" />
+              </app-form-field>
+            </div>
+
+            <div class="col-span-12 md:col-span-3">
+              <app-form-field
+                [control]="formGroup.get('ie')"
+                label="Inscrição Estadual"
+                [required]="true"
+                fieldId="ie"
+                hint="Digite apenas números">
+                <input
+                  pInputText
+                  id="ie"
+                  formControlName="ie"
+                  onlyNumber
+                  class="w-full"
+                  placeholder="000000000" />
+              </app-form-field>
+            </div>
+
+            <div class="col-span-12 md:col-span-3">
+              <app-form-field
+                [control]="formGroup.get('telefone')"
+                label="Telefone"
+                [required]="true"
+                fieldId="telefone"
+                hint="Digite o telefone com DDD">
+                <input
+                  pInputText
+                  id="telefone"
+                  formControlName="telefone"
+                  formatTelefone
+                  maxlength="15"
+                  class="w-full"
+                  placeholder="(00) 00000-0000" />
+              </app-form-field>
+            </div>
+
+            <div class="col-span-12 md:col-span-3">
+              <app-form-field
+                [control]="formGroup.get('email')"
+                label="E-mail"
+                [required]="true"
+                fieldId="email"
+                hint="Digite um e-mail válido">
+                <input
+                  pInputText
+                  id="email"
+                  type="email"
+                  formControlName="email"
+                  class="w-full"
+                  placeholder="exemplo@email.com" />
+              </app-form-field>
             </div>
           </div>
 
-          <div class="col-md-5">
-            <div class="form-group">
-              <label for="nomeFantasia">Nome Fantasia</label>
-              <span class="field-required">*</span>
-              <input type="text"
-                     id="nomeFantasia"
-                     name="nomeFantasia"
-                     required
-                     validation
-                     class="form-control"
-                     [(ngModel)]="object.nomeFantasia"
-                     pInputText>
+          <!-- Row 3: Endereço, Estado, Cidade -->
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-12 md:col-span-4">
+              <app-form-field
+                [control]="formGroup.get('endereco')"
+                label="Endereço"
+                [required]="true"
+                fieldId="endereco"
+                hint="Digite o endereço completo">
+                <input
+                  pInputText
+                  id="endereco"
+                  formControlName="endereco"
+                  class="w-full"
+                  placeholder="Rua, número, bairro" />
+              </app-form-field>
             </div>
-          </div>
-        </div>
 
-        <div class="row">
-          <div class="col-md-3">
-            <div class="form-group">
-              <label for="cnpj">CNPJ</label>
-              <span class="field-required">*</span>
-              <input type="text"
-                     id="cnpj"
-                     name="cnpj"
-                     required
-                     validation
-                     validateCnpj
-                     onlyNumber
-                     formatCnpj
-                     [maxLength]="14"
-                     [style]="{width: '100%'}"
-                     [(ngModel)]="object.cnpj"
-                     pInputText>
+            <div class="col-span-12 md:col-span-4">
+              <app-form-field
+                [control]="formGroup.get('estado')"
+                label="Estado"
+                [required]="true"
+                fieldId="estado"
+                hint="Selecione o estado">
+                <p-autoComplete
+                  inputId="estado"
+                  formControlName="estado"
+                  field="nome"
+                  appendTo="body"
+                  [forceSelection]="true"
+                  [dropdown]="true"
+                  [suggestions]="estadoList()"
+                  (completeMethod)="findEstados($event)"
+                  (onChange)="onEstadoChange()"
+                  styleClass="w-full"
+                  [inputStyleClass]="'w-full'"
+                  placeholder="Digite ou selecione o estado">
+                </p-autoComplete>
+              </app-form-field>
             </div>
-          </div>
 
-          <div class="col-md-3">
-            <div class="form-group">
-              <label for="ie">Inscrição Estadual</label>
-              <span class="field-required">*</span>
-              <input type="text"
-                     id="ie"
-                     name="ie"
-                     required
-                     validation
-                     onlyNumber
-                     class="form-control"
-                     [(ngModel)]="object.ie"
-                     pInputText>
-            </div>
-          </div>
-
-          <div class="col-md-3">
-            <div class="form-group">
-              <label for="telefone">Telefone</label>
-              <span class="field-required">*</span>
-              <input type="text"
-                     id="telefone"
-                     name="telefone"
-                     formatTelefone
-                     required
-                     validation
-                     maxlength="15"
-                     class="form-control"
-                     [(ngModel)]="object.telefone"
-                     pInputText>
+            <div class="col-span-12 md:col-span-4">
+              <app-form-field
+                [control]="formGroup.get('cidade')"
+                label="Cidade"
+                [required]="true"
+                fieldId="cidade"
+                hint="Selecione primeiro o estado">
+                <p-autoComplete
+                  inputId="cidade"
+                  formControlName="cidade"
+                  field="nome"
+                  [forceSelection]="true"
+                  [disabled]="!formGroup.get('estado')?.value"
+                  [dropdown]="true"
+                  [suggestions]="cidadeList()"
+                  (completeMethod)="findCidadesByEstado($event)"
+                  styleClass="w-full"
+                  [inputStyleClass]="'w-full'"
+                  placeholder="Digite ou selecione a cidade">
+                </p-autoComplete>
+              </app-form-field>
             </div>
           </div>
 
-          <div class="col-md-3">
-            <div class="form-group">
-              <label for="email">Email</label>
-              <span class="field-required">*</span>
-              <input type="text"
-                     id="email"
-                     name="email"
-                     validation
-                     required
-                     validateEmail
-                     class="form-control"
-                     [(ngModel)]="object.email"
-                     pInputText>
-            </div>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col-md-4">
-            <div class="form-group">
-              <label for="endereco">Endereço</label>
-              <span class="field-required">*</span>
-              <input type="text"
-                     id="endereco"
-                     name="endereco"
-                     required
-                     validation
-                     class="form-control"
-                     [(ngModel)]="object.endereco"
-                     pInputText>
+          <!-- Row 4: Observação -->
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-12">
+              <app-form-field
+                [control]="formGroup.get('observacao')"
+                label="Observação"
+                fieldId="observacao"
+                hint="Informações adicionais (máximo 2000 caracteres)">
+                <textarea
+                  pInputTextarea
+                  id="observacao"
+                  formControlName="observacao"
+                  rows="4"
+                  maxlength="2000"
+                  class="w-full"
+                  placeholder="Digite observações adicionais">
+                </textarea>
+              </app-form-field>
             </div>
           </div>
 
-          <div class="col-md-4">
-            <div class="form-group d-flex flex-column">
-              <div>
-                <label for="estado">Estado</label>
-                <span class="field-required">*</span>
-              </div>
-              <p-autoComplete id="estado"
-                              name="estado"
-                              required
-                              validation
-                              appendTo="body"
-                              field="nome"
-                              inputStyleClass="form-control"
-                              (ngModelChange)="object.cidade = null"
-                              [forceSelection]="true"
-                              [dropdown]="true"
-                              [suggestions]="estadoList"
-                              [(ngModel)]="object.estado"
-                              (onClear)="object.estado = null"
-                              (completeMethod)="findEstados($event)">
-              </p-autoComplete>
-            </div>
-          </div>
-
-          <div class="col-md-4">
-            <div class="form-group d-flex flex-column">
-              <div>
-                <label for="cidade">Cidade</label>
-                <span class="field-required">*</span>
-              </div>
-              <p-autoComplete id="cidade"
-                              name="cidade"
-                              required
-                              validation
-                              field="nome"
-                              inputStyleClass="form-control"
-                              [forceSelection]="true"
-                              [disabled]="!object.estado"
-                              [dropdown]="true"
-                              [suggestions]="cidadeList"
-                              [(ngModel)]="object.cidade"
-                              (onClear)="object.cidade = null"
-                              (completeMethod)="findCidadesByEstado($event)">
-              </p-autoComplete>
-            </div>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col-md-12">
-            <div class="form-group">
-              <label for="observacao">Observação</label>
-              <textarea type="number"
-                        id="observacao"
-                        name="observacao"
-                        maxlength="2000"
-                        class="form-control"
-                        rows="4"
-                        [(ngModel)]="object.observacao"
-                        pInputTextarea>
-              </textarea>
-            </div>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col-md-12 d-flex justify-content-end">
+          <!-- Action Buttons -->
+          <div class="flex justify-end gap-2 mt-4">
             <app-cancelar (onClick)="back()"></app-cancelar>
-            <app-salvar [typeButton]="'submit'"></app-salvar>
+            <app-salvar [typeButton]="'submit'" [disabled]="isLoading()"></app-salvar>
           </div>
-        </div>
-      </form>
-
-    </mat-card-content>
-  </mat-card>
+        </form>
+      }
+    </ng-template>
+  </p-card>
 </div>
