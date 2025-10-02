@@ -30,6 +30,35 @@
   letter-spacing: 0.025em;
 }
 
+.loader-cancel-btn {
+  padding: 0.625rem 1.25rem;
+  font-family: var(--p-font-family, 'Inter', sans-serif);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--p-text-color, #334155);
+  background-color: var(--p-content-background, #ffffff);
+  border: 1px solid var(--p-surface-400, #cbd5e1);
+  border-radius: var(--p-border-radius, 6px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  outline: none;
+  min-width: 120px;
+}
+
+.loader-cancel-btn:hover {
+  background-color: var(--p-surface-50, #f8fafc);
+  border-color: var(--p-surface-500, #94a3b8);
+}
+
+.loader-cancel-btn:active {
+  background-color: var(--p-surface-100, #f1f5f9);
+  transform: scale(0.98);
+}
+
+.loader-cancel-btn:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--p-primary-color, #3b82f6), transparent 80%);
+}
+
 ::ng-deep .loader-spinner {
   width: 80px !important;
   height: 80px !important;

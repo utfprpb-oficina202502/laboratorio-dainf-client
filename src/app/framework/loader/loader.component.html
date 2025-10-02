@@ -7,6 +7,16 @@
         animationDuration="1s"
         aria-label="Carregando conteúdo" />
       <span class="loader-text">Carregando...</span>
+
+      @if (cancelAction()) {
+        <button
+          type="button"
+          class="loader-cancel-btn"
+          (click)="onCancel()"
+          [attr.aria-label]="cancelLabel()">
+          {{ cancelLabel() }}
+        </button>
+      }
     </div>
   </div>
 }

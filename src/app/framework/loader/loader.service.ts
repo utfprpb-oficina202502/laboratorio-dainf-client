@@ -5,6 +5,8 @@ import { finalize } from 'rxjs/operators';
 @Injectable({ providedIn: 'root' })
 export class LoaderService {
   readonly loading = signal<boolean>(false);
+  readonly cancelAction = signal<(() => void) | null>(null);
+  readonly cancelLabel = signal<string>('Cancelar');
 
   // Métodos de controle do loader
   show(): void {
@@ -13,6 +15,29 @@ export class LoaderService {
 
   hide(): void {
     this.loading.set(false);
+    this.cancelAction.set(null);
+  }
+
+  /**
+   * Show loader with optional cancel button
+   * @param cancelAction Function to call when user clicks cancel
+   * @param cancelLabel Label for cancel button
+   */
+  showWithCancel(cancelAction: () => void, cancelLabel: string = 'Cancelar'): void {
+    this.loading.set(true);
+    this.cancelAction.set(cancelAction);
+    this.cancelLabel.set(cancelLabel);
+  }
+
+  /**
+   * Handle cancel action
+   */
+  cancel(): void {
+    const action = this.cancelAction();
+    if (action) {
+      action();
+    }
+    this.hide();
   }
 
   // Método utilitário para envolver observables e controlar loading automaticamente
