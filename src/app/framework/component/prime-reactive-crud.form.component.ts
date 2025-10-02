@@ -15,24 +15,19 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
   protected loaderService: LoaderService;
   protected loginService: LoginService;
 
-  // Signals for reactive state management
   protected readonly isEditing = signal(false);
   protected readonly isAlunoOrProfessor = signal(false);
   protected readonly isLoading = signal(false);
   protected readonly object = signal<T | null>(null);
 
-  // Computed signals
   protected readonly isFormValid = computed(() => this.form()?.valid ?? false);
   protected readonly isFormDirty = computed(() => this.form()?.dirty ?? false);
   protected readonly isFormTouched = computed(() => this.form()?.touched ?? false);
 
-  // Form group signal - subclasses will set this
   protected readonly form = signal<FormGroup | null>(null);
-
-  // Extra validation flag (can be overridden by subclasses)
   protected validExtra = true;
 
-  constructor(
+  protected constructor(
     protected service: CrudService<T, ID>,
     protected injector: Injector,
     protected urlList: string,
@@ -45,15 +40,8 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
     this.loginService = this.injector.get(LoginService);
   }
 
-  /**
-   * Abstract method to build the form group
-   * Subclasses must implement this to define their form structure
-   */
   protected abstract buildForm(): FormGroup;
 
-  /**
-   * Lifecycle hook to initialize form and load data
-   */
   ngOnInit(): void {
     this.loginService
       .userLoggedIsAlunoOrProfessor()
@@ -76,9 +64,6 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
     });
   }
 
-  /**
-   * Save the form data
-   */
   save(): void {
     this.loaderService.show();
     this.isLoading.set(true);
@@ -123,9 +108,6 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
     }
   }
 
-  /**
-   * Load object for editing
-   */
   edit(id: ID): void {
     this.loaderService.show();
     this.isLoading.set(true);
@@ -148,16 +130,10 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
     });
   }
 
-  /**
-   * Navigate back to list
-   */
   back(): void {
     this.router.navigate([this.urlList]);
   }
 
-  /**
-   * Get validation error message for a form control
-   */
   getErrorMessage(controlName: string): string {
     const formGroup = this.form();
     if (!formGroup) return '';
@@ -180,9 +156,6 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
     return 'Campo inválido';
   }
 
-  /**
-   * Check if a form control has error and is touched
-   */
   hasError(controlName: string): boolean {
     const formGroup = this.form();
     if (!formGroup) return false;
@@ -191,9 +164,6 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
     return !!(control && control.invalid && control.touched);
   }
 
-  /**
-   * Check if a form control is valid and touched
-   */
   isValidField(controlName: string): boolean {
     const formGroup = this.form();
     if (!formGroup) return false;
@@ -202,9 +172,6 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
     return !!(control && control.valid && control.touched);
   }
 
-  /**
-   * Mark all form controls as touched to trigger validation display
-   */
   protected markFormAsTouched(formGroup: FormGroup): void {
     for (const key of Object.keys(formGroup.controls)) {
       const control = formGroup.get(key);
@@ -216,9 +183,6 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
     }
   }
 
-  /**
-   * Patch form with object values
-   */
   protected patchFormWithObject(object: T): void {
     const formGroup = this.form();
     if (formGroup) {
@@ -226,24 +190,15 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
     }
   }
 
-  /**
-   * Prepare form value before saving (can be overridden)
-   */
   protected prepareFormValue(formValue: any): any {
     return formValue;
   }
 
-  /**
-   * Merge form value with existing object (preserves non-form fields)
-   */
   protected mergeWithObject(formValue: any): T {
     const currentObject = this.object();
     return { ...currentObject, ...formValue } as T;
   }
 
-  /**
-   * Create new instance of object
-   */
   protected newInstance(): void {
     if (this.type) {
       this.object.set(new this.type());
@@ -252,7 +207,6 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
     }
   }
 
-  // Lifecycle hooks that can be overridden
   protected initializeValues(): void {}
   protected preOnInit(): void {}
   protected postEdit(): void {}
