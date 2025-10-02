@@ -1,14 +1,12 @@
-import {Component, EventEmitter, Output} from '@angular/core';
+import { Component, output } from '@angular/core';
 
 @Component({
-    selector: 'app-voltar',
-    templateUrl: './voltar.component.html',
-    styleUrls: ['./voltar.component.css'],
-    standalone: false
+  selector: 'app-voltar',
+  templateUrl: './voltar.component.html',
+  standalone: false
 })
 export class VoltarComponent {
-
-  @Output() onClick: EventEmitter<any> = new EventEmitter();
+  readonly onClick = output<void>();
 
   click(): void {
     this.onClick.emit();

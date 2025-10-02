@@ -1,24 +1,16 @@
-import {NgModule} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {VoltarComponent} from './voltar.component';
-import {MatIconModule} from '@angular/material/icon';
-import {TooltipModule} from 'primeng/tooltip';
-import {MatButtonModule} from '@angular/material/button';
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { VoltarComponent } from './voltar.component';
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 
 @NgModule({
   imports: [
     CommonModule,
-    MatIconModule,
-    TooltipModule,
-    MatButtonModule,
+    ButtonModule,
+    TooltipModule
   ],
-  declarations: [
-    VoltarComponent
-  ],
-  exports: [
-    VoltarComponent
-  ]
+  declarations: [VoltarComponent],
+  exports: [VoltarComponent]
 })
-export class VoltarModule {
-
-}
+export class VoltarModule {}

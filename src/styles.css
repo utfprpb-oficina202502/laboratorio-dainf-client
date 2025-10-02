@@ -237,3 +237,60 @@ legend {
   box-shadow: 0 4px 12px -2px rgba(0,0,0,0.15);
   border-radius: 8px !important;
 }
+
+/* === Dark Mode Button Styles === */
+/* In dark mode, make all primary buttons use outlined style for better contrast */
+/* This overrides both default (filled) and explicitly outlined buttons */
+
+/* Light mode: Remove outline from primary buttons to use filled style */
+:root[data-theme="light"] .p-button-primary.p-button-outlined {
+  background: var(--p-button-primary-background);
+  border-color: var(--p-button-primary-border-color);
+  color: var(--p-button-primary-color);
+}
+
+:root[data-theme="light"] .p-button-primary.p-button-outlined:hover {
+  background: var(--p-button-primary-hover-background);
+  border-color: var(--p-button-primary-hover-border-color);
+  color: var(--p-button-primary-hover-color);
+}
+
+:root[data-theme="light"] .p-button-primary.p-button-outlined:active {
+  background: var(--p-button-primary-active-background);
+  border-color: var(--p-button-primary-active-border-color);
+  color: var(--p-button-primary-active-color);
+}
+
+/* Dark mode: Force all primary buttons to outlined style */
+:root[data-theme="dark"] .p-button-primary:not(.p-button-text) {
+  background: transparent !important;
+  border: 1px solid var(--p-primary-color) !important;
+  color: var(--p-primary-color) !important;
+}
+
+:root[data-theme="dark"] .p-button-primary:not(.p-button-text):hover {
+  background: var(--p-primary-color) !important;
+  border-color: var(--p-primary-color) !important;
+  color: var(--p-primary-contrast-color) !important;
+}
+
+:root[data-theme="dark"] .p-button-primary:not(.p-button-text):active,
+:root[data-theme="dark"] .p-button-primary:not(.p-button-text):focus {
+  background: var(--p-primary-color) !important;
+  border-color: var(--p-primary-color) !important;
+  color: var(--p-primary-contrast-color) !important;
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--p-primary-color), transparent 80%);
+}
+
+/* Dark mode: Keep secondary buttons consistent */
+:root[data-theme="dark"] .p-button-secondary.p-button-outlined {
+  background: transparent;
+  border-color: var(--p-surface-400);
+  color: var(--p-surface-400);
+}
+
+:root[data-theme="dark"] .p-button-secondary.p-button-outlined:hover {
+  background: var(--p-surface-600);
+  border-color: var(--p-surface-600);
+  color: var(--p-surface-0);
+}

@@ -1,8 +1,9 @@
-<button type="{{typeButton}}"
-        color="primary"
-        class="w-100px br-25px"
-        [disabled]="disabled"
-        (click)="click()"
-        mat-stroked-button>
-  Salvar
-</button>
+<p-button
+  [type]="typeButton()"
+  severity="primary"
+  [outlined]="true"
+  [disabled]="disabled()"
+  (onClick)="click()"
+  [attr.aria-label]="'Salvar'">
+  <span pButtonLabel>Salvar</span>
+</p-button>

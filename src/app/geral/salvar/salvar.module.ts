@@ -1,24 +1,14 @@
-import {NgModule} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {SalvarComponent} from './salvar.component';
-import {MatIconModule} from '@angular/material/icon';
-import {TooltipModule} from 'primeng/tooltip';
-import {MatButtonModule} from '@angular/material/button';
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SalvarComponent } from './salvar.component';
+import { ButtonModule } from 'primeng/button';
 
 @NgModule({
   imports: [
     CommonModule,
-    MatIconModule,
-    TooltipModule,
-    MatButtonModule,
+    ButtonModule
   ],
-  declarations: [
-    SalvarComponent
-  ],
-  exports: [
-    SalvarComponent
-  ]
+  declarations: [SalvarComponent],
+  exports: [SalvarComponent]
 })
-export class SalvarModule {
-
-}
+export class SalvarModule {}

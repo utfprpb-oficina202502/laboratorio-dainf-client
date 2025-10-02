@@ -1,16 +1,14 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import { Component, input, output } from '@angular/core';
 
 @Component({
-    selector: 'app-salvar',
-    templateUrl: './salvar.component.html',
-    styleUrls: ['./salvar.component.css'],
-    standalone: false
+  selector: 'app-salvar',
+  templateUrl: './salvar.component.html',
+  standalone: false
 })
 export class SalvarComponent {
-
-  @Input() typeButton: string;
-  @Input() disabled: boolean;
-  @Output() onClick: EventEmitter<any> = new EventEmitter();
+  readonly typeButton = input<string>('button');
+  readonly disabled = input(false);
+  readonly onClick = output<void>();
 
   click(): void {
     this.onClick.emit();
