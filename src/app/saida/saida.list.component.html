@@ -82,7 +82,7 @@
                   <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.id }}</span>
                 }
                 @case ('dataSaida') {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.dataSaida | date:'dd/MM/yyyy' }}</span>
+                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.dataSaida }}</span>
                 }
                 @case ('qtde') {
                   <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ getQtdeTotal(rowData?.saidaItem) }}</span>
@@ -96,26 +96,14 @@
                   </span>
                 }
                 @case ('actions') {
-                  <div class="flex items-center gap-1 justify-center">
-                    <p-button
-                      icon="pi pi-pencil"
-                      [outlined]="true"
-                      severity="secondary"
-                      size="small"
-                      pTooltip="Editar"
-                      tooltipPosition="top"
-                      (onClick)="edit(rowData.id)">
-                    </p-button>
-                    <p-button
-                      icon="pi pi-trash"
-                      [outlined]="true"
-                      severity="danger"
-                      size="small"
-                      pTooltip="Remover"
-                      tooltipPosition="top"
-                      (onClick)="preDelete(rowData)">
-                    </p-button>
-                  </div>
+                  <app-action-buttons
+                    [showEdit]="true"
+                    [showDelete]="true"
+                    [editTooltip]="'Editar'"
+                    [deleteTooltip]="'Remover'"
+                    (edit)="edit(rowData.id)"
+                    (delete)="preDelete(rowData)">
+                  </app-action-buttons>
                 }
                 @default {
                   <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData[column.field] }}</span>

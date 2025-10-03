@@ -18,6 +18,7 @@ import {InputIconModule} from 'primeng/inputicon';
 import {TooltipModule} from 'primeng/tooltip';
 import {TagModule} from 'primeng/tag';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
+import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 import {NovoModule} from '../geral/novo/novo.module';
 
 @Component({
@@ -38,6 +39,7 @@ import {NovoModule} from '../geral/novo/novo.module';
     TooltipModule,
     TagModule,
     PrimeCrudToolbarComponent,
+    ActionButtonsComponent,
     NovoModule
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => GrupoListComponent) }],

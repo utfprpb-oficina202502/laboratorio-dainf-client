@@ -5,6 +5,7 @@ import {
   ChangeDetectionStrategy,
   signal,
   computed,
+  effect,
   OnDestroy
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -80,6 +81,35 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     protected injector: Injector
   ) {
     super(itemService, injector, '/item', Item);
+
+    // Effect to handle form fields enable/disable based on user role
+    effect(() => {
+      const formGroup = this.form();
+      if (!formGroup) return;
+
+      const fieldsToToggle = ['nome', 'patrimonio', 'siorg', 'valor', 'localizacao', 'tipoItem', 'descricao', 'grupo'];
+
+      if (this.isAlunoOrProfessor()) {
+        for (const field of fieldsToToggle) {
+          formGroup.get(field)?.disable();
+        }
+        formGroup.get('qtdeMinima')?.disable();
+        formGroup.get('saldo')?.disable();
+      } else {
+        for (const field of fieldsToToggle) {
+          formGroup.get(field)?.enable();
+        }
+
+        // qtdeMinima and saldo have additional conditions
+        if (this.isSaldoDisabled()) {
+          formGroup.get('qtdeMinima')?.disable();
+          formGroup.get('saldo')?.disable();
+        } else {
+          formGroup.get('qtdeMinima')?.enable();
+          formGroup.get('saldo')?.enable();
+        }
+      }
+    });
   }
 
   /**

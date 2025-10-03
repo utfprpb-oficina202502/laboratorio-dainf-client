@@ -15,6 +15,7 @@ import {AutoCompleteModule} from 'primeng/autocomplete';
 import {InputTextModule} from 'primeng/inputtext';
 import {TooltipModule} from 'primeng/tooltip';
 import {ValidationModule} from '../framework/validation/validation.module';
+import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 import {VoltarModule} from '../geral/voltar/voltar.module';
 import {CancelarModule} from '../geral/cancelar/cancelar.module';
 import {SalvarModule} from '../geral/salvar/salvar.module';
@@ -42,6 +43,7 @@ import {SelectModule} from "primeng/select";
     DatePickerModule,
     SelectModule,
     ValidationModule,
+    ActionButtonsComponent,
     VoltarModule,
     CancelarModule,
     SalvarModule,

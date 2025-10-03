@@ -25,6 +25,7 @@ import {TooltipModule} from 'primeng/tooltip';
 import {TagModule} from 'primeng/tag';
 import {DialogModule} from 'primeng/dialog';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
+import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 import {NovoModule} from '../geral/novo/novo.module';
 
 @Component({
@@ -46,6 +47,7 @@ import {NovoModule} from '../geral/novo/novo.module';
     TagModule,
     DialogModule,
     PrimeCrudToolbarComponent,
+    ActionButtonsComponent,
     NovoModule,
     NgOptimizedImage
   ],

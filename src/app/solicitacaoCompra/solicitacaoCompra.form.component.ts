@@ -103,16 +103,7 @@ export class SolicitacaoCompraFormComponent extends PrimeReactiveCrudFormCompone
    * Initialize form values
    */
   protected override initializeValues(): void {
-    const formGroup = this.form();
-    if (formGroup) {
-      const hoje = new Date();
-      const dia = String(hoje.getDate()).padStart(2, '0');
-      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-      const ano = hoje.getFullYear();
-      formGroup.patchValue({
-        dataSolicitacao: `${dia}/${mes}/${ano}`
-      });
-    }
+    this.setTodayAsDefaultDate('dataSolicitacao');
     this.setCurrentUserAsResponsible('usuario');
   }
 

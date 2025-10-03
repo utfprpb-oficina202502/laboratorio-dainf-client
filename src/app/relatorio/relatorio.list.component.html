@@ -133,40 +133,26 @@
                   [attr.headers]="'col-' + column.field">
                   @switch (column.field) {
                     @case ('actions') {
-                      <div class="flex items-center gap-2 justify-center">
-                        @if (canEdit) {
-                          <p-button
-                            severity="secondary"
-                            [outlined]="true"
-                            [rounded]="true"
-                            pTooltip="Editar relatório"
-                            tooltipPosition="top"
-                            (onClick)="edit(row.id)"
-                            [attr.aria-label]="'Editar relatório ' + row.nome">
-                            <span pButtonIcon class="pi pi-pencil"></span>
-                          </p-button>
-                        }
-                        @if (canDelete) {
-                          <p-button
-                            severity="danger"
-                            [outlined]="true"
-                            [rounded]="true"
-                            pTooltip="Remover relatório"
-                            tooltipPosition="top"
-                            (onClick)="delete(row.id)"
-                            [attr.aria-label]="'Remover relatório ' + row.nome">
-                            <span pButtonIcon class="pi pi-trash"></span>
-                          </p-button>
-                        }
+                      <div class="flex items-center gap-1 justify-center">
+                        <app-action-buttons
+                          [showEdit]="canEdit"
+                          [showDelete]="canDelete"
+                          [editTooltip]="'Editar relatório'"
+                          [deleteTooltip]="'Remover relatório'"
+                          [editAriaLabel]="'Editar relatório ' + row.nome"
+                          [deleteAriaLabel]="'Remover relatório ' + row.nome"
+                          (edit)="edit(row.id)"
+                          (delete)="delete(row.id)">
+                        </app-action-buttons>
                         <p-button
-                          severity="info"
+                          icon="pi pi-file-pdf"
                           [outlined]="true"
-                          [rounded]="true"
+                          severity="info"
+                          size="small"
                           pTooltip="Gerar relatório"
                           tooltipPosition="top"
                           (onClick)="generateReport(row.id)"
                           [attr.aria-label]="'Gerar relatório ' + row.nome">
-                          <span pButtonIcon class="pi pi-file-pdf"></span>
                         </p-button>
                       </div>
                     }

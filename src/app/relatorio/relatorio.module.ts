@@ -34,6 +34,7 @@ import {SelectModule} from "primeng/select";
 
 // Framework components
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
+import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 
 // Angular Material (still needed for form and viewer components)
 import {MatCardModule} from '@angular/material/card';
@@ -75,6 +76,7 @@ import {MatButtonModule} from '@angular/material/button';
 
     // Framework components
     PrimeCrudToolbarComponent,
+    ActionButtonsComponent,
 
     // Angular Material (still needed for form and viewer components)
     MatCardModule,

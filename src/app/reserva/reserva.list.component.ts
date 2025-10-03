@@ -1,5 +1,5 @@
 import {Component, forwardRef, Injector, OnInit, ChangeDetectionStrategy} from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
@@ -20,6 +20,7 @@ import {InputIconModule} from 'primeng/inputicon';
 import {TooltipModule} from 'primeng/tooltip';
 import {TagModule} from 'primeng/tag';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
+import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 import {NovoModule} from '../geral/novo/novo.module';
 
 @Component({
@@ -29,7 +30,6 @@ import {NovoModule} from '../geral/novo/novo.module';
   imports: [
     CommonModule,
     FormsModule,
-    DatePipe,
     CardModule,
     TableModule,
     MultiSelectModule,
@@ -41,6 +41,7 @@ import {NovoModule} from '../geral/novo/novo.module';
     TooltipModule,
     TagModule,
     PrimeCrudToolbarComponent,
+    ActionButtonsComponent,
     NovoModule
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => ReservaListComponent) }],

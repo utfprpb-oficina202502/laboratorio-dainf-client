@@ -18,6 +18,7 @@ import { VoltarModule } from '../geral/voltar/voltar.module';
 import { CancelarModule } from '../geral/cancelar/cancelar.module';
 import { SalvarModule } from '../geral/salvar/salvar.module';
 import { FormFieldComponent } from '../framework/component/form-field.component';
+import { ActionButtonsComponent } from '../framework/component/action-buttons.component';
 
 @NgModule({
   imports: [
@@ -35,7 +36,8 @@ import { FormFieldComponent } from '../framework/component/form-field.component'
     VoltarModule,
     CancelarModule,
     SalvarModule,
-    FormFieldComponent
+    FormFieldComponent,
+    ActionButtonsComponent
   ],
   declarations: [GrupoFormComponent],
   exports: [GrupoFormComponent],

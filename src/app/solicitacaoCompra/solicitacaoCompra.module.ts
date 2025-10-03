@@ -14,6 +14,7 @@ import {MatIconModule} from '@angular/material/icon';
 import {CancelarModule} from '../geral/cancelar/cancelar.module';
 import {SalvarModule} from '../geral/salvar/salvar.module';
 import {ValidationModule} from '../framework/validation/validation.module';
+import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 import {SolicitacaoCompraFormComponent} from './solicitacaoCompra.form.component';
 import {SolicitacaoCompraListComponent} from './solicitacaoCompra.list.component';
 import {ValidationService} from '../framework/validation/validation.service';
@@ -40,6 +41,7 @@ import {DatePickerModule} from "primeng/datepicker";
     SalvarModule,
     InputTextModule,
     ValidationModule,
+    ActionButtonsComponent,
     SolicitacaoCompraListComponent,
     SolicitacaoCompraFormComponent,
   ],

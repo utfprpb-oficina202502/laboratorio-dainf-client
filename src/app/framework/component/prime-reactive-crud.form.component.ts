@@ -298,4 +298,22 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
       detail: customMessage || 'Necessário adicionar ao menos um item!'
     });
   }
+
+  /**
+   * Set today's date as default value for a date field
+   * Formats date as dd/MM/yyyy string (Brazilian format)
+   * @param fieldName Name of the form field to set
+   */
+  protected setTodayAsDefaultDate(fieldName: string): void {
+    const formGroup = this.form();
+    if (formGroup) {
+      const hoje = new Date();
+      const dia = String(hoje.getDate()).padStart(2, '0');
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      const ano = hoje.getFullYear();
+      formGroup.patchValue({
+        [fieldName]: `${dia}/${mes}/${ano}`
+      });
+    }
+  }
 }

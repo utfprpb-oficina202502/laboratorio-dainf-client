@@ -42,7 +42,8 @@
                 <p-autoComplete
                   inputId="usuarioEmprestimo"
                   formControlName="usuarioEmprestimo"
-                  field="nome"
+                  optionLabel="nome"
+                  dataKey="id"
                   [suggestions]="usuarioList()"
                   (completeMethod)="findUsuarios($event)"
                   (onSelect)="onUsuarioEmprestimoChange($event)"
@@ -135,7 +136,6 @@
                   formControlName="dataDevolucao"
                   dateFormat="dd/mm/yy"
                   dataType="string"
-                  [disabled]="true"
                   [showIcon]="true"
                   styleClass="w-full"
                   [inputStyle]="{ width: '100%' }">
@@ -159,7 +159,8 @@
                         inputId="item"
                         [(ngModel)]="tempItem"
                         [ngModelOptions]="{standalone: true}"
-                        field="nome"
+                        optionLabel="nome"
+                        dataKey="id"
                         [suggestions]="itemList()"
                         (completeMethod)="findProdutos($event)"
                         (onSelect)="setDevolucaoItem()"

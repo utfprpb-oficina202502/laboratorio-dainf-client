@@ -20,6 +20,7 @@ import { MatIconModule } from '@angular/material/icon';
 
 // Custom components
 import { FormFieldComponent } from '../framework/component/form-field.component';
+import { ActionButtonsComponent } from '../framework/component/action-buttons.component';
 import { VoltarModule } from '../geral/voltar/voltar.module';
 import { CancelarModule } from '../geral/cancelar/cancelar.module';
 import { SalvarModule } from '../geral/salvar/salvar.module';
@@ -50,6 +51,7 @@ import { UsuarioService } from './usuario.service';
     MatIconModule,
     // Custom
     FormFieldComponent,
+    ActionButtonsComponent,
     VoltarModule,
     CancelarModule,
     SalvarModule,

@@ -25,6 +25,7 @@ import { MatSortModule } from "@angular/material/sort";
 
 // Framework
 import { FormFieldComponent } from "../framework/component/form-field.component";
+import { ActionButtonsComponent } from "../framework/component/action-buttons.component";
 
 // Geral components
 import { VoltarModule } from "../geral/voltar/voltar.module";
@@ -65,6 +66,7 @@ import { BottomSheetItemModule } from "./bottomScheetItem/bottomSheetItem.module
     MatSortModule,
     // Framework
     FormFieldComponent,
+    ActionButtonsComponent,
     // Geral
     VoltarModule,
     CancelarModule,

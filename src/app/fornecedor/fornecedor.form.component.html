@@ -163,7 +163,8 @@
                 <p-autoComplete
                   inputId="estado"
                   formControlName="estado"
-                  field="nome"
+                  optionLabel="nome"
+                  dataKey="id"
                   appendTo="body"
                   [forceSelection]="true"
                   [dropdown]="true"
@@ -187,7 +188,8 @@
                 <p-autoComplete
                   inputId="cidade"
                   formControlName="cidade"
-                  field="nome"
+                  optionLabel="nome"
+                  dataKey="id"
                   [forceSelection]="true"
                   [disabled]="!formGroup.get('estado')?.value"
                   [dropdown]="true"

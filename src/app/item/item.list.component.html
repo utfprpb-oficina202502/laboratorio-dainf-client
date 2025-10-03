@@ -130,44 +130,20 @@
                   [attr.headers]="'col-' + column.field">
                   @switch (column.field) {
                     @case ('actions') {
-                      <div class="flex items-center gap-2 justify-center">
-                        @if (row.id != 1 && !isAlunoOrProfessor && canEdit) {
-                          <p-button
-                            severity="secondary"
-                            [outlined]="true"
-                            [rounded]="true"
-                            pTooltip="Editar item"
-                            tooltipPosition="top"
-                            (onClick)="edit(row.id)"
-                            [attr.aria-label]="'Editar item ' + row.nome">
-                            <span pButtonIcon class="pi pi-pencil"></span>
-                          </p-button>
-                        }
-                        @if (row.id != 1 && !isAlunoOrProfessor && canDelete) {
-                          <p-button
-                            severity="danger"
-                            [outlined]="true"
-                            [rounded]="true"
-                            pTooltip="Remover item"
-                            tooltipPosition="top"
-                            (onClick)="delete(row.id)"
-                            [attr.aria-label]="'Remover item ' + row.nome">
-                            <span pButtonIcon class="pi pi-trash"></span>
-                          </p-button>
-                        }
-                        @if (row.id != 1 && isAlunoOrProfessor) {
-                          <p-button
-                            severity="secondary"
-                            [outlined]="true"
-                            [rounded]="true"
-                            pTooltip="Visualizar item"
-                            tooltipPosition="top"
-                            (onClick)="edit(row.id)"
-                            [attr.aria-label]="'Visualizar item ' + row.nome">
-                            <span pButtonIcon class="pi pi-eye"></span>
-                          </p-button>
-                        }
-                      </div>
+                      <app-action-buttons
+                        [showEdit]="row.id != 1 && !isAlunoOrProfessor && canEdit"
+                        [showDelete]="row.id != 1 && !isAlunoOrProfessor && canDelete"
+                        [showView]="row.id != 1 && isAlunoOrProfessor"
+                        [editTooltip]="'Editar item'"
+                        [deleteTooltip]="'Remover item'"
+                        [viewTooltip]="'Visualizar item'"
+                        [editAriaLabel]="'Editar item ' + row.nome"
+                        [deleteAriaLabel]="'Remover item ' + row.nome"
+                        [viewAriaLabel]="'Visualizar item ' + row.nome"
+                        (edit)="edit(row.id)"
+                        (delete)="delete(row.id)"
+                        (view)="edit(row.id)">
+                      </app-action-buttons>
                     }
                     @case ('imagem') {
                       <div class="flex justify-center">

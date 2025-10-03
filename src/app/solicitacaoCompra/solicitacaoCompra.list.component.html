@@ -85,32 +85,20 @@
                   <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.descricao }}</span>
                 }
                 @case ('dataSolicitacao') {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.dataSolicitacao | date:'dd/MM/yyyy' }}</span>
+                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.dataSolicitacao }}</span>
                 }
                 @case ('usuario') {
                   <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.usuario?.nome || 'N/A' }}</span>
                 }
                 @case ('actions') {
-                  <div class="flex items-center gap-1 justify-center">
-                    <p-button
-                      icon="pi pi-pencil"
-                      [outlined]="true"
-                      severity="secondary"
-                      size="small"
-                      pTooltip="Editar"
-                      tooltipPosition="top"
-                      (onClick)="edit(rowData.id)">
-                    </p-button>
-                    <p-button
-                      icon="pi pi-trash"
-                      [outlined]="true"
-                      severity="danger"
-                      size="small"
-                      pTooltip="Remover"
-                      tooltipPosition="top"
-                      (onClick)="delete(rowData.id)">
-                    </p-button>
-                  </div>
+                  <app-action-buttons
+                    [showEdit]="true"
+                    [showDelete]="true"
+                    [editTooltip]="'Editar'"
+                    [deleteTooltip]="'Remover'"
+                    (edit)="edit(rowData.id)"
+                    (delete)="delete(rowData.id)">
+                  </app-action-buttons>
                 }
                 @default {
                   <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData[column.field] }}</span>

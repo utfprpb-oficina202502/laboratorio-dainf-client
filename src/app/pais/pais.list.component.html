@@ -110,32 +110,16 @@
                   [attr.headers]="'col-' + column.field">
                   @switch (column.field) {
                     @case ('actions') {
-                      <div class="flex items-center gap-2 justify-center">
-                        @if (canEdit) {
-                          <p-button
-                            severity="secondary"
-                            [outlined]="true"
-                            [rounded]="true"
-                            pTooltip="Editar pais"
-                            tooltipPosition="top"
-                            (onClick)="edit(row.id)"
-                            [attr.aria-label]="'Editar pais ' + row.nome">
-                            <span pButtonIcon class="pi pi-pencil"></span>
-                          </p-button>
-                        }
-                        @if (canDelete) {
-                          <p-button
-                            severity="danger"
-                            [outlined]="true"
-                            [rounded]="true"
-                            pTooltip="Remover pais"
-                            tooltipPosition="top"
-                            (onClick)="delete(row.id)"
-                            [attr.aria-label]="'Remover pais ' + row.nome">
-                            <span pButtonIcon class="pi pi-trash"></span>
-                          </p-button>
-                        }
-                      </div>
+                      <app-action-buttons
+                        [showEdit]="canEdit"
+                        [showDelete]="canDelete"
+                        [editTooltip]="'Editar pais'"
+                        [deleteTooltip]="'Remover pais'"
+                        [editAriaLabel]="'Editar pais ' + row.nome"
+                        [deleteAriaLabel]="'Remover pais ' + row.nome"
+                        (edit)="edit(row.id)"
+                        (delete)="delete(row.id)">
+                      </app-action-buttons>
                     }
                     @default {
                       <span

@@ -129,32 +129,16 @@
                   [attr.headers]="'col-' + column.field">
                   @switch (column.field) {
                     @case ('actions') {
-                      <div class="flex items-center gap-2 justify-center">
-                        @if (canEdit) {
-                          <p-button
-                            severity="secondary"
-                            [outlined]="true"
-                            [rounded]="true"
-                            pTooltip="Editar estado"
-                            tooltipPosition="top"
-                            (onClick)="edit(row.id)"
-                            [attr.aria-label]="'Editar estado ' + row.nome">
-                            <span pButtonIcon class="pi pi-pencil"></span>
-                          </p-button>
-                        }
-                        @if (canDelete) {
-                          <p-button
-                            severity="danger"
-                            [outlined]="true"
-                            [rounded]="true"
-                            pTooltip="Remover estado"
-                            tooltipPosition="top"
-                            (onClick)="delete(row.id)"
-                            [attr.aria-label]="'Remover estado ' + row.nome">
-                            <span pButtonIcon class="pi pi-trash"></span>
-                          </p-button>
-                        }
-                      </div>
+                      <app-action-buttons
+                        [showEdit]="canEdit"
+                        [showDelete]="canDelete"
+                        [editTooltip]="'Editar estado'"
+                        [deleteTooltip]="'Remover estado'"
+                        [editAriaLabel]="'Editar estado ' + row.nome"
+                        [deleteAriaLabel]="'Remover estado ' + row.nome"
+                        (edit)="edit(row.id)"
+                        (delete)="delete(row.id)">
+                      </app-action-buttons>
                     }
                     @case ('pais') {
                       <span

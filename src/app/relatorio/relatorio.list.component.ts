@@ -8,6 +8,7 @@ import {Button} from "primeng/button";
 import {TableModule} from "primeng/table";
 import {Card} from "primeng/card";
 import {PrimeCrudToolbarComponent} from "../framework/component/prime-crud-toolbar.component";
+import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 import {InputIconModule} from "primeng/inputicon";
 import {IconFieldModule} from "primeng/iconfield";
 
@@ -26,6 +27,7 @@ import {IconFieldModule} from "primeng/iconfield";
     NgClass,
     Card,
     PrimeCrudToolbarComponent,
+    ActionButtonsComponent,
     InputIconModule,
     IconFieldModule
 ],

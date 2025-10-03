@@ -49,7 +49,6 @@
                   id="nome"
                   formControlName="nome"
                   class="w-full"
-                  [disabled]="isAlunoOrProfessor()"
                   placeholder="Digite o nome do item" />
               </app-form-field>
             </div>
@@ -67,7 +66,6 @@
                   inputId="patrimonio"
                   formControlName="patrimonio"
                   class="w-full"
-                  [disabled]="isAlunoOrProfessor()"
                   [useGrouping]="false"
                   (onInput)="onPatrimonioChange()"
                   styleClass="w-full">
@@ -84,7 +82,6 @@
                   inputId="siorg"
                   formControlName="siorg"
                   class="w-full"
-                  [disabled]="isAlunoOrProfessor()"
                   [useGrouping]="false"
                   styleClass="w-full">
                 </p-inputNumber>
@@ -103,7 +100,6 @@
                   currency="BRL"
                   locale="pt-BR"
                   class="w-full"
-                  [disabled]="isAlunoOrProfessor()"
                   styleClass="w-full">
                 </p-inputNumber>
               </app-form-field>
@@ -119,7 +115,6 @@
                   inputId="qtdeMinima"
                   formControlName="qtdeMinima"
                   class="w-full"
-                  [disabled]="isAlunoOrProfessor() || isSaldoDisabled()"
                   [useGrouping]="false"
                   [min]="1"
                   styleClass="w-full">
@@ -141,7 +136,6 @@
                   id="localizacao"
                   formControlName="localizacao"
                   class="w-full"
-                  [disabled]="isAlunoOrProfessor()"
                   placeholder="Ex: Sala 101" />
               </app-form-field>
             </div>
@@ -158,7 +152,6 @@
                   [options]="tipoItemOptions()"
                   optionLabel="label"
                   optionValue="value"
-                  [disabled]="isAlunoOrProfessor()"
                   (onChange)="onTipoItemChange()"
                   styleClass="w-full">
                 </p-select>
@@ -175,7 +168,6 @@
                   inputId="saldo"
                   formControlName="saldo"
                   class="w-full"
-                  [disabled]="isAlunoOrProfessor() || isSaldoDisabled()"
                   [useGrouping]="false"
                   [min]="0"
                   styleClass="w-full">
@@ -193,12 +185,12 @@
                   <p-autoComplete
                     inputId="grupo"
                     formControlName="grupo"
-                    field="descricao"
+                    optionLabel="descricao"
+                    dataKey="id"
                     appendTo="body"
                     [forceSelection]="true"
                     [dropdown]="true"
                     [suggestions]="grupoList()"
-                    [disabled]="isAlunoOrProfessor()"
                     (completeMethod)="findGrupos($event)"
                     styleClass="flex-1"
                     inputStyleClass="w-full">
@@ -227,7 +219,6 @@
                   formControlName="descricao"
                   rows="4"
                   class="w-full"
-                  [disabled]="isAlunoOrProfessor()"
                   placeholder="Digite uma descrição detalhada do item">
                 </textarea>
               </app-form-field>

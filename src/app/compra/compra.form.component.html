@@ -39,7 +39,8 @@
                   <p-autoComplete
                     inputId="fornecedor"
                     formControlName="fornecedor"
-                    field="razaoSocial"
+                    optionLabel="razaoSocial"
+                    dataKey="id"
                     [suggestions]="fornecedorList()"
                     (completeMethod)="findFornecedores($event)"
                     [forceSelection]="true"
@@ -100,18 +101,22 @@
 
             <!-- Item Field -->
             <div class="col-span-12 md:col-span-6">
-              <app-form-field label="Item" fieldId="item">
+              <app-form-field
+                label="Item"
+                fieldId="item"
+                hint="Digite pelo menos 2 caracteres para buscar">
                 <div class="flex items-center gap-2">
                   <p-autoComplete
                     inputId="item"
                     [(ngModel)]="tempItem"
                     [ngModelOptions]="{standalone: true}"
-                    field="nome"
+                    optionLabel="nome"
+                    dataKey="id"
                     [suggestions]="itemList()"
                     (completeMethod)="findProdutos($event)"
                     (onSelect)="setPrecoProduto()"
-                    [dropdown]="true"
-                    placeholder="Selecione o item"
+                    [minLength]="2"
+                    placeholder="Digite para buscar itens..."
                     styleClass="w-full"
                     [inputStyle]="{ width: '100%' }">
                     <ng-template let-item pTemplate="item">

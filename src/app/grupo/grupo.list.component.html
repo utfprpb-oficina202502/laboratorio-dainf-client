@@ -123,32 +123,16 @@
                   [attr.headers]="'col-' + column.field">
                   @switch (column.field) {
                     @case ('actions') {
-                      <div class="flex items-center gap-2 justify-center">
-                        @if (canEdit) {
-                          <p-button
-                            severity="secondary"
-                            [outlined]="true"
-                            [rounded]="true"
-                            pTooltip="Editar grupo"
-                            tooltipPosition="top"
-                            (onClick)="edit(row.id)"
-                            [attr.aria-label]="'Editar grupo ' + row.descricao">
-                            <span pButtonIcon class="pi pi-pencil"></span>
-                          </p-button>
-                        }
-                        @if (canDelete) {
-                          <p-button
-                            severity="danger"
-                            [outlined]="true"
-                            [rounded]="true"
-                            pTooltip="Remover grupo"
-                            tooltipPosition="top"
-                            (onClick)="delete(row.id)"
-                            [attr.aria-label]="'Remover grupo ' + row.descricao">
-                            <span pButtonIcon class="pi pi-trash"></span>
-                          </p-button>
-                        }
-                      </div>
+                      <app-action-buttons
+                        [showEdit]="canEdit"
+                        [showDelete]="canDelete"
+                        [editTooltip]="'Editar grupo'"
+                        [deleteTooltip]="'Remover grupo'"
+                        [editAriaLabel]="'Editar grupo ' + row.descricao"
+                        [deleteAriaLabel]="'Remover grupo ' + row.descricao"
+                        (edit)="edit(row.id)"
+                        (delete)="delete(row.id)">
+                      </app-action-buttons>
                     }
                     @default {
                       <span

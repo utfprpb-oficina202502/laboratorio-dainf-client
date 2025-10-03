@@ -113,16 +113,7 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
    * Initialize form values
    */
   protected override initializeValues(): void {
-    const formGroup = this.form();
-    if (formGroup) {
-      const hoje = new Date();
-      const dia = String(hoje.getDate()).padStart(2, '0');
-      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-      const ano = hoje.getFullYear();
-      formGroup.patchValue({
-        dataCompra: `${dia}/${mes}/${ano}`
-      });
-    }
+    this.setTodayAsDefaultDate('dataCompra');
     this.setCurrentUserAsResponsible('usuario');
   }
 
@@ -137,9 +128,18 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
 
   /**
    * Autocomplete for Items
+   * Requires minimum 2 characters to search (performance optimization for 700+ items)
    */
   findProdutos(event: any): void {
-    this.itemService.completeItem(event.query, false).subscribe(e => {
+    const query = event.query || '';
+
+    // Require minimum 2 characters to search
+    if (query.length < 2) {
+      this.itemList.set([]);
+      return;
+    }
+
+    this.itemService.completeItem(query, false).subscribe(e => {
       this.itemList.set(e);
     });
   }
