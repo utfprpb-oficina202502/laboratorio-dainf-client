@@ -1,235 +1,419 @@
-import {Component, ElementRef, Injector, ViewChild} from '@angular/core';
-import {CrudFormComponent} from '../framework/component/crud.form.component';
+import {Component, Injector, ChangeDetectionStrategy, signal, computed} from '@angular/core';
+import {CommonModule, NgOptimizedImage} from '@angular/common';
+import {
+  ReactiveFormsModule, FormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators
+} from '@angular/forms';
 import {Emprestimo} from './emprestimo';
 import {EmprestimoService} from './emprestimo.service';
+import {
+  PrimeReactiveCrudFormComponent
+} from '../framework/component/prime-reactive-crud.form.component';
 import {EmprestimoItem} from './emprestimoItem';
 import {Item} from '../item/item';
 import {ItemService} from '../item/item.service';
 import {UsuarioService} from '../usuario/usuario.service';
 import {Usuario} from '../usuario/usuario';
-import {MatTable} from '@angular/material/table';
 import {SelectItem} from 'primeng/api';
-import {NgForm} from '@angular/forms';
-import {pt} from '../framework/constantes/calendarPt';
-import Swal from "sweetalert2";
-import { DatePipe } from '@angular/common';
-import { environment } from 'src/environments/environment';
+import Swal from 'sweetalert2';
+import {environment} from 'src/environments/environment';
+
+// PrimeNG
+import {CardModule} from 'primeng/card';
+import {InputTextModule} from 'primeng/inputtext';
+import {TextareaModule} from 'primeng/textarea';
+import {AutoCompleteModule} from 'primeng/autocomplete';
+import {DatePickerModule} from 'primeng/datepicker';
+import {ButtonModule} from 'primeng/button';
+import {TableModule} from 'primeng/table';
+import {TooltipModule} from 'primeng/tooltip';
+import {SelectModule} from 'primeng/select';
+import {DialogModule} from 'primeng/dialog';
+import {ScrollPanelModule} from 'primeng/scrollpanel';
+
+// Custom components
+import {FormFieldComponent} from '../framework/component/form-field.component';
+import {VoltarModule} from '../geral/voltar/voltar.module';
+import {CancelarModule} from '../geral/cancelar/cancelar.module';
+import {SalvarModule} from '../geral/salvar/salvar.module';
+import {CadastroRapidoModule} from '../geral/cadastroRapido/cadastroRapido.module';
 
 @Component({
-    selector: 'app-form-emprestimo',
-    templateUrl: './emprestimo.form.component.html',
-    styleUrls: ['./emprestimo.form.component.css'],
-    standalone: false
+  selector: 'app-form-emprestimo',
+  templateUrl: './emprestimo.form.component.html',
+  styleUrls: ['./emprestimo.form.component.css'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    // PrimeNG
+    CardModule,
+    InputTextModule,
+    TextareaModule,
+    AutoCompleteModule,
+    DatePickerModule,
+    ButtonModule,
+    TableModule,
+    TooltipModule,
+    SelectModule,
+    DialogModule,
+    ScrollPanelModule,
+    // Custom
+    FormFieldComponent,
+    VoltarModule,
+    CancelarModule,
+    SalvarModule,
+    CadastroRapidoModule,
+    NgOptimizedImage
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EmprestimoFormComponent extends CrudFormComponent<Emprestimo, number> {
+export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Emprestimo, number> {
+  private readonly fb = this.injector.get(FormBuilder);
+  private readonly itemService = this.injector.get(ItemService);
+  private readonly usuarioService = this.injector.get(UsuarioService);
 
-  @ViewChild('form') frm: NgForm;
-  @ViewChild('table') table: MatTable<any>;
-  @ViewChild('itemToAdd') itemToAdd: ElementRef;
-  @ViewChild('qtdeToAdd') qtdeToAdd: ElementRef;
+  // State signals
+  protected readonly itemList = signal<Item[]>([]);
+  protected readonly usuarioList = signal<Usuario[]>([]);
+  protected readonly emprestimoItems = signal<EmprestimoItem[]>([]);
+  protected readonly maxDateEmprestimo = signal<Date>(new Date());
+  protected readonly minDatePrazoDevolucao = signal<Date | undefined>(undefined);
+  protected readonly documentoUsuario = signal<string>('');
+  protected readonly disableForm = signal<boolean>(false);
+  protected readonly idReserva = signal<number>(0);
+  protected readonly minioUrl = signal<string>(environment.minio_url);
 
-  datepipe: DatePipe = new DatePipe('pt-BR');
-  idReserva = 0;
-  displayedColumns = ['item', 'devolver', 'qtde', 'actionsForm'];
-  emprestimoItem: EmprestimoItem;
-  itemList: Item[];
-  usuarioList: Usuario[];
-  itemDevolver: any;
-  maxDateEmprestimo = new Date();
-  minDatePrazoDevolucao: Date;
-  yesNoDropdown: SelectItem[];
-  documentoUsuario: string;
-  disableForm = false;
-  localePt: any;
-  minioUrl: string;
+  // Temporary signals for adding items
+  protected readonly tempItem = signal<Item | null>(null);
+  protected readonly tempQtde = signal<number>(1);
+  protected readonly tempDevolver = signal<boolean | null>(null);
 
-  constructor(protected emprestimoService: EmprestimoService,
-              protected injector: Injector,
-              private readonly itemService: ItemService,
-              private readonly usuarioService: UsuarioService) {
-    super(emprestimoService, injector, '/emprestimo');
-    this.emprestimoItem = new EmprestimoItem();
-    this.yesNoDropdown = [
-      {label: 'Sim', value: true},
-      {label: 'Não', value: false}
-    ];
-    this.localePt = pt;
-    this.minioUrl = environment.minio_url;
+  // Dropdown options
+  protected readonly yesNoDropdown: SelectItem[] = [
+    {label: 'Sim', value: true},
+    {label: 'Não', value: false}
+  ];
+
+  // Computed signals
+  protected readonly qtdeTotal = computed(() =>
+    this.calculateTotalQuantity(this.emprestimoItems())
+  );
+
+  protected readonly hasItems = computed(() => this.emprestimoItems().length > 0);
+
+  protected readonly isEmprestimoFinalizado = computed(() => {
+    const obj = this.object();
+    return obj && 'dataDevolucao' in obj && !!obj.dataDevolucao;
+  });
+
+  constructor(
+    protected emprestimoService: EmprestimoService,
+    protected injector: Injector
+  ) {
+    super(emprestimoService, injector, '/emprestimo', Emprestimo);
   }
 
-  initializeValues(): void {
-    this.object.usuarioResponsavel = new Usuario();
-    this.object.dataEmprestimo = this.datepipe.transform(new Date(), 'dd/MM/yyyy');
+  /**
+   * Build the reactive form with validators
+   */
+  protected override buildForm(): FormGroup {
+    return this.fb.group({
+      id: [{value: null, disabled: true}],
+      usuarioEmprestimo: [null, Validators.required],
+      usuarioResponsavel: [{value: null, disabled: true}],
+      dataEmprestimo: ['', Validators.required],
+      prazoDevolucao: ['', Validators.required],
+      dataDevolucao: [{value: '', disabled: true}],
+      observacao: ['']
+    });
+  }
+
+  /**
+   * Initialize form values
+   */
+  protected override initializeValues(): void {
+    const formGroup = this.form();
+    if (formGroup) {
+      const hoje = new Date();
+      const dia = String(hoje.getDate()).padStart(2, '0');
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      const ano = hoje.getFullYear();
+      formGroup.patchValue({
+        dataEmprestimo: `${dia}/${mes}/${ano}`
+      });
+    }
     this.setDateMinPrazoDevolucao();
-    this.setUsuarioResponsavel();
+    this.setCurrentUserAsResponsible('usuarioResponsavel');
+
     if (window.location.href.includes('reserva')) {
       this.generateEmprestimoByReserva();
     }
   }
 
-
-  postEdit(): void {
-    this.documentoUsuario = this.object.usuarioEmprestimo.documento;
+  /**
+   * Post edit hook
+   */
+  protected override postEdit(): void {
+    const obj = this.object();
+    if (obj && 'usuarioEmprestimo' in obj && obj.usuarioEmprestimo) {
+      this.documentoUsuario.set(obj.usuarioEmprestimo.documento);
+    }
     this.verifyFormDisable();
   }
 
-  setUsuarioResponsavel() {
-    this.loginService.getCurrentUser().subscribe((user) => {
-      this.object.usuarioResponsavel = user;
+  /**
+   * Autocomplete for Items
+   */
+  findProdutos(event: any): void {
+    this.itemService.completeItem(event.query, true).subscribe(e => {
+      this.itemList.set(e);
     });
   }
 
-  findProdutos($event) {
-    this.itemService.completeItem($event.query, true)
-      .subscribe(e => {
-        this.itemList = e;
-      });
-  }
-
-  findUsuarios($event) {
-    this.usuarioService.completeCustom($event.query)
-      .subscribe(e => {
-          this.usuarioList = e;
-          if (this.usuarioList != null && this.usuarioList.length === 1) {
-            this.object.usuarioEmprestimo = this.usuarioList[0];
-          }
+  /**
+   * Autocomplete for Usuarios
+   */
+  findUsuarios(event: any): void {
+    this.usuarioService.completeCustom(event.query).subscribe(e => {
+      this.usuarioList.set(e);
+      if (e != null && e.length === 1) {
+        const formGroup = this.form();
+        if (formGroup) {
+          formGroup.patchValue({usuarioEmprestimo: e[0]});
+          this.documentoUsuario.set(e[0].documento);
         }
-      );
-  }
-
-  insertItem() {
-    if (this.emprestimoItem.item && this.emprestimoItem.qtde && typeof this.emprestimoItem.item === 'object') {
-      if (this.saldoItemIsValid(this.emprestimoItem.qtde)) {
-        if (!this.object.emprestimoItem) {
-          this.object.emprestimoItem = new Array();
-        }
-        const upQtde = this.object.emprestimoItem.some(value => value.item.id === this.emprestimoItem.item.id);
-        if (upQtde) {
-          this.object.emprestimoItem.forEach(empItem => {
-            if (empItem.item.id === this.emprestimoItem.item.id) {
-              const novaQtde = Number(empItem.qtde) + Number(this.emprestimoItem.qtde);
-              if (this.saldoItemIsValid(novaQtde)) {
-                empItem.qtde = novaQtde;
-              }
-            }
-          });
-        } else {
-          this.object.emprestimoItem.push(this.emprestimoItem);
-        }
-        this.postInsertItemList();
-      }
-    } else {
-      this.messageService.add({severity: 'info', detail: 'Necessário informar o item e a quantidade.'});
-    }
-  }
-
-  saldoItemIsValid(qtdeInserir) {
-    const isValid = this.emprestimoItem.item.saldo > 0 && qtdeInserir <= this.emprestimoItem.item.saldo;
-    if (!isValid) {
-      this.messageService.add({severity: 'info', detail: 'A quantidade é maior do que o saldo atual do item.'});
-      return false;
-    }
-    return true;
-  }
-
-  postInsertItemList() {
-    this.emprestimoItem = new EmprestimoItem();
-    this.table.renderRows();
-  }
-
-  removeItem(id: number) {
-    let index;
-    this.object.emprestimoItem.forEach(empItem => {
-      if (empItem.item.id === id) {
-        index = this.object.emprestimoItem.indexOf(empItem);
       }
     });
-    this.object.emprestimoItem.splice(index, 1);
-    this.table.renderRows();
   }
 
-  getQtdeTotal() {
-    const valid = this?.object?.emprestimoItem;
-    if (valid) {
-      return this.object.emprestimoItem.map(t => t.qtde).reduce((acc, value) => Number(acc) + Number(value), 0);
+  /**
+   * Handle usuario emprestimo change
+   */
+  onUsuarioEmprestimoChange(event: any): void {
+    const usuario = event?.value || event;
+    if (usuario?.documento) {
+      this.documentoUsuario.set(usuario.documento);
     }
   }
 
-  setDevolucaoItem() {
-    if (this.emprestimoItem.item != null && typeof this.emprestimoItem.item === 'object') {
-      if (this.emprestimoItem.item.tipoItem === 'C') {
-        this.itemDevolver = true;
+  /**
+   * Set devolution flag when item is selected
+   */
+  setDevolucaoItem(): void {
+    const item = this.tempItem();
+    if (item && typeof item === 'object') {
+      if (item.tipoItem === 'C') {
+        this.tempDevolver.set(true);
       } else {
-        this.itemDevolver = false;
+        this.tempDevolver.set(false);
       }
-      this.emprestimoItem.qtde = 1;
+      this.tempQtde.set(1);
     }
   }
 
-  setFocusInputItem() {
-    this.itemToAdd.nativeElement.focus();
+
+  /**
+   * Insert item into the list
+   */
+  insertItem(): void {
+    const item = this.tempItem();
+    const qtde = this.tempQtde();
+
+    if (!item || !qtde || typeof item !== 'object') {
+      this.showItemRequiredMessage();
+      return;
+    }
+
+    if (!this.validateItemSaldo(item, qtde)) {
+      return;
+    }
+
+    const currentItems = [...this.emprestimoItems()];
+    const existingIndex = currentItems.findIndex(ei => ei.item.id === item.id);
+
+    if (existingIndex >= 0) {
+      const novaQtde = Number(currentItems[existingIndex].qtde) + Number(qtde);
+      if (this.validateItemSaldo(item, novaQtde)) {
+        currentItems[existingIndex].qtde = novaQtde;
+      }
+    } else {
+      const newEmprestimoItem = new EmprestimoItem();
+      newEmprestimoItem.item = item;
+      newEmprestimoItem.qtde = qtde;
+      newEmprestimoItem.devolver = this.tempDevolver() ?? false;
+      currentItems.push(newEmprestimoItem);
+    }
+
+    this.emprestimoItems.set(currentItems);
+
+    // Reset temp values
+    this.tempItem.set(null);
+    this.tempQtde.set(1);
+    this.tempDevolver.set(null);
   }
 
-  setFocusInputQtde() {
-    this.qtdeToAdd.nativeElement.focus();
+  /**
+   * Remove item from the list
+   */
+  removeItem(id: number): void {
+    const updatedItems = this.removeItemById(this.emprestimoItems(), id, 'item.id');
+    this.emprestimoItems.set(updatedItems);
   }
 
-  clearNewItem() {
-    this.emprestimoItem.item = null;
-    this.emprestimoItem.qtde = null;
+  /**
+   * Set minimum date for prazo devolucao
+   */
+  setDateMinPrazoDevolucao(): void {
+    const formGroup = this.form();
+    const dataEmprestimo = formGroup?.get('dataEmprestimo')?.value;
+    if (dataEmprestimo) {
+      // Parse dd/MM/yyyy to Date
+      const parts = dataEmprestimo.split('/');
+      if (parts.length === 3) {
+        const minDate = new Date(Number.parseInt(parts[2]), Number.parseInt(parts[1]) - 1, Number.parseInt(parts[0]));
+        this.minDatePrazoDevolucao.set(minDate);
+      }
+    }
   }
 
-  setDateMinPrazoDevolucao() {
-    //this.minDatePrazoDevolucao = DateUtil.parseStringToDate(this.datepipe.transform(this.object.dataEmprestimo, 'MM/dd/yyyy'));
-  }
+  /**
+   * Override save to use custom service method
+   */
+  override save(): void {
+    const formGroup = this.form();
+    const items = this.emprestimoItems();
+    const usuarioEmprestimo = formGroup?.get('usuarioEmprestimo')?.value;
 
-  save() {
-    this.loaderService.show();
-    if (!this.object.emprestimoItem || this.object.emprestimoItem.length <= 0 || typeof this.object.usuarioEmprestimo !== 'object') {
+    if (!items || items.length === 0 || typeof usuarioEmprestimo !== 'object') {
       this.validExtra = false;
-    } else {
-      this.validExtra = true;
+      this.showMinimumItemsMessage('Necessário informar o aluno/professor e adicionar ao menos um item!');
+      return;
     }
 
-    if (this.isValid() && this.validExtra) {
-      this.emprestimoService.saveEmprestimo(this.object, this.idReserva)
-        .subscribe(e => {
-          this.object = e;
-          this.postSave(value => {
-            this.loaderService.hide();
-            Swal.fire('Sucesso!', 'Registro salvo com sucesso!', 'success');
-            this.back();
-          });
-        }, error => {
+    this.validExtra = true;
+
+    if (!formGroup || !formGroup.valid || !this.validExtra) {
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Atenção',
+        detail: 'Necessário preencher todos os campos corretamente!'
+      });
+      this.markFormAsTouched(formGroup);
+      return;
+    }
+
+    this.loaderService.show();
+    this.isLoading.set(true);
+
+    const formValue = this.prepareFormValue(formGroup.value);
+    const objectToSave = this.mergeWithObject(formValue);
+
+    this.emprestimoService.saveEmprestimo(objectToSave, this.idReserva()).subscribe({
+      next: (savedObject) => {
+        this.object.set(savedObject);
+        this.postSave(() => {
           this.loaderService.hide();
-          Swal.fire('Atenção!', 'Ocorreu um erro ao salvar o registro!', 'error');
+          this.isLoading.set(false);
+          Swal.fire('Sucesso!', 'Registro salvo com sucesso!', 'success');
+          this.back();
         });
-    } else {
-      this.loaderService.hide();
-      this.messageService.add({severity: 'info', summary: 'Atenção', detail: 'Necessário preencher todos os campos corretamente!'});
-      this.validarFormulario();
-    }
-  }
-
-  verifyFormDisable() {
-    if (this.isAlunosOrProfessor || this.object.dataDevolucao) {
-      this.disableForm = true;
-    }
-  }
-
-  generateEmprestimoByReserva() {
-    let reserva = JSON.parse(localStorage.getItem('reserva-to-emprestimo'));
-    this.idReserva = reserva.id;
-    this.object.usuarioEmprestimo = reserva.usuario;
-    this.object.observacao = reserva.observacao;
-    this.documentoUsuario = reserva.usuario.documento;
-    this.object.emprestimoItem = new Array();
-    reserva.reservaItem.forEach(reserva => {
-      let emprestimoItem = new EmprestimoItem();
-      emprestimoItem.item = reserva.item;
-      emprestimoItem.qtde = reserva.qtde;
-      this.object.emprestimoItem.push(emprestimoItem);
+      },
+      error: (error) => {
+        this.loaderService.hide();
+        this.isLoading.set(false);
+        Swal.fire('Atenção!', 'Ocorreu um erro ao salvar o registro!', 'error');
+        console.error(error);
+      }
     });
+  }
+
+  /**
+   * Verify if form should be disabled
+   */
+  verifyFormDisable(): void {
+    const isAluno = this.isAlunoOrProfessor();
+    const obj = this.object();
+    const hasDevolucao = obj && 'dataDevolucao' in obj && !!obj.dataDevolucao;
+
+    if (isAluno || hasDevolucao) {
+      this.disableForm.set(true);
+    }
+  }
+
+  /**
+   * Generate emprestimo from reserva
+   */
+  generateEmprestimoByReserva(): void {
+    const reservaData = localStorage.getItem('reserva-to-emprestimo');
+    if (!reservaData) return;
+
+    const reserva = JSON.parse(reservaData);
+    this.idReserva.set(reserva.id);
+
+    const formGroup = this.form();
+    if (formGroup) {
+      formGroup.patchValue({
+        usuarioEmprestimo: reserva.usuario,
+        observacao: reserva.observacao
+      });
+    }
+
+    this.documentoUsuario.set(reserva.usuario.documento);
+
+    const newItems: EmprestimoItem[] = [];
+    for (const reservaItem of reserva.reservaItem) {
+      const emprestimoItem = new EmprestimoItem();
+      emprestimoItem.item = reservaItem.item;
+      emprestimoItem.qtde = reservaItem.qtde;
+      newItems.push(emprestimoItem);
+    }
+
+    this.emprestimoItems.set(newItems);
     localStorage.removeItem('reserva-to-emprestimo');
+  }
+
+  /**
+   * Patch form with object data
+   */
+  protected override patchFormWithObject(object: Emprestimo): void {
+    const formGroup = this.form();
+    if (formGroup) {
+      formGroup.patchValue({
+        id: object.id,
+        usuarioEmprestimo: object.usuarioEmprestimo,
+        usuarioResponsavel: object.usuarioResponsavel,
+        dataEmprestimo: object.dataEmprestimo,
+        prazoDevolucao: object.prazoDevolucao,
+        dataDevolucao: object.dataDevolucao,
+        observacao: object.observacao
+      });
+    }
+
+    // Set items
+    if (object.emprestimoItem) {
+      this.emprestimoItems.set([...object.emprestimoItem]);
+    }
+  }
+
+  /**
+   * Prepare form value before saving
+   */
+  protected override prepareFormValue(formValue: Partial<Emprestimo>): Partial<Emprestimo> {
+    const formGroup = this.form();
+    const id = formGroup?.get('id')?.value;
+    const usuarioResponsavel = formGroup?.get('usuarioResponsavel')?.value;
+    const dataDevolucao = formGroup?.get('dataDevolucao')?.value;
+
+    return {
+      ...formValue,
+      ...(id && {id}),
+      usuarioResponsavel: usuarioResponsavel,
+      ...(dataDevolucao && {dataDevolucao}),
+      emprestimoItem: this.emprestimoItems()
+    };
   }
 }

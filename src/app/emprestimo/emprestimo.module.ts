@@ -1,74 +1,66 @@
-import {NgModule} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
-import {MatFormFieldModule} from '@angular/material/form-field';
-import {MatInputModule} from '@angular/material/input';
-import {MatTableModule} from '@angular/material/table';
-import {MatPaginatorModule} from '@angular/material/paginator';
-import {MatIconModule} from '@angular/material/icon';
-import {MatCardModule} from '@angular/material/card';
-import {MatButtonModule} from '@angular/material/button';
-import {AutoCompleteModule} from 'primeng/autocomplete';
-import {DialogModule} from 'primeng/dialog';
-import {InputTextModule} from 'primeng/inputtext';
-import {ScrollPanelModule} from 'primeng/scrollpanel';
-import {TooltipModule} from 'primeng/tooltip';
-import {EmprestimoFormComponent} from './emprestimo.form.component';
-import {EmprestimoListComponent} from './emprestimo.list.component';
-import {EmprestimoService} from './emprestimo.service';
-import {ValidationModule} from '../framework/validation/validation.module';
-import {ValidationService} from '../framework/validation/validation.service';
-import {MatSortModule} from '@angular/material/sort';
-import {NovoModule} from '../geral/novo/novo.module';
-import {VoltarModule} from '../geral/voltar/voltar.module';
-import {CancelarModule} from '../geral/cancelar/cancelar.module';
-import {SalvarModule} from '../geral/salvar/salvar.module';
-import {BottomSheetModule} from '../geral/bottomScheet/bottomSheet.module';
-import {CadastroRapidoModule} from '../geral/cadastroRapido/cadastroRapido.module';
-import {OnlyNumberModule} from '../framework/directives/onlyNumber/onlyNumber.module';
-import {BottomSheetEmprestimoModule} from './bottomScheetEmprestimo/bottomSheetEmprestimo.module';
-import {EmprestimoDevolucaoComponent} from './emprestimo.devolucao.component';
-import {DragDropModule} from '@angular/cdk/drag-drop';
-import {MatMenuModule} from '@angular/material/menu';
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { EmprestimoFormComponent } from './emprestimo.form.component';
+import { EmprestimoListComponent } from './emprestimo.list.component';
+import { EmprestimoService } from './emprestimo.service';
+import { EmprestimoDevolucaoComponent } from './emprestimo.devolucao.component';
+
+// PrimeNG
 import { CardModule } from 'primeng/card';
-import {DatePickerModule} from "primeng/datepicker";
-import {SelectModule} from "primeng/select";
+import { InputTextModule } from 'primeng/inputtext';
+import { AutoCompleteModule } from 'primeng/autocomplete';
+import { DatePickerModule } from 'primeng/datepicker';
+import { SelectModule } from 'primeng/select';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { TooltipModule } from 'primeng/tooltip';
+import { DialogModule } from 'primeng/dialog';
+import { ScrollPanelModule } from 'primeng/scrollpanel';
+import { TextareaModule } from 'primeng/textarea';
+
+// Angular Material (for components not yet migrated)
+import { MatCardModule } from '@angular/material/card';
+import { MatMenuModule } from '@angular/material/menu';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+
+// Custom components
+import { VoltarModule } from '../geral/voltar/voltar.module';
+import { CancelarModule } from '../geral/cancelar/cancelar.module';
+import { SalvarModule } from '../geral/salvar/salvar.module';
+import { BottomSheetModule } from '../geral/bottomScheet/bottomSheet.module';
+import { BottomSheetEmprestimoModule } from './bottomScheetEmprestimo/bottomSheetEmprestimo.module';
+import { CadastroRapidoModule } from '../geral/cadastroRapido/cadastroRapido.module';
 
 @NgModule({
   imports: [
     CommonModule,
+    ReactiveFormsModule,
     FormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatIconModule,
-    MatCardModule,
-    MatSortModule,
-    MatButtonModule,
+    CardModule,
     InputTextModule,
-    TooltipModule,
     AutoCompleteModule,
     DatePickerModule,
     SelectModule,
-    ValidationModule,
-    NovoModule,
+    ButtonModule,
+    TableModule,
+    TooltipModule,
+    DialogModule,
+    ScrollPanelModule,
+    TextareaModule,
+    MatCardModule,
+    MatMenuModule,
+    DragDropModule,
     VoltarModule,
     CancelarModule,
     SalvarModule,
+    CadastroRapidoModule,
     BottomSheetModule,
     BottomSheetEmprestimoModule,
-    CadastroRapidoModule,
-    OnlyNumberModule,
-    DragDropModule,
-    ScrollPanelModule,
-    DialogModule,
-    MatMenuModule,
-    CardModule,
     EmprestimoListComponent,
+    EmprestimoFormComponent
   ],
   declarations: [
-    EmprestimoFormComponent,
     EmprestimoDevolucaoComponent
   ],
   exports: [
@@ -77,8 +69,7 @@ import {SelectModule} from "primeng/select";
     EmprestimoDevolucaoComponent
   ],
   providers: [
-    EmprestimoService,
-    ValidationService
+    EmprestimoService
   ]
 })
 export class EmprestimoModule {

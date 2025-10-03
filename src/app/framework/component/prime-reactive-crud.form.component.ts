@@ -213,4 +213,89 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
   protected postSave(callback: Function): void {
     callback();
   }
+
+  /**
+   * Set current user as responsible user in the form
+   * Common pattern used across multiple forms
+   */
+  protected setCurrentUserAsResponsible(fieldName: string = 'usuario'): void {
+    this.loginService.getCurrentUser().subscribe((user) => {
+      const formGroup = this.form();
+      if (formGroup) {
+        formGroup.patchValue({ [fieldName]: user });
+      }
+    });
+  }
+
+  /**
+   * Calculate total quantity from an array of items
+   * @param items Array of items with qtde property
+   */
+  protected calculateTotalQuantity<K extends { qtde: number }>(items: K[]): number {
+    return items.length > 0
+      ? items.map(t => t.qtde).reduce((acc, value) => Number(acc) + Number(value), 0)
+      : 0;
+  }
+
+  /**
+   * Validate if item quantity doesn't exceed available saldo
+   * @param item Item with saldo property
+   * @param qtdeInserir Quantity to insert
+   */
+  protected validateItemSaldo<K extends { saldo: number }>(
+    item: K | null,
+    qtdeInserir: number
+  ): boolean {
+    if (!item) return false;
+
+    const isValid = item.saldo > 0 && qtdeInserir <= item.saldo;
+    if (!isValid) {
+      this.messageService.add({
+        severity: 'info',
+        detail: 'A quantidade informada é maior do que o saldo atual do item.'
+      });
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Remove item from array by id
+   * @param items Current items array
+   * @param itemId ID of item to remove
+   * @param idField Field name to compare (default: 'id')
+   */
+  protected removeItemById<K>(
+    items: K[],
+    itemId: any,
+    idField: string = 'id'
+  ): K[] {
+    return items.filter((item: any) => {
+      const nestedId = idField.includes('.')
+        ? idField.split('.').reduce((obj, key) => obj?.[key], item)
+        : item[idField];
+      return nestedId !== itemId;
+    });
+  }
+
+  /**
+   * Show info message for missing item or quantity
+   */
+  protected showItemRequiredMessage(): void {
+    this.messageService.add({
+      severity: 'info',
+      detail: 'Necessário informar o item e a quantidade.'
+    });
+  }
+
+  /**
+   * Show info message for missing items in list
+   */
+  protected showMinimumItemsMessage(customMessage?: string): void {
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Atenção',
+      detail: customMessage || 'Necessário adicionar ao menos um item!'
+    });
+  }
 }

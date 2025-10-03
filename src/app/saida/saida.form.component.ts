@@ -1,171 +1,252 @@
-import {Component, ElementRef, Injector, ViewChild} from '@angular/core';
-import {CrudFormComponent} from '../framework/component/crud.form.component';
+import {Component, Injector, ChangeDetectionStrategy, signal, computed} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {
+  ReactiveFormsModule, FormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators
+} from '@angular/forms';
+
 import {Saida} from './saida';
 import {SaidaService} from './saida.service';
-import {Item} from '../item/item';
-import {SaidaItem} from './saidaItem';
-import {ItemService} from '../item/item.service';
 import {
-  MatFooterCell,
-  MatFooterCellDef,
-  MatFooterRow,
-  MatHeaderRow, MatHeaderRowDef,
-  MatRow,
-  MatTable, MatTableModule
-} from '@angular/material/table';
-import {pt} from '../framework/constantes/calendarPt';
-import { DatePipe } from '@angular/common';
-import {SalvarModule} from "../geral/salvar/salvar.module";
-import {CancelarModule} from "../geral/cancelar/cancelar.module";
-import {FormsModule} from "@angular/forms";
-import {MatCard, MatCardContent, MatCardModule, MatCardTitle} from "@angular/material/card";
-import {VoltarModule} from "../geral/voltar/voltar.module";
-import {DatePicker} from "primeng/datepicker";
-import {CadastroRapidoModule} from "../geral/cadastroRapido/cadastroRapido.module";
-import {AutoComplete, AutoCompleteModule} from "primeng/autocomplete";
-import {MatIconModule} from "@angular/material/icon";
+  PrimeReactiveCrudFormComponent
+} from '../framework/component/prime-reactive-crud.form.component';
+import {Item} from '../item/item';
+import {ItemService} from '../item/item.service';
+import {SaidaItem} from './saidaItem';
+
+// PrimeNG
+import {CardModule} from 'primeng/card';
+import {InputTextModule} from 'primeng/inputtext';
+import {AutoCompleteModule} from 'primeng/autocomplete';
+import {DatePickerModule} from 'primeng/datepicker';
+import {ButtonModule} from 'primeng/button';
+import {TableModule} from 'primeng/table';
+import {TooltipModule} from 'primeng/tooltip';
+import {TextareaModule} from 'primeng/textarea';
+
+// Custom components
+import {FormFieldComponent} from '../framework/component/form-field.component';
+import {VoltarModule} from '../geral/voltar/voltar.module';
+import {CancelarModule} from '../geral/cancelar/cancelar.module';
+import {SalvarModule} from '../geral/salvar/salvar.module';
+import {CadastroRapidoModule} from '../geral/cadastroRapido/cadastroRapido.module';
 
 @Component({
   selector: 'app-form-saida',
   templateUrl: './saida.form.component.html',
   styleUrls: ['./saida.form.component.css'],
+  standalone: true,
   imports: [
-    SalvarModule,
-    CancelarModule,
+    CommonModule,
+    ReactiveFormsModule,
     FormsModule,
-    MatFooterRow,
-    MatRow,
-    MatHeaderRow,
-    MatFooterCell,
-    MatFooterCellDef,
-    MatHeaderRowDef,
-    MatCardContent,
-    VoltarModule,
-    MatCard,
-    MatCardTitle,
-    DatePicker,
-    CadastroRapidoModule,
+    // PrimeNG
+    CardModule,
+    InputTextModule,
     AutoCompleteModule,
-    MatCardModule,
-    MatTableModule,
-    MatIconModule
-  ]
+    DatePickerModule,
+    ButtonModule,
+    TableModule,
+    TooltipModule,
+    TextareaModule,
+    // Custom
+    FormFieldComponent,
+    VoltarModule,
+    CancelarModule,
+    SalvarModule,
+    CadastroRapidoModule
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SaidaFormComponent extends CrudFormComponent<Saida, number> {
+export class SaidaFormComponent extends PrimeReactiveCrudFormComponent<Saida, number> {
+  private readonly fb = this.injector.get(FormBuilder);
+  private readonly itemService = this.injector.get(ItemService);
 
-  datepipe: DatePipe = new DatePipe('pt-BR');
-  itemList: Item[];
-  saidaItem: SaidaItem;
-  maxDate = new Date();
-  displayedColumns = ['item', 'qtde', 'actionsForm'];
-  @ViewChild('table') table: MatTable<any>;
-  @ViewChild('itemToAdd') itemToAdd: ElementRef;
-  @ViewChild('qtdeToAdd') qtdeToAdd: ElementRef;
-  localePt: any;
+  // Signals for state management
+  protected readonly itemList = signal<Item[]>([]);
+  protected readonly saidaItems = signal<SaidaItem[]>([]);
+  protected readonly maxDate = signal<Date>(new Date());
 
-  constructor(protected saidaService: SaidaService,
-              protected injector: Injector,
-              private readonly itemService: ItemService) {
-    super(saidaService, injector, '/saida');
-    this.saidaItem = new SaidaItem();
-    this.localePt = pt;
+  // Temporary signals for adding items (not part of main form)
+  protected readonly tempItem = signal<Item | null>(null);
+  protected readonly tempQtde = signal<number>(1);
+
+  // Computed signals
+  protected readonly qtdeTotal = computed(() =>
+    this.calculateTotalQuantity(this.saidaItems())
+  );
+
+  protected readonly hasItems = computed(() => this.saidaItems().length > 0);
+
+  // Determine if form is disabled (from emprestimo)
+  protected readonly isFromEmprestimo = computed(() => {
+    const obj = this.object();
+    return obj && obj.idEmprestimo !== null && obj.idEmprestimo !== undefined;
+  });
+
+  constructor(
+    protected saidaService: SaidaService,
+    protected injector: Injector
+  ) {
+    super(saidaService, injector, '/saida', Saida);
   }
 
-  initializeValues(): void {
-    this.object.dataSaida = this.datepipe.transform(new Date(), 'dd/MM/yyyy');
-    this.setUsuarioResponsavel();
-  }
-
-  setFocusInputItem() {
-    this.itemToAdd.nativeElement.focus();
-  }
-
-  setFocusQtdeToAdd() {
-    this.qtdeToAdd.nativeElement.focus();
-  }
-
-  setQtdeDefaultItem() {
-    this.saidaItem.qtde = 1;
-  }
-
-  setUsuarioResponsavel() {
-    this.loginService.getCurrentUser().subscribe((user) => {
-      this.object.usuarioResponsavel = user;
+  /**
+   * Build the reactive form with validators
+   */
+  protected override buildForm(): FormGroup {
+    return this.fb.group({
+      id: [{value: null, disabled: true}],
+      usuarioResponsavel: [{value: null, disabled: true}],
+      dataSaida: ['', Validators.required],
+      observacao: [''],
+      idEmprestimo: [null]
     });
   }
 
-  findProdutos($event) {
-    this.itemService.completeItem($event.query, true)
-      .subscribe(e => {
-        this.itemList = e;
+  /**
+   * Initialize form values
+   */
+  protected override initializeValues(): void {
+    const formGroup = this.form();
+    if (formGroup) {
+      const hoje = new Date();
+      const dia = String(hoje.getDate()).padStart(2, '0');
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      const ano = hoje.getFullYear();
+      formGroup.patchValue({
+        dataSaida: `${dia}/${mes}/${ano}`
       });
-  }
-
-  getQtdeTotal() {
-    const valid = this?.object?.saidaItem;
-    if (valid) {
-      return this.object.saidaItem.map(t => t.qtde).reduce((acc, value) => Number(acc) + Number(value), 0);
     }
+    this.setCurrentUserAsResponsible('usuarioResponsavel');
   }
 
-  removeItem(id: number) {
-    let index;
-    this.object.saidaItem.forEach(saiItem => {
-      if (saiItem.item.id === id) {
-        index = this.object.saidaItem.indexOf(saiItem);
-      }
+  /**
+   * Autocomplete for Items
+   */
+  findProdutos(event: any): void {
+    this.itemService.completeItem(event.query, true).subscribe(e => {
+      this.itemList.set(e);
     });
-    this.object.saidaItem.splice(index, 1);
-    this.table.renderRows();
   }
 
-  insertItem() {
-    if (this.saidaItem.item && this.saidaItem.qtde && typeof this.saidaItem.item === 'object') {
-      if (this.saldoItemIsValid(this.saidaItem.qtde)) {
-        if (!this.object.saidaItem) {
-          this.object.saidaItem = new Array();
-        }
-        const upQtde = this.object.saidaItem.some(value => value.item.id === this.saidaItem.item.id);
-        if (upQtde) {
-          this.object.saidaItem.forEach(saiItem => {
-            if (saiItem.item.id === this.saidaItem.item.id) {
-              const novaQtde = Number(saiItem.qtde) + Number(this.saidaItem.qtde);
-              if (this.saldoItemIsValid(novaQtde)) {
-                saiItem.qtde = novaQtde;
-              }
-            }
-          });
-        } else {
-          this.object.saidaItem.push(this.saidaItem);
-        }
-        this.postInsertItemList();
+  /**
+   * Set default quantity when item is selected
+   */
+  setQtdeDefaultItem(): void {
+    this.tempQtde.set(1);
+  }
+
+  /**
+   * Insert item into the list
+   */
+  insertItem(): void {
+    const item = this.tempItem();
+    const qtde = this.tempQtde();
+
+    if (!item || !qtde || typeof item !== 'object') {
+      this.showItemRequiredMessage();
+      return;
+    }
+
+    if (!this.validateItemSaldo(item, qtde)) {
+      return;
+    }
+
+    const currentItems = [...this.saidaItems()];
+    const existingIndex = currentItems.findIndex(si => si.item.id === item.id);
+
+    if (existingIndex >= 0) {
+      const novaQtde = Number(currentItems[existingIndex].qtde) + Number(qtde);
+      if (this.validateItemSaldo(item, novaQtde)) {
+        currentItems[existingIndex].qtde = novaQtde;
+      } else {
+        return;
       }
     } else {
-      this.messageService.add({severity: 'info', detail: 'Necessário informar o item e a quantidade.'});
+      const newSaidaItem = new SaidaItem();
+      newSaidaItem.item = item;
+      newSaidaItem.qtde = qtde;
+      currentItems.push(newSaidaItem);
     }
+
+    this.saidaItems.set(currentItems);
+
+    // Reset temp values
+    this.tempItem.set(null);
+    this.tempQtde.set(1);
   }
 
-  saldoItemIsValid(qtdeInserir) {
-    const isValid = this.saidaItem.item.saldo > 0 && qtdeInserir <= this.saidaItem.item.saldo;
-    if (!isValid) {
-      this.messageService.add({severity: 'info', detail: 'A quantidade informada é maior do que o saldo atual do item.'});
-      return false;
-    }
-    return true;
+  /**
+   * Remove item from the list
+   */
+  removeItem(id: number): void {
+    const updatedItems = this.removeItemById(this.saidaItems(), id, 'item.id');
+    this.saidaItems.set(updatedItems);
   }
 
-  postInsertItemList() {
-    this.saidaItem = new SaidaItem();
-    this.setFocusInputItem();
-    this.table.renderRows();
-  }
+  /**
+   * Override save to validate items
+   */
+  override save(): void {
+    const items = this.saidaItems();
 
-  save() {
-    if (!this.object.saidaItem || this.object.saidaItem.length <= 0) {
+    if (!items || items.length === 0) {
       this.validExtra = false;
-    } else {
-      this.validExtra = true;
+      this.showMinimumItemsMessage();
+      return;
     }
+
+    this.validExtra = true;
     super.save();
+  }
+
+  /**
+   * Patch form with object data
+   */
+  protected override patchFormWithObject(object: Saida): void {
+    const formGroup = this.form();
+    if (formGroup) {
+      formGroup.patchValue({
+        id: object.id,
+        usuarioResponsavel: object.usuarioResponsavel,
+        dataSaida: object.dataSaida,
+        observacao: object.observacao,
+        idEmprestimo: object.idEmprestimo
+      });
+
+      // Disable fields if from emprestimo
+      if (object.idEmprestimo) {
+        formGroup.get('dataSaida')?.disable();
+        formGroup.get('observacao')?.disable();
+      }
+    }
+
+    // Set items
+    if (object.saidaItem) {
+      this.saidaItems.set([...object.saidaItem]);
+    }
+  }
+
+  /**
+   * Prepare form value before saving
+   */
+  protected override prepareFormValue(formValue: Partial<Saida>): Partial<Saida> {
+    const formGroup = this.form();
+    const id = formGroup?.get('id')?.value;
+    const usuarioResponsavel = formGroup?.get('usuarioResponsavel')?.value;
+    const dataSaida = formGroup?.get('dataSaida')?.value;
+    const idEmprestimo = formGroup?.get('idEmprestimo')?.value;
+
+    return {
+      ...formValue,
+      ...(id && {id}),
+      usuarioResponsavel: usuarioResponsavel,
+      dataSaida: dataSaida,
+      ...(idEmprestimo && {idEmprestimo}),
+      saidaItem: this.saidaItems()
+    };
   }
 }

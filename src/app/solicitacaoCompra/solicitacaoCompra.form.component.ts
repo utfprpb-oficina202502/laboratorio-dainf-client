@@ -1,146 +1,227 @@
-import {Component, ElementRef, Injector, ViewChild} from '@angular/core';
-import {CrudFormComponent} from '../framework/component/crud.form.component';
+import {Component, Injector, ChangeDetectionStrategy, signal, computed} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {
+  ReactiveFormsModule, FormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators
+} from '@angular/forms';
+
 import {SolicitacaoCompra} from './solicitacaoCompra';
 import {SolicitacaoCompraService} from './solicitacaoCompra.service';
-import {SolicitacaoCompraItem} from './solicitacaoCompraItem';
 import {
-  MatCell, MatCellDef,
-  MatFooterCell, MatFooterCellDef,
-  MatFooterRow, MatFooterRowDef,
-  MatHeaderCell, MatHeaderCellDef, MatHeaderRow, MatHeaderRowDef, MatRow, MatRowDef,
-  MatTable
-} from '@angular/material/table';
-import {ItemService} from '../item/item.service';
+  PrimeReactiveCrudFormComponent
+} from '../framework/component/prime-reactive-crud.form.component';
 import {Item} from '../item/item';
-import {pt} from '../framework/constantes/calendarPt';
-import { DatePipe } from '@angular/common';
-import {SalvarModule} from "../geral/salvar/salvar.module";
-import {CancelarModule} from "../geral/cancelar/cancelar.module";
-import {FormsModule} from "@angular/forms";
-import {MatCard, MatCardContent, MatCardTitle} from "@angular/material/card";
-import {VoltarModule} from "../geral/voltar/voltar.module";
-import {MatIconModule} from "@angular/material/icon";
-import {AutoComplete} from "primeng/autocomplete";
-import {CadastroRapidoModule} from "../geral/cadastroRapido/cadastroRapido.module";
+import {ItemService} from '../item/item.service';
+import {SolicitacaoCompraItem} from './solicitacaoCompraItem';
+
+// PrimeNG
+import {CardModule} from 'primeng/card';
+import {InputTextModule} from 'primeng/inputtext';
+import {AutoCompleteModule} from 'primeng/autocomplete';
+import {DatePickerModule} from 'primeng/datepicker';
+import {ButtonModule} from 'primeng/button';
+import {TableModule} from 'primeng/table';
+import {TooltipModule} from 'primeng/tooltip';
+import {TextareaModule} from 'primeng/textarea';
+
+// Custom components
+import {FormFieldComponent} from '../framework/component/form-field.component';
+import {VoltarModule} from '../geral/voltar/voltar.module';
+import {CancelarModule} from '../geral/cancelar/cancelar.module';
+import {SalvarModule} from '../geral/salvar/salvar.module';
+import {CadastroRapidoModule} from '../geral/cadastroRapido/cadastroRapido.module';
 
 @Component({
   selector: 'app-form-solicitacao-compra',
   templateUrl: './solicitacaoCompra.form.component.html',
   styleUrls: ['./solicitacaoCompra.form.component.css'],
+  standalone: true,
   imports: [
-    MatCell,
-    MatHeaderCell,
-    MatFooterCell,
-    SalvarModule,
-    CancelarModule,
+    CommonModule,
+    ReactiveFormsModule,
     FormsModule,
-    MatCardContent,
+    // PrimeNG
+    CardModule,
+    InputTextModule,
+    AutoCompleteModule,
+    DatePickerModule,
+    ButtonModule,
+    TableModule,
+    TooltipModule,
+    TextareaModule,
+    // Custom
+    FormFieldComponent,
     VoltarModule,
-    MatCardTitle,
-    MatCard,
-    MatFooterRow,
-    MatRow,
-    MatHeaderRow,
-    MatFooterRowDef,
-    MatRowDef,
-    MatHeaderRowDef,
-    MatTable,
-    MatIconModule,
-    AutoComplete,
-    CadastroRapidoModule,
-    MatHeaderCellDef,
-    MatCellDef,
-    MatFooterCellDef
-  ]
+    CancelarModule,
+    SalvarModule,
+    CadastroRapidoModule
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SolicitacaoCompraFormComponent extends CrudFormComponent<SolicitacaoCompra, number> {
+export class SolicitacaoCompraFormComponent extends PrimeReactiveCrudFormComponent<SolicitacaoCompra, number> {
+  private readonly fb = this.injector.get(FormBuilder);
+  private readonly itemService = this.injector.get(ItemService);
 
-  @ViewChild('table') table: MatTable<any>;
-  @ViewChild('itemToAdd') itemToAdd: ElementRef;
-  @ViewChild('qtdeToAdd') qtdeToAdd: ElementRef;
-  datepipe: DatePipe = new DatePipe('pt-BR');
-  displayedColumns = ['item', 'qtde', 'actionsForm'];
-  solicitacaoCompraItem: SolicitacaoCompraItem;
-  itemList: Item[];
-  localePt: any;
+  // Signals for state management
+  protected readonly itemList = signal<Item[]>([]);
+  protected readonly solicitacaoItems = signal<SolicitacaoCompraItem[]>([]);
 
-  constructor(protected solicitacaoCompraService: SolicitacaoCompraService,
-              protected injector: Injector,
-              private readonly itemService: ItemService) {
-    super(solicitacaoCompraService, injector, '/solicitacao-compra');
-    this.localePt = pt;
-    this.solicitacaoCompraItem = new SolicitacaoCompraItem();
+  // Temporary signals for adding items (not part of main form)
+  protected readonly tempItem = signal<Item | null>(null);
+  protected readonly tempQtde = signal<number>(1);
+
+  // Computed signals
+  protected readonly qtdeTotal = computed(() =>
+    this.calculateTotalQuantity(this.solicitacaoItems())
+  );
+
+  protected readonly hasItems = computed(() => this.solicitacaoItems().length > 0);
+
+  constructor(
+    protected solicitacaoCompraService: SolicitacaoCompraService,
+    protected injector: Injector
+  ) {
+    super(solicitacaoCompraService, injector, '/solicitacao-compra', SolicitacaoCompra);
   }
 
-  initializeValues(): void {
-    this.object.dataSolicitacao = this.datepipe.transform(new Date(), 'dd/MM/yyyy');
-    this.setUsuarioResponsavel();
-  }
-
-  setUsuarioResponsavel() {
-    this.loginService.getCurrentUser().subscribe((user) => {
-      this.object.usuario = user;
+  /**
+   * Build the reactive form with validators
+   */
+  protected override buildForm(): FormGroup {
+    return this.fb.group({
+      id: [{value: null, disabled: true}],
+      descricao: ['', Validators.required],
+      usuario: [{value: null, disabled: true}],
+      dataSolicitacao: ['', Validators.required],
+      observacao: ['']
     });
   }
 
-  findProdutos($event) {
-    this.itemService.completeItem($event.query, false)
-      .subscribe(e => {
-        this.itemList = e;
+  /**
+   * Initialize form values
+   */
+  protected override initializeValues(): void {
+    const formGroup = this.form();
+    if (formGroup) {
+      const hoje = new Date();
+      const dia = String(hoje.getDate()).padStart(2, '0');
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      const ano = hoje.getFullYear();
+      formGroup.patchValue({
+        dataSolicitacao: `${dia}/${mes}/${ano}`
       });
+    }
+    this.setCurrentUserAsResponsible('usuario');
   }
 
-  removeItem(id: number) {
-    let index;
-    this.object.solicitacaoItem.forEach(empItem => {
-      if (empItem.item.id === id) {
-        index = this.object.solicitacaoItem.indexOf(empItem);
-      }
+  /**
+   * Autocomplete for Items
+   */
+  findProdutos(event: any): void {
+    this.itemService.completeItem(event.query, false).subscribe(e => {
+      this.itemList.set(e);
     });
-    this.object.solicitacaoItem.splice(index, 1);
-    this.table.renderRows();
   }
 
-  getQtdeTotal() {
-    const valid = this?.object?.solicitacaoItem;
-    if (valid) {
-      return this.object.solicitacaoItem.map(t => t.qtde).reduce((acc, value) => Number(acc) + Number(value), 0);
+  /**
+   * Set default quantity when item is selected
+   */
+  setQtdeDefaultItem(): void {
+    this.tempQtde.set(1);
+  }
+
+  /**
+   * Insert item into the list
+   */
+  insertItem(): void {
+    const item = this.tempItem();
+    const qtde = this.tempQtde();
+
+    if (!item || !qtde || typeof item !== 'object') {
+      this.showItemRequiredMessage();
+      return;
     }
-  }
 
-  insertItem() {
-    if (this.solicitacaoCompraItem.item && this.solicitacaoCompraItem.qtde) {
-      if (!this.object.solicitacaoItem) {
-        this.object.solicitacaoItem = new Array();
-      }
-      const upQtde = this.object.solicitacaoItem.some(value => value.item.id === this.solicitacaoCompraItem.item.id);
-      if (upQtde) {
-        this.object.solicitacaoItem.forEach(empItem => {
-          if (empItem.item.id === this.solicitacaoCompraItem.item.id) {
-            const novaQtde = Number(empItem.qtde) + Number(this.solicitacaoCompraItem.qtde);
-            empItem.qtde = novaQtde;
-          }
-        });
-      } else {
-        this.object.solicitacaoItem.push(this.solicitacaoCompraItem);
-      }
-      this.postInsertItemList();
+    const currentItems = [...this.solicitacaoItems()];
+    const existingIndex = currentItems.findIndex(si => si.item.id === item.id);
+
+    if (existingIndex >= 0) {
+      const novaQtde = Number(currentItems[existingIndex].qtde) + Number(qtde);
+      currentItems[existingIndex].qtde = novaQtde;
     } else {
-      this.messageService.add({severity: 'info', detail: 'Necessário informar o item e a quantidade.'});
+      const newSolicitacaoItem = new SolicitacaoCompraItem();
+      newSolicitacaoItem.item = item;
+      newSolicitacaoItem.qtde = qtde;
+      currentItems.push(newSolicitacaoItem);
+    }
+
+    this.solicitacaoItems.set(currentItems);
+
+    // Reset temp values
+    this.tempItem.set(null);
+    this.tempQtde.set(1);
+  }
+
+  /**
+   * Remove item from the list
+   */
+  removeItem(id: number): void {
+    const updatedItems = this.removeItemById(this.solicitacaoItems(), id, 'item.id');
+    this.solicitacaoItems.set(updatedItems);
+  }
+
+  /**
+   * Override save to validate items
+   */
+  override save(): void {
+    const items = this.solicitacaoItems();
+
+    if (!items || items.length === 0) {
+      this.validExtra = false;
+      this.showMinimumItemsMessage();
+      return;
+    }
+
+    this.validExtra = true;
+    super.save();
+  }
+
+  /**
+   * Patch form with object data
+   */
+  protected override patchFormWithObject(object: SolicitacaoCompra): void {
+    const formGroup = this.form();
+    if (formGroup) {
+      formGroup.patchValue({
+        id: object.id,
+        descricao: object.descricao,
+        usuario: object.usuario,
+        dataSolicitacao: object.dataSolicitacao,
+        observacao: object.observacao
+      });
+    }
+
+    // Set items
+    if (object.solicitacaoItem) {
+      this.solicitacaoItems.set([...object.solicitacaoItem]);
     }
   }
 
-  postInsertItemList() {
-    this.solicitacaoCompraItem = new SolicitacaoCompraItem();
-    this.setFocusInputItem();
-    this.table.renderRows();
-  }
+  /**
+   * Prepare form value before saving
+   */
+  protected override prepareFormValue(formValue: Partial<SolicitacaoCompra>): Partial<SolicitacaoCompra> {
+    const formGroup = this.form();
+    const id = formGroup?.get('id')?.value;
+    const usuario = formGroup?.get('usuario')?.value;
 
-  setFocusInputItem() {
-    this.itemToAdd.nativeElement.focus();
-  }
-
-  setFocusQtdeToAdd() {
-    this.qtdeToAdd.nativeElement.focus();
+    return {
+      ...formValue,
+      ...(id && {id}),
+      usuario: usuario,
+      solicitacaoItem: this.solicitacaoItems()
+    };
   }
 }
