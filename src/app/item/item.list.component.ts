@@ -1,4 +1,4 @@
-import { Component, forwardRef, Injector, ChangeDetectionStrategy } from "@angular/core";
+import { Component, forwardRef, Injector, ChangeDetectionStrategy, inject } from "@angular/core";
 import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import { Item } from "./item";
@@ -55,6 +55,11 @@ import {NovoModule} from '../geral/novo/novo.module';
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => ItemListComponent) }]
 })
 export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
+  protected itemService: ItemService;
+  protected injector: Injector;
+  private readonly bottomSheetOptions = inject(MatBottomSheet);
+  private readonly reservaService = inject(ReservaService);
+
   isAlunoOrProfessor = false;
   reservasItem: Reserva[];
   dialogReservaitem = false;
@@ -127,18 +132,19 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
     }
   ];
 
-  constructor(
-    protected itemService: ItemService,
-    protected injector: Injector,
-    private readonly bottomSheetOptions: MatBottomSheet,
-    private readonly reservaService: ReservaService
-  ) {
+  constructor() {
+    const itemService = inject(ItemService);
+    const injector = inject(Injector);
+
     super(
       itemService,
       injector,
       ["id", "imagem", "nome", "localizacao", "grupo","saldo", "actions"],
       "item/form"
     );
+    this.itemService = itemService;
+    this.injector = injector;
+
     this.minioUrl = environment.minio_url;
     this.bottomSheetEnabled = false;
     this.configureTable();

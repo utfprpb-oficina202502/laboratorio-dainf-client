@@ -1,4 +1,4 @@
-import {Component, forwardRef, Injector, ChangeDetectionStrategy} from '@angular/core';
+import { Component, forwardRef, Injector, ChangeDetectionStrategy, inject } from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {Estado} from './estado';
@@ -44,6 +44,9 @@ import {NovoModule} from '../geral/novo/novo.module';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EstadoListComponent extends PrimeCrudListComponent<Estado, number> {
+  protected estadoService: EstadoService;
+  protected injector: Injector;
+
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -93,9 +96,14 @@ export class EstadoListComponent extends PrimeCrudListComponent<Estado, number> 
     }
   ];
 
-  constructor(protected estadoService: EstadoService,
-              protected injector: Injector) {
+  constructor() {
+    const estadoService = inject(EstadoService);
+    const injector = inject(Injector);
+
     super(estadoService, injector, ['id', 'nome', 'uf', 'pais', 'actions'], 'estado/form');
+    this.estadoService = estadoService;
+    this.injector = injector;
+
     this.configureTable();
   }
 

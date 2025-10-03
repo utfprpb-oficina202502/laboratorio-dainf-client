@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef } from "@angular/core";
+import { Component, OnInit, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef, inject } from "@angular/core";
 import { LoginService } from "./login.service";
 import { Usuario } from "../usuario/usuario";
 import {FormsModule, NgForm} from "@angular/forms";
@@ -19,18 +19,14 @@ import {NgOptimizedImage} from "@angular/common";
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LoginComponent implements OnInit {
+  private readonly loginService = inject(LoginService);
+  private readonly router = inject(Router);
+  private readonly messageService = inject(MessageService);
+  private readonly cdr = inject(ChangeDetectorRef);
+
   usuario: Usuario;
   showProgress = false;
   @ViewChild("form", { static: true }) form: NgForm;
-
-  constructor(
-    private readonly loginService: LoginService,
-    private readonly router: Router,
-    private readonly messageService: MessageService,
-    private readonly cdr: ChangeDetectorRef
-  ) {
-    // private socialAuthService: SocialAuthService
-  }
 
   ngOnInit() {
     this.usuario = new Usuario();

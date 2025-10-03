@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, ChangeDetectionStrategy } from "@angular/core";
+import { Component, HostListener, OnInit, ChangeDetectionStrategy, inject } from "@angular/core";
 import { LoginService } from "../login/login.service";
 import { SidenavService } from "../sidenav/sidenav.service";
 import { MenuItem } from "primeng/api";
@@ -12,15 +12,13 @@ import { Router } from "@angular/router";
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ToolbarComponent implements OnInit {
+  private readonly loginService = inject(LoginService);
+  private readonly sidenavService = inject(SidenavService);
+  private readonly router = inject(Router);
+
   widthScreen: number;
   sidenavIsOpen: boolean;
   items: MenuItem[];
-
-  constructor(
-    private readonly loginService: LoginService,
-    private readonly sidenavService: SidenavService,
-    private readonly router: Router
-  ) {}
 
   ngOnInit() {
     this.getScreenSize();

@@ -1,4 +1,4 @@
-import {Component, forwardRef, Injector, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { Component, forwardRef, Injector, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
@@ -44,6 +44,9 @@ import {NovoModule} from '../geral/novo/novo.module';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<SolicitacaoCompra, number> implements OnInit {
+  protected solicitacaoCompraService: SolicitacaoCompraService;
+  protected injector: Injector;
+
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -91,9 +94,14 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
     }
   ];
 
-  constructor(protected solicitacaoCompraService: SolicitacaoCompraService,
-              protected injector: Injector) {
+  constructor() {
+    const solicitacaoCompraService = inject(SolicitacaoCompraService);
+    const injector = inject(Injector);
+
     super(solicitacaoCompraService, injector, ['id', 'descricao', 'dataSolicitacao', 'usuario', 'actions'], 'solicitacao-compra/form');
+    this.solicitacaoCompraService = solicitacaoCompraService;
+    this.injector = injector;
+
     this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.configureTable();

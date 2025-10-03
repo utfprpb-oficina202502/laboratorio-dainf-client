@@ -1,4 +1,4 @@
-import {Component, Injector, OnInit} from '@angular/core';
+import { Component, Injector, OnInit, inject } from '@angular/core';
 import {Item} from './item';
 import {ItemService} from './item.service';
 import {Reserva} from '../reserva/reserva';
@@ -12,6 +12,10 @@ import { LoginService } from '../login/login.service';
     standalone: false
 })
 export class ItemViewComponent implements OnInit {
+  protected itemService = inject(ItemService);
+  protected injector = inject(Injector);
+  private readonly loginService = inject(LoginService);
+
   isAlunoOrProfessor = false;
   reservasItem: Reserva[];
   dialogReservaitem = false;
@@ -20,9 +24,7 @@ export class ItemViewComponent implements OnInit {
   minioUrl: string;
   itens: Item[];
 
-  constructor(protected itemService: ItemService,
-              protected injector: Injector,
-              private readonly loginService: LoginService,) {
+  constructor() {
     this.minioUrl = environment.minio_url;
   }
 

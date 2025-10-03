@@ -1,4 +1,4 @@
-import {Component, forwardRef, Injector, ChangeDetectionStrategy} from '@angular/core';
+import { Component, forwardRef, Injector, ChangeDetectionStrategy, inject } from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
@@ -44,6 +44,9 @@ import {NovoModule} from '../geral/novo/novo.module';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CompraListComponent extends PrimeCrudListComponent<Compra, number> {
+  protected compraService: CompraService;
+  protected injector: Injector;
+
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -83,9 +86,14 @@ export class CompraListComponent extends PrimeCrudListComponent<Compra, number> 
     }
   ];
 
-  constructor(protected compraService: CompraService,
-              protected injector: Injector) {
+  constructor() {
+    const compraService = inject(CompraService);
+    const injector = inject(Injector);
+
     super(compraService, injector, ['id', 'fornecedor', 'dataCompra', 'actions'], 'compra/form');
+    this.compraService = compraService;
+    this.injector = injector;
+
     this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.configureTable();

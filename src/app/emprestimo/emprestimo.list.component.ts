@@ -1,6 +1,4 @@
-import {
-  Component, forwardRef, Injector, ViewChild, ChangeDetectionStrategy, OnInit
-} from '@angular/core';
+import { Component, forwardRef, Injector, ViewChild, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
@@ -63,6 +61,11 @@ import {NovoModule} from '../geral/novo/novo.module';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, number> implements OnInit{
+  protected emprestimoService: EmprestimoService;
+  protected injector: Injector;
+  private readonly bottomSheetOptions = inject(MatBottomSheet);
+  private readonly usuarioService = inject(UsuarioService);
+
 
   @ViewChild('novaData') novaData: DatePicker;
   dialogFiltroEmprestimo = false;
@@ -121,11 +124,14 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     }
   ];
 
-  constructor(protected emprestimoService: EmprestimoService,
-              protected injector: Injector,
-              private readonly bottomSheetOptions: MatBottomSheet,
-              private readonly usuarioService: UsuarioService) {
+  constructor() {
+    const emprestimoService = inject(EmprestimoService);
+    const injector = inject(Injector);
+
     super(emprestimoService, injector, ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status'], 'emprestimo/form');
+    this.emprestimoService = emprestimoService;
+    this.injector = injector;
+
     this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.emprestimoFilter = new EmprestimoFilter();

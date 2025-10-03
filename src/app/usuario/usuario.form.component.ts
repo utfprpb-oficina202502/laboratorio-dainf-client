@@ -1,4 +1,4 @@
-import { Component, Injector, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { Component, Injector, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Usuario } from './usuario';
 import { UsuarioService } from './usuario.service';
@@ -19,6 +19,9 @@ interface PermissaoSelectItem {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario, number> {
+  protected usuarioService: UsuarioService;
+  protected injector: Injector;
+
   private readonly fb = this.injector.get(FormBuilder);
 
   // Signals for dropdown options and dialog state
@@ -42,11 +45,14 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
   // Computed signal to determine if password change button should be shown
   protected readonly canShowPasswordChange = computed(() => this.isEditMode());
 
-  constructor(
-    protected usuarioService: UsuarioService,
-    protected injector: Injector
-  ) {
+  constructor() {
+    const usuarioService = inject(UsuarioService);
+    const injector = inject(Injector);
+
     super(usuarioService, injector, '/usuario', Usuario);
+    this.usuarioService = usuarioService;
+    this.injector = injector;
+
     this.buildGrupoDeAcesso();
     this.buildPasswordChangeForm();
   }
@@ -220,12 +226,5 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
       ...(id && { id }),
       ...(password && { password })
     };
-  }
-
-  /**
-   * Cleanup on component destroy
-   */
-  ngOnDestroy(): void {
-    // Parent class handles form cleanup
   }
 }

@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, Host, Input, Optional, TemplateRef} from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, TemplateRef, inject } from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {ToolbarModule} from 'primeng/toolbar';
@@ -123,7 +123,9 @@ export class PrimeCrudToolbarComponent {
   @Input() table?: Table | null;
   private _list?: PrimeCrudListComponent<any, any>;
 
-  constructor(@Optional() @Host() list: PrimeCrudListComponent<any, any>) {
+  constructor() {
+    const list = inject<PrimeCrudListComponent<any, any>>(PrimeCrudListComponent, { optional: true, host: true })!;
+
     this._list = list || undefined;
   }
 

@@ -1,4 +1,4 @@
-import {Component, forwardRef, Injector, ChangeDetectionStrategy} from '@angular/core';
+import { Component, forwardRef, Injector, ChangeDetectionStrategy, inject } from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Relatorio} from './relatorio';
@@ -34,6 +34,9 @@ import {IconFieldModule} from "primeng/iconfield";
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RelatorioListComponent extends PrimeCrudListComponent<Relatorio, number> {
+  protected relatorioService: RelatorioService;
+  protected injector: Injector;
+
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -64,9 +67,14 @@ export class RelatorioListComponent extends PrimeCrudListComponent<Relatorio, nu
     }
   ];
 
-  constructor(protected relatorioService: RelatorioService,
-              protected injector: Injector) {
+  constructor() {
+    const relatorioService = inject(RelatorioService);
+    const injector = inject(Injector);
+
     super(relatorioService, injector, ['id', 'nome', 'actions'], 'relatorio/form');
+    this.relatorioService = relatorioService;
+    this.injector = injector;
+
     this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.configureTable();

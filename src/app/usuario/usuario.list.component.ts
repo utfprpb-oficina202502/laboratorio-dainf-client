@@ -1,4 +1,4 @@
-import {Component, forwardRef, Injector, ChangeDetectionStrategy} from '@angular/core';
+import { Component, forwardRef, Injector, ChangeDetectionStrategy, inject } from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {Usuario} from './usuario';
@@ -47,6 +47,9 @@ import {NovoModule} from '../geral/novo/novo.module';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number> {
+  protected usuarioService: UsuarioService;
+  protected injector: Injector;
+
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -95,9 +98,14 @@ export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number
     }
   ];
 
-  constructor(protected usuarioService: UsuarioService,
-              protected injector: Injector) {
+  constructor() {
+    const usuarioService = inject(UsuarioService);
+    const injector = inject(Injector);
+
     super(usuarioService, injector, ['id', 'nome', 'username', 'permissoes', 'actions'], 'usuario/form');
+    this.usuarioService = usuarioService;
+    this.injector = injector;
+
     this.configureTable();
   }
 

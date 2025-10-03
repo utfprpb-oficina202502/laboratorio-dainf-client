@@ -1,4 +1,4 @@
-import {Component, Injector, ChangeDetectionStrategy, signal, computed} from '@angular/core';
+import { Component, Injector, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {
   ReactiveFormsModule, FormsModule,
@@ -61,6 +61,9 @@ import {CadastroRapidoModule} from '../geral/cadastroRapido/cadastroRapido.modul
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SaidaFormComponent extends PrimeReactiveCrudFormComponent<Saida, number> {
+  protected saidaService: SaidaService;
+  protected injector: Injector;
+
   private readonly fb = this.injector.get(FormBuilder);
   private readonly itemService = this.injector.get(ItemService);
 
@@ -86,11 +89,14 @@ export class SaidaFormComponent extends PrimeReactiveCrudFormComponent<Saida, nu
     return obj && obj.idEmprestimo !== null && obj.idEmprestimo !== undefined;
   });
 
-  constructor(
-    protected saidaService: SaidaService,
-    protected injector: Injector
-  ) {
+  constructor() {
+    const saidaService = inject(SaidaService);
+    const injector = inject(Injector);
+
     super(saidaService, injector, '/saida', Saida);
+  
+    this.saidaService = saidaService;
+    this.injector = injector;
   }
 
   /**

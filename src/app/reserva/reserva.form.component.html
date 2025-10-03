@@ -160,7 +160,7 @@
                 id="qtde"
                 [(ngModel)]="tempQtde"
                 [ngModelOptions]="{standalone: true}"
-                [disabled]="tempItem()?.patrimonio != null"
+                [disabled]="tempItem()?.patrimonio !== null"
                 class="w-full"
                 min="1" />
             </div>

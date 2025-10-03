@@ -1,4 +1,4 @@
-import {Directive, ElementRef, Input, OnInit} from '@angular/core';
+import { Directive, ElementRef, Input, OnInit, inject } from '@angular/core';
 import {NgControl} from '@angular/forms';
 import $ from 'jquery';
 import {ValidationService} from './validation.service';
@@ -7,23 +7,26 @@ import {ValidationService} from './validation.service';
     selector: '[validation]',
     standalone: false
 })
-export class ValidationDirective implements OnInit {
+export class ValidationDirective {
+  private el = inject(ElementRef);
+  private formControl = inject(NgControl);
+  private validationService = inject(ValidationService);
+
 
   @Input('validationMessage') customMessage: string;
 
   private target: any;
   private formGroup: any;
 
-  constructor(private el: ElementRef, private formControl: NgControl, private validationService: ValidationService) {
+  constructor() {
+    const el = this.el;
+
     this.target = $(el.nativeElement);
     this.formGroup = this.target.closest('.form-group');
 
     this.formControl.valueChanges.subscribe((newValue) => {
       this.checkValidation();
     });
-  }
-
-  ngOnInit() {
   }
 
   resetFormGroup() {

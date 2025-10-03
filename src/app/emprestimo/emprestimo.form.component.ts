@@ -1,4 +1,4 @@
-import {Component, Injector, ChangeDetectionStrategy, signal, computed} from '@angular/core';
+import { Component, Injector, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
 import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {
   ReactiveFormsModule, FormsModule,
@@ -72,6 +72,9 @@ import {CadastroRapidoModule} from '../geral/cadastroRapido/cadastroRapido.modul
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Emprestimo, number> {
+  protected emprestimoService: EmprestimoService;
+  protected injector: Injector;
+
   private readonly fb = this.injector.get(FormBuilder);
   private readonly itemService = this.injector.get(ItemService);
   private readonly usuarioService = this.injector.get(UsuarioService);
@@ -110,11 +113,14 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
     return obj && 'dataDevolucao' in obj && !!obj.dataDevolucao;
   });
 
-  constructor(
-    protected emprestimoService: EmprestimoService,
-    protected injector: Injector
-  ) {
+  constructor() {
+    const emprestimoService = inject(EmprestimoService);
+    const injector = inject(Injector);
+
     super(emprestimoService, injector, '/emprestimo', Emprestimo);
+  
+    this.emprestimoService = emprestimoService;
+    this.injector = injector;
   }
 
   /**

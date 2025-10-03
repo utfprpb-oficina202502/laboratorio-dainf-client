@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from "@angular/core";
+import { Component, OnInit, ViewChild, inject } from "@angular/core";
 import { NgForm } from "@angular/forms";
 import { Router } from "@angular/router";
 import { MessageService } from "primeng/api";
@@ -12,15 +12,13 @@ import { CadastrarUsuarioService } from "./cadastrarUsuario.service";
     standalone: false
 })
 export class CadastrarUsuarioComponent implements OnInit {
+  private readonly router = inject(Router);
+  private readonly messageService = inject(MessageService);
+  private readonly cadastrarUsuarioService = inject(CadastrarUsuarioService);
+
   usuario: UsuarioCadastro;
   showProgress = false;
   @ViewChild("form", { static: true }) form: NgForm;
-
-  constructor(
-    private router: Router,
-    private messageService: MessageService,
-    private cadastrarUsuarioService: CadastrarUsuarioService
-  ) {}
 
   ngOnInit() {
     this.usuario = new UsuarioCadastro();

@@ -1,5 +1,5 @@
 import { CrudService } from "../framework/service/crud.service";
-import { Injectable } from "@angular/core";
+import { Injectable, inject } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { environment } from "../../environments/environment";
 import { Observable } from "rxjs";
@@ -12,7 +12,9 @@ export class CadastrarUsuarioService extends CrudService<
   UsuarioCadastro,
   number
 > {
-  constructor(http: HttpClient) {
+  constructor() {
+    const http = inject(HttpClient);
+
     super(`${environment.api_url}usuario/`, http);
   }
 

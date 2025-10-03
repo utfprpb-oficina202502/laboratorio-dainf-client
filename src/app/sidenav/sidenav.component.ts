@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef } from "@angular/core";
+import { Component, HostListener, OnInit, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef, inject } from "@angular/core";
 import { SidenavService } from "./sidenav.service";
 import { browserChange } from "../app.component";
 import { LoginService } from "../login/login.service";
@@ -120,6 +120,13 @@ export const MENU_ITEM: MenuItem[] = [
     standalone: false
 })
 export class SidenavComponent implements OnInit {
+  private readonly sidenavService = inject(SidenavService);
+  private readonly loginService = inject(LoginService);
+  private readonly usuarioService = inject(UsuarioService);
+  private readonly router = inject(Router);
+  readonly themeService = inject(ThemeService);
+  private readonly cdr = inject(ChangeDetectorRef);
+
   public menuItems: PrimeMenuItem[] = this.getDefaultMenuItems();
   public menuCadastros: PrimeMenuItem[] = [];
   display = false;
@@ -131,15 +138,6 @@ export class SidenavComponent implements OnInit {
   closeOnEscape = false;
   sidebarVisible = true;
   @ViewChild("drawer") drawer: Drawer;
-
-  constructor(
-    private readonly sidenavService: SidenavService,
-    private readonly loginService: LoginService,
-    private readonly usuarioService: UsuarioService,
-    private readonly router: Router,
-    public readonly themeService: ThemeService,
-    private readonly cdr: ChangeDetectorRef
-  ) {}
 
   ngOnInit(): void {
     this.buildMenu();

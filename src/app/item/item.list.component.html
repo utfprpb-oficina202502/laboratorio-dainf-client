@@ -131,9 +131,9 @@
                   @switch (column.field) {
                     @case ('actions') {
                       <app-action-buttons
-                        [showEdit]="row.id != 1 && !isAlunoOrProfessor && canEdit"
-                        [showDelete]="row.id != 1 && !isAlunoOrProfessor && canDelete"
-                        [showView]="row.id != 1 && isAlunoOrProfessor"
+                        [showEdit]="row.id !== 1 && !isAlunoOrProfessor && canEdit"
+                        [showDelete]="row.id !== 1 && !isAlunoOrProfessor && canDelete"
+                        [showView]="row.id !== 1 && isAlunoOrProfessor"
                         [editTooltip]="'Editar item'"
                         [deleteTooltip]="'Remover item'"
                         [viewTooltip]="'Visualizar item'"

@@ -1,4 +1,4 @@
-import {Inject, Injectable} from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {CrudService} from '../framework/service/crud.service';
 import {Emprestimo} from './emprestimo';
 import { HttpClient } from '@angular/common/http';
@@ -9,7 +9,9 @@ import {EmprestimoFilter} from './emprestimo.filter';
 @Injectable()
 export class EmprestimoService extends CrudService<Emprestimo, number> {
 
-  constructor(@Inject(HttpClient) http: HttpClient) {
+  constructor() {
+    const http = inject<HttpClient>(HttpClient);
+
     super(`${environment.api_url}emprestimo/`, http);
   }
 

@@ -34,6 +34,11 @@ import {
   standalone: false
 })
 export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
+  private readonly homeService = inject(HomeService);
+  private readonly loginService = inject(LoginService);
+  private readonly loaderService = inject(LoaderService);
+  private readonly cdr = inject(ChangeDetectorRef);
+
   datepipe: DatePipe = inject(DatePipe);
   dashEmprestimoCount: DashboardEmprestimoCountRange;
   dialodFiltroData = false;
@@ -55,12 +60,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   loadingStats = false;
   loadingCharts = false;
 
-  constructor(
-    private readonly homeService: HomeService,
-    private readonly loginService: LoginService,
-    private readonly loaderService: LoaderService,
-    private readonly cdr: ChangeDetectorRef
-  ) {
+  constructor() {
     this.dashEmprestimoCount = new DashboardEmprestimoCountRange();
     this.localePt = pt;
     effect(() => {
@@ -83,14 +83,14 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       this.showDashboardAluno = !!value;
       this.cdr.markForCheck();
 
-      if (!this.showDashboardAluno) {
+      if (this.showDashboardAluno) {
+        this.loaderService.hide();
+      } else {
         if (this.viewInitialized) {
           this.buildDashboards();
         } else {
           this.pendingDashboardBuild = true;
         }
-      } else {
-        this.loaderService.hide();
       }
     }).catch(() => {
       this.loaderService.hide();
@@ -270,7 +270,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         }
         return {...d, _dtParsed: new Date(d[dateField])};
       })
-      .filter(d => !isNaN(d._dtParsed?.getTime?.()))
+      .filter(d => !Number.isNaN(d._dtParsed?.getTime?.()))
       .sort((a, b) => a._dtParsed.getTime() - b._dtParsed.getTime());
   }
 
@@ -491,12 +491,12 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         chart.scrollbarX = new am4core.Scrollbar();
       }
       chart.scrollbarX.disabled = false;
-      if (!chart.cursor) {
+      if (chart.cursor) {
+        chart.cursor.lineY.disabled = true;
+      } else {
         const cursor = new am4charts.XYCursor();
         cursor.lineY.disabled = true;
         chart.cursor = cursor;
-      } else {
-        chart.cursor.lineY.disabled = true;
       }
       chart.cursor.behavior = "panX";
     } else {
@@ -584,16 +584,16 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
     const needsPan = hasData && safeData.length > 30 && !!series;
     if (needsPan && series) {
-      if (!chartLine.cursor) {
+      if (chartLine.cursor) {
+        chartLine.cursor.xAxis = dateAxis;
+        chartLine.cursor.snapToSeries = series;
+        chartLine.cursor.lineY.disabled = true;
+      } else {
         const cursor = new am4charts.XYCursor();
         cursor.xAxis = dateAxis;
         cursor.snapToSeries = series;
         cursor.lineY.disabled = true;
         chartLine.cursor = cursor;
-      } else {
-        chartLine.cursor.xAxis = dateAxis;
-        chartLine.cursor.snapToSeries = series;
-        chartLine.cursor.lineY.disabled = true;
       }
       chartLine.cursor.visible = true;
 
@@ -607,15 +607,15 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         chartLine.scrollbarX.disabled = false;
       }
 
-      if (!chartLine.scrollbarY) {
+      if (chartLine.scrollbarY) {
+        chartLine.scrollbarY.parent = chartLine.leftAxesContainer;
+        chartLine.scrollbarY.toBack();
+        chartLine.scrollbarY.disabled = false;
+      } else {
         const scrollbarY = new am4core.Scrollbar();
         scrollbarY.parent = chartLine.leftAxesContainer;
         scrollbarY.toBack();
         chartLine.scrollbarY = scrollbarY;
-      } else {
-        chartLine.scrollbarY.parent = chartLine.leftAxesContainer;
-        chartLine.scrollbarY.toBack();
-        chartLine.scrollbarY.disabled = false;
       }
     } else {
       if (chartLine.cursor) {

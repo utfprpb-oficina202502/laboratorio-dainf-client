@@ -1,13 +1,4 @@
-import {
-  Component,
-  Injector,
-  ViewChild,
-  ChangeDetectionStrategy,
-  signal,
-  computed,
-  effect,
-  OnDestroy
-} from '@angular/core';
+import { Component, Injector, ViewChild, ChangeDetectionStrategy, signal, computed, effect, OnDestroy, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { PrimeReactiveCrudFormComponent } from '../framework/component/prime-reactive-crud.form.component';
@@ -33,6 +24,9 @@ interface TipoItemOption {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, number> implements OnDestroy {
+  protected itemService: ItemService;
+  protected injector: Injector;
+
   private readonly fb = this.injector.get(FormBuilder);
   private readonly grupoService = this.injector.get(GrupoService);
   private grupoSubscription?: Subscription;
@@ -76,11 +70,14 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
 
   private callback?: Function;
 
-  constructor(
-    protected itemService: ItemService,
-    protected injector: Injector
-  ) {
+  constructor() {
+    const itemService = inject(ItemService);
+    const injector = inject(Injector);
+
     super(itemService, injector, '/item', Item);
+    this.itemService = itemService;
+    this.injector = injector;
+
 
     // Effect to handle form fields enable/disable based on user role
     effect(() => {

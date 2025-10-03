@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
 import {MatBottomSheetRef} from '@angular/material/bottom-sheet';
 import {LoginService} from '../../login/login.service';
 
@@ -8,13 +8,15 @@ import {LoginService} from '../../login/login.service';
     styleUrls: ['./bottomSheetEmprestimo.component.css'],
     standalone: false
 })
-export class BottomSheetEmprestimoComponent {
+export class BottomSheetEmprestimoComponent implements OnInit {
+  private readonly bottomSheetRef = inject<MatBottomSheetRef<BottomSheetEmprestimoComponent>>(MatBottomSheetRef);
+  private readonly loginService = inject(LoginService);
+
 
   isAlunoOrProfessor = false;
 
-  constructor(private bottomSheetRef: MatBottomSheetRef<BottomSheetEmprestimoComponent>,
-              private loginService: LoginService) {
-    loginService.userLoggedIsAlunoOrProfessor().then(value => this.isAlunoOrProfessor = value);
+  ngOnInit(): void {
+    this.loginService.userLoggedIsAlunoOrProfessor().then(value => this.isAlunoOrProfessor = value);
   }
 
   click(action) {

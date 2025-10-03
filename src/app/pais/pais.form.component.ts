@@ -1,4 +1,4 @@
-import { Component, Injector, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Injector, ChangeDetectionStrategy, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Pais } from './pais';
 import { PaisService } from './pais.service';
@@ -12,13 +12,19 @@ import { PrimeReactiveCrudFormComponent } from '../framework/component/prime-rea
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PaisFormComponent extends PrimeReactiveCrudFormComponent<Pais, number> {
+  protected paisService: PaisService;
+  protected injector: Injector;
+
   private readonly fb = this.injector.get(FormBuilder);
 
-  constructor(
-    protected paisService: PaisService,
-    protected injector: Injector
-  ) {
+  constructor() {
+    const paisService = inject(PaisService);
+    const injector = inject(Injector);
+
     super(paisService, injector, '/pais', Pais);
+  
+    this.paisService = paisService;
+    this.injector = injector;
   }
 
   /**

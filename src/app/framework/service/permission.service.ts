@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { LoginService } from '../../login/login.service';
 
 export interface UserPermissions {
@@ -15,8 +15,8 @@ export interface UserPermissions {
   providedIn: 'root'
 })
 export class PermissionService {
+  private readonly loginService = inject(LoginService);
 
-  constructor(private readonly loginService: LoginService) {}
 
   /**
    * Get comprehensive user permissions based on their role

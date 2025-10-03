@@ -1,4 +1,4 @@
-import {Directive, DoCheck, ElementRef, HostListener} from '@angular/core';
+import { Directive, DoCheck, ElementRef, HostListener, inject } from '@angular/core';
 import {NgControl} from '@angular/forms';
 
 @Directive({
@@ -6,8 +6,9 @@ import {NgControl} from '@angular/forms';
     standalone: false
 })
 export class TelefoneFormatDirective implements DoCheck {
+  el = inject(ElementRef);
+  private control = inject(NgControl);
 
-  constructor(public el: ElementRef, private control: NgControl) {}
 
   ngDoCheck(): void {
     this.format();

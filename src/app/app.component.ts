@@ -1,4 +1,4 @@
-import {Component, ChangeDetectionStrategy, ChangeDetectorRef} from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import {LoginService} from './login/login.service';
 import {Subject, Subscription} from 'rxjs';
 import {NavigationCancel, NavigationEnd, NavigationStart, NavigationError, Router} from '@angular/router';
@@ -14,15 +14,19 @@ export const browserChange = new Subject<boolean>();
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppComponent {
+  private readonly loginService = inject(LoginService);
+  private readonly router = inject(Router);
+  private readonly loaderService = inject(LoaderService);
+  private readonly cdr = inject(ChangeDetectorRef);
+
   title = 'tcc-client';
   isAuthenticated = false;
   isNavigating = false;
   subscription: Subscription;
 
-  constructor(private readonly loginService: LoginService,
-              private readonly router: Router,
-              private readonly loaderService: LoaderService,
-              private readonly cdr: ChangeDetectorRef) {
+  constructor() {
+    const loginService = this.loginService;
+
     loginService.isAuthenticated.asObservable()
       .subscribe(e => {
         this.isAuthenticated = e;

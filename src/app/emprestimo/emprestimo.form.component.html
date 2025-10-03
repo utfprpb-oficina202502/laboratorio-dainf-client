@@ -218,7 +218,7 @@
                     id="qtde"
                     [(ngModel)]="tempQtde"
                     [ngModelOptions]="{standalone: true}"
-                    [disabled]="tempItem()?.patrimonio != null"
+                    [disabled]="tempItem()?.patrimonio !== null"
                     (keyup.enter)="insertItem()"
                     class="w-full" />
                 </app-form-field>

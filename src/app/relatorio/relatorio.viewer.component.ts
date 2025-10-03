@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {RelatorioService} from './relatorio.service';
 import {LoaderService} from '../framework/loader/loader.service';
@@ -15,19 +15,18 @@ import {StringUtils} from '../framework/util/string.utils';
     standalone: false
 })
 export class RelatorioViewerComponent implements OnInit {
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly loaderService = inject(LoaderService);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly relatorioService = inject(RelatorioService);
+
 
   reportHTML: any;
   relatorioCurrent: Relatorio;
   dialogFiltroRelatorio = false;
   localePt: any;
   relatorioParamValue: RelatorioParamsValue[];
-
-  constructor(private readonly router: Router,
-              private readonly route: ActivatedRoute,
-              private readonly loaderService: LoaderService,
-              private readonly sanitizer: DomSanitizer,
-              private readonly relatorioService: RelatorioService) {
-  }
 
   ngOnInit(): void {
     this.localePt = pt;

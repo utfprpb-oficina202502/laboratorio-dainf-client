@@ -1,4 +1,4 @@
-import { Component, Injector, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, Injector, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Fornecedor } from './fornecedor';
 import { FornecedorService } from './fornecedor.service';
@@ -16,6 +16,9 @@ import { PrimeReactiveCrudFormComponent } from '../framework/component/prime-rea
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FornecedorFormComponent extends PrimeReactiveCrudFormComponent<Fornecedor, number> {
+  protected fornecedorService: FornecedorService;
+  protected injector: Injector;
+
   private readonly fb = this.injector.get(FormBuilder);
   private readonly cidadeService = this.injector.get(CidadeService);
   private readonly estadoService = this.injector.get(EstadoService);
@@ -24,11 +27,14 @@ export class FornecedorFormComponent extends PrimeReactiveCrudFormComponent<Forn
   protected readonly cidadeList = signal<Cidade[]>([]);
   protected readonly estadoList = signal<Estado[]>([]);
 
-  constructor(
-    protected fornecedorService: FornecedorService,
-    protected injector: Injector
-  ) {
+  constructor() {
+    const fornecedorService = inject(FornecedorService);
+    const injector = inject(Injector);
+
     super(fornecedorService, injector, '/fornecedor', Fornecedor);
+  
+    this.fornecedorService = fornecedorService;
+    this.injector = injector;
   }
 
   /**

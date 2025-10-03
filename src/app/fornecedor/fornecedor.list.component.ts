@@ -1,4 +1,4 @@
-import {Component, forwardRef, Injector, ChangeDetectionStrategy} from '@angular/core';
+import { Component, forwardRef, Injector, ChangeDetectionStrategy, inject } from '@angular/core';
 
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
@@ -43,6 +43,9 @@ import {CpfCnpjPipeModule} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe.module";
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, number> {
+  protected fornecedorService: FornecedorService;
+  protected injector: Injector;
+
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -90,9 +93,14 @@ export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, 
     }
   ];
 
-  constructor(protected fornecedorService: FornecedorService,
-              protected injector: Injector) {
+  constructor() {
+    const fornecedorService = inject(FornecedorService);
+    const injector = inject(Injector);
+
     super(fornecedorService, injector, ['id', 'razaoSocial', 'nomeFantasia', 'cnpj', 'actions'], 'fornecedor/form');
+    this.fornecedorService = fornecedorService;
+    this.injector = injector;
+
     this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.configureTable();

@@ -1,11 +1,4 @@
-import {
-  Component,
-  Injector,
-  ChangeDetectionStrategy,
-  signal,
-  computed,
-  OnDestroy
-} from '@angular/core';
+import { Component, Injector, ChangeDetectionStrategy, signal, computed, OnDestroy, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { Grupo } from './grupo';
@@ -22,6 +15,9 @@ import Swal from 'sweetalert2';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, number> implements OnDestroy {
+  protected grupoService: GrupoService;
+  protected injector: Injector;
+
   private readonly fb = this.injector.get(FormBuilder);
   private itensVinculadosSubscription?: Subscription;
 
@@ -36,11 +32,14 @@ export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, nu
     return !!(obj && 'id' in obj && obj.id);
   });
 
-  constructor(
-    protected grupoService: GrupoService,
-    protected injector: Injector
-  ) {
+  constructor() {
+    const grupoService = inject(GrupoService);
+    const injector = inject(Injector);
+
     super(grupoService, injector, '/grupo', Grupo);
+  
+    this.grupoService = grupoService;
+    this.injector = injector;
   }
 
   /**

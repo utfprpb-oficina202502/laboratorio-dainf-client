@@ -1,4 +1,4 @@
-import {Component, Injector, ChangeDetectionStrategy, signal, computed} from '@angular/core';
+import { Component, Injector, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
 import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {
   ReactiveFormsModule, FormsModule,
@@ -69,6 +69,9 @@ import {CadastroRapidoModule} from '../geral/cadastroRapido/cadastroRapido.modul
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva, number> {
+  protected reservaService: ReservaService;
+  protected injector: Injector;
+
   private readonly fb = this.injector.get(FormBuilder);
   private readonly itemService = this.injector.get(ItemService);
 
@@ -104,11 +107,14 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
 
   protected readonly hasItems = computed(() => this.reservaItems().length > 0);
 
-  constructor(
-    protected reservaService: ReservaService,
-    protected injector: Injector
-  ) {
+  constructor() {
+    const reservaService = inject(ReservaService);
+    const injector = inject(Injector);
+
     super(reservaService, injector, '/reserva', Reserva);
+  
+    this.reservaService = reservaService;
+    this.injector = injector;
   }
 
   /**

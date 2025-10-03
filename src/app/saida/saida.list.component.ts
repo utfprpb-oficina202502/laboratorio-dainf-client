@@ -1,4 +1,4 @@
-import {Component, forwardRef, Injector, ChangeDetectionStrategy} from '@angular/core';
+import { Component, forwardRef, Injector, ChangeDetectionStrategy, inject } from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
@@ -46,6 +46,9 @@ import {ActionButtonsComponent} from '../framework/component/action-buttons.comp
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
+  protected saidaService: SaidaService;
+  protected injector: Injector;
+
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -102,9 +105,14 @@ export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
     }
   ];
 
-  constructor(protected saidaService: SaidaService,
-              protected injector: Injector) {
+  constructor() {
+    const saidaService = inject(SaidaService);
+    const injector = inject(Injector);
+
     super(saidaService, injector, ['id', 'dataSaida', 'qtde', 'usuarioResponsavel', 'observacao', 'actions'], 'saida/form');
+    this.saidaService = saidaService;
+    this.injector = injector;
+
     this.configureTable();
   }
 

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { ThemeService } from '../services/theme.service';
@@ -47,8 +47,12 @@ import {FormsModule} from "@angular/forms";
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ThemeToggleComponent {
+  readonly themeService = inject(ThemeService);
+
   checked = false;
-  constructor(public readonly themeService: ThemeService) {
+  constructor() {
+    const themeService = this.themeService;
+
     this.checked = themeService.isDarkMode();
   }
 

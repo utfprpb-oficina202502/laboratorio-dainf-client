@@ -1,4 +1,4 @@
-import { Component, Injector, ViewChild } from "@angular/core";
+import { Component, Injector, ViewChild, inject } from "@angular/core";
 import { Usuario } from "./usuario";
 import { UsuarioService } from "./usuario.service";
 import { NgForm } from "@angular/forms";
@@ -13,6 +13,9 @@ import Swal from "sweetalert2";
     standalone: false
 })
 export class UsuarioEditComponent extends CrudFormComponent<Usuario, number> {
+  protected usuarioService: UsuarioService;
+  protected injector: Injector;
+
   @ViewChild("form", { static: true }) frm: NgForm;
   @ViewChild("formChangeSenha", { static: true }) formChangeSenha: NgForm;
   grupoAcessoDropdown: SelectItem[];
@@ -21,11 +24,14 @@ export class UsuarioEditComponent extends CrudFormComponent<Usuario, number> {
   redConfNovaSenha: string;
   redNovaSenha: string;
 
-  constructor(
-    protected usuarioService: UsuarioService,
-    protected injector: Injector
-  ) {
+  constructor() {
+    const usuarioService = inject(UsuarioService);
+    const injector = inject(Injector);
+
     super(usuarioService, injector, "/usuario");
+    this.usuarioService = usuarioService;
+    this.injector = injector;
+
     this.buildGrupoDeAcesso();
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from "@angular/core";
+import { Component, OnInit, ViewChild, inject } from "@angular/core";
 import { NgForm } from "@angular/forms";
 import { Router } from "@angular/router";
 import { MessageService } from "primeng/api";
@@ -12,15 +12,13 @@ import { EmailConfirmacao } from "./emailConfirmacao";
     standalone: false
 })
 export class ReenviarEmailConfirmacaoUsuarioComponent implements OnInit {
+  private router = inject(Router);
+  private messageService = inject(MessageService);
+  private cadastrarUsuarioService = inject(CadastrarUsuarioService);
+
   emailConfirmacao: EmailConfirmacao;
   showProgress = false;
   @ViewChild("form", { static: true }) form: NgForm;
-
-  constructor(
-    private router: Router,
-    private messageService: MessageService,
-    private cadastrarUsuarioService: CadastrarUsuarioService
-  ) {}
 
   ngOnInit() {
     this.emailConfirmacao = new EmailConfirmacao();

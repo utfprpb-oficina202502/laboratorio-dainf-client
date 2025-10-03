@@ -1,4 +1,4 @@
-import {Component, forwardRef, Injector, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { Component, forwardRef, Injector, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
@@ -48,6 +48,10 @@ import {NovoModule} from '../geral/novo/novo.module';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number> implements OnInit{
+  protected reservaService: ReservaService;
+  protected injector: Injector;
+  private readonly bottomSheetOptions = inject(MatBottomSheet);
+
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -104,10 +108,14 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
     }
   ];
 
-  constructor(protected reservaService: ReservaService,
-              protected injector: Injector,
-              private readonly bottomSheetOptions: MatBottomSheet) {
+  constructor() {
+    const reservaService = inject(ReservaService);
+    const injector = inject(Injector);
+
     super(reservaService, injector, ['id', 'descricao', 'dataReserva', 'dataRetirada', 'usuario', 'actions'], 'reserva/form');
+    this.reservaService = reservaService;
+    this.injector = injector;
+
     this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.configureTable();

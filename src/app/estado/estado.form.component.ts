@@ -1,4 +1,4 @@
-import { Component, Injector, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, Injector, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Estado } from './estado';
 import { EstadoService } from './estado.service';
@@ -14,17 +14,23 @@ import { PrimeReactiveCrudFormComponent } from '../framework/component/prime-rea
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EstadoFormComponent extends PrimeReactiveCrudFormComponent<Estado, number> {
+  protected estadoService: EstadoService;
+  protected injector: Injector;
+
   private readonly fb = this.injector.get(FormBuilder);
   private readonly paisService = this.injector.get(PaisService);
 
   // Signal for autocomplete suggestions
   protected readonly paisList = signal<Pais[]>([]);
 
-  constructor(
-    protected estadoService: EstadoService,
-    protected injector: Injector
-  ) {
+  constructor() {
+    const estadoService = inject(EstadoService);
+    const injector = inject(Injector);
+
     super(estadoService, injector, '/estado', Estado);
+  
+    this.estadoService = estadoService;
+    this.injector = injector;
   }
 
   /**

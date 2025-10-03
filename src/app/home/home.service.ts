@@ -1,4 +1,4 @@
-import {Inject, Injectable} from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {environment} from '../../environments/environment';
 import {Observable} from 'rxjs';
@@ -10,10 +10,10 @@ import {DashboardItensSaidas} from './dashboard/dashboardItensSaidas';
 
 @Injectable()
 export class HomeService {
-
+  private readonly http = inject<HttpClient>(HttpClient);
   url: string;
 
-  constructor(@Inject(HttpClient) private http: HttpClient) {
+  constructor() {
     this.url = `${environment.api_url}dashboard/`;
   }
 

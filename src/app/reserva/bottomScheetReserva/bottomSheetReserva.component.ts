@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
 import {MatBottomSheetRef} from '@angular/material/bottom-sheet';
 import {LoginService} from '../../login/login.service';
 
@@ -8,13 +8,13 @@ import {LoginService} from '../../login/login.service';
     styleUrls: ['./bottomSheetReserva.component.css'],
     standalone: false
 })
-export class BottomSheetReservaComponent {
-
+export class BottomSheetReservaComponent implements OnInit {
+  private readonly bottomSheetRef = inject<MatBottomSheetRef<BottomSheetReservaComponent>>(MatBottomSheetRef);
+  private readonly loginService = inject(LoginService);
   isAlunoOrProfessor = true;
 
-  constructor(private bottomSheetRef: MatBottomSheetRef<BottomSheetReservaComponent>,
-              private loginService: LoginService) {
-    loginService.userLoggedIsAlunoOrProfessor().then(value => this.isAlunoOrProfessor = value);
+  ngOnInit(): void {
+    this.loginService.userLoggedIsAlunoOrProfessor().then(value => this.isAlunoOrProfessor = value);
   }
 
   click(action) {

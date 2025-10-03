@@ -1,6 +1,6 @@
 import {CrudService} from '../framework/service/crud.service';
 import {Item} from './item';
-import {Inject, Injectable} from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {environment} from '../../environments/environment';
 import {Observable} from 'rxjs';
@@ -9,7 +9,9 @@ import {ItemImage} from './itemImage';
 @Injectable()
 export class ItemService extends CrudService<Item, number> {
 
-  constructor(@Inject(HttpClient) http: HttpClient) {
+  constructor() {
+    const http = inject<HttpClient>(HttpClient);
+
     super(`${environment.api_url}item/`, http);
   }
 

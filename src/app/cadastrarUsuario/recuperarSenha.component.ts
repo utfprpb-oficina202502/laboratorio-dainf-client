@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from "@angular/core";
+import { Component, OnInit, ViewChild, inject } from "@angular/core";
 import { NgForm } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { MessageService } from "primeng/api";
@@ -13,18 +13,16 @@ import { RecuperarSenha } from "./recuperarSenha";
     standalone: false
 })
 export class RecuperarSenhaComponent implements OnInit {
+  private router = inject(Router);
+  private messageService = inject(MessageService);
+  private cadastrarUsuarioService = inject(CadastrarUsuarioService);
+  private route = inject(ActivatedRoute);
+
   emailConfirmacao: EmailConfirmacao = new EmailConfirmacao();
   recuperarSenha: RecuperarSenha = new RecuperarSenha();
 
   showProgress = false;
   @ViewChild("form", { static: true }) form: NgForm;
-
-  constructor(
-    private router: Router,
-    private messageService: MessageService,
-    private cadastrarUsuarioService: CadastrarUsuarioService,
-    private route: ActivatedRoute
-  ) {}
 
   ngOnInit() {
     this.emailConfirmacao = new EmailConfirmacao();

@@ -1,4 +1,4 @@
-import {Component, ElementRef, Injector, ViewChild} from '@angular/core';
+import { Component, ElementRef, Injector, ViewChild, inject } from '@angular/core';
 import {CrudFormComponent} from '../framework/component/crud.form.component';
 import {Relatorio} from './relatorio';
 import {RelatorioService} from './relatorio.service';
@@ -16,6 +16,9 @@ import {MatTable} from '@angular/material/table';
     standalone: false
 })
 export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number> {
+  protected relatorioService: RelatorioService;
+  protected injector: Injector;
+
 
   @ViewChild('table') table: MatTable<any>;
   @ViewChild('fileUpload') fileUpload: FileUpload;
@@ -26,9 +29,14 @@ export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number>
   relatorioParams: RelatorioParams;
   displayedColumns = ['nameParam', 'aliasParam', 'tipoParam', 'actionsForm'];
 
-  constructor(protected relatorioService: RelatorioService,
-              protected injector: Injector) {
+  constructor() {
+    const relatorioService = inject(RelatorioService);
+    const injector = inject(Injector);
+
     super(relatorioService, injector, '/relatorio');
+    this.relatorioService = relatorioService;
+    this.injector = injector;
+
 
     this.tipoParamDropdown = [
       {label: 'String', value: 'S'},
