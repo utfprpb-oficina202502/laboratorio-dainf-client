@@ -59,8 +59,9 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--p-primary-color, #3b82f6), transparent 80%);
 }
 
+/* PrimeNG ProgressSpinner sizing override */
 ::ng-deep .loader-spinner {
-  width: 80px !important;
+  width: 80px !important; /* Override PrimeNG default size */
   height: 80px !important;
 }
 

@@ -1,204 +1,239 @@
-/* Tema Lara movido para angular.json para evitar erro de resolução */
+/* ============================================================================
+   Global Styles - UTFPR DAINF Laboratory Management System
+   Modern CSS with Layers, Nesting, and Custom Properties
+   ============================================================================ */
 
-/* Reativando o Tailwind CSS para corrigir problemas de posicionamento */
+/* Import CSS Variables */
+@import './styles/variables.css';
+
+/* PrimeNG theme loaded via angular.json */
+
+/* Tailwind CSS */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Reset de conflitos potenciais */
-* {
-  box-sizing: border-box;
+/* ============================================================================
+   CSS Layers - Control cascade explicitly
+   ============================================================================ */
+
+@layer base, components, utilities, overrides;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  :is(html, body) {
+    height: 100vh;
+    background-color: var(--color-bg-secondary);
+    overflow: hidden;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-family-base);
+  }
+
+  table {
+    width: 100%;
+  }
+
+  legend {
+    width: auto;
+  }
 }
 
-html, body {
-  height: 100vh;
-  background-color: var(--color-bg-secondary);
-  overflow: hidden;
+@layer utilities {
+  /* Custom utilities not in Tailwind */
+  .w-100px {
+    width: 100px;
+  }
+
+  .abbreviate {
+    width: 90%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .font-poppins {
+    font-family: var(--font-family-display);
+  }
 }
 
-body {
-  margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+@layer components {
+  /* ============================================================================
+     Form Validation
+     ============================================================================ */
+  .help-block {
+    color: var(--brand-danger);
+  }
+
+  .field-required {
+    padding-left: 5px;
+  }
+
+  /* ============================================================================
+     PrimeNG Component Overrides - Using nesting
+     ============================================================================ */
+  /* AutoComplete */
+  .p-autocomplete {
+    width: 100%;
+    display: flex;
+  }
+
+  .p-autocomplete-input {
+    width: calc(100% - 35px);
+  }
+
+  .p-autocomplete-dropdown {
+    border-top: 1px solid var(--p-autocomplete-border-color, var(--color-border));
+    border-right: 1px solid var(--p-autocomplete-border-color, var(--color-border));
+    border-bottom: 1px solid var(--p-autocomplete-border-color, var(--color-border));
+    border-left: none;
+    height: auto;
+    width: 35px;
+    background-color: transparent;
+    color: var(--p-text-color, var(--color-text-primary));
+  }
+
+  .autocomplete-separator-field {
+    border-left: 1px solid var(--color-border);
+    display: inline-block;
+    padding-left: 10px;
+    margin-left: 10px;
+    min-width: 50px;
+  }
+
+  /* Fieldset */
+  .p-fieldset {
+    & .p-fieldset-legend {
+      font-size: var(--font-size-sm);
+    }
+  }
+
+  /* Calendar */
+  .p-datepicker.p-component.p-datepicker-touch-ui {
+    min-width: 80%;
+  }
+
+  .p-datepicker-panel {
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.15);
+    border-radius: var(--radius-lg);
+  }
+
+  /* ============================================================================
+     Filter Dialog - Nested styles
+     ============================================================================ */
+  .filtro-dialog.p-dialog {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+
+    & .p-dialog-header {
+      padding: var(--spacing-md) var(--spacing-lg);
+
+      & .p-dialog-title {
+        font-weight: 600;
+        font-size: var(--font-size-base);
+      }
+    }
+
+    & .p-dialog-content {
+      padding: var(--spacing-xl);
+
+      @media (max-width: 480px) {
+        padding: var(--spacing-lg);
+      }
+    }
+
+    & .p-dialog-footer {
+      padding: var(--spacing-md) var(--spacing-xl);
+
+      @media (max-width: 480px) {
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+      }
+
+      & .p-button {
+        min-width: 110px;
+      }
+    }
+  }
+
+  /* Filter DatePicker */
+  .filtro-datepicker.p-datepicker {
+    border-radius: var(--radius-md);
+
+    & .p-inputtext {
+      border: none;
+      box-shadow: none;
+      padding: 0.6rem 0.75rem;
+    }
+
+    & .p-datepicker-trigger {
+      background: transparent;
+    }
+  }
 }
 
-/* Custom utility classes not provided by Tailwind */
-.w-100px {
-  width: 100px;
-}
+@layer overrides {
+  /* ============================================================================
+     Theme-Specific Button Overrides
+     NOTE: !important needed to override PrimeNG's high specificity
+     ============================================================================ */
+  /* Light mode: Primary buttons filled style */
+  :is(:root, :root[data-theme="light"]) {
+    & .p-button-primary.p-button-outlined {
+      background: var(--p-button-primary-background);
+      border-color: var(--p-button-primary-border-color);
+      color: var(--p-button-primary-color);
 
-/* validation */
-.help-block {
-  color: #dc3545; /* Bootstrap danger color - compatible with both themes */
-}
+      &:hover {
+        background: var(--p-button-primary-hover-background);
+        border-color: var(--p-button-primary-hover-border-color);
+        color: var(--p-button-primary-hover-color);
+      }
 
-.field-required {
-  padding-left: 5px;
-}
+      &:active {
+        background: var(--p-button-primary-active-background);
+        border-color: var(--p-button-primary-active-border-color);
+        color: var(--p-button-primary-active-color);
+      }
+    }
+  }
 
-/* list */
-table {
-  width: 100%;
-}
+  /* Dark mode: Primary buttons outlined for contrast */
+  :root[data-theme="dark"] {
+    & .p-button-primary:not(.p-button-text) {
+      background: transparent !important;
+      border: 1px solid var(--p-primary-color) !important;
+      color: var(--p-primary-color) !important;
 
-/* PrimeNG AutoComplete - modern p-autocomplete styles */
-.p-autocomplete {
-  width: 100%;
-  display: flex;
-}
+      &:hover {
+        background: var(--p-primary-color) !important;
+        border-color: var(--p-primary-color) !important;
+        color: var(--p-primary-contrast-color) !important;
+      }
 
-.p-autocomplete-input {
-  width: calc(100% - 35px);
-}
+      &:is(:active, :focus) {
+        background: var(--p-primary-color) !important;
+        border-color: var(--p-primary-color) !important;
+        color: var(--p-primary-contrast-color) !important;
+        box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--p-primary-color), transparent 80%);
+      }
+    }
 
-.p-autocomplete-dropdown {
-  border-top: 1px solid var(--p-autocomplete-border-color, var(--color-border));
-  border-right: 1px solid var(--p-autocomplete-border-color, var(--color-border));
-  border-bottom: 1px solid var(--p-autocomplete-border-color, var(--color-border));
-  border-left: none;
-  height: auto;
-  width: 35px;
-  background-color: transparent;
-  color: var(--p-text-color, var(--color-text-primary));
-}
+    & .p-button-secondary.p-button-outlined {
+      background: transparent;
+      border-color: var(--p-surface-400);
+      color: var(--p-surface-400);
 
-
-/* Text truncation utility */
-.abbreviate {
-  width: 90%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.autocomplete-separator-field {
-  border-left: 1px solid var(--color-border);
-  display: inline-block;
-  padding-left: 10px;
-  margin-left: 10px;
-  min-width: 50px;
-}
-
-/* Font utilities */
-.font-poppins {
-  font-family: 'Poppins', sans-serif;
-}
-
-/* fieldset */
-legend {
-  width: auto;
-}
-
-/* PrimeNG Fieldset - modern styling */
-.p-fieldset .p-fieldset-legend {
-  font-size: 0.875rem;
-}
-
-/* PrimeNG Calendar touch UI */
-.p-datepicker.p-component.p-datepicker-touch-ui {
-  min-width: 80%;
-}
-
-
-
-/* === Dialog Filtro (minimal override) === */
-.filtro-dialog.p-dialog {
-  border-radius: 8px;
-  overflow: hidden;
-}
-.filtro-dialog .p-dialog-header {
-  padding: 0.75rem 1rem !important;
-}
-.filtro-dialog .p-dialog-header .p-dialog-title {
-  font-weight: 600;
-  font-size: 1rem;
-}
-.filtro-dialog .p-dialog-content {
-  padding: 1.25rem 1.25rem 1rem 1.25rem !important;
-}
-.filtro-dialog .p-dialog-footer {
-  padding: 0.75rem 1.25rem !important;
-}
-.filtro-dialog .p-dialog-footer .p-button {
-  min-width: 110px;
-}
-
-/* Ajuste para botões de ação mais próximos em telas muito pequenas */
-@media (max-width: 480px) {
-  .filtro-dialog .p-dialog-content { padding: 1rem !important; }
-  .filtro-dialog .p-dialog-footer { flex-wrap: wrap; gap: .5rem; }
-}
-
-/* Estilo específico do DatePicker do filtro - minimal overrides */
-.filtro-datepicker.p-datepicker {
-  border-radius: 6px !important;
-}
-.filtro-datepicker .p-inputtext {
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0.6rem 0.75rem !important;
-}
-.filtro-datepicker .p-datepicker-trigger {
-  background: transparent !important;
-}
-/* Painel (overlay) quando aberto */
-.p-datepicker-panel {
-  box-shadow: 0 4px 12px -2px rgba(0,0,0,0.15);
-  border-radius: 8px !important;
-}
-
-/* === Dark Mode Button Styles === */
-/* In dark mode, make all primary buttons use outlined style for better contrast */
-/* This overrides both default (filled) and explicitly outlined buttons */
-
-/* Light mode: Remove outline from primary buttons to use filled style */
-:root[data-theme="light"] .p-button-primary.p-button-outlined {
-  background: var(--p-button-primary-background);
-  border-color: var(--p-button-primary-border-color);
-  color: var(--p-button-primary-color);
-}
-
-:root[data-theme="light"] .p-button-primary.p-button-outlined:hover {
-  background: var(--p-button-primary-hover-background);
-  border-color: var(--p-button-primary-hover-border-color);
-  color: var(--p-button-primary-hover-color);
-}
-
-:root[data-theme="light"] .p-button-primary.p-button-outlined:active {
-  background: var(--p-button-primary-active-background);
-  border-color: var(--p-button-primary-active-border-color);
-  color: var(--p-button-primary-active-color);
-}
-
-/* Dark mode: Force all primary buttons to outlined style */
-:root[data-theme="dark"] .p-button-primary:not(.p-button-text) {
-  background: transparent !important;
-  border: 1px solid var(--p-primary-color) !important;
-  color: var(--p-primary-color) !important;
-}
-
-:root[data-theme="dark"] .p-button-primary:not(.p-button-text):hover {
-  background: var(--p-primary-color) !important;
-  border-color: var(--p-primary-color) !important;
-  color: var(--p-primary-contrast-color) !important;
-}
-
-:root[data-theme="dark"] .p-button-primary:not(.p-button-text):active,
-:root[data-theme="dark"] .p-button-primary:not(.p-button-text):focus {
-  background: var(--p-primary-color) !important;
-  border-color: var(--p-primary-color) !important;
-  color: var(--p-primary-contrast-color) !important;
-  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--p-primary-color), transparent 80%);
-}
-
-/* Dark mode: Keep secondary buttons consistent */
-:root[data-theme="dark"] .p-button-secondary.p-button-outlined {
-  background: transparent;
-  border-color: var(--p-surface-400);
-  color: var(--p-surface-400);
-}
-
-:root[data-theme="dark"] .p-button-secondary.p-button-outlined:hover {
-  background: var(--p-surface-600);
-  border-color: var(--p-surface-600);
-  color: var(--p-surface-0);
+      &:hover {
+        background: var(--p-surface-600);
+        border-color: var(--p-surface-600);
+        color: var(--p-surface-0);
+      }
+    }
+  }
 }
