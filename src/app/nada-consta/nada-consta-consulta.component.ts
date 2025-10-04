@@ -1,0 +1,2 @@
+// Arquivo removido para evitar conflitos de metadados Angular.
+

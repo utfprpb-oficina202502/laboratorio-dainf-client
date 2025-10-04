@@ -1,0 +1,31 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+  <h2>Listagem de Nada Consta</h2>
+  <button pButton type="button" label="Adicionar" class="p-button-primary" (click)="adicionar()"></button>
+</div>
+
+@if (!carregando) {
+  <p-table [value]="dataSource">
+    <ng-template pTemplate="header">
+      <tr>
+        <th id="alunoId-header" scope="col">ID do Aluno</th>
+        <th id="nome-header" scope="col">Nome</th>
+        <th id="status-header" scope="col">Status</th>
+        <th id="acoes-header" scope="col">Ações</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-element>
+      <tr>
+        <td>{{element.alunoId}}</td>
+        <td>{{element.nome}}</td>
+        <td>{{element.nadaConsta ? 'OK' : 'Com Pendências'}}</td>
+        <td>
+          <!-- Botões de ação futuros -->
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+}
+
+@if (carregando) {
+  <p-progressBar mode="indeterminate" style="height: 6px;"></p-progressBar>
+}

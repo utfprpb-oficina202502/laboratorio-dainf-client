@@ -31,6 +31,8 @@ import {
 } from './cadastrarUsuario/reenviarEmailConfirmacaoUsuario.component';
 import {RecuperarSenhaComponent} from './cadastrarUsuario/recuperarSenha.component';
 import {ConfirmarEmailComponent} from './cadastrarUsuario/confirmarEmail.component';
+import { NadaConstaVisualizarComponent } from './nada-consta/nada-consta-visualizar.component';
+import { NadaConstaListComponent } from './nada-consta/list/nada-consta-list.component';
 
 export const routes: Routes = [
   // Rotas públicas
@@ -177,6 +179,11 @@ export const routes: Routes = [
     canActivate: [LoginService],
     loadComponent: () => import('./relatorio/relatorio.list.component').then(m => m.RelatorioListComponent)
   },
+
+  //Nada Consta
+  { path: 'nada-consta', canActivate: [LoginService], component: NadaConstaListComponent },
+  { path: 'nada-consta/adicionar', canActivate: [LoginService], component: NadaConstaVisualizarComponent },
+
   {path: 'relatorio/form', canActivate: [LoginService], component: RelatorioFormComponent},
   {path: 'relatorio/form/:id', canActivate: [LoginService], component: RelatorioFormComponent},
   {path: 'relatorio/view/:id', canActivate: [LoginService], component: RelatorioViewerComponent},
