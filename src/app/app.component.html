@@ -1,17 +1,16 @@
 @if (isAuthenticated) {
   <section class="layout-auth">
-    <app-toolbar></app-toolbar>
-    <div class="flex flex-row h-[calc(100vh-40px)] w-full overflow-hidden">
-      <aside id="sidenav" class="w-64 shrink-0 h-full overflow-y-auto border-r border-slate-200 bg-white">
-        <app-sidenav></app-sidenav>
-      </aside>
-      <main id="content" class="flex-1 h-full overflow-y-auto px-4 pb-6 pt-4 layout-content">
-        <div [style.opacity]="isNavigating ? '0' : '1'" [style.pointer-events]="isNavigating ? 'none' : 'auto'" style="transition: opacity 0.15s ease-in-out;">
-          <router-outlet></router-outlet>
-        </div>
-        <app-loader></app-loader>
-      </main>
-    </div>
+    <app-navbar></app-navbar>
+    <app-sidenav></app-sidenav>
+    <main id="content" class="layout-content">
+      <div [style.opacity]="isNavigating ? '0' : '1'"
+           [style.pointer-events]="isNavigating ? 'none' : 'auto'"
+           style="transition: opacity 0.15s ease-in-out;">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+    <!-- Loader outside main content to cover entire viewport including sidebar -->
+    <app-loader></app-loader>
   </section>
 } @else {
   <main id="content" class="only-login flex flex-col min-h-screen w-full overflow-y-auto">

@@ -1,8 +1,21 @@
-import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject} from '@angular/core';
+import {
+  NavigationCancel,
+  NavigationEnd,
+  NavigationError,
+  NavigationStart,
+  Router,
+  RouterOutlet
+} from '@angular/router';
 import {LoginService} from './login/login.service';
 import {Subject, Subscription} from 'rxjs';
-import {NavigationCancel, NavigationEnd, NavigationStart, NavigationError, Router} from '@angular/router';
 import {LoaderService} from './framework/loader/loader.service';
+import {NavbarComponent} from './navbar/navbar.component';
+import {SidenavComponent} from './sidenav/sidenav.component';
+import {LoaderComponent} from './framework/loader/loader.component';
+import {ToastModule} from 'primeng/toast';
+import {ConfirmDialogModule} from 'primeng/confirmdialog';
+import {ScrollPanelModule} from 'primeng/scrollpanel';
 
 export const browserChange = new Subject<boolean>();
 
@@ -10,7 +23,15 @@ export const browserChange = new Subject<boolean>();
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css'],
-    standalone: false,
+  imports: [
+    RouterOutlet,
+    NavbarComponent,
+    SidenavComponent,
+    LoaderComponent,
+    ToastModule,
+    ConfirmDialogModule,
+    ScrollPanelModule
+  ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppComponent {

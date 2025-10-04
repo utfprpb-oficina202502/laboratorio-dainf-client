@@ -1,0 +1,6 @@
+<svg height="150" width="200" xmlns="http://www.w3.org/2000/svg">
+  <rect fill="#f0f0f0" height="150" width="200"/>
+  <text dominant-baseline="middle" fill="#999" font-family="Arial, sans-serif" font-size="14"
+        text-anchor="middle" x="50%" y="50%">Sem Imagem
+  </text>
+</svg>
