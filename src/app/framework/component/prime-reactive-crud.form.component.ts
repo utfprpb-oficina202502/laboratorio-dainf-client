@@ -1,11 +1,11 @@
-import { ActivatedRoute, Router } from '@angular/router';
-import { CrudService } from '../service/crud.service';
-import { Directive, Injector, OnInit, signal, computed } from '@angular/core';
-import { FormGroup } from '@angular/forms';
-import { MessageService } from 'primeng/api';
+import {ActivatedRoute, Router} from '@angular/router';
+import {CrudService} from '../service/crud.service';
+import {computed, Directive, Injector, OnInit, signal} from '@angular/core';
+import {FormGroup} from '@angular/forms';
+import {MessageService} from 'primeng/api';
 import Swal from 'sweetalert2';
-import { LoaderService } from '../loader/loader.service';
-import { LoginService } from '../../login/login.service';
+import {LoaderService} from '../loader/loader.service';
+import {LoginService} from '../../login/login.service';
 
 @Directive()
 export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {

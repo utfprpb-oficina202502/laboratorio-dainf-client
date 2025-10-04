@@ -8,9 +8,11 @@ import {
   OnDestroy,
   OnInit
 } from "@angular/core";
+import {CommonModule, DatePipe} from '@angular/common';
+import {RouterLink} from '@angular/router';
+import {FormsModule} from '@angular/forms';
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
-import {DatePipe} from '@angular/common';
 import {finalize, forkJoin} from 'rxjs';
 
 import {DashboardEmprestimoCountRange} from "./dashboard/dashboardEmprestimoCountRange";
@@ -26,12 +28,38 @@ import {
   getAlternatingColor
 } from "../framework/charts/chart-colors.config";
 
+// PrimeNG
+import {DialogModule} from 'primeng/dialog';
+import {TooltipModule} from 'primeng/tooltip';
+import {DatePickerModule} from 'primeng/datepicker';
+import {PanelModule} from 'primeng/panel';
+import {ButtonModule} from 'primeng/button';
+
+// Custom Components
+import {StatCardComponent} from '../components/stat-card/stat-card.component';
+import {SkeletonCardComponent} from '../framework/component/skeleton-card.component';
+import {SkeletonChartComponent} from '../framework/component/skeleton-chart.component';
+
 @Component({
   selector: "app-home",
   templateUrl: "./home.component.html",
   styleUrls: ["./home.component.css"],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: false
+  imports: [
+    CommonModule,
+    RouterLink,
+    FormsModule,
+    // PrimeNG
+    DialogModule,
+    TooltipModule,
+    DatePickerModule,
+    PanelModule,
+    ButtonModule,
+    // Custom
+    StatCardComponent,
+    SkeletonCardComponent,
+    SkeletonChartComponent,
+  ]
 })
 export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly homeService = inject(HomeService);
@@ -85,12 +113,10 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
       if (this.showDashboardAluno) {
         this.loaderService.hide();
+      } else if (this.viewInitialized) {
+        this.buildDashboards();
       } else {
-        if (this.viewInitialized) {
-          this.buildDashboards();
-        } else {
-          this.pendingDashboardBuild = true;
-        }
+        this.pendingDashboardBuild = true;
       }
     }).catch(() => {
       this.loaderService.hide();
@@ -827,12 +853,4 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
 }
-
-
-
-
-
-
-
-
 

@@ -1,15 +1,49 @@
-import { Component, Injector, ViewChild, ChangeDetectionStrategy, signal, computed, effect, OnDestroy, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import { PrimeReactiveCrudFormComponent } from '../framework/component/prime-reactive-crud.form.component';
-import { Item } from './item';
-import { ItemService } from './item.service';
-import { Grupo } from '../grupo/grupo';
-import { GrupoService } from '../grupo/grupo.service';
-import { FileUpload } from 'primeng/fileupload';
-import { environment } from '../../environments/environment';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  Injector,
+  OnDestroy,
+  signal,
+  ViewChild
+} from '@angular/core';
+import {CommonModule, NgOptimizedImage} from '@angular/common';
+import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
+import {Subscription} from 'rxjs';
+import {
+  PrimeReactiveCrudFormComponent
+} from '../framework/component/prime-reactive-crud.form.component';
+import {Item} from './item';
+import {ItemService} from './item.service';
+import {Grupo} from '../grupo/grupo';
+import {GrupoService} from '../grupo/grupo.service';
+import {FileUpload, FileUploadModule} from 'primeng/fileupload';
+import {environment} from '../../environments/environment';
 import Swal from 'sweetalert2';
-import { ItemImage } from './itemImage';
+import {ItemImage} from './itemImage';
+
+// PrimeNG
+import {AutoCompleteModule} from "primeng/autocomplete";
+import {ButtonModule} from "primeng/button";
+import {CardModule} from "primeng/card";
+import {CarouselModule} from "primeng/carousel";
+import {DialogModule} from "primeng/dialog";
+import {InputTextModule} from "primeng/inputtext";
+import {TextareaModule} from "primeng/textarea";
+import {InputNumberModule} from "primeng/inputnumber";
+import {SelectModule} from "primeng/select";
+import {TooltipModule} from "primeng/tooltip";
+
+// Framework
+import {FormFieldComponent} from "../framework/component/form-field.component";
+
+// Geral components
+import {VoltarComponent} from "../geral/voltar/voltar.component";
+import {CancelarComponent} from "../geral/cancelar/cancelar.component";
+import {SalvarComponent} from "../geral/salvar/salvar.component";
+import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.component';
 
 interface TipoItemOption {
   label: string;
@@ -20,7 +54,31 @@ interface TipoItemOption {
   selector: 'app-form-item',
   templateUrl: './item.form.component.html',
   styleUrls: ['./item.form.component.css'],
-  standalone: false,
+  imports: [
+    CadastroRapidoComponent,
+    CommonModule,
+    ReactiveFormsModule,
+    NgOptimizedImage,
+    // PrimeNG
+    AutoCompleteModule,
+    ButtonModule,
+    CardModule,
+    CarouselModule,
+    DialogModule,
+    FileUploadModule,
+    InputTextModule,
+    TextareaModule,
+    InputNumberModule,
+    SelectModule,
+    TooltipModule,
+    // Framework
+    FormFieldComponent,
+    // Geral
+    VoltarComponent,
+    CancelarComponent,
+    SalvarComponent,
+
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, number> implements OnDestroy {
@@ -77,7 +135,6 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     super(itemService, injector, '/item', Item);
     this.itemService = itemService;
     this.injector = injector;
-
 
     // Effect to handle form fields enable/disable based on user role
     effect(() => {

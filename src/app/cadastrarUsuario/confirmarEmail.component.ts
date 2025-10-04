@@ -1,13 +1,19 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from "@angular/core";
-import { ActivatedRoute, Router } from "@angular/router";
-import { MessageService } from "primeng/api";
-import { CadastrarUsuarioService } from "./cadastrarUsuario.service";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit} from "@angular/core";
+import {CommonModule, NgOptimizedImage} from "@angular/common";
+import {ActivatedRoute, Router} from "@angular/router";
+import {MessageService} from "primeng/api";
+import {ProgressBar} from "primeng/progressbar";
+import {CadastrarUsuarioService} from "./cadastrarUsuario.service";
 
 @Component({
     selector: "app-confirmarvalidar-email",
     templateUrl: "./confirmarEmail.component.html",
     styleUrls: ["./confirmarEmail.component.css"],
-    standalone: false,
+  imports: [
+    CommonModule,
+    NgOptimizedImage,
+    ProgressBar
+  ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConfirmarEmailComponent implements OnInit {

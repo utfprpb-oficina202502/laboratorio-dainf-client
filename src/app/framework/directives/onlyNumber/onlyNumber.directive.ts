@@ -1,8 +1,7 @@
-import { Directive, ElementRef, HostListener, inject } from '@angular/core';
+import {Directive, ElementRef, HostListener, inject} from '@angular/core';
 
 @Directive({
   selector: '[onlyNumber]',
-  standalone: false,
 })
 export class OnlyNumberDirective {
   private readonly el = inject<ElementRef<HTMLInputElement>>(ElementRef);

@@ -1,7 +1,7 @@
-import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
+import {ChangeDetectionStrategy, Component, input, output} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {ButtonModule} from 'primeng/button';
+import {TooltipModule} from 'primeng/tooltip';
 
 /**
  * Unified action buttons component for list tables
@@ -9,7 +9,6 @@ import { TooltipModule } from 'primeng/tooltip';
  */
 @Component({
   selector: 'app-action-buttons',
-  standalone: true,
   imports: [CommonModule, ButtonModule, TooltipModule],
   template: `
     <div class="flex items-center gap-1 justify-center">

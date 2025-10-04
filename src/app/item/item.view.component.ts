@@ -1,15 +1,29 @@
-import { Component, Injector, OnInit, inject } from '@angular/core';
+import {Component, inject, Injector, OnInit} from '@angular/core';
+import {CommonModule} from '@angular/common';
 import {Item} from './item';
 import {ItemService} from './item.service';
 import {Reserva} from '../reserva/reserva';
-import { environment } from 'src/environments/environment';
-import { LoginService } from '../login/login.service';
+import {environment} from 'src/environments/environment';
+import {LoginService} from '../login/login.service';
+
+// PrimeNG
+import {DataViewModule} from 'primeng/dataview';
+import {TagModule} from 'primeng/tag';
+import {ButtonModule} from 'primeng/button';
+import {CardModule} from 'primeng/card';
 
 @Component({
     selector: 'app-view-item',
     templateUrl: './item.view.component.html',
     styleUrls: ['./item.view.component.css'],
-    standalone: false
+  imports: [
+    CommonModule,
+    // PrimeNG
+    DataViewModule,
+    TagModule,
+    ButtonModule,
+    CardModule
+  ]
 })
 export class ItemViewComponent implements OnInit {
   protected itemService = inject(ItemService);

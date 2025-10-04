@@ -1,4 +1,12 @@
-import { Component, forwardRef, Injector, ViewChild, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  forwardRef,
+  inject,
+  Injector,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
@@ -23,7 +31,6 @@ import {TagModule} from 'primeng/tag';
 import {MenuModule} from 'primeng/menu';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
 import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
-import {NovoModule} from '../geral/novo/novo.module';
 
 @Component({
     selector: 'app-list-reserva',
@@ -46,7 +53,6 @@ import {NovoModule} from '../geral/novo/novo.module';
     MenuModule,
     PrimeCrudToolbarComponent,
     ActionButtonsComponent,
-    NovoModule
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => ReservaListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -58,7 +64,6 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
   @ViewChild('actionsMenu') actionsMenu: Popover;
   contextMenuItems: MenuItem[] = [];
   selectedReserva: Reserva;
-
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -220,7 +225,6 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
     localStorage.setItem('reserva-to-emprestimo', JSON.stringify(reserva));
     this.router.navigate(['emprestimo/form/reserva']);
   }
-
 
   postFindAll(): void {
     // PrimeNG tables handle sorting and filtering through the table configuration

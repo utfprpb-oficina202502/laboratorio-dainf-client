@@ -1,6 +1,6 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { SkeletonModule } from 'primeng/skeleton';
+import {ChangeDetectionStrategy, Component} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {SkeletonModule} from 'primeng/skeleton';
 
 @Component({
   selector: 'app-skeleton-card',

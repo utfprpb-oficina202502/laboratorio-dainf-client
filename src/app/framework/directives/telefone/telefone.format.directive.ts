@@ -1,53 +1,56 @@
-import { Directive, DoCheck, ElementRef, HostListener, inject } from '@angular/core';
+import {Directive, ElementRef, HostListener, inject, OnInit} from '@angular/core';
 import {NgControl} from '@angular/forms';
 
 @Directive({
-    selector: '[formatTelefone]',
-    standalone: false
+  selector: '[formatTelefone]',
 })
-export class TelefoneFormatDirective implements DoCheck {
-  el = inject(ElementRef);
-  private control = inject(NgControl);
+export class TelefoneFormatDirective implements OnInit {
+  private readonly el = inject<ElementRef<HTMLInputElement>>(ElementRef);
+  private readonly control = inject(NgControl);
 
-
-  ngDoCheck(): void {
+  ngOnInit(): void {
+    // Garante formatação inicial se já houver valor
     this.format();
   }
 
-  @HostListener('keydown', ['$event']) onKeyDown(event) {
-    const e = <KeyboardEvent> event;
-    if ([46, 8, 9, 27, 13, 110, 190].indexOf(e.keyCode) !== -1 ||
-      // Allow: Ctrl+A
-      (e.keyCode === 65 && (e.ctrlKey || e.metaKey)) ||
-      // Allow: Ctrl+C
-      (e.keyCode === 67 && (e.ctrlKey || e.metaKey)) ||
-      // Allow: Ctrl+V
-      (e.keyCode === 86 && (e.ctrlKey || e.metaKey)) ||
-      // Allow: Ctrl+X
-      (e.keyCode === 88 && (e.ctrlKey || e.metaKey)) ||
-      // Allow: home, end, left, right
-      (e.keyCode >= 35 && e.keyCode <= 39)) {
-      // let it happen, don't do anything
+  @HostListener('keydown', ['$event'])
+  onKeyDown(e: KeyboardEvent) {
+    // Permite edição/navegação e atalhos
+    if (
+      ['Delete', 'Backspace', 'Tab', 'Escape', 'Enter', 'Home', 'End', 'ArrowLeft', 'ArrowRight'].includes(e.key) ||
+      (['a', 'c', 'v', 'x'].includes(e.key.toLowerCase()) && (e.ctrlKey || e.metaKey))
+    ) {
       return;
     }
-    // Ensure that it is a number and stop the keypress
-    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
-      e.preventDefault();
-    }
+
+    // Permite apenas dígitos no keypress
+    if (/^\d$/.test(e.key)) return;
+
+    e.preventDefault();
   }
 
-  @HostListener('input', ['$event'])
-  onInput(e) {
+  @HostListener('input')
+  onInput() {
     this.format();
   }
 
   private format(): void {
-    const identificacao = this.el.nativeElement.value.replace(/[^0-9]/g, '');
+    const input = this.el.nativeElement;
+    const digits = (input.value ?? '').replace(/\D/g, ''); // remove tudo que não é dígito
 
-    if (identificacao.length === 10) {
-      this.control.valueAccessor.writeValue(identificacao.replace(/(\d{0})(\d{2})(\d{0})(\d{4})/g, "\$1(\$2)\$3\ \$4\-"));
-    } else if (identificacao.length === 11) {
-      this.control.valueAccessor.writeValue(identificacao.replace(/(\d{0})(\d{2})(\d{0})(\d{5})/g, "\$1(\$2)\$3\ \$4\-"));
+    let formatted = digits;
+
+    if (digits.length === 10) {
+      // (AA) NNNN-NNNN
+      formatted = digits.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    } else if (digits.length === 11) {
+      // (AA) NNNNN-NNNN
+      formatted = digits.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    }
+
+    // Evita loops desnecessários: só escreve se mudou
+    if (formatted !== input.value) {
+      this.control?.valueAccessor?.writeValue(formatted);
     }
   }
 }

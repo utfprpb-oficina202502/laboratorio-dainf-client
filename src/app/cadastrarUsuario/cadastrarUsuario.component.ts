@@ -1,14 +1,30 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from "@angular/core";
-import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from "@angular/forms";
-import { Router } from "@angular/router";
-import { MessageService } from "primeng/api";
-import { CadastrarUsuarioService } from "./cadastrarUsuario.service";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit} from "@angular/core";
+import {CommonModule, NgOptimizedImage} from "@angular/common";
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators
+} from "@angular/forms";
+import {Router} from "@angular/router";
+import {MessageService} from "primeng/api";
+import {ProgressBar} from "primeng/progressbar";
+import {InputTextModule} from "primeng/inputtext";
+import {CadastrarUsuarioService} from "./cadastrarUsuario.service";
 
 @Component({
     selector: "app-cadastrar-usuario",
     templateUrl: "./cadastrarUsuario.component.html",
     styleUrls: ["./cadastrarUsuario.component.css"],
-    standalone: false,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    NgOptimizedImage,
+    ProgressBar,
+    InputTextModule
+  ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CadastrarUsuarioComponent implements OnInit {

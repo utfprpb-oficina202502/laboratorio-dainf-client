@@ -1,12 +1,19 @@
-import { Component, forwardRef, Injector, ViewChild, ChangeDetectionStrategy, inject } from "@angular/core";
+import {
+  ChangeDetectionStrategy,
+  Component,
+  forwardRef,
+  inject,
+  Injector,
+  ViewChild
+} from "@angular/core";
 import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {FormsModule} from '@angular/forms';
-import { Item } from "./item";
-import { ItemService } from "./item.service";
-import { PrimeCrudListComponent } from "../framework/component/prime-crud.list.component";
-import { TableColumn } from '../framework/model/table-config.interface';
-import { MenuItem } from 'primeng/api';
-import { Popover, PopoverModule} from 'primeng/popover';
+import {Item} from "./item";
+import {ItemService} from "./item.service";
+import {PrimeCrudListComponent} from "../framework/component/prime-crud.list.component";
+import {TableColumn} from '../framework/model/table-config.interface';
+import {MenuItem} from 'primeng/api';
+import {Popover, PopoverModule} from 'primeng/popover';
 import {ReservaService} from "../reserva/reserva.service";
 import Swal from "sweetalert2";
 import {Reserva} from "../reserva/reserva";
@@ -28,7 +35,7 @@ import {DialogModule} from 'primeng/dialog';
 import {MenuModule} from 'primeng/menu';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
 import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
-import {NovoModule} from '../geral/novo/novo.module';
+import {NovoComponent} from '../geral/novo/novo.component';
 
 @Component({
     selector: "app-list-item",
@@ -52,7 +59,7 @@ import {NovoModule} from '../geral/novo/novo.module';
     MenuModule,
     PrimeCrudToolbarComponent,
     ActionButtonsComponent,
-    NovoModule,
+    NovoComponent,
     NgOptimizedImage
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

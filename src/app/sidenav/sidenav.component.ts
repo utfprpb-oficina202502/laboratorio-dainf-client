@@ -1,12 +1,19 @@
-import { Component, HostListener, OnInit, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef, inject } from "@angular/core";
-import { SidenavService } from "./sidenav.service";
-import { browserChange } from "../app.component";
-import { LoginService } from "../login/login.service";
-import { UsuarioService } from "../usuario/usuario.service";
-import { Router } from "@angular/router";
-import { ThemeService } from "../framework/services/theme.service";
-import { MenuItem as PrimeMenuItem } from 'primeng/api';
-import { Drawer } from 'primeng/drawer';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  inject,
+  OnInit
+} from "@angular/core";
+import {Router, RouterLink, RouterLinkActive} from "@angular/router";
+import {SidenavService} from "./sidenav.service";
+import {browserChange} from "../app.component";
+import {LoginService} from "../login/login.service";
+import {UsuarioService} from "../usuario/usuario.service";
+import {ThemeService} from "../framework/services/theme.service";
+import {MenuItem as PrimeMenuItem} from 'primeng/api';
+import {ThemeToggleComponent} from '../framework/component/theme-toggle.component';
 
 export interface MenuItem {
   path: string;
@@ -117,7 +124,11 @@ export const MENU_ITEM: MenuItem[] = [
     templateUrl: "./sidenav.component.html",
     styleUrls: ["./sidenav.component.css"],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    ThemeToggleComponent
+  ]
 })
 export class SidenavComponent implements OnInit {
   private readonly sidenavService = inject(SidenavService);
@@ -134,10 +145,8 @@ export class SidenavComponent implements OnInit {
   showCadastros = false;
   private readonly desktopBreakpoint = 1200;
   private viewportInitialized = false;
-  private isDesktopView = true;
-  closeOnEscape = false;
+  isDesktopView = true;
   sidebarVisible = true;
-  @ViewChild("drawer") drawer: Drawer;
 
   ngOnInit(): void {
     this.buildMenu();
@@ -175,12 +184,12 @@ export class SidenavComponent implements OnInit {
       const items = [];
 
       MENU_ITEM.forEach((menu: any) => {
-        if (menu.roles != null) {
+        if (menu.roles == null) {
+          items.push(menu);
+        } else {
           if (menu.roles.filter((value) => -1 !== userRoles.indexOf(value)).length > 0) {
             items.push(menu);
           }
-        } else {
-          items.push(menu);
         }
       });
 
@@ -232,6 +241,14 @@ export class SidenavComponent implements OnInit {
 
   toggleSubMenuCadastro() {
     this.showSubMenuCadastro = !this.showSubMenuCadastro;
+    this.cdr.markForCheck();
+  }
+
+  closeSidebar() {
+    if (!this.isDesktopView) {
+      this.sidebarVisible = false;
+      this.cdr.markForCheck();
+    }
   }
 
   private updateViewportFlags(): void {
@@ -244,18 +261,20 @@ export class SidenavComponent implements OnInit {
     const isDesktop = width >= this.desktopBreakpoint;
 
     this.isDesktopView = isDesktop;
-    this.closeOnEscape = !isDesktop;
 
     if (!this.viewportInitialized) {
       this.sidebarVisible = isDesktop;
       this.viewportInitialized = true;
+      this.cdr.markForCheck();
       return;
     }
 
     if (!wasDesktop && isDesktop) {
       this.sidebarVisible = true;
+      this.cdr.markForCheck();
     } else if (wasDesktop && !isDesktop) {
       this.sidebarVisible = false;
+      this.cdr.markForCheck();
     }
   }
 

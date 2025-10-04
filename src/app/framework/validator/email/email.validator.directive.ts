@@ -8,7 +8,6 @@ import {EmailUtil} from '../../util/email.util';
     providers: [
         { provide: NG_VALIDATORS, useExisting: forwardRef(() => EmailValidatorDirective), multi: true }
     ],
-    standalone: false
 })
 export class EmailValidatorDirective implements Validator {
 

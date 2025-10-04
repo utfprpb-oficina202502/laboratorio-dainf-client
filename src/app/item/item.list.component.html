@@ -149,7 +149,7 @@
                       <div class="flex justify-center">
                         <img
                           style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px;"
-                          [ngSrc]="row.imageItem?.length > 0 ? minioUrl + row.imageItem[0].nameImage : '/assets/no-image.png'"
+                          [ngSrc]="row.imageItem?.length > 0 ? minioUrl + row.imageItem[0].nameImage : 'no-image.svg'"
                           [alt]="'Item ' + row.nome"
                           (click)="openOptions($event, row)"
                           class="cursor-pointer" />
@@ -206,7 +206,7 @@
                   <div class="flex-shrink-0">
                     <img
                       style="width: 120px; height: 90px; object-fit: cover; border-radius: 8px;"
-                      [src]="row.imageItem?.length > 0 ? minioUrl + row.imageItem[0].nameImage : '/assets/no-image.png'"
+                      [src]="row.imageItem?.length > 0 ? minioUrl + row.imageItem[0].nameImage : 'no-image.svg'"
                       [alt]="'Item ' + row.nome" />
                     </div>
                     <div class="flex-grow-1">

@@ -1,6 +1,6 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { AbstractControl } from '@angular/forms';
+import {ChangeDetectionStrategy, Component, input} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {AbstractControl} from '@angular/forms';
 
 /**
  * Reusable form field wrapper component that handles validation display
@@ -12,7 +12,6 @@ import { AbstractControl } from '@angular/forms';
  */
 @Component({
   selector: 'app-form-field',
-  standalone: true,
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `

@@ -1,6 +1,6 @@
 import {ActivatedRoute, Router} from '@angular/router';
 import {CrudService} from '../service/crud.service';
-import { Injector, OnInit, Directive } from '@angular/core';
+import {Directive, Injector, OnInit} from '@angular/core';
 import {MessageService} from 'primeng/api';
 import {BaseFormComponent} from './base.form.component';
 import Swal from 'sweetalert2';
@@ -40,7 +40,7 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
     this.preOnInit();
     this.route.params.subscribe(params => {
       if (params.id) {
-        if (isNaN(params.id)) {
+        if (Number.isNaN(params.id)) {
           this.initializeValues();
         } else {
           this.edit(params.id);

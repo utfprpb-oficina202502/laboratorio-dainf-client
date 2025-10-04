@@ -1,16 +1,48 @@
-import { Component, Injector, ViewChild, inject } from "@angular/core";
-import { Usuario } from "./usuario";
-import { UsuarioService } from "./usuario.service";
-import { NgForm } from "@angular/forms";
-import { CrudFormComponent } from "../framework/component/crud.form.component";
-import { SelectItem } from "primeng/api";
+import {Component, inject, Injector, ViewChild} from "@angular/core";
+import {CommonModule} from "@angular/common";
+import {FormsModule, NgForm} from "@angular/forms";
+import {Usuario} from "./usuario";
+import {UsuarioService} from "./usuario.service";
+import {CrudFormComponent} from "../framework/component/crud.form.component";
+import {SelectItem} from "primeng/api";
 import Swal from "sweetalert2";
+
+// PrimeNG
+import {CardModule} from 'primeng/card';
+import {InputTextModule} from 'primeng/inputtext';
+import {ButtonModule} from 'primeng/button';
+import {TooltipModule} from 'primeng/tooltip';
+import {DialogModule} from 'primeng/dialog';
+import {MultiSelectModule} from 'primeng/multiselect';
+import {PasswordModule} from 'primeng/password';
+import {InputMaskModule} from 'primeng/inputmask';
+
+// Custom components
+import {VoltarComponent} from '../geral/voltar/voltar.component';
+import {CancelarComponent} from '../geral/cancelar/cancelar.component';
+import {SalvarComponent} from '../geral/salvar/salvar.component';
 
 @Component({
     selector: "app-edit-usuario",
     templateUrl: "./usuario.edit.component.html",
     styleUrls: ["./usuario.edit.component.css"],
-    standalone: false
+  imports: [
+    CommonModule,
+    FormsModule,
+    // PrimeNG
+    CardModule,
+    InputTextModule,
+    ButtonModule,
+    TooltipModule,
+    DialogModule,
+    MultiSelectModule,
+    PasswordModule,
+    InputMaskModule,
+    // Custom
+    VoltarComponent,
+    CancelarComponent,
+    SalvarComponent
+  ]
 })
 export class UsuarioEditComponent extends CrudFormComponent<Usuario, number> {
   protected usuarioService: UsuarioService;
@@ -66,34 +98,34 @@ export class UsuarioEditComponent extends CrudFormComponent<Usuario, number> {
 
   redefinirSenha() {
     if (this.formChangeSenha.valid) {
-      if (this.redNovaSenha !== this.redConfNovaSenha) {
+      if (this.redNovaSenha === this.redConfNovaSenha) {
+        this.object.password = this.redNovaSenha;
+        this.usuarioService
+        .changeSenha(this.object, this.redSenhaAtual)
+        .subscribe(
+          (e) => {
+            this.messageService.add({
+              severity: "success",
+              summary: "Sucesso",
+              detail: "Senha redefinida com sucesso!",
+            });
+            this.formChangeSenha.reset();
+            this.dialogChangeSenha = false;
+          },
+          (error) => {
+            this.messageService.add({
+              severity: "error",
+              summary: "Atenção",
+              detail: "A senha atual está incorreta!",
+            });
+          }
+        );
+      } else {
         this.messageService.add({
           severity: "error",
           summary: "Atenção",
           detail: "Senhas não conferem!",
         });
-      } else {
-        this.object.password = this.redNovaSenha;
-        this.usuarioService
-          .changeSenha(this.object, this.redSenhaAtual)
-          .subscribe(
-            (e) => {
-              this.messageService.add({
-                severity: "success",
-                summary: "Sucesso",
-                detail: "Senha redefinida com sucesso!",
-              });
-              this.formChangeSenha.reset();
-              this.dialogChangeSenha = false;
-            },
-            (error) => {
-              this.messageService.add({
-                severity: "error",
-                summary: "Atenção",
-                detail: "A senha atual está incorreta!",
-              });
-            }
-          );
       }
     } else {
       this.validarFormulario(this.formChangeSenha);

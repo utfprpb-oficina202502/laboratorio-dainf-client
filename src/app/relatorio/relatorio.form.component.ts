@@ -1,19 +1,61 @@
-import { Component, ElementRef, Injector, ViewChild, inject, ChangeDetectorRef } from '@angular/core';
+import {ChangeDetectorRef, Component, ElementRef, inject, Injector, ViewChild} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
 import {CrudFormComponent} from '../framework/component/crud.form.component';
 import {Relatorio} from './relatorio';
 import {RelatorioService} from './relatorio.service';
-import {FileUpload} from 'primeng/fileupload';
+import {FileUpload, FileUploadModule} from 'primeng/fileupload';
 import {SelectItem} from 'primeng/api';
 import {environment} from '../../environments/environment';
 import {RelatorioParams} from './relatorioParams';
 import {StringUtils} from '../framework/util/string.utils';
-import {Table} from 'primeng/table';
+import {Table, TableModule} from 'primeng/table';
+
+// PrimeNG Components
+import {CardModule} from 'primeng/card';
+import {ButtonModule} from 'primeng/button';
+import {InputTextModule} from 'primeng/inputtext';
+import {TooltipModule} from 'primeng/tooltip';
+import {DialogModule} from 'primeng/dialog';
+import {FieldsetModule} from 'primeng/fieldset';
+import {DatePickerModule} from "primeng/datepicker";
+import {SelectModule} from "primeng/select";
+
+// Custom modules
+import {VoltarComponent} from '../geral/voltar/voltar.component';
+import {SalvarComponent} from '../geral/salvar/salvar.component';
+import {CancelarComponent} from '../geral/cancelar/cancelar.component';
+
+// Framework components
+// Validation
+import {ValidationDirective} from '../framework/validation/validation.directive';
 
 @Component({
     selector: 'app-form-relatorio',
     templateUrl: './relatorio.form.component.html',
     styleUrls: ['./relatorio.form.component.css'],
-    standalone: false
+  imports: [
+    CommonModule,
+    FormsModule,
+    // PrimeNG
+    CardModule,
+    TableModule,
+    ButtonModule,
+    InputTextModule,
+    TooltipModule,
+    DialogModule,
+    FieldsetModule,
+    FileUploadModule,
+    DatePickerModule,
+    SelectModule,
+    // Custom
+    VoltarComponent,
+    SalvarComponent,
+    CancelarComponent,
+    // Framework
+    // Validation
+    ValidationDirective,
+  ]
 })
 export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number> {
   protected relatorioService: RelatorioService;
@@ -94,10 +136,9 @@ export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number>
   }
 
   preSave() {
-    if (this.editando) {
+    this.validExtra = false;
+    if (this.editando || this.fileUpload.files.length > 0) {
       this.validExtra = true;
-    } else {
-      this.fileUpload.files.length > 0 ? this.validExtra = true : this.validExtra = false;
     }
     this.save();
   }

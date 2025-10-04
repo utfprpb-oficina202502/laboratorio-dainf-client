@@ -1,24 +1,72 @@
-import { Component, Injector, ViewChild, inject } from '@angular/core';
+import {Component, inject, Injector, ViewChild} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule, NgForm} from '@angular/forms';
 import {CrudFormComponent} from '../framework/component/crud.form.component';
 import {Emprestimo} from './emprestimo';
 import {EmprestimoService} from './emprestimo.service';
-import {NgForm} from '@angular/forms';
-import {CdkDragDrop, moveItemInArray, transferArrayItem} from '@angular/cdk/drag-drop';
+import {
+  CdkDragDrop,
+  DragDropModule,
+  moveItemInArray,
+  transferArrayItem
+} from '@angular/cdk/drag-drop';
 import {EmprestimoDevolucaoItem, StatusDevolucao} from './emprestimoDevolucaoItem';
-import { MenuItem } from 'primeng/api';
-import { Menu } from 'primeng/menu';
+import {MenuItem} from 'primeng/api';
+import {Menu, MenuModule} from 'primeng/menu';
 import Swal from 'sweetalert2';
+
+// PrimeNG
+import {CardModule} from 'primeng/card';
+import {InputTextModule} from 'primeng/inputtext';
+import {AutoCompleteModule} from 'primeng/autocomplete';
+import {DatePickerModule} from 'primeng/datepicker';
+import {SelectModule} from 'primeng/select';
+import {ButtonModule} from 'primeng/button';
+import {TableModule} from 'primeng/table';
+import {TooltipModule} from 'primeng/tooltip';
+import {DialogModule} from 'primeng/dialog';
+import {ScrollPanelModule} from 'primeng/scrollpanel';
+import {TextareaModule} from 'primeng/textarea';
+import {TagModule} from 'primeng/tag';
+
+// Custom components
+import {VoltarComponent} from '../geral/voltar/voltar.component';
+import {CancelarComponent} from '../geral/cancelar/cancelar.component';
+import {SalvarComponent} from '../geral/salvar/salvar.component';
 
 @Component({
     selector: 'app-devolucao-emprestimo',
     templateUrl: './emprestimo.devolucao.component.html',
     styleUrls: ['./emprestimo.devolucao.component.css'],
-    standalone: false
+  imports: [
+    CommonModule,
+    FormsModule,
+    // PrimeNG
+    CardModule,
+    InputTextModule,
+    AutoCompleteModule,
+    DatePickerModule,
+    SelectModule,
+    ButtonModule,
+    TableModule,
+    TooltipModule,
+    DialogModule,
+    ScrollPanelModule,
+    TextareaModule,
+    MenuModule,
+    TagModule,
+    // Angular CDK
+    DragDropModule,
+    // Custom
+    VoltarComponent,
+    CancelarComponent,
+    SalvarComponent,
+
+  ]
 })
 export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, number> {
   protected emprestimoService: EmprestimoService;
   protected injector: Injector;
-
 
   @ViewChild('form') frm: NgForm;
   @ViewChild('contextMenu') contextMenu: Menu;

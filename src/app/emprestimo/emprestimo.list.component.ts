@@ -1,4 +1,12 @@
-import { Component, forwardRef, Injector, ViewChild, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  forwardRef,
+  inject,
+  Injector,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
@@ -31,7 +39,7 @@ import {SelectModule} from 'primeng/select';
 
 import {MenuModule} from 'primeng/menu';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {NovoModule} from '../geral/novo/novo.module';
+import {NovoComponent} from '../geral/novo/novo.component';
 
 @Component({
     selector: 'app-list-emprestimo',
@@ -57,7 +65,7 @@ import {NovoModule} from '../geral/novo/novo.module';
     PopoverModule,
     MenuModule,
     PrimeCrudToolbarComponent,
-    NovoModule
+    NovoComponent
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => EmprestimoListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush

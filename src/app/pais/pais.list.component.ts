@@ -1,4 +1,4 @@
-import { Component, forwardRef, Injector, ChangeDetectionStrategy, inject } from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {Pais} from './pais';
@@ -44,7 +44,6 @@ import {ActionButtonsComponent} from '../framework/component/action-buttons.comp
 export class PaisListComponent extends PrimeCrudListComponent<Pais, number> {
   protected paisService: PaisService;
   protected injector: Injector;
-
 
   private readonly tableColumns: TableColumn[] = [
     {

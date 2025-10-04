@@ -1,14 +1,12 @@
-import { Directive, DoCheck, ElementRef, HostListener, inject } from '@angular/core';
+import {Directive, DoCheck, ElementRef, HostListener, inject} from '@angular/core';
 import {NgControl} from '@angular/forms';
 
 @Directive({
     selector: '[formatCnpj]',
-    standalone: false
 })
 export class CnpjDirective implements DoCheck {
   el = inject(ElementRef);
   private readonly control = inject(NgControl);
-
 
   ngDoCheck(): void {
     this.format();

@@ -1,4 +1,4 @@
-import { Component, forwardRef, Injector, ChangeDetectionStrategy, inject } from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
@@ -48,7 +48,6 @@ import {ActionButtonsComponent} from '../framework/component/action-buttons.comp
 export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
   protected saidaService: SaidaService;
   protected injector: Injector;
-
 
   private readonly tableColumns: TableColumn[] = [
     {

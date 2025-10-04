@@ -1,11 +1,13 @@
-import { Component, Injector, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
-import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {
-  ReactiveFormsModule, FormsModule,
-  FormBuilder,
-  FormGroup,
-  Validators
-} from '@angular/forms';
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  Injector,
+  signal
+} from '@angular/core';
+import {CommonModule, NgOptimizedImage} from '@angular/common';
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Emprestimo} from './emprestimo';
 import {EmprestimoService} from './emprestimo.service';
 import {
@@ -35,17 +37,17 @@ import {ScrollPanelModule} from 'primeng/scrollpanel';
 
 // Custom components
 import {FormFieldComponent} from '../framework/component/form-field.component';
-import {VoltarModule} from '../geral/voltar/voltar.module';
-import {CancelarModule} from '../geral/cancelar/cancelar.module';
-import {SalvarModule} from '../geral/salvar/salvar.module';
-import {CadastroRapidoModule} from '../geral/cadastroRapido/cadastroRapido.module';
+import {VoltarComponent} from '../geral/voltar/voltar.component';
+import {CancelarComponent} from '../geral/cancelar/cancelar.component';
+import {SalvarComponent} from '../geral/salvar/salvar.component';
+import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.component';
 
 @Component({
   selector: 'app-form-emprestimo',
   templateUrl: './emprestimo.form.component.html',
   styleUrls: ['./emprestimo.form.component.css'],
-  standalone: true,
   imports: [
+    CadastroRapidoComponent,
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
@@ -63,10 +65,9 @@ import {CadastroRapidoModule} from '../geral/cadastroRapido/cadastroRapido.modul
     ScrollPanelModule,
     // Custom
     FormFieldComponent,
-    VoltarModule,
-    CancelarModule,
-    SalvarModule,
-    CadastroRapidoModule,
+    VoltarComponent,
+    CancelarComponent,
+    SalvarComponent,
     NgOptimizedImage
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -118,7 +119,7 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
     const injector = inject(Injector);
 
     super(emprestimoService, injector, '/emprestimo', Emprestimo);
-  
+
     this.emprestimoService = emprestimoService;
     this.injector = injector;
   }
@@ -211,7 +212,6 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
       this.tempQtde.set(1);
     }
   }
-
 
   /**
    * Insert item into the list

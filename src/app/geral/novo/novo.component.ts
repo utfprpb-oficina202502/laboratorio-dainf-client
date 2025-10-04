@@ -1,14 +1,14 @@
-import {Component, EventEmitter, OnInit, Output} from '@angular/core';
+import {Component, output} from '@angular/core';
+import {ButtonModule} from 'primeng/button';
 
 @Component({
     selector: 'app-novo',
     templateUrl: './novo.component.html',
     styleUrls: ['./novo.component.css'],
-    standalone: false
+  imports: [ButtonModule]
 })
 export class NovoComponent {
-
-  @Output() onClick: EventEmitter<any> = new EventEmitter();
+  readonly onClick = output<void>();
 
   click(): void {
     this.onClick.emit();

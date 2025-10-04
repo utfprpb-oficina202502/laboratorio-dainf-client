@@ -1,4 +1,4 @@
-import { Component, forwardRef, Injector, ChangeDetectionStrategy, inject } from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
 
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
@@ -17,8 +17,7 @@ import {IconFieldModule} from 'primeng/iconfield';
 import {InputIconModule} from 'primeng/inputicon';
 import {TooltipModule} from 'primeng/tooltip';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {NovoModule} from '../geral/novo/novo.module';
-import {CpfCnpjPipeModule} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe.module";
+import {CpfCnpjPipe} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe";
 
 @Component({
     selector: 'app-list-fornecedor',
@@ -36,8 +35,7 @@ import {CpfCnpjPipeModule} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe.module";
     InputIconModule,
     TooltipModule,
     PrimeCrudToolbarComponent,
-    NovoModule,
-    CpfCnpjPipeModule
+    CpfCnpjPipe
 ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => FornecedorListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -45,7 +43,6 @@ import {CpfCnpjPipeModule} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe.module";
 export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, number> {
   protected fornecedorService: FornecedorService;
   protected injector: Injector;
-
 
   private readonly tableColumns: TableColumn[] = [
     {

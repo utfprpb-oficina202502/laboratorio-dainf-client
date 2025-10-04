@@ -1,10 +1,36 @@
-import { Component, Injector, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Usuario } from './usuario';
-import { UsuarioService } from './usuario.service';
-import { PrimeReactiveCrudFormComponent } from '../framework/component/prime-reactive-crud.form.component';
-import { Permissao } from './permissao';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  Injector,
+  signal
+} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import {Usuario} from './usuario';
+import {UsuarioService} from './usuario.service';
+import {
+  PrimeReactiveCrudFormComponent
+} from '../framework/component/prime-reactive-crud.form.component';
+import {Permissao} from './permissao';
 import Swal from 'sweetalert2';
+
+// PrimeNG
+import {CardModule} from 'primeng/card';
+import {InputTextModule} from 'primeng/inputtext';
+import {ButtonModule} from 'primeng/button';
+import {TooltipModule} from 'primeng/tooltip';
+import {DialogModule} from 'primeng/dialog';
+import {MultiSelectModule} from 'primeng/multiselect';
+import {PasswordModule} from 'primeng/password';
+import {InputMaskModule} from 'primeng/inputmask';
+
+// Custom components
+import {FormFieldComponent} from '../framework/component/form-field.component';
+import {VoltarComponent} from '../geral/voltar/voltar.component';
+import {CancelarComponent} from '../geral/cancelar/cancelar.component';
+import {SalvarComponent} from '../geral/salvar/salvar.component';
 
 interface PermissaoSelectItem {
   label: string;
@@ -15,7 +41,25 @@ interface PermissaoSelectItem {
   selector: 'app-form-usuario',
   templateUrl: './usuario.form.component.html',
   styleUrls: ['./usuario.form.component.css'],
-  standalone: false,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    // PrimeNG
+    CardModule,
+    InputTextModule,
+    ButtonModule,
+    TooltipModule,
+    DialogModule,
+    MultiSelectModule,
+    PasswordModule,
+    InputMaskModule,
+    // Custom
+    FormFieldComponent,
+    VoltarComponent,
+    CancelarComponent,
+    SalvarComponent
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario, number> {

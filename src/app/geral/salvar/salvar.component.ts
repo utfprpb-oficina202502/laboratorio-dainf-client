@@ -1,9 +1,10 @@
-import { Component, input, output } from '@angular/core';
+import {Component, input, output} from '@angular/core';
+import {ButtonModule} from 'primeng/button';
 
 @Component({
   selector: 'app-salvar',
   templateUrl: './salvar.component.html',
-  standalone: false
+  imports: [ButtonModule]
 })
 export class SalvarComponent {
   readonly typeButton = input<string>('button');

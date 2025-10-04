@@ -1,4 +1,11 @@
-import { Component, forwardRef, Injector, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  forwardRef,
+  inject,
+  Injector,
+  OnInit
+} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
@@ -18,7 +25,6 @@ import {InputIconModule} from 'primeng/inputicon';
 import {TooltipModule} from 'primeng/tooltip';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
 import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
-import {NovoModule} from '../geral/novo/novo.module';
 
 @Component({
     selector: 'app-list-solicitacao-compra',
@@ -38,7 +44,6 @@ import {NovoModule} from '../geral/novo/novo.module';
     TooltipModule,
     PrimeCrudToolbarComponent,
     ActionButtonsComponent,
-    NovoModule
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => SolicitacaoCompraListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -46,7 +51,6 @@ import {NovoModule} from '../geral/novo/novo.module';
 export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<SolicitacaoCompra, number> implements OnInit {
   protected solicitacaoCompraService: SolicitacaoCompraService;
   protected injector: Injector;
-
 
   private readonly tableColumns: TableColumn[] = [
     {

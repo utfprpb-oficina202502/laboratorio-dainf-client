@@ -1,5 +1,5 @@
-import { FormControl, NgForm } from '@angular/forms';
-import { ViewChild, Directive } from '@angular/core';
+import {FormControl, NgForm} from '@angular/forms';
+import {Directive, ViewChild} from '@angular/core';
 
 @Directive()
 export abstract class BaseFormComponent {

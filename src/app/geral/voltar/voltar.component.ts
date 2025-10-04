@@ -1,9 +1,14 @@
-import { Component, output } from '@angular/core';
+import {Component, output} from '@angular/core';
+import {ButtonModule} from 'primeng/button';
+import {TooltipModule} from 'primeng/tooltip';
 
 @Component({
   selector: 'app-voltar',
   templateUrl: './voltar.component.html',
-  standalone: false
+  imports: [
+    ButtonModule,
+    TooltipModule
+  ]
 })
 export class VoltarComponent {
   readonly onClick = output<void>();

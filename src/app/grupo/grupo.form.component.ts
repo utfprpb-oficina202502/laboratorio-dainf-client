@@ -1,17 +1,59 @@
-import { Component, Injector, ChangeDetectionStrategy, signal, computed, OnDestroy, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import { Grupo } from './grupo';
-import { GrupoService } from './grupo.service';
-import { PrimeReactiveCrudFormComponent } from '../framework/component/prime-reactive-crud.form.component';
-import { Item } from '../item/item';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  Injector,
+  OnDestroy,
+  signal
+} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
+import {Subscription} from 'rxjs';
+import {Grupo} from './grupo';
+import {GrupoService} from './grupo.service';
+import {
+  PrimeReactiveCrudFormComponent
+} from '../framework/component/prime-reactive-crud.form.component';
+import {Item} from '../item/item';
 import Swal from 'sweetalert2';
+
+// PrimeNG Modules
+import {DialogModule} from 'primeng/dialog';
+import {InputTextModule} from 'primeng/inputtext';
+import {TooltipModule} from 'primeng/tooltip';
+import {CardModule} from 'primeng/card';
+import {ButtonModule} from 'primeng/button';
+import {TableModule} from 'primeng/table';
+import {ProgressSpinnerModule} from 'primeng/progressspinner';
+
+// Custom Components
+import {VoltarComponent} from '../geral/voltar/voltar.component';
+import {CancelarComponent} from '../geral/cancelar/cancelar.component';
+import {SalvarComponent} from '../geral/salvar/salvar.component';
+import {FormFieldComponent} from '../framework/component/form-field.component';
 
 @Component({
   selector: 'app-form-grupo',
   templateUrl: './grupo.form.component.html',
   styleUrls: ['./grupo.form.component.css'],
-  standalone: false,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    // PrimeNG
+    CardModule,
+    InputTextModule,
+    ButtonModule,
+    TooltipModule,
+    DialogModule,
+    TableModule,
+    ProgressSpinnerModule,
+    // Custom
+    VoltarComponent,
+    CancelarComponent,
+    SalvarComponent,
+    FormFieldComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, number> implements OnDestroy {
@@ -37,7 +79,7 @@ export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, nu
     const injector = inject(Injector);
 
     super(grupoService, injector, '/grupo', Grupo);
-  
+
     this.grupoService = grupoService;
     this.injector = injector;
   }

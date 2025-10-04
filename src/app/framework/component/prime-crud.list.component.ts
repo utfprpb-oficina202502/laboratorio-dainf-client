@@ -1,4 +1,16 @@
-import { HostListener, Injector, OnInit, Directive, Input, ContentChild, TemplateRef, OnDestroy, ElementRef, ViewChild, ChangeDetectorRef } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  ContentChild,
+  Directive,
+  ElementRef,
+  HostListener,
+  Injector,
+  Input,
+  OnDestroy,
+  OnInit,
+  TemplateRef,
+  ViewChild
+} from '@angular/core';
 import {Router} from '@angular/router';
 import {CrudService} from '../service/crud.service';
 import {ConfirmationService, MessageService} from 'primeng/api';
@@ -9,8 +21,8 @@ import {Exception} from '../../exception/exception';
 import {LoaderService} from '../loader/loader.service';
 import {LoginService} from '../../login/login.service';
 import {PermissionService} from '../service/permission.service';
-import {TableConfiguration, TableColumn, ColumnState} from '../model/table-config.interface';
-import {Subject, debounceTime, distinctUntilChanged, takeUntil} from 'rxjs';
+import {ColumnState, TableColumn, TableConfiguration} from '../model/table-config.interface';
+import {debounceTime, distinctUntilChanged, Subject, takeUntil} from 'rxjs';
 
 @Directive()
 export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy {

@@ -1,18 +1,59 @@
-import { Component, Injector, ChangeDetectionStrategy, signal, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Fornecedor } from './fornecedor';
-import { FornecedorService } from './fornecedor.service';
-import { Estado } from '../estado/estado';
-import { CidadeService } from '../cidade/cidade.service';
-import { EstadoService } from '../estado/estado.service';
-import { Cidade } from '../cidade/cidade';
-import { PrimeReactiveCrudFormComponent } from '../framework/component/prime-reactive-crud.form.component';
+import {ChangeDetectionStrategy, Component, inject, Injector, signal} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
+import {Fornecedor} from './fornecedor';
+import {FornecedorService} from './fornecedor.service';
+import {Estado} from '../estado/estado';
+import {CidadeService} from '../cidade/cidade.service';
+import {EstadoService} from '../estado/estado.service';
+import {Cidade} from '../cidade/cidade';
+import {
+  PrimeReactiveCrudFormComponent
+} from '../framework/component/prime-reactive-crud.form.component';
+
+// PrimeNG
+import {CardModule} from 'primeng/card';
+import {InputTextModule} from 'primeng/inputtext';
+import {TextareaModule} from 'primeng/textarea';
+import {AutoCompleteModule} from 'primeng/autocomplete';
+import {ButtonModule} from 'primeng/button';
+import {TooltipModule} from 'primeng/tooltip';
+
+// Custom components
+import {FormFieldComponent} from '../framework/component/form-field.component';
+import {VoltarComponent} from '../geral/voltar/voltar.component';
+import {CancelarComponent} from '../geral/cancelar/cancelar.component';
+import {SalvarComponent} from '../geral/salvar/salvar.component';
+
+// Directives
+import {OnlyNumberDirective} from '../framework/directives/onlyNumber/onlyNumber.directive';
+import {CnpjDirective} from '../framework/directives/cnpj/cnpj.directive';
+import {TelefoneFormatDirective} from '../framework/directives/telefone/telefone.format.directive';
 
 @Component({
   selector: 'app-form-fornecedor',
   templateUrl: './fornecedor.form.component.html',
   styleUrls: ['./fornecedor.form.component.css'],
-  standalone: false,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    // PrimeNG
+    CardModule,
+    InputTextModule,
+    TextareaModule,
+    AutoCompleteModule,
+    ButtonModule,
+    TooltipModule,
+    // Custom
+    FormFieldComponent,
+    VoltarComponent,
+    CancelarComponent,
+    SalvarComponent,
+    // Directives
+    OnlyNumberDirective,
+    CnpjDirective,
+    TelefoneFormatDirective
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FornecedorFormComponent extends PrimeReactiveCrudFormComponent<Fornecedor, number> {
@@ -32,7 +73,7 @@ export class FornecedorFormComponent extends PrimeReactiveCrudFormComponent<Forn
     const injector = inject(Injector);
 
     super(fornecedorService, injector, '/fornecedor', Fornecedor);
-  
+
     this.fornecedorService = fornecedorService;
     this.injector = injector;
   }

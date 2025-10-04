@@ -1,10 +1,9 @@
-import { Directive, ElementRef, Input, Renderer2, inject } from '@angular/core';
-import { NgControl } from '@angular/forms';
-import { ValidationService } from './validation.service';
+import {Directive, ElementRef, inject, Input, Renderer2} from '@angular/core';
+import {NgControl} from '@angular/forms';
+import {ValidationService} from './validation.service';
 
 @Directive({
     selector: '[validation]',
-    standalone: false
 })
 export class ValidationDirective {
   private readonly el = inject(ElementRef);

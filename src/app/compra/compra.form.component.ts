@@ -1,11 +1,13 @@
-import { Component, Injector, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
-import {CommonModule} from '@angular/common';
 import {
-  ReactiveFormsModule, FormsModule,
-  FormBuilder,
-  FormGroup,
-  Validators
-} from '@angular/forms';
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  Injector,
+  signal
+} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 
 import {Compra} from './compra';
 import {CompraService} from './compra.service';
@@ -29,17 +31,17 @@ import {TooltipModule} from 'primeng/tooltip';
 
 // Custom components
 import {FormFieldComponent} from '../framework/component/form-field.component';
-import {VoltarModule} from '../geral/voltar/voltar.module';
-import {CancelarModule} from '../geral/cancelar/cancelar.module';
-import {SalvarModule} from '../geral/salvar/salvar.module';
-import {CadastroRapidoModule} from '../geral/cadastroRapido/cadastroRapido.module';
+import {VoltarComponent} from '../geral/voltar/voltar.component';
+import {CancelarComponent} from '../geral/cancelar/cancelar.component';
+import {SalvarComponent} from '../geral/salvar/salvar.component';
+import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.component';
 
 @Component({
   selector: 'app-form-compra',
   templateUrl: './compra.form.component.html',
   styleUrls: ['./compra.form.component.css'],
-  standalone: true,
   imports: [
+    CadastroRapidoComponent,
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
@@ -53,10 +55,10 @@ import {CadastroRapidoModule} from '../geral/cadastroRapido/cadastroRapido.modul
     TooltipModule,
     // Custom
     FormFieldComponent,
-    VoltarModule,
-    CancelarModule,
-    SalvarModule,
-    CadastroRapidoModule
+    VoltarComponent,
+    CancelarComponent,
+    SalvarComponent,
+
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -98,7 +100,7 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
     const injector = inject(Injector);
 
     super(compraService, injector, '/compra', Compra);
-  
+
     this.compraService = compraService;
     this.injector = injector;
   }

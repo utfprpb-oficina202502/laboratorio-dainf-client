@@ -1,9 +1,9 @@
-import { Component, forwardRef, Injector, ChangeDetectionStrategy, inject } from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Relatorio} from './relatorio';
 import {RelatorioService} from './relatorio.service';
-import { NgClass, NgTemplateOutlet } from "@angular/common";
+import {NgClass, NgTemplateOutlet} from "@angular/common";
 import {Button} from "primeng/button";
 import {TableModule} from "primeng/table";
 import {Card} from "primeng/card";
@@ -36,7 +36,6 @@ import {IconFieldModule} from "primeng/iconfield";
 export class RelatorioListComponent extends PrimeCrudListComponent<Relatorio, number> {
   protected relatorioService: RelatorioService;
   protected injector: Injector;
-
 
   private readonly tableColumns: TableColumn[] = [
     {

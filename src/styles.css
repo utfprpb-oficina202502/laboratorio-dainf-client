@@ -21,48 +21,9 @@ body {
   font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
+/* Custom utility classes not provided by Tailwind */
 .w-100px {
-  width: 100px !important;
-}
-
-.text-center {
-  text-align: center !important;
-}
-
-.text-lg {
-  font-size: 1.125rem !important;
-}
-
-.mr-2 {
-  margin-right: 0.5rem !important;
-}
-
-.mb-3 {
-  margin-bottom: 0.75rem !important;
-}
-
-.mb-4 {
-  margin-bottom: 1rem !important;
-}
-
-.p-3 {
-  padding: 0.75rem !important;
-}
-
-.block {
-  display: block !important;
-}
-
-.w-full {
-  width: 100% !important;
-}
-
-.m-0 {
-  margin: 0 !important;
-}
-
-.gap-2 {
-  gap: 0.5rem !important;
+  width: 100px;
 }
 
 /* validation */
@@ -79,58 +40,34 @@ table {
   width: 100%;
 }
 
-/* drawer and content responsive */
-.sidenav-drawer-on {
-  width: 260px !important;
-  position: absolute !important;
-  min-height: calc(100vh - 50px) !important;
-  height: calc(100vh - 50px) !important;
-  z-index: 3;
-  top: 50px;
-}
-
-.content-responsive {
+/* PrimeNG AutoComplete - modern p-autocomplete styles */
+.p-autocomplete {
   width: 100%;
-}
-
-.content-responsive:before {
-  content: '';
-  position: fixed;
-  top: 50px;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  background: var(--color-overlay);
-  opacity: 1;
-  z-index: 2;
-}
-
-.ui-autocomplete {
-  width: 100% !important;
   display: flex;
 }
 
-.ui-autocomplete-input {
-  width: calc(100% - 35px) !important;
+.p-autocomplete-input {
+  width: calc(100% - 35px);
 }
 
-.ui-autocomplete-dropdown {
-  border-top: 1px solid var(--color-border) !important;
-  border-right: 1px solid var(--color-border) !important;
-  border-bottom: 1px solid var(--color-border) !important;
-  border-left: none !important;
-  height: auto !important;
-  width: 35px !important;
-  background-color: transparent !important;
-  color: var(--color-text-primary) !important;
+.p-autocomplete-dropdown {
+  border-top: 1px solid var(--p-autocomplete-border-color, var(--color-border));
+  border-right: 1px solid var(--p-autocomplete-border-color, var(--color-border));
+  border-bottom: 1px solid var(--p-autocomplete-border-color, var(--color-border));
+  border-left: none;
+  height: auto;
+  width: 35px;
+  background-color: transparent;
+  color: var(--p-text-color, var(--color-text-primary));
 }
 
 
+/* Text truncation utility */
 .abbreviate {
-  width: 90% !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .autocomplete-separator-field {
@@ -141,53 +78,24 @@ table {
   min-width: 50px;
 }
 
-.ui-carousel .ui-carousel-content .ui-carousel-item .car-details > .p-grid {
-  margin: 0.3em;
-  text-align: center;
-  padding: 2em 0 2.25em 0;
-}
-.ui-carousel .ui-carousel-content .ui-carousel-item .car-data .car-title {
-  font-weight: 700;
-  font-size: 20px;
-  margin-top: 24px;
-}
-.ui-carousel .ui-carousel-content .ui-carousel-item .car-data .car-subtitle {
-  margin: 0.25em 0 2em 0;
-}
-.ui-carousel .ui-carousel-content .ui-carousel-item .car-data button {
-  margin-left: 0.5em;
-}
-.ui-carousel .ui-carousel-content .ui-carousel-item .car-data button:first-child {
-  margin-left: 0;
-}
-.ui-carousel.custom-carousel .ui-carousel-dot-icon {
-  width: 16px !important;
-  height: 16px !important;
-  border-radius: 50%;
-}
-.ui-carousel.ui-carousel-horizontal .ui-carousel-content .ui-carousel-item.ui-carousel-item-start .car-details > .p-grid {
-  margin-left: 0.6em;
-}
-.ui-carousel.ui-carousel-horizontal .ui-carousel-content .ui-carousel-item.ui-carousel-item-end .car-details > .p-grid {
-  margin-right: 0.6em;
-}
-
+/* Font utilities */
 .font-poppins {
   font-family: 'Poppins', sans-serif;
 }
 
 /* fieldset */
 legend {
-  width: auto !important;
+  width: auto;
 }
 
-.ui-fieldset-legend-text {
-  font-size: 14px !important;
+/* PrimeNG Fieldset - modern styling */
+.p-fieldset .p-fieldset-legend {
+  font-size: 0.875rem;
 }
 
-/* calendar touch ui */
-.ui-datepicker-touch-ui {
-  min-width: 80% !important;
+/* PrimeNG Calendar touch UI */
+.p-datepicker.p-component.p-datepicker-touch-ui {
+  min-width: 80%;
 }
 
 

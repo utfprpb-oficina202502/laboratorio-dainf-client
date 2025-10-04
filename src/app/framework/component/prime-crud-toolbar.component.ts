@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, TemplateRef, inject } from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, Input, TemplateRef} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {ToolbarModule} from 'primeng/toolbar';
@@ -11,7 +11,6 @@ import {Table} from 'primeng/table';
 
 @Component({
   selector: 'app-prime-crud-toolbar',
-  standalone: true,
   imports: [CommonModule, FormsModule, ToolbarModule, ButtonModule, ButtonGroupModule, TooltipModule, MultiSelectModule],
   template: `
     <p-toolbar class="mb-3" [attr.aria-label]="toolbarAriaLabel">
@@ -124,7 +123,10 @@ export class PrimeCrudToolbarComponent {
   private _list?: PrimeCrudListComponent<any, any>;
 
   constructor() {
-    const list = inject<PrimeCrudListComponent<any, any>>(PrimeCrudListComponent, { optional: true, host: true })!;
+    const list = inject<PrimeCrudListComponent<any, any>>(PrimeCrudListComponent, {
+      optional: true,
+      host: true
+    });
 
     this._list = list || undefined;
   }

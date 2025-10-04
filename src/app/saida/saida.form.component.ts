@@ -1,11 +1,13 @@
-import { Component, Injector, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
-import {CommonModule} from '@angular/common';
 import {
-  ReactiveFormsModule, FormsModule,
-  FormBuilder,
-  FormGroup,
-  Validators
-} from '@angular/forms';
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  Injector,
+  signal
+} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 
 import {Saida} from './saida';
 import {SaidaService} from './saida.service';
@@ -28,17 +30,17 @@ import {TextareaModule} from 'primeng/textarea';
 
 // Custom components
 import {FormFieldComponent} from '../framework/component/form-field.component';
-import {VoltarModule} from '../geral/voltar/voltar.module';
-import {CancelarModule} from '../geral/cancelar/cancelar.module';
-import {SalvarModule} from '../geral/salvar/salvar.module';
-import {CadastroRapidoModule} from '../geral/cadastroRapido/cadastroRapido.module';
+import {VoltarComponent} from '../geral/voltar/voltar.component';
+import {CancelarComponent} from '../geral/cancelar/cancelar.component';
+import {SalvarComponent} from '../geral/salvar/salvar.component';
+import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.component';
 
 @Component({
   selector: 'app-form-saida',
   templateUrl: './saida.form.component.html',
   styleUrls: ['./saida.form.component.css'],
-  standalone: true,
   imports: [
+    CadastroRapidoComponent,
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
@@ -53,10 +55,10 @@ import {CadastroRapidoModule} from '../geral/cadastroRapido/cadastroRapido.modul
     TextareaModule,
     // Custom
     FormFieldComponent,
-    VoltarModule,
-    CancelarModule,
-    SalvarModule,
-    CadastroRapidoModule
+    VoltarComponent,
+    CancelarComponent,
+    SalvarComponent,
+
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -94,7 +96,7 @@ export class SaidaFormComponent extends PrimeReactiveCrudFormComponent<Saida, nu
     const injector = inject(Injector);
 
     super(saidaService, injector, '/saida', Saida);
-  
+
     this.saidaService = saidaService;
     this.injector = injector;
   }

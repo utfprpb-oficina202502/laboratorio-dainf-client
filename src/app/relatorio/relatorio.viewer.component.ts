@@ -1,4 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
 import {ActivatedRoute, Router} from '@angular/router';
 import {RelatorioService} from './relatorio.service';
 import {LoaderService} from '../framework/loader/loader.service';
@@ -8,11 +10,37 @@ import {pt} from '../framework/constantes/calendarPt';
 import {RelatorioParamsValue} from './relatorioParamsValue';
 import {StringUtils} from '../framework/util/string.utils';
 
+// PrimeNG
+import {CardModule} from 'primeng/card';
+import {ButtonModule} from 'primeng/button';
+import {InputTextModule} from 'primeng/inputtext';
+import {DialogModule} from 'primeng/dialog';
+import {DatePickerModule} from 'primeng/datepicker';
+
+// Custom modules
+import {VoltarComponent} from '../geral/voltar/voltar.component';
+
+// Validation
+import {OnlyNumberDirective} from '../framework/directives/onlyNumber/onlyNumber.directive';
+
 @Component({
     selector: 'app-viewer-relatorio',
     templateUrl: './relatorio.viewer.component.html',
     styleUrls: ['./relatorio.viewer.component.css'],
-    standalone: false
+  imports: [
+    CommonModule,
+    FormsModule,
+    // PrimeNG
+    CardModule,
+    ButtonModule,
+    InputTextModule,
+    DialogModule,
+    DatePickerModule,
+    // Custom
+    VoltarComponent,
+    // Validation
+    OnlyNumberDirective
+  ]
 })
 export class RelatorioViewerComponent implements OnInit {
   private readonly router = inject(Router);
@@ -20,7 +48,6 @@ export class RelatorioViewerComponent implements OnInit {
   private readonly loaderService = inject(LoaderService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly relatorioService = inject(RelatorioService);
-
 
   reportHTML: any;
   relatorioCurrent: Relatorio;
@@ -111,10 +138,10 @@ export class RelatorioViewerComponent implements OnInit {
   }
 
   onChangeValueParam($event: any, tipoFiltro: string, nameFiltro: string) {
-    if (tipoFiltro !== 'D') {
-      this.updateParamsValue(tipoFiltro, nameFiltro, $event.target.value);
-    } else {
+    if (tipoFiltro === 'D') {
       this.updateParamsValue(tipoFiltro, nameFiltro, new Date($event).toLocaleDateString());
+    } else {
+      this.updateParamsValue(tipoFiltro, nameFiltro, $event.target.value);
     }
   }
 

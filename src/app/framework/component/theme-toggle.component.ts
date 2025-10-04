@@ -1,7 +1,7 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 
-import { ToggleButtonModule } from 'primeng/togglebutton';
-import { ThemeService } from '../services/theme.service';
+import {ToggleButtonModule} from 'primeng/togglebutton';
+import {ThemeService} from '../services/theme.service';
 import {FormsModule} from "@angular/forms";
 
 @Component({

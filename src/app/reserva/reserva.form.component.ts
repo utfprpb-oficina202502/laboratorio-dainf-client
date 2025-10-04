@@ -1,11 +1,13 @@
-import { Component, Injector, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
-import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {
-  ReactiveFormsModule, FormsModule,
-  FormBuilder,
-  FormGroup,
-  Validators
-} from '@angular/forms';
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  Injector,
+  signal
+} from '@angular/core';
+import {CommonModule, NgOptimizedImage} from '@angular/common';
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 
 import {Reserva} from './reserva';
 import {ReservaService} from './reserva.service';
@@ -33,17 +35,17 @@ import {CarouselModule} from 'primeng/carousel';
 
 // Custom components
 import {FormFieldComponent} from '../framework/component/form-field.component';
-import {VoltarModule} from '../geral/voltar/voltar.module';
-import {CancelarModule} from '../geral/cancelar/cancelar.module';
-import {SalvarModule} from '../geral/salvar/salvar.module';
-import {CadastroRapidoModule} from '../geral/cadastroRapido/cadastroRapido.module';
+import {VoltarComponent} from '../geral/voltar/voltar.component';
+import {CancelarComponent} from '../geral/cancelar/cancelar.component';
+import {SalvarComponent} from '../geral/salvar/salvar.component';
+import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.component';
 
 @Component({
   selector: 'app-form-reserva',
   templateUrl: './reserva.form.component.html',
   styleUrls: ['./reserva.form.component.css'],
-  standalone: true,
   imports: [
+    CadastroRapidoComponent,
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
@@ -60,10 +62,9 @@ import {CadastroRapidoModule} from '../geral/cadastroRapido/cadastroRapido.modul
     CarouselModule,
     // Custom
     FormFieldComponent,
-    VoltarModule,
-    CancelarModule,
-    SalvarModule,
-    CadastroRapidoModule,
+    VoltarComponent,
+    CancelarComponent,
+    SalvarComponent,
     NgOptimizedImage
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -112,7 +113,7 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
     const injector = inject(Injector);
 
     super(reservaService, injector, '/reserva', Reserva);
-  
+
     this.reservaService = reservaService;
     this.injector = injector;
   }

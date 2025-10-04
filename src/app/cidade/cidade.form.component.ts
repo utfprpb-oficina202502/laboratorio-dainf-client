@@ -1,16 +1,46 @@
-import { Component, Injector, ChangeDetectionStrategy, signal, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Cidade } from './cidade';
-import { CidadeService } from './cidade.service';
-import { Estado } from '../estado/estado';
-import { EstadoService } from '../estado/estado.service';
-import { PrimeReactiveCrudFormComponent } from '../framework/component/prime-reactive-crud.form.component';
+import {ChangeDetectionStrategy, Component, inject, Injector, signal} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
+import {Cidade} from './cidade';
+import {CidadeService} from './cidade.service';
+import {Estado} from '../estado/estado';
+import {EstadoService} from '../estado/estado.service';
+import {
+  PrimeReactiveCrudFormComponent
+} from '../framework/component/prime-reactive-crud.form.component';
+
+// PrimeNG
+import {CardModule} from 'primeng/card';
+import {InputTextModule} from 'primeng/inputtext';
+import {AutoCompleteModule} from 'primeng/autocomplete';
+import {ButtonModule} from 'primeng/button';
+import {TooltipModule} from 'primeng/tooltip';
+
+// Custom components
+import {FormFieldComponent} from '../framework/component/form-field.component';
+import {VoltarComponent} from '../geral/voltar/voltar.component';
+import {CancelarComponent} from '../geral/cancelar/cancelar.component';
+import {SalvarComponent} from '../geral/salvar/salvar.component';
 
 @Component({
   selector: 'app-form-cidade',
   templateUrl: './cidade.form.component.html',
   styleUrls: ['./cidade.form.component.css'],
-  standalone: false,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    // PrimeNG
+    CardModule,
+    InputTextModule,
+    AutoCompleteModule,
+    ButtonModule,
+    TooltipModule,
+    // Custom
+    FormFieldComponent,
+    VoltarComponent,
+    CancelarComponent,
+    SalvarComponent
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CidadeFormComponent extends PrimeReactiveCrudFormComponent<Cidade, number> {
@@ -28,7 +58,7 @@ export class CidadeFormComponent extends PrimeReactiveCrudFormComponent<Cidade, 
     const injector = inject(Injector);
 
     super(cidadeService, injector, '/cidade', Cidade);
-  
+
     this.cidadeService = cidadeService;
     this.injector = injector;
   }
