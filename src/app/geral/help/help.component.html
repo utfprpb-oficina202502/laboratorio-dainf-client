@@ -1,34 +1,35 @@
-<button type="button"
-        (click)="click()"
-        pTooltip="Ajuda"
-        mat-icon-button>
+<p-button
+  type="button"
+  (onClick)="click()"
+  pTooltip="Ajuda"
+  [text]="true"
+  [rounded]="true"
+  severity="info"
+  aria-label="Ajuda">
   <i class="fa fa-2x fa-question-circle-o"></i>
-</button>
+</p-button>
 
-<p-dialog header="Ajuda"
-          [(visible)]="dialogHelp"
-          [style]="{minWidth: '400px'}"
-          [modal]="true"
-          [baseZIndex]="10000">
+<p-dialog
+  header="Ajuda"
+  [(visible)]="dialogHelp"
+  [style]="{minWidth: '400px'}"
+  [modal]="true"
+  [baseZIndex]="10000">
 
-    <div class="row">
-      <div class="col-md-12" style="max-width: 400px !important">
-        <p>{{messageHelp}}</p>
-      </div>
+  <div class="flex flex-col gap-4">
+    <p class="max-w-md">{{messageHelp}}</p>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end">
+      <p-button
+        type="button"
+        label="OK"
+        severity="primary"
+        (onClick)="dialogHelp = false"
+        aria-label="Fechar ajuda">
+      </p-button>
     </div>
-
-    <p-footer>
-      <div class="row">
-        <div class="col-md-12 d-flex justify-content-end">
-          <button type="submit"
-                  color="primary"
-                  class="text-uppercase"
-                  (click)="dialogHelp = false"
-                  mat-raised-button>
-            OK
-          </button>
-        </div>
-      </div>
-    </p-footer>
+  </ng-template>
 </p-dialog>
 

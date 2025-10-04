@@ -1,49 +1,70 @@
-import { Component, OnInit, ViewChild, inject } from "@angular/core";
-import { NgForm } from "@angular/forms";
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from "@angular/core";
+import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
 import { MessageService } from "primeng/api";
 import { CadastrarUsuarioService } from "./cadastrarUsuario.service";
-import { EmailConfirmacao } from "./emailConfirmacao";
 
 @Component({
     selector: "app-reenviar-email-confirmacao-usuario",
     templateUrl: "./reenviarEmailConfirmacaoUsuario.component.html",
     styleUrls: ["./reenviarEmailConfirmacaoUsuario.component.css"],
-    standalone: false
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReenviarEmailConfirmacaoUsuarioComponent implements OnInit {
-  private router = inject(Router);
-  private messageService = inject(MessageService);
-  private cadastrarUsuarioService = inject(CadastrarUsuarioService);
+  private readonly router = inject(Router);
+  private readonly messageService = inject(MessageService);
+  private readonly cadastrarUsuarioService = inject(CadastrarUsuarioService);
+  private readonly fb = inject(FormBuilder);
+  private readonly cdr = inject(ChangeDetectorRef);
 
-  emailConfirmacao: EmailConfirmacao;
+  form!: FormGroup;
   showProgress = false;
-  @ViewChild("form", { static: true }) form: NgForm;
 
   ngOnInit() {
-    this.emailConfirmacao = new EmailConfirmacao();
+    this.buildForm();
+  }
+
+  buildForm() {
+    this.form = this.fb.group({
+      email: ['', [Validators.required, Validators.email]]
+    });
   }
 
   submit() {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.messageService.add({
+        severity: "error",
+        summary: "Atenção",
+        detail: "Por favor, insira um email válido.",
+      });
+      return;
+    }
+
     this.showProgress = true;
-    this.cadastrarUsuarioService.resendConfirmEmail(this.emailConfirmacao).subscribe({
+    this.cdr.markForCheck();
+
+    const emailConfirmacao = { email: this.form.value.email };
+
+    this.cadastrarUsuarioService.resendConfirmEmail(emailConfirmacao).subscribe({
       next: (e) => {
         this.showProgress = false;
+        this.cdr.markForCheck();
         this.messageService.add({
           severity: "success",
           summary: "Sucesso",
-          detail:
-            "Um email foi enviado contento o link para confirmação do email.",
+          detail: "Um email foi enviado contendo o link para confirmação do email.",
         });
         this.router.navigate(["/login"]);
       },
       error: (error) => {
         this.showProgress = false;
+        this.cdr.markForCheck();
         this.messageService.add({
           severity: "error",
           summary: "Atenção",
-          detail:
-            "O email informado não está cadastrado no sistema ou já foi confirmado.",
+          detail: "O email informado não está cadastrado no sistema ou já foi confirmado.",
         });
       },
     });
@@ -52,7 +73,19 @@ export class ReenviarEmailConfirmacaoUsuarioComponent implements OnInit {
   goToLogin() {
     this.router.navigate(["/login"]);
   }
-  goToCadastro() {
-    this.router.navigate(["/cadastrar-usuario"]);
+
+  getErrorMessage(fieldName: string): string {
+    const control = this.form.get(fieldName);
+    if (!control?.errors || !control?.touched) {
+      return '';
+    }
+
+    if (control.errors['required']) {
+      return 'Este campo é obrigatório';
+    }
+    if (control.errors['email']) {
+      return 'Email inválido';
+    }
+    return '';
   }
 }

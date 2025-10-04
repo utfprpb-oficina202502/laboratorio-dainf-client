@@ -1,16 +1,16 @@
-import { Component, forwardRef, Injector, ChangeDetectionStrategy, inject } from "@angular/core";
+import { Component, forwardRef, Injector, ViewChild, ChangeDetectionStrategy, inject } from "@angular/core";
 import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import { Item } from "./item";
 import { ItemService } from "./item.service";
 import { PrimeCrudListComponent } from "../framework/component/prime-crud.list.component";
 import { TableColumn } from '../framework/model/table-config.interface';
-import { MatBottomSheet } from "@angular/material/bottom-sheet";
-import { BottomSheetItemComponent } from "./bottomScheetItem/bottomSheetItem.component";
-import { ReservaService } from "../reserva/reserva.service";
+import { MenuItem } from 'primeng/api';
+import { Popover, PopoverModule} from 'primeng/popover';
+import {ReservaService} from "../reserva/reserva.service";
 import Swal from "sweetalert2";
-import { Reserva } from "../reserva/reserva";
-import { environment } from "src/environments/environment";
+import {Reserva} from "../reserva/reserva";
+import {environment} from "src/environments/environment";
 
 // PrimeNG Components
 import {CardModule} from 'primeng/card';
@@ -24,6 +24,8 @@ import {InputIconModule} from 'primeng/inputicon';
 import {TooltipModule} from 'primeng/tooltip';
 import {TagModule} from 'primeng/tag';
 import {DialogModule} from 'primeng/dialog';
+
+import {MenuModule} from 'primeng/menu';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
 import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 import {NovoModule} from '../geral/novo/novo.module';
@@ -46,6 +48,8 @@ import {NovoModule} from '../geral/novo/novo.module';
     TooltipModule,
     TagModule,
     DialogModule,
+    PopoverModule,
+    MenuModule,
     PrimeCrudToolbarComponent,
     ActionButtonsComponent,
     NovoModule,
@@ -57,8 +61,11 @@ import {NovoModule} from '../geral/novo/novo.module';
 export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   protected itemService: ItemService;
   protected injector: Injector;
-  private readonly bottomSheetOptions = inject(MatBottomSheet);
   private readonly reservaService = inject(ReservaService);
+
+  @ViewChild('actionsMenu') actionsMenu: Popover;
+  contextMenuItems: MenuItem[] = [];
+  selectedItem: Item;
 
   isAlunoOrProfessor = false;
   reservasItem: Reserva[];
@@ -211,19 +218,45 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
       });
   }
 
-  openOptions(id): void {
-    const sheet = this.bottomSheetOptions.open(BottomSheetItemComponent);
-    sheet.afterDismissed().subscribe((action) => {
-      if (action === "E") {
-        this.edit(id);
-      } else if (action === "R") {
-        this.delete(id);
-      } else if (action === "C") {
-        this.copyItem(id);
-      } else if (action === "D") {
-        this.findReservasItem(id);
-      }
+  async openOptions(event: Event, item: Item): Promise<void> {
+    this.selectedItem = item;
+    const isAlunoOrProfessor = await this.loginService.userLoggedIsAlunoOrProfessor();
+    const isMobile = window.innerWidth <= 1200;
+
+    this.contextMenuItems = [];
+
+    if (!isAlunoOrProfessor) {
+      this.contextMenuItems.push({
+        label: 'Copiar',
+        icon: 'fa fa-copy',
+        command: () => this.copyItem(item.id)
+      });
+    }
+
+    this.contextMenuItems.push({
+      label: 'Reservas',
+      icon: 'fa fa-paste',
+      command: () => this.findReservasItem(item.id)
     });
+
+    if (isMobile) {
+      this.contextMenuItems.push({
+        label: isAlunoOrProfessor ? 'Visualizar' : 'Editar',
+        icon: isAlunoOrProfessor ? 'fa fa-eye' : 'fa fa-edit',
+        command: () => this.edit(item.id)
+      });
+
+      if (!isAlunoOrProfessor) {
+        this.contextMenuItems.push({
+          label: 'Remover',
+          icon: 'fa fa-trash-o',
+          command: () => this.delete(item.id)
+        });
+      }
+    }
+
+    this.actionsMenu.toggle(event);
+    this.cdr.markForCheck();
   }
 
   findReservasItem(id) {

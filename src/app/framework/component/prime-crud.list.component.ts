@@ -4,8 +4,6 @@ import {CrudService} from '../service/crud.service';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import {Table} from 'primeng/table';
 import {MultiSelect} from 'primeng/multiselect';
-import {BottomSheetComponent} from '../../geral/bottomScheet/bottomSheet.component';
-import {MatBottomSheet} from '@angular/material/bottom-sheet';
 import Swal from 'sweetalert2';
 import {Exception} from '../../exception/exception';
 import {LoaderService} from '../loader/loader.service';
@@ -21,7 +19,6 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   protected router: Router;
   protected messageService: MessageService;
   protected confirmationService: ConfirmationService;
-  protected bottom: MatBottomSheet;
   protected loaderService: LoaderService;
   protected loginService: LoginService;
   protected permissionService: PermissionService;
@@ -129,11 +126,10 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.initializeKeyboardShortcuts();
     this.setupUserPermissions();
 
-    // Load data immediately - no setTimeout needed
-    if (this.tableConfig.preloadData !== false) {
-      this.findAll();
-    } else {
+    if (this.tableConfig.preloadData === false) {
       this.buildColumnsTable();
+    } else {
+      this.findAll();
     }
   }
 
@@ -144,7 +140,6 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.router = this.injector.get(Router);
     this.messageService = this.injector.get(MessageService);
     this.confirmationService = this.injector.get(ConfirmationService);
-    this.bottom = injector.get(MatBottomSheet);
     this.loaderService = injector.get(LoaderService);
     this.loginService = injector.get(LoginService);
     this.permissionService = injector.get(PermissionService);
@@ -333,7 +328,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     }
 
     const defaults = { columns: true, filters: true, sort: true, pagination: true, selection: true, expandedRows: true };
-    const props = { ...defaults, ...(this.tableConfig.stateProps || {}) } as { [key: string]: boolean };
+    const props = { ...defaults, ...(this.tableConfig.stateProps) } as { [key: string]: boolean };
 
     const state: any = {};
 
@@ -381,7 +376,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     }
 
     const defaults = { columns: true, filters: true, sort: true, pagination: true, selection: true, expandedRows: true };
-    const props = { ...defaults, ...(this.tableConfig.stateProps || {}) } as { [key: string]: boolean };
+    const props = { ...defaults, ...(this.tableConfig.stateProps) } as { [key: string]: boolean };
 
     try {
       const raw = this.stateStorageRef.getItem(this.stateKey);
@@ -392,12 +387,12 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       const state = JSON.parse(raw);
 
       if (props.columns && Array.isArray(state.columns) && this.tableConfig.columns) {
-        state.columns.forEach((saved: any) => {
+        for (const saved of state.columns) {
           const column = this.tableConfig.columns.find(col => col.field === saved.field);
           if (column) {
             column.visible = saved.visible !== false;
           }
-        });
+        }
         if (Array.isArray(state.columnToggleModel)) {
           this.columnToggleModel = state.columnToggleModel;
         }
@@ -499,12 +494,12 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     }
 
     const selectedSet = new Set(selectedFields);
-    this.tableConfig.columns.forEach(column => {
+    for (const column of this.tableConfig.columns) {
       if (column.toggleable === false || column.field === 'actions') {
-        return;
+        continue;
       }
       column.visible = selectedSet.has(column.field);
-    });
+    }
 
     this.columnToggleModel = selectedFields;
     this.updateDisplayedColumns();
@@ -535,7 +530,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     if (this.tableConfig.expandMode === 'single') {
       this.expandedRows = this.isRowExpanded(row) ? {} : { [key]: true };
     } else {
-      const updated = { ...(this.expandedRows || {}) };
+      const updated = { ...(this.expandedRows) };
       if (updated[key]) {
         delete updated[key];
       } else {
@@ -568,7 +563,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
     const key = this.getRowKey(row);
     if (key && this.expandedRows?.[key]) {
-      const updated = { ...(this.expandedRows || {}) };
+      const updated = { ...(this.expandedRows) };
       delete updated[key];
       this.expandedRows = updated;
     }
@@ -580,12 +575,12 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       return;
     }
     const expanded: { [key: string]: boolean } = {};
-    this.objects.forEach(row => {
+    for (const row of this.objects) {
       const key = this.getRowKey(row);
       if (key) {
         expanded[key] = true;
       }
-    });
+    }
     this.expandedRows = expanded;
     this.saveTableState();
   }
@@ -626,56 +621,76 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.applyFilter('');
   }
 
+  /**
+   * Handles interactive cell clicks for mobile/keyboard accessibility
+   *
+   * @deprecated Use custom context menu implementation with Popover instead.
+   * Legacy support maintained for backward compatibility.
+   * @param event - The click/keyboard/touch event
+   * @param id - The ID of the object
+   */
   public handleInteractiveCell(event: Event, id: ID): void {
-    if (this.displayedColumns?.includes('actions')) {
+    if (!this.bottomSheetEnabled) {
       return;
     }
 
-    if (!id) {
-      console.warn('ID inválido para iteração:', id);
-      return;
-    }
+    const target = event.target as HTMLElement;
+    const isActionButton = target.closest('button, a, .action-button, [role="button"]');
 
-    if (!(event instanceof KeyboardEvent || event instanceof MouseEvent || event instanceof TouchEvent)){
-      console.warn('Unsupported event type for interaction:', event.type, event);
+    if (isActionButton) {
+      event.stopPropagation();
+      return;
     }
 
     if (event instanceof KeyboardEvent) {
-      const key = event.key?.toLowerCase();
-
-      switch (key) {
-        case 'enter':
-        case ' ':
-        case 'spacebar':
-          event.preventDefault();
-          event.stopPropagation();
-          this.openBottomSheet(id);
-          break;
-        default:
-          break;
+      const key = event.key;
+      if (key === 'Enter' || key === ' ') {
+        event.preventDefault();
+        this.openBottomSheet(id);
       }
-      return;
-    }
-
-    if (event instanceof MouseEvent) {
-      switch (event.type) {
-        case 'click':
-          this.openBottomSheet(id);
-          break;
-        case 'dblclick':
-          event.preventDefault();
-          this.openBottomSheet(id);
-          break;
-        default:
-          this.openBottomSheet(id);
-          break;
-      }
-      return;
-    }
-
-    if ('TouchEvent' in window && event instanceof TouchEvent) {
-      event.preventDefault();
+    } else if (event instanceof MouseEvent || event instanceof TouchEvent) {
       this.openBottomSheet(id);
+    }
+  }
+
+  /**
+   * Common handler for successful data loading
+   * Extracts duplicated logic from findAll(), onPageChange(), and loadData()
+   */
+  private handleDataLoadSuccess(response: any): void {
+    this.objects = response.content;
+    this.totalElements = response.totalElements;
+    this.pageSize = response.size;
+    this.pageIndex = response.number;
+
+    this.rows = this.pageSize;
+    this.first = this.pageIndex * this.pageSize;
+
+    this.restoreSelectionFromKeys();
+    this.loaderService.hide();
+    this.postFindAll();
+    this.saveTableState();
+
+    this.triggerChangeDetection();
+  }
+
+  /**
+   * Common handler for data loading errors
+   * Extracts duplicated error handling logic
+   */
+  private handleDataLoadError(error: any): void {
+    this.loaderService.hide();
+    this.showError(error);
+    this.triggerChangeDetection();
+  }
+
+  /**
+   * Triggers change detection for OnPush components
+   * Extracts duplicated change detection logic
+   */
+  private triggerChangeDetection(): void {
+    if (this.cdr) {
+      this.cdr.markForCheck();
     }
   }
 
@@ -691,34 +706,8 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
     this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue)
       .subscribe(
-        e => {
-          this.objects = e.content;
-          this.totalElements = e.totalElements;
-          this.pageSize = e.size;
-          this.pageIndex = e.number;
-
-          this.rows = this.pageSize;
-          this.first = this.pageIndex * this.pageSize;
-
-          this.restoreSelectionFromKeys();
-          this.loaderService.hide();
-          this.postFindAll();
-          this.saveTableState();
-
-          // Trigger change detection for OnPush components
-          if (this.cdr) {
-            this.cdr.markForCheck();
-          }
-        },
-        error => {
-          this.loaderService.hide();
-          this.showError(error);
-
-          // Trigger change detection even on error
-          if (this.cdr) {
-            this.cdr.markForCheck();
-          }
-        }
+        e => this.handleDataLoadSuccess(e),
+        error => this.handleDataLoadError(error)
       );
   }
 
@@ -733,35 +722,13 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
   findAll() {
     this.loaderService.show();
-    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue || '')
-      .subscribe(e => {
-        this.objects = e.content;
-        this.totalElements = e.totalElements;
-        this.pageSize = e.size;
-        this.pageIndex = e.number;
-
-        this.rows = this.pageSize;
-        this.first = this.pageIndex * this.pageSize;
-
-        this.restoreSelectionFromKeys();
-        this.loaderService.hide();
-        this.postFindAll();
-        this.saveTableState();
-
-        // Trigger change detection for OnPush components
-        if (this.cdr) {
-          this.cdr.markForCheck();
-        }
-      }, error => {
-        this.loaderService.hide();
-        this.showError(error);
-
-        // Trigger change detection even on error
-        if (this.cdr) {
-          this.cdr.markForCheck();
-        }
-      });
     this.buildColumnsTable();
+
+    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue || '')
+      .subscribe(
+        e => this.handleDataLoadSuccess(e),
+        error => this.handleDataLoadError(error)
+      );
   }
 
   findAllByUsername() {
@@ -815,17 +782,26 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     });
   }
 
-  openBottomSheet(id): void {
-    if (window.innerWidth <= 1200 && this.bottomSheetEnabled) {
-      const sheet = this.bottom.open(BottomSheetComponent);
-      sheet.afterDismissed().subscribe(action => {
-        if (action === 'E') {
-          this.edit(id);
-        } else if (action === 'R') {
-          this.delete(id);
-        }
-      });
-    }
+  /**
+   * Opens a bottom sheet for row actions
+   *
+   * @deprecated Bottom sheets have been replaced with context menus using Popover.
+   * Implement custom context menu in your component using openOptions() with Popover.
+   *
+   * Migration guide:
+   * 1. Add ViewChild for Popover: @ViewChild('actionsMenu') actionsMenu: Popover;
+   * 2. Create MenuItem array: contextMenuItems: MenuItem[] = [];
+   * 3. Implement openOptions(event: Event, id: ID) method
+   * 4. Use actionsMenu.toggle(event) to show menu
+   * 5. Replace template with: <p-popover #actionsMenu><p-menu [model]="contextMenuItems"></p-menu></p-popover>
+   *
+   * @param id - The ID of the object to show actions for
+   */
+  openBottomSheet(id: ID): void {
+    console.warn(
+      'openBottomSheet is deprecated. Use Popover context menus instead. ' +
+      'See method documentation for migration guide.'
+    );
   }
 
   openForm() {
@@ -879,16 +855,9 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue)
       .subscribe(
         e => {
-          this.objects = e.content;
-          this.totalElements = e.totalElements;
-          this.pageSize = e.size;
-          this.pageIndex = e.number;
-
-          this.rows = this.pageSize;
-          this.first = this.pageIndex * this.pageSize;
-
-          if (this.sortField && this.objects) {
-            this.objects.sort((a: any, b: any) => {
+          // Apply client-side sorting if needed
+          if (this.sortField && e.content) {
+            e.content.sort((a: any, b: any) => {
               const aVal = a[this.sortField];
               const bVal = b[this.sortField];
 
@@ -898,25 +867,9 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
             });
           }
 
-          this.restoreSelectionFromKeys();
-          this.loaderService.hide();
-          this.postFindAll();
-          this.saveTableState();
-
-          // Trigger change detection for OnPush components
-          if (this.cdr) {
-            this.cdr.markForCheck();
-          }
+          this.handleDataLoadSuccess(e);
         },
-        error => {
-          this.loaderService.hide();
-          this.showError(error);
-
-          // Trigger change detection even on error
-          if (this.cdr) {
-            this.cdr.markForCheck();
-          }
-        }
+        error => this.handleDataLoadError(error)
       );
   }
 
@@ -973,7 +926,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
         const data: Blob = new Blob([buffer], {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
         });
-        module.default.saveAs(data, fileName + '_export_' + new Date().getTime() + '.xlsx');
+        module.default.saveAs(data, fileName + '_export_' + Date.now() + '.xlsx');
       }
     }).catch(error => {
       console.error('Error importing file-saver library:', error);

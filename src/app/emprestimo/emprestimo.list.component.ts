@@ -5,11 +5,9 @@ import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.com
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Emprestimo} from './emprestimo';
 import {EmprestimoService} from './emprestimo.service';
-import {MatBottomSheet} from '@angular/material/bottom-sheet';
-import {BottomSheetEmprestimoComponent} from './bottomScheetEmprestimo/bottomSheetEmprestimo.component';
-import {SelectItem} from 'primeng/api';
+import {MenuItem, SelectItem} from 'primeng/api';
+import {Popover, PopoverModule} from 'primeng/popover';
 import {DateUtil} from '../framework/util/dateUtil';
-import {pt} from '../framework/constantes/calendarPt';
 import {EmprestimoFilter} from './emprestimo.filter';
 import {Usuario} from '../usuario/usuario';
 import {UsuarioService} from '../usuario/usuario.service';
@@ -30,6 +28,8 @@ import {DialogModule} from 'primeng/dialog';
 import {AutoCompleteModule} from 'primeng/autocomplete';
 import {DatePicker, DatePickerModule} from 'primeng/datepicker';
 import {SelectModule} from 'primeng/select';
+
+import {MenuModule} from 'primeng/menu';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
 import {NovoModule} from '../geral/novo/novo.module';
 
@@ -54,6 +54,8 @@ import {NovoModule} from '../geral/novo/novo.module';
     AutoCompleteModule,
     DatePickerModule,
     SelectModule,
+    PopoverModule,
+    MenuModule,
     PrimeCrudToolbarComponent,
     NovoModule
   ],
@@ -63,15 +65,16 @@ import {NovoModule} from '../geral/novo/novo.module';
 export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, number> implements OnInit{
   protected emprestimoService: EmprestimoService;
   protected injector: Injector;
-  private readonly bottomSheetOptions = inject(MatBottomSheet);
   private readonly usuarioService = inject(UsuarioService);
 
-
+  @ViewChild('actionsMenu') actionsMenu: Popover;
   @ViewChild('novaData') novaData: DatePicker;
+
+  contextMenuItems: MenuItem[] = [];
+  selectedEmprestimoId: number;
   dialogFiltroEmprestimo = false;
   emprestimoFilter: EmprestimoFilter;
   statusDropdown: SelectItem[];
-  localePt = pt;
   usuarioEmprestimoList: Usuario[];
   usuarioResponsalvel: Usuario[];
   dtNovaData: string;
@@ -215,20 +218,45 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     // Custom sorting and filtering logic is now handled in the tableConfig
   }
 
-  openOptions(id): void {
-    const sheet = this.bottomSheetOptions.open(BottomSheetEmprestimoComponent);
-    sheet.afterDismissed().subscribe(action => {
-      if (action === 'E') {
-        this.edit(id);
-      } else if (action === 'R') {
-        this.delete(id);
-      } else if (action === 'P') {
-        this.idEmprestimoToChangePrazoDev = id;
-        this.openCalendarNewDate();
-      } else if (action === 'D') {
-        this.openDevolucao(id);
-      }
+  async openOptions(event: Event, id: number): Promise<void> {
+    this.selectedEmprestimoId = id;
+    const isAlunoOrProfessor = await this.loginService.userLoggedIsAlunoOrProfessor();
+
+    this.contextMenuItems = [];
+
+    if (!isAlunoOrProfessor) {
+      this.contextMenuItems.push({
+        label: 'Devolução',
+        icon: 'fa fa-undo',
+        command: () => this.openDevolucao(id)
+      });
+
+      this.contextMenuItems.push({
+        label: 'Novo Prazo',
+        icon: 'fa fa-clock-o',
+        command: () => {
+          this.idEmprestimoToChangePrazoDev = id;
+          this.openCalendarNewDate();
+        }
+      });
+    }
+
+    this.contextMenuItems.push({
+      label: isAlunoOrProfessor ? 'Visualizar' : 'Editar',
+      icon: isAlunoOrProfessor ? 'fa fa-eye' : 'fa fa-edit',
+      command: () => this.edit(id)
     });
+
+    if (!isAlunoOrProfessor) {
+      this.contextMenuItems.push({
+        label: 'Remover',
+        icon: 'fa fa-trash-o',
+        command: () => this.delete(id)
+      });
+    }
+
+    this.actionsMenu.toggle(event);
+    this.cdr.markForCheck();
   }
 
   openDevolucao(id) {

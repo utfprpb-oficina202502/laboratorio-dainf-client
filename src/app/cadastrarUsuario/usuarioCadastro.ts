@@ -3,7 +3,7 @@ export class UsuarioCadastro {
   email: string;
   documento: string;
   telefone: string;
-  username: string;
+  username?: string;
   password: string;
   confirmPassword: string;
 }

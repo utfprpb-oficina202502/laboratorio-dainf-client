@@ -2,11 +2,11 @@ import { Component, Injector, ViewChild, inject } from '@angular/core';
 import {CrudFormComponent} from '../framework/component/crud.form.component';
 import {Emprestimo} from './emprestimo';
 import {EmprestimoService} from './emprestimo.service';
-import {MatTable} from '@angular/material/table';
 import {NgForm} from '@angular/forms';
 import {CdkDragDrop, moveItemInArray, transferArrayItem} from '@angular/cdk/drag-drop';
-import {MatMenuTrigger} from '@angular/material/menu';
 import {EmprestimoDevolucaoItem, StatusDevolucao} from './emprestimoDevolucaoItem';
+import { MenuItem } from 'primeng/api';
+import { Menu } from 'primeng/menu';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -21,8 +21,7 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
 
 
   @ViewChild('form') frm: NgForm;
-  @ViewChild('table') table: MatTable<any>;
-  @ViewChild(MatMenuTrigger) contextMenu: MatMenuTrigger;
+  @ViewChild('contextMenu') contextMenu: Menu;
 
   itensPendentes = [];
   itensDevolvidos = [];
@@ -31,9 +30,8 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
   itemIsEditing: EmprestimoDevolucaoItem;
   dialogDuplicaItem = false;
 
-  contextMenuPosition = {x: '0px', y: '0px'};
-  optionDuplicateDisable = false;
-  optionRemoveDuplicateDisable = false;
+  contextMenuPosition = {x: 0, y: 0};
+  contextMenuItems: MenuItem[] = [];
   documentoUsuario: string;
 
   constructor() {
@@ -126,20 +124,17 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
     }
   }
 
-  verificaOptionsEnabled(item: EmprestimoDevolucaoItem) {
+  verificaOptionsEnabled(item: EmprestimoDevolucaoItem): {canDuplicate: boolean, canRemoveDuplicates: boolean} {
     let count = 0;
     for (const empDevItem of this.object.emprestimoDevolucaoItem) {
       if (empDevItem.item.id === item.item.id) {
         count++;
       }
     }
-    if (count === 1) {
-      this.optionDuplicateDisable = false;
-      this.optionRemoveDuplicateDisable = true;
-    } else {
-      this.optionDuplicateDisable = true;
-      this.optionRemoveDuplicateDisable = false;
-    }
+    return {
+      canDuplicate: count === 1,
+      canRemoveDuplicates: count > 1
+    };
   }
 
   openDialogDuplicarItem(item: EmprestimoDevolucaoItem) {
@@ -149,12 +144,28 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
 
   onContextMenu(event: MouseEvent, item: EmprestimoDevolucaoItem) {
     event.preventDefault();
-    this.contextMenuPosition.x = event.clientX + 'px';
-    this.contextMenuPosition.y = event.clientY + 'px';
-    this.contextMenu.menuData = {item};
-    this.contextMenu.menu.focusFirstItem('mouse');
-    this.contextMenu.openMenu();
-    this.verificaOptionsEnabled(item);
+    this.contextMenuPosition.x = event.clientX;
+    this.contextMenuPosition.y = event.clientY;
+    this.itemIsEditing = item;
+
+    const options = this.verificaOptionsEnabled(item);
+
+    this.contextMenuItems = [
+      {
+        label: 'Duplicar Item',
+        icon: 'fa fa-copy',
+        disabled: !options.canDuplicate,
+        command: () => this.onClickMenuDuplicateItem(item)
+      },
+      {
+        label: 'Remover Itens Duplicados',
+        icon: 'fa fa-trash',
+        disabled: !options.canRemoveDuplicates,
+        command: () => this.onClickMenuRemoveDuplicates(item)
+      }
+    ];
+
+    this.contextMenu?.show(event);
   }
 
   onClickMenuDuplicateItem(item: EmprestimoDevolucaoItem) {

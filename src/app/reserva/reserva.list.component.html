@@ -79,19 +79,19 @@
               [style.min-width]="column.minWidth">
               @switch (column.field) {
                 @case ('id') {
-                  <span (click)="openOptions(rowData)" style="cursor: pointer;">{{ rowData.id }}</span>
+                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData.id }}</span>
                 }
                 @case ('descricao') {
-                  <span (click)="openOptions(rowData)" style="cursor: pointer;">{{ rowData.descricao }}</span>
+                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData.descricao }}</span>
                 }
                 @case ('dataReserva') {
-                  <span (click)="openOptions(rowData)" style="cursor: pointer;">{{ rowData.dataReserva }}</span>
+                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData.dataReserva }}</span>
                 }
                 @case ('dataRetirada') {
-                  <span (click)="openOptions(rowData)" style="cursor: pointer;">{{ rowData.dataRetirada }}</span>
+                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData.dataRetirada }}</span>
                 }
                 @case ('usuario') {
-                  <span (click)="openOptions(rowData)" style="cursor: pointer;">{{ rowData.usuario?.nome || 'N/A' }}</span>
+                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData.usuario?.nome || 'N/A' }}</span>
                 }
                 @case ('actions') {
                   <app-action-buttons
@@ -104,7 +104,7 @@
                   </app-action-buttons>
                 }
                 @default {
-                  <span (click)="openOptions(rowData)" style="cursor: pointer;">{{ rowData[column.field] }}</span>
+                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData[column.field] }}</span>
                 }
               }
             </td>
@@ -136,3 +136,8 @@
     </p-table>
   </p-card>
 </div>
+
+<!-- Actions Popover -->
+<p-popover #actionsMenu>
+  <p-menu [model]="contextMenuItems" [style]="{border: 'none'}"></p-menu>
+</p-popover>

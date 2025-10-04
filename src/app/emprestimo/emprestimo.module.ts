@@ -18,18 +18,16 @@ import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { TextareaModule } from 'primeng/textarea';
+import { MenuModule } from 'primeng/menu';
+import { TagModule } from 'primeng/tag';
 
-// Angular Material (for components not yet migrated)
-import { MatCardModule } from '@angular/material/card';
-import { MatMenuModule } from '@angular/material/menu';
+// Angular CDK
 import { DragDropModule } from '@angular/cdk/drag-drop';
 
 // Custom components
 import { VoltarModule } from '../geral/voltar/voltar.module';
 import { CancelarModule } from '../geral/cancelar/cancelar.module';
 import { SalvarModule } from '../geral/salvar/salvar.module';
-import { BottomSheetModule } from '../geral/bottomScheet/bottomSheet.module';
-import { BottomSheetEmprestimoModule } from './bottomScheetEmprestimo/bottomSheetEmprestimo.module';
 import { CadastroRapidoModule } from '../geral/cadastroRapido/cadastroRapido.module';
 
 @NgModule({
@@ -48,15 +46,13 @@ import { CadastroRapidoModule } from '../geral/cadastroRapido/cadastroRapido.mod
     DialogModule,
     ScrollPanelModule,
     TextareaModule,
-    MatCardModule,
-    MatMenuModule,
+    MenuModule,
+    TagModule,
     DragDropModule,
     VoltarModule,
     CancelarModule,
     SalvarModule,
     CadastroRapidoModule,
-    BottomSheetModule,
-    BottomSheetEmprestimoModule,
     EmprestimoListComponent,
     EmprestimoFormComponent
   ],

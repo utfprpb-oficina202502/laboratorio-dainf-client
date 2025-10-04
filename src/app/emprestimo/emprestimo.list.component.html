@@ -144,9 +144,9 @@
                         [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
                         [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
                         [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                        (click)="openOptions(row.id)"
-                        (keydown.enter)="openOptions(row.id)"
-                        (keydown.space)="openOptions(row.id)"
+                        (click)="openOptions($event, row.id)"
+                        (keydown.enter)="openOptions($event, row.id)"
+                        (keydown.space)="openOptions($event, row.id)"
                         [attr.aria-label]="column.header + ': ' + row.usuarioEmprestimo?.nome">
                         {{ row.usuarioEmprestimo?.nome }}
                       </span>
@@ -157,7 +157,7 @@
                           <p-tag
                             value="Em andamento"
                             severity="info"
-                            (click)="openOptions(row.id)"
+                            (click)="openOptions($event, row.id)"
                             [style.cursor]="'pointer'"
                             [attr.aria-label]="'Status: Em andamento'">
                           </p-tag>
@@ -166,7 +166,7 @@
                           <p-tag
                             value="Em atraso"
                             severity="danger"
-                            (click)="openOptions(row.id)"
+                            (click)="openOptions($event, row.id)"
                             [style.cursor]="'pointer'"
                             [attr.aria-label]="'Status: Em atraso'">
                           </p-tag>
@@ -175,7 +175,7 @@
                           <p-tag
                             value="Finalizado"
                             severity="success"
-                            (click)="openOptions(row.id)"
+                            (click)="openOptions($event, row.id)"
                             [style.cursor]="'pointer'"
                             [attr.aria-label]="'Status: Finalizado'">
                           </p-tag>
@@ -187,9 +187,9 @@
                         [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
                         [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
                         [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                        (click)="openOptions(row.id)"
-                        (keydown.enter)="openOptions(row.id)"
-                        (keydown.space)="openOptions(row.id)"
+                        (click)="openOptions($event, row.id)"
+                        (keydown.enter)="openOptions($event, row.id)"
+                        (keydown.space)="openOptions($event, row.id)"
                         [attr.aria-label]="column.header + ': ' + row[column.field]">
                         {{ row[column.field] }}
                       </span>
@@ -380,3 +380,8 @@
     [(ngModel)]="dtNovaData">
   </p-datePicker>
 </div>
+
+<!-- Actions Popover -->
+<p-popover #actionsMenu>
+  <p-menu [model]="contextMenuItems" [style]="{border: 'none'}"></p-menu>
+</p-popover>

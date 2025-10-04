@@ -1,4 +1,4 @@
 export class EmailConfirmacao {
-  email: string;
-  code: string;
+  email?: string;
+  code?: string;
 }

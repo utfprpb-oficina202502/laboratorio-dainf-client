@@ -1,4 +1,4 @@
-import { Component, ElementRef, Injector, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, Injector, ViewChild, inject, ChangeDetectorRef } from '@angular/core';
 import {CrudFormComponent} from '../framework/component/crud.form.component';
 import {Relatorio} from './relatorio';
 import {RelatorioService} from './relatorio.service';
@@ -7,7 +7,7 @@ import {SelectItem} from 'primeng/api';
 import {environment} from '../../environments/environment';
 import {RelatorioParams} from './relatorioParams';
 import {StringUtils} from '../framework/util/string.utils';
-import {MatTable} from '@angular/material/table';
+import {Table} from 'primeng/table';
 
 @Component({
     selector: 'app-form-relatorio',
@@ -18,25 +18,25 @@ import {MatTable} from '@angular/material/table';
 export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number> {
   protected relatorioService: RelatorioService;
   protected injector: Injector;
+  protected cdr: ChangeDetectorRef;
 
-
-  @ViewChild('table') table: MatTable<any>;
+  @ViewChild('table') table: Table;
   @ViewChild('fileUpload') fileUpload: FileUpload;
   @ViewChild('nomeParam') nomeParam: ElementRef;
   uploadedFiles: any[] = [];
   callback: Function;
   tipoParamDropdown: SelectItem[];
   relatorioParams: RelatorioParams;
-  displayedColumns = ['nameParam', 'aliasParam', 'tipoParam', 'actionsForm'];
 
   constructor() {
     const relatorioService = inject(RelatorioService);
     const injector = inject(Injector);
+    const cdr = inject(ChangeDetectorRef);
 
     super(relatorioService, injector, '/relatorio');
     this.relatorioService = relatorioService;
     this.injector = injector;
-
+    this.cdr = cdr;
 
     this.tipoParamDropdown = [
       {label: 'String', value: 'S'},
@@ -61,9 +61,7 @@ export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number>
       && StringUtils.isNotBlank(this.relatorioParams.nameParam)
       && StringUtils.isNotBlank(this.relatorioParams.aliasParam)) {
 
-      if (this.object.paramsList == null) {
-        this.object.paramsList = new Array();
-      }
+      this.object.paramsList ??= new Array();
       this.object.paramsList.push(this.relatorioParams);
       this.postInsertParam();
     } else {
@@ -74,7 +72,7 @@ export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number>
   postInsertParam() {
     this.relatorioParams = new RelatorioParams();
     this.relatorioParams.tipoParam = this.tipoParamDropdown[0].value;
-    this.table.renderRows();
+    this.cdr.markForCheck();
     this.nomeParam.nativeElement.focus();
   }
 
@@ -85,21 +83,21 @@ export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number>
   }
 
   removeParam(nameParam: string) {
-    let index;
-    this.object.paramsList.forEach(param => {
+    let index: number;
+    for (const param of this.object.paramsList) {
       if (param.nameParam === nameParam) {
         index = this.object.paramsList.indexOf(param);
       }
-    });
+    }
     this.object.paramsList.splice(index, 1);
-    this.table.renderRows();
+    this.cdr.markForCheck();
   }
 
   preSave() {
-    if (!this.editando) {
-      this.fileUpload.files.length > 0 ? this.validExtra = true : this.validExtra = false;
-    } else {
+    if (this.editando) {
       this.validExtra = true;
+    } else {
+      this.fileUpload.files.length > 0 ? this.validExtra = true : this.validExtra = false;
     }
     this.save();
   }

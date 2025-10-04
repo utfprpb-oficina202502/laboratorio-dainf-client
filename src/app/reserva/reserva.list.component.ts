@@ -1,12 +1,12 @@
-import { Component, forwardRef, Injector, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, forwardRef, Injector, ViewChild, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Reserva} from './reserva';
 import {ReservaService} from './reserva.service';
-import {MatBottomSheet} from '@angular/material/bottom-sheet';
-import {BottomSheetReservaComponent} from './bottomScheetReserva/bottomSheetReserva.component';
+import {MenuItem} from 'primeng/api';
+import {Popover, PopoverModule} from 'primeng/popover';
 
 // PrimeNG Components
 import {CardModule} from 'primeng/card';
@@ -19,6 +19,8 @@ import {IconFieldModule} from 'primeng/iconfield';
 import {InputIconModule} from 'primeng/inputicon';
 import {TooltipModule} from 'primeng/tooltip';
 import {TagModule} from 'primeng/tag';
+
+import {MenuModule} from 'primeng/menu';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
 import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 import {NovoModule} from '../geral/novo/novo.module';
@@ -40,6 +42,8 @@ import {NovoModule} from '../geral/novo/novo.module';
     InputIconModule,
     TooltipModule,
     TagModule,
+    PopoverModule,
+    MenuModule,
     PrimeCrudToolbarComponent,
     ActionButtonsComponent,
     NovoModule
@@ -50,7 +54,10 @@ import {NovoModule} from '../geral/novo/novo.module';
 export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number> implements OnInit{
   protected reservaService: ReservaService;
   protected injector: Injector;
-  private readonly bottomSheetOptions = inject(MatBottomSheet);
+
+  @ViewChild('actionsMenu') actionsMenu: Popover;
+  contextMenuItems: MenuItem[] = [];
+  selectedReserva: Reserva;
 
 
   private readonly tableColumns: TableColumn[] = [
@@ -179,17 +186,34 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
     });
   }
 
-  openOptions(reserva: Reserva): void {
-    const sheet = this.bottomSheetOptions.open(BottomSheetReservaComponent);
-    sheet.afterDismissed().subscribe(action => {
-      if (action === 'E') {
-        this.edit(reserva.id);
-      } else if (action === 'R') {
-        this.delete(reserva.id);
-      } else if (action === 'F') {
-        this.finalizarReserva(reserva);
-      }
+  async openOptions(event: Event, reserva: Reserva): Promise<void> {
+    this.selectedReserva = reserva;
+    const isAlunoOrProfessor = await this.loginService.userLoggedIsAlunoOrProfessor();
+
+    this.contextMenuItems = [];
+
+    if (!isAlunoOrProfessor) {
+      this.contextMenuItems.push({
+        label: 'Gerar Empréstimo',
+        icon: 'fa fa-handshake-o',
+        command: () => this.finalizarReserva(reserva)
+      });
+    }
+
+    this.contextMenuItems.push({
+      label: 'Editar',
+      icon: 'fa fa-edit',
+      command: () => this.edit(reserva.id)
     });
+
+    this.contextMenuItems.push({
+      label: 'Remover',
+      icon: 'fa fa-trash-o',
+      command: () => this.delete(reserva.id)
+    });
+
+    this.actionsMenu.toggle(event);
+    this.cdr.markForCheck();
   }
 
   finalizarReserva(reserva) {

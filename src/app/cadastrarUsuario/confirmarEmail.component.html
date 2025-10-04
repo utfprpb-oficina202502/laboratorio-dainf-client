@@ -1,43 +1,33 @@
 @if (showProgress) {
-  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  <p-progressBar mode="indeterminate" class="login-progress"></p-progressBar>
 }
-<div
-  class="container w-100 h-100 d-flex justify-content-center align-items-center"
-  >
-  <div class="col-md-5">
-    <mat-card
-      style="width: 400px; height: 200px"
-      class="d-flex justify-content-between flex-column"
+
+<div class="login-page">
+  <section class="login-panel">
+    <header class="login-header">
+      <img ngSrc="assets/utfpr.jpg" alt="Logo UTFPR" class="login-logo" height="117" width="335"/>
+      <span class="login-title">Sistema Laboratório - Confirmar Email</span>
+    </header>
+
+    <div class="login-form">
+      <p class="confirmation-message">
+        Clique no botão abaixo para validar seu email e ativar sua conta no sistema.
+      </p>
+
+      <button
+        type="button"
+        (click)="submit()"
+        [disabled]="showProgress"
+        class="login-submit"
       >
-      <div class="div-header">
-        <img
-          src="assets/utfpr.jpg"
-          alt="Logo UTFPR"
-          width="50px"
-          style="margin-right: 10px"
-          />
-          <span>Sistema Laboratório - Confirmar email</span>
-        </div>
-        <mat-card-content class="h-100">
-          <form #form class="d-flex flex-column justify-content-around h-100">
-            <div class="row justify-content-center mb-2">
-              <div class="col-md-6 d-flex justify-content-center mb-3">
-                <button
-                  mat-stroked-button
-                  type="submit"
-                  class="w-100 br-25px"
-                  color="primary"
-                  (click)="submit()"
-                  >
-                  Validar o email
-                </button>
-              </div>
-              <a (click)="goToLogin()" class="text-center" style="color: #222d43; cursor: pointer"
-                >Voltar para a tela de autenticação</a
-                >
-              </div>
-            </form>
-          </mat-card-content>
-        </mat-card>
-      </div>
+        Validar o email
+      </button>
+
+      <menu class="login-links" role="list">
+        <button type="button" (click)="goToLogin()" class="login-link">
+          Voltar para a tela de autenticação
+        </button>
+      </menu>
     </div>
+  </section>
+</div>

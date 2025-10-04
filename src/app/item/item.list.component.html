@@ -151,7 +151,7 @@
                           style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px;"
                           [ngSrc]="row.imageItem?.length > 0 ? minioUrl + row.imageItem[0].nameImage : '/assets/no-image.png'"
                           [alt]="'Item ' + row.nome"
-                          (click)="openOptions(row.id)"
+                          (click)="openOptions($event, row)"
                           class="cursor-pointer" />
                         </div>
                       }
@@ -160,9 +160,9 @@
                           [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
                           [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
                           [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                          (click)="openOptions(row.id)"
-                          (keydown.enter)="openOptions(row.id)"
-                          (keydown.space)="openOptions(row.id)"
+                          (click)="openOptions($event, row)"
+                          (keydown.enter)="openOptions($event, row)"
+                          (keydown.space)="openOptions($event, row)"
                           [attr.aria-label]="column.header + ': ' + (row.patrimonio ? row.patrimonio + ' - ' : '') + row.nome">
                           {{ row.patrimonio ? row.patrimonio + ' - ' : '' }}{{ row.nome }}
                         </span>
@@ -172,9 +172,9 @@
                           [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
                           [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
                           [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                          (click)="openOptions(row.id)"
-                          (keydown.enter)="openOptions(row.id)"
-                          (keydown.space)="openOptions(row.id)"
+                          (click)="openOptions($event, row)"
+                          (keydown.enter)="openOptions($event, row)"
+                          (keydown.space)="openOptions($event, row)"
                           [attr.aria-label]="column.header + ': ' + row.grupo?.descricao">
                           {{ row.grupo?.descricao }}
                         </span>
@@ -184,9 +184,9 @@
                           [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
                           [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
                           [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                          (click)="openOptions(row.id)"
-                          (keydown.enter)="openOptions(row.id)"
-                          (keydown.space)="openOptions(row.id)"
+                          (click)="openOptions($event, row)"
+                          (keydown.enter)="openOptions($event, row)"
+                          (keydown.space)="openOptions($event, row)"
                           [attr.aria-label]="column.header + ': ' + row[column.field]">
                           {{ row[column.field] }}
                         </span>
@@ -264,3 +264,8 @@
         </ng-template>
       </p-table>
     </p-dialog>
+
+    <!-- Actions Popover -->
+    <p-popover #actionsMenu>
+      <p-menu [model]="contextMenuItems" [style]="{border: 'none'}"></p-menu>
+    </p-popover>

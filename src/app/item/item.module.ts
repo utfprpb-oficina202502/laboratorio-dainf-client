@@ -17,12 +17,6 @@ import { TooltipModule } from "primeng/tooltip";
 import { DataViewModule } from 'primeng/dataview';
 import { TagModule } from 'primeng/tag';
 
-// Material (only for list/view components still using it)
-import { MatTableModule } from "@angular/material/table";
-import { MatPaginatorModule } from "@angular/material/paginator";
-import { MatIconModule } from "@angular/material/icon";
-import { MatSortModule } from "@angular/material/sort";
-
 // Framework
 import { FormFieldComponent } from "../framework/component/form-field.component";
 import { ActionButtonsComponent } from "../framework/component/action-buttons.component";
@@ -39,7 +33,6 @@ import { ItemFormComponent } from "./item.form.component";
 import { ItemListComponent } from "./item.list.component";
 import { ItemViewComponent } from "./item.view.component";
 import { ItemService } from "./item.service";
-import { BottomSheetItemModule } from "./bottomScheetItem/bottomSheetItem.module";
 
 @NgModule({
   imports: [
@@ -59,11 +52,6 @@ import { BottomSheetItemModule } from "./bottomScheetItem/bottomSheetItem.module
     TooltipModule,
     DataViewModule,
     TagModule,
-    // Material (for list/view)
-    MatTableModule,
-    MatPaginatorModule,
-    MatIconModule,
-    MatSortModule,
     // Framework
     FormFieldComponent,
     ActionButtonsComponent,
@@ -74,7 +62,6 @@ import { BottomSheetItemModule } from "./bottomScheetItem/bottomSheetItem.module
     NovoModule,
     CadastroRapidoModule,
     // Item
-    BottomSheetItemModule,
     ItemListComponent,
     NgOptimizedImage
   ],

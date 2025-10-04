@@ -1,109 +1,134 @@
-import { Component, OnInit, ViewChild, inject } from "@angular/core";
-import { NgForm } from "@angular/forms";
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from "@angular/core";
+import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from "@angular/forms";
 import { Router } from "@angular/router";
 import { MessageService } from "primeng/api";
-import { UsuarioCadastro } from "./usuarioCadastro";
 import { CadastrarUsuarioService } from "./cadastrarUsuario.service";
 
 @Component({
     selector: "app-cadastrar-usuario",
     templateUrl: "./cadastrarUsuario.component.html",
     styleUrls: ["./cadastrarUsuario.component.css"],
-    standalone: false
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CadastrarUsuarioComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly messageService = inject(MessageService);
   private readonly cadastrarUsuarioService = inject(CadastrarUsuarioService);
+  private readonly fb = inject(FormBuilder);
+  private readonly cdr = inject(ChangeDetectorRef);
 
-  usuario: UsuarioCadastro;
+  form!: FormGroup;
   showProgress = false;
-  @ViewChild("form", { static: true }) form: NgForm;
 
   ngOnInit() {
-    this.usuario = new UsuarioCadastro();
+    this.buildForm();
+  }
+
+  buildForm() {
+    this.form = this.fb.group({
+      nome: ['', [Validators.required, Validators.minLength(3)]],
+      email: ['', [Validators.required, Validators.email, this.utfprEmailValidator]],
+      documento: ['', [Validators.required, Validators.minLength(3)]],
+      telefone: ['', [Validators.required, Validators.minLength(8)]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', [Validators.required]]
+    }, { validators: this.passwordMatchValidator });
+  }
+
+  utfprEmailValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) {
+      return null;
+    }
+    const email = control.value.toLowerCase();
+    const isValid = email.endsWith('@utfpr.edu.br') || email.endsWith('@alunos.utfpr.edu.br');
+    return isValid ? null : { utfprEmail: true };
+  }
+
+  passwordMatchValidator(group: AbstractControl): ValidationErrors | null {
+    const password = group.get('password')?.value;
+    const confirmPassword = group.get('confirmPassword')?.value;
+    return password === confirmPassword ? null : { passwordMismatch: true };
   }
 
   submit() {
-    if (this.isFormValid()) {
-      this.showProgress = true;
-      this.cadastrarUsuarioService.saveUser(this.usuario).subscribe({
-        next: (e) => {
-          this.showProgress = false;
-          this.messageService.add({
-            severity: "success",
-            summary: "Sucesso",
-            detail:
-              "Cadastro realizado com sucesso. Um email de confirmação foi enviado para o endereço de email cadastrado.",
-          });
-          this.router.navigate(["/login"]);
-        },
-        error: (error) => {
-          this.showProgress = false;
-          this.messageService.add({
-            severity: "error",
-            summary: "Atenção",
-            detail:
-              "Verifique o formulário, os dados de cadastro estão incorretos",
-          });
-        },
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.messageService.add({
+        severity: "error",
+        summary: "Atenção",
+        detail: "Por favor, preencha todos os campos corretamente.",
       });
-    } else {
-      console.log("Formulário inválido");
-    }
-  }
-
-  isFormValid(): boolean {
-    let formValid = this.form.valid;
-    let passwordInvalid = false;
-
-    if (this.usuario.password !== this.usuario.confirmPassword) {
-      this.form.controls["confirmPassword"].setErrors({
-        incorrect: true,
-        message: "As senhas não conferem",
-      });
-      formValid = false;
-      passwordInvalid = true;
-    }
-    if (this.usuario.password?.length < 6) {
-      this.form.controls["password"].setErrors({
-        incorrect: true,
-        message: "A senha deve ter no mínimo 6 caracteres",
-      });
-      this.form.controls["confirmPassword"].setErrors({
-        incorrect: true,
-        message: "A senha deve ter no mínimo 6 caracteres",
-      });
-      formValid = false;
-      passwordInvalid = true;
+      return;
     }
 
-    if (!passwordInvalid) {
-      this.form.controls["password"].setErrors({ incorrect: false });
-      this.form.controls["password"].updateValueAndValidity();
-      this.form.controls["confirmPassword"].setErrors({ incorrect: false });
-      this.form.controls["confirmPassword"].updateValueAndValidity();
-    }
+    this.showProgress = true;
+    this.cdr.markForCheck();
 
-    if (
-      this.usuario.email &&
-      !this.usuario.email.endsWith("@utfpr.edu.br") &&
-      !this.usuario.email?.endsWith("@alunos.utfpr.edu.br")
-    ) {
-      this.form.controls["email"].setErrors({
-        incorrect: true,
-        message: "Digite um email válido da UTFPR",
-      });
-      formValid = false;
-    } else {
-      this.form.controls["email"].setErrors({ incorrect: false });
-      this.form.controls["email"].updateValueAndValidity();
-    }
+    const formValue = this.form.value;
+    const usuario = {
+      nome: formValue.nome,
+      email: formValue.email,
+      documento: formValue.documento,
+      telefone: formValue.telefone,
+      password: formValue.password,
+      confirmPassword: formValue.confirmPassword
+    };
 
-    return formValid;
+    this.cadastrarUsuarioService.saveUser(usuario).subscribe({
+      next: (e) => {
+        this.showProgress = false;
+        this.cdr.markForCheck();
+        this.messageService.add({
+          severity: "success",
+          summary: "Sucesso",
+          detail:
+            "Cadastro realizado com sucesso. Um email de confirmação foi enviado para o endereço de email cadastrado.",
+        });
+        this.router.navigate(["/login"]);
+      },
+      error: (error) => {
+        this.showProgress = false;
+        this.cdr.markForCheck();
+        this.messageService.add({
+          severity: "error",
+          summary: "Atenção",
+          detail:
+            "Verifique o formulário, os dados de cadastro estão incorretos",
+        });
+      },
+    });
   }
 
   goToLogin() {
     this.router.navigate(["/login"]);
+  }
+
+  getErrorMessage(fieldName: string): string {
+    const control = this.form.get(fieldName);
+    if (!control?.errors || !control?.touched) {
+      return '';
+    }
+
+    if (control.errors['required']) {
+      return 'Este campo é obrigatório';
+    }
+    if (control.errors['minlength']) {
+      return `Mínimo de ${control.errors['minlength'].requiredLength} caracteres`;
+    }
+    if (control.errors['email']) {
+      return 'Email inválido';
+    }
+    if (control.errors['utfprEmail']) {
+      return 'Digite um email válido da UTFPR (@utfpr.edu.br ou @alunos.utfpr.edu.br)';
+    }
+    return '';
+  }
+
+  getPasswordMatchError(): string {
+    if (this.form.errors?.['passwordMismatch'] && this.form.get('confirmPassword')?.touched) {
+      return 'As senhas não conferem';
+    }
+    return '';
   }
 }

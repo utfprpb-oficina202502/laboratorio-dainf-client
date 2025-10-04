@@ -13,11 +13,6 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { PasswordModule } from 'primeng/password';
 import { InputMaskModule } from 'primeng/inputmask';
 
-// Material (still needed for UsuarioEditComponent)
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-
 // Custom components
 import { FormFieldComponent } from '../framework/component/form-field.component';
 import { ActionButtonsComponent } from '../framework/component/action-buttons.component';
@@ -45,10 +40,6 @@ import { UsuarioService } from './usuario.service';
     MultiSelectModule,
     PasswordModule,
     InputMaskModule,
-    // Material (still needed for UsuarioEditComponent)
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
     // Custom
     FormFieldComponent,
     ActionButtonsComponent,

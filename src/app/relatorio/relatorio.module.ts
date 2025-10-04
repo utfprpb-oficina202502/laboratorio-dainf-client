@@ -9,7 +9,7 @@ import {ValidationModule} from '../framework/validation/validation.module';
 import {ValidationService} from '../framework/validation/validation.service';
 import {OnlyNumberModule} from '../framework/directives/onlyNumber/onlyNumber.module';
 
-// Legacy modules (kept for form and viewer components)
+// Custom modules
 import {NovoModule} from '../geral/novo/novo.module';
 import {VoltarModule} from '../geral/voltar/voltar.module';
 import {SalvarModule} from '../geral/salvar/salvar.module';
@@ -36,14 +36,6 @@ import {SelectModule} from "primeng/select";
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
 import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 
-// Angular Material (still needed for form and viewer components)
-import {MatCardModule} from '@angular/material/card';
-import {MatFormFieldModule} from '@angular/material/form-field';
-import {MatInputModule} from '@angular/material/input';
-import {MatTableModule} from '@angular/material/table';
-import {MatIconModule} from '@angular/material/icon';
-import {MatButtonModule} from '@angular/material/button';
-
 @NgModule({
   imports: [
     CommonModule,
@@ -51,7 +43,7 @@ import {MatButtonModule} from '@angular/material/button';
     ValidationModule,
     OnlyNumberModule,
 
-    // Legacy modules (kept for form and viewer components)
+    // Custom modules
     NovoModule,
     VoltarModule,
     SalvarModule,
@@ -78,13 +70,6 @@ import {MatButtonModule} from '@angular/material/button';
     PrimeCrudToolbarComponent,
     ActionButtonsComponent,
 
-    // Angular Material (still needed for form and viewer components)
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatTableModule,
-    MatIconModule,
-    MatButtonModule,
     RelatorioListComponent
   ],
   declarations: [

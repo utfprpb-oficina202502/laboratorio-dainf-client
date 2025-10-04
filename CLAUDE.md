@@ -2,6 +2,25 @@
 
 Este arquivo fornece orientações para Claude Code (claude.ai/code) ao trabalhar com código neste repositório.
 
+## Migration Status ✅
+
+**Material Design → PrimeNG Migration: COMPLETE**
+
+- ✅ Todos os componentes migrados de Material Design para PrimeNG v20
+- ✅ `@angular/material` removido de `package.json` e código
+- ✅ Bottom sheets substituídos por Popover (context menus)
+- ✅ Bootstrap CSS removido - apenas Tailwind CSS utilities
+- ✅ Reactive forms com PrimeNG components
+- ✅ Componentes standalone com lazy loading
+- ✅ 100% PrimeNG + Tailwind CSS
+
+**Stack Atual**:
+- **UI Library**: PrimeNG v20 (tema Aura)
+- **Styling**: Tailwind CSS v3.4+
+- **Forms**: Reactive Forms com signals
+- **State**: RxJS + Angular Signals
+- **Change Detection**: OnPush em todos os componentes
+
 ## Development Commands
 
 - **Development server**: `npm run dev` (inicia servidor dev em http://localhost:4200)
