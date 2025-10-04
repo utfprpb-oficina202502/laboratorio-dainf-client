@@ -1,4 +1,4 @@
-import {Inject, Injectable} from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {environment} from '../../environments/environment';
 import {Grupo} from './grupo';
@@ -9,7 +9,9 @@ import {Item} from '../item/item';
 @Injectable()
 export class GrupoService extends CrudService<Grupo, number> {
 
-  constructor(@Inject(HttpClient) http: HttpClient) {
+  constructor() {
+    const http = inject<HttpClient>(HttpClient);
+
     super(`${environment.api_url}grupo/`, http);
   }
 

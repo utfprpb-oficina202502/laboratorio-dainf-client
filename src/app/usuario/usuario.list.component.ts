@@ -1,4 +1,4 @@
-import {Component, forwardRef, Injector} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {Usuario} from './usuario';
@@ -19,7 +19,7 @@ import {InputIconModule} from 'primeng/inputicon';
 import {TooltipModule} from 'primeng/tooltip';
 import {TagModule} from 'primeng/tag';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {NovoModule} from '../geral/novo/novo.module';
+import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 
 @Component({
     selector: 'app-list-usuario',
@@ -39,11 +39,14 @@ import {NovoModule} from '../geral/novo/novo.module';
     TooltipModule,
     TagModule,
     PrimeCrudToolbarComponent,
-    NovoModule
+    ActionButtonsComponent,
   ],
-  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => UsuarioListComponent) }]
+  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => UsuarioListComponent) }],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number> {
+  protected usuarioService: UsuarioService;
+  protected injector: Injector;
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -92,9 +95,14 @@ export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number
     }
   ];
 
-  constructor(protected usuarioService: UsuarioService,
-              protected injector: Injector) {
+  constructor() {
+    const usuarioService = inject(UsuarioService);
+    const injector = inject(Injector);
+
     super(usuarioService, injector, ['id', 'nome', 'username', 'permissoes', 'actions'], 'usuario/form');
+    this.usuarioService = usuarioService;
+    this.injector = injector;
+
     this.configureTable();
   }
 

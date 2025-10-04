@@ -31,8 +31,8 @@
              [attr.aria-label]="'Lista de saidas com ' + totalElements + ' registro(s)'">
 
       <ng-template pTemplate="caption">
-        <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
-          <p-iconField iconPosition="left" class="flex-grow-1 flex-md-grow-0">
+        <div class="flex items-center justify-end gap-2 flex-wrap">
+          <p-iconField iconPosition="left" style="flex: 0 1 auto; min-width: 200px; max-width: 300px;">
             <p-inputIcon class="pi pi-search" aria-hidden="true"></p-inputIcon>
             <input
               #globalFilterInput
@@ -82,7 +82,7 @@
                   <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.id }}</span>
                 }
                 @case ('dataSaida') {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.dataSaida | date:'dd/MM/yyyy' }}</span>
+                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.dataSaida }}</span>
                 }
                 @case ('qtde') {
                   <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ getQtdeTotal(rowData?.saidaItem) }}</span>
@@ -96,26 +96,14 @@
                   </span>
                 }
                 @case ('actions') {
-                  <div class="d-flex align-items-center gap-1 justify-content-center">
-                    <p-button
-                      icon="pi pi-pencil"
-                      [outlined]="true"
-                      severity="secondary"
-                      size="small"
-                      pTooltip="Editar"
-                      tooltipPosition="top"
-                      (onClick)="edit(rowData.id)">
-                    </p-button>
-                    <p-button
-                      icon="pi pi-trash"
-                      [outlined]="true"
-                      severity="danger"
-                      size="small"
-                      pTooltip="Remover"
-                      tooltipPosition="top"
-                      (onClick)="preDelete(rowData)">
-                    </p-button>
-                  </div>
+                  <app-action-buttons
+                    [showEdit]="true"
+                    [showDelete]="true"
+                    [editTooltip]="'Editar'"
+                    [deleteTooltip]="'Remover'"
+                    (edit)="edit(rowData.id)"
+                    (delete)="preDelete(rowData)">
+                  </app-action-buttons>
                 }
                 @default {
                   <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData[column.field] }}</span>

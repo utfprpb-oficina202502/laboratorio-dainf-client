@@ -8,7 +8,6 @@ import {CpfCnpjUtil} from '../../util/cpfCnpj.util';
     providers: [
         { provide: NG_VALIDATORS, useExisting: forwardRef(() => CnpjValidatorDirective), multi: true }
     ],
-    standalone: false
 })
 export class CnpjValidatorDirective implements Validator {
 

@@ -1,5 +1,5 @@
-import {Component, forwardRef, Injector} from '@angular/core';
-import {CommonModule, DatePipe} from '@angular/common';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
+import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
@@ -17,7 +17,7 @@ import {IconFieldModule} from 'primeng/iconfield';
 import {InputIconModule} from 'primeng/inputicon';
 import {TooltipModule} from 'primeng/tooltip';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {NovoModule} from '../geral/novo/novo.module';
+import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 
 @Component({
     selector: 'app-list-compra',
@@ -26,7 +26,6 @@ import {NovoModule} from '../geral/novo/novo.module';
   imports: [
     CommonModule,
     FormsModule,
-    DatePipe,
     CardModule,
     TableModule,
     MultiSelectModule,
@@ -37,11 +36,14 @@ import {NovoModule} from '../geral/novo/novo.module';
     InputIconModule,
     TooltipModule,
     PrimeCrudToolbarComponent,
-    NovoModule
+    ActionButtonsComponent,
   ],
-  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => CompraListComponent) }]
+  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => CompraListComponent) }],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CompraListComponent extends PrimeCrudListComponent<Compra, number> {
+  protected compraService: CompraService;
+  protected injector: Injector;
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -81,9 +83,14 @@ export class CompraListComponent extends PrimeCrudListComponent<Compra, number> 
     }
   ];
 
-  constructor(protected compraService: CompraService,
-              protected injector: Injector) {
+  constructor() {
+    const compraService = inject(CompraService);
+    const injector = inject(Injector);
+
     super(compraService, injector, ['id', 'fornecedor', 'dataCompra', 'actions'], 'compra/form');
+    this.compraService = compraService;
+    this.injector = injector;
+
     this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.configureTable();

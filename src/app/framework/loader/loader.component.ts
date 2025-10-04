@@ -1,20 +1,24 @@
-import {Component} from '@angular/core';
-import {LoaderService} from './loader.service';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { LoaderService } from './loader.service';
+import { ProgressSpinner } from "primeng/progressspinner";
 
 @Component({
-    selector: 'app-loader',
-    templateUrl: './loader.component.html',
-    styleUrls: ['./loader.component.css'],
-    standalone: false
+  selector: 'app-loader',
+  templateUrl: './loader.component.html',
+  styleUrls: ['./loader.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    ProgressSpinner
+  ]
 })
 export class LoaderComponent {
+  protected readonly loaderService = inject(LoaderService);
 
-  display = false;
+  protected readonly loading = this.loaderService.loading;
+  protected readonly cancelAction = this.loaderService.cancelAction;
+  protected readonly cancelLabel = this.loaderService.cancelLabel;
 
-  constructor(private loaderService: LoaderService) {
-    this.loaderService.observableDisplay().subscribe(display => {
-      this.display = display;
-    });
+  protected onCancel(): void {
+    this.loaderService.cancel();
   }
-
 }

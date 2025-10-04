@@ -1,0 +1,102 @@
+/* Fix navbar vertical alignment */
+p-toolbar ::ng-deep .p-toolbar {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem !important; /* Minimal padding for edge spacing */
+  min-height: 56px !important;
+  height: 56px !important;
+  gap: 0;
+}
+
+p-toolbar ::ng-deep .p-toolbar-group-start,
+p-toolbar ::ng-deep .p-toolbar-group-end {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 !important; /* Remove any default padding from groups */
+}
+
+/* Ensure content fills the available height */
+p-toolbar ::ng-deep .p-toolbar-group-start > *,
+p-toolbar ::ng-deep .p-toolbar-group-end > * {
+  display: flex;
+  align-items: center;
+}
+
+/* Ensure buttons don't flash on theme change */
+button {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Remove any selection/highlight styling */
+p-toolbar ::ng-deep .p-toolbar * {
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Responsive navbar controls - exact 1200px breakpoint */
+
+/* Hamburger button: Show on mobile (<1200px), hide on desktop (≥1200px) */
+.navbar-hamburger {
+  display: flex !important;
+}
+
+@media (min-width: 1200px) {
+  .navbar-hamburger {
+    display: none !important;
+  }
+}
+
+/* User menu: Full text on desktop, icon-only on mobile */
+.navbar-user-menu {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Desktop (≥768px): Show full username, hide icon */
+@media (min-width: 768px) {
+  .navbar-user-full {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .navbar-user-icon {
+    display: none;
+  }
+
+  .navbar-user-menu {
+    border-radius: var(--p-button-border-radius, 6px);
+  }
+}
+
+/* Mobile (<768px): Hide username, show icon only - compact square button */
+@media (max-width: 767px) {
+  .navbar-user-full {
+    display: none;
+  }
+
+  .navbar-user-icon {
+    display: block;
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  .navbar-user-menu.p-button {
+    border-radius: 6px !important; /* Square with slight rounding */
+    width: 2rem !important; /* Smaller, more compact */
+    height: 2rem !important;
+    min-width: 2rem !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Override PrimeNG button padding */
+  .navbar-user-menu.p-button ::ng-deep .p-button-label {
+    padding: 0;
+  }
+}

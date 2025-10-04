@@ -5,9 +5,21 @@
 }
 
 .layout-content {
+  position: fixed;
+  top: 56px; /* Below navbar */
+  left: 260px; /* Sidebar width on desktop */
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+  padding: 1rem;
   background-color: var(--layout-content-bg, var(--color-bg-secondary));
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Removido calculo fixo; layout agora usa flex */
+/* Mobile: content takes full width when sidebar is hidden */
+@media (max-width: 1199px) {
+  .layout-content {
+    left: 0;
+  }
+}
 
-.sidenav-transition { transition: width .25s ease, transform .25s ease; }

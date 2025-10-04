@@ -1,5 +1,5 @@
-import {Component, forwardRef, Injector} from '@angular/core';
-import {CommonModule} from '@angular/common';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
+
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
@@ -17,15 +17,13 @@ import {IconFieldModule} from 'primeng/iconfield';
 import {InputIconModule} from 'primeng/inputicon';
 import {TooltipModule} from 'primeng/tooltip';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {NovoModule} from '../geral/novo/novo.module';
-import {CpfCnpjPipeModule} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe.module";
+import {CpfCnpjPipe} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe";
 
 @Component({
     selector: 'app-list-fornecedor',
     templateUrl: './fornecedor.list.component.html',
     styleUrls: ['./fornecedor.list.component.css'],
   imports: [
-    CommonModule,
     FormsModule,
     CardModule,
     TableModule,
@@ -37,12 +35,14 @@ import {CpfCnpjPipeModule} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe.module";
     InputIconModule,
     TooltipModule,
     PrimeCrudToolbarComponent,
-    NovoModule,
-    CpfCnpjPipeModule
-  ],
-  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => FornecedorListComponent) }]
+    CpfCnpjPipe
+],
+  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => FornecedorListComponent) }],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, number> {
+  protected fornecedorService: FornecedorService;
+  protected injector: Injector;
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -90,9 +90,14 @@ export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, 
     }
   ];
 
-  constructor(protected fornecedorService: FornecedorService,
-              protected injector: Injector) {
+  constructor() {
+    const fornecedorService = inject(FornecedorService);
+    const injector = inject(Injector);
+
     super(fornecedorService, injector, ['id', 'razaoSocial', 'nomeFantasia', 'cnpj', 'actions'], 'fornecedor/form');
+    this.fornecedorService = fornecedorService;
+    this.injector = injector;
+
     this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.configureTable();

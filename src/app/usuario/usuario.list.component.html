@@ -38,8 +38,8 @@
         [attr.aria-label]="'Lista de usuarios com ' + totalElements + ' registro(s)'">
 
         <ng-template pTemplate="caption">
-          <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
-            <p-iconField iconPosition="left" class="flex-grow-1 flex-md-grow-0">
+          <div class="flex items-center justify-end gap-2 flex-wrap">
+            <p-iconField iconPosition="left" style="flex: 0 1 auto; min-width: 200px; max-width: 300px;">
               <p-inputIcon class="pi pi-search" aria-hidden="true"></p-inputIcon>
               <input
                 #globalFilterInput
@@ -49,7 +49,7 @@
                 [value]="filterValue"
                 [placeholder]="getGlobalFilterPlaceholder()"
                 [attr.aria-label]="'Campo de busca para filtrar usuarios'"
-                autocomplete="off" />
+                autocomplete="off"/>
             </p-iconField>
             <p-button
               type="button"
@@ -70,7 +70,8 @@
             }
             @if (!isReadOnly && tableConfig.selectable !== false) {
               <th scope="col" style="width: 3rem" [attr.aria-label]="'Selecao de usuarios'">
-                <p-tableHeaderCheckbox [attr.aria-label]="'Selecionar todos os usuarios'"></p-tableHeaderCheckbox>
+                <p-tableHeaderCheckbox
+                  [attr.aria-label]="'Selecionar todos os usuarios'"></p-tableHeaderCheckbox>
               </th>
             }
             @for (column of getVisibleColumns(); track column.field) {
@@ -83,7 +84,8 @@
                 [style.min-width]="column.minWidth"
                 [ngClass]="column.headerClass"
                 [attr.aria-label]="column.tooltip || column.header">
-                <div class="d-flex align-items-center gap-2" [class.justify-content-center]="column.align === 'center'">
+                <div class="flex items-center gap-2"
+                     [class.justify-center]="column.align === 'center'">
                   {{ column.header }}
                   @if (column.sortable !== false && column.field !== 'actions') {
                     <p-sortIcon [field]="column.field" aria-hidden="true"></p-sortIcon>
@@ -104,7 +106,8 @@
                   [pRowToggler]="row"
                   class="p-button-text p-button-rounded"
                   [attr.aria-label]="(isRowExpanded(row) ? 'Recolher' : 'Expandir') + ' detalhes do usuario ' + row.nome">
-                  <span pButtonIcon [ngClass]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
+                  <span pButtonIcon
+                        [ngClass]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
                 </button>
               </td>
             }
@@ -118,39 +121,22 @@
             }
             @for (column of getVisibleColumns(); track column.field) {
               <td
-                [ngSwitch]="column.field"
                 [style.text-align]="column.align || 'left'"
                 [style.width]="column.width"
                 [style.min-width]="column.minWidth"
                 [attr.headers]="'col-' + column.field">
                 @switch (column.field) {
                   @case ('actions') {
-                    <div class="d-flex align-items-center gap-2 justify-content-center">
-                      @if (canEdit) {
-                        <p-button
-                          severity="secondary"
-                          [outlined]="true"
-                          [rounded]="true"
-                          pTooltip="Editar usuario"
-                          tooltipPosition="top"
-                          (onClick)="edit(row.id)"
-                          [attr.aria-label]="'Editar usuario ' + row.nome">
-                          <span pButtonIcon class="pi pi-pencil"></span>
-                        </p-button>
-                      }
-                      @if (canDelete) {
-                        <p-button
-                          severity="danger"
-                          [outlined]="true"
-                          [rounded]="true"
-                          pTooltip="Remover usuario"
-                          tooltipPosition="top"
-                          (onClick)="delete(row.id)"
-                          [attr.aria-label]="'Remover usuario ' + row.nome">
-                          <span pButtonIcon class="pi pi-trash"></span>
-                        </p-button>
-                      }
-                    </div>
+                    <app-action-buttons
+                      [showEdit]="canEdit"
+                      [showDelete]="canDelete"
+                      [editTooltip]="'Editar usuario'"
+                      [deleteTooltip]="'Remover usuario'"
+                      [editAriaLabel]="'Editar usuario ' + row.nome"
+                      [deleteAriaLabel]="'Remover usuario ' + row.nome"
+                      (edit)="edit(row.id)"
+                      (delete)="delete(row.id)">
+                    </app-action-buttons>
                   }
                   @case ('permissoes') {
                     <span
@@ -161,8 +147,8 @@
                       (keydown.enter)="handleInteractiveCell($event, row.id)"
                       (keydown.space)="handleInteractiveCell($event, row.id)"
                       [attr.aria-label]="column.header + ': ' + formatGruposAcesso(row[column.field])">
-                      {{ formatGruposAcesso(row[column.field]) }}
-                    </span>
+                        {{ formatGruposAcesso(row[column.field]) }}
+                      </span>
                   }
                   @default {
                     <span
@@ -173,24 +159,26 @@
                       (keydown.enter)="handleInteractiveCell($event, row.id)"
                       (keydown.space)="handleInteractiveCell($event, row.id)"
                       [attr.aria-label]="column.header + ': ' + row[column.field]">
-                      {{ row[column.field] }}
-                    </span>
+                        {{ row[column.field] }}
+                      </span>
                   }
                 }
-              </td>
-            }
+              }
           </tr>
         </ng-template>
 
         <ng-template pTemplate="rowexpansion" let-row>
           @if (rowExpansionTemplate) {
-            <ng-container [ngTemplateOutlet]="rowExpansionTemplate" [ngTemplateOutletContext]="{$implicit: row}"></ng-container>
+            <ng-container [ngTemplateOutlet]="rowExpansionTemplate"
+                          [ngTemplateOutletContext]="{$implicit: row}"></ng-container>
           } @else {
             <div class="p-3">
-              <p class="mb-1"><strong>Codigo:</strong> {{ row.id }}</p>
+              <p class="mb-1"><strong>Código:</strong> {{ row.id }}</p>
               <p class="mb-1"><strong>Nome:</strong> {{ row.nome }}</p>
-              <p class="mb-1"><strong>Usuario:</strong> {{ row.username }}</p>
-              <p class="mb-0"><strong>Grupo de Acesso:</strong> {{ formatGruposAcesso(row.permissoes) }}</p>
+              <p class="mb-1"><strong>Usuário:</strong> {{ row.username }}</p>
+              <p class="mb-0"><strong>Grupo de Acesso:</strong> {{
+                  formatGruposAcesso(row.permissoes)
+                }}</p>
             </div>
           }
         </ng-template>

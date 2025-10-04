@@ -1,6 +1,8 @@
-<button type="button"
-        class="mr-2 w-100px br-25px"
-        mat-stroked-button
-        (click)="click()">
-  Cancelar
-</button>
+<p-button
+  type="button"
+  severity="secondary"
+  [outlined]="true"
+  (onClick)="click()"
+  [attr.aria-label]="'Cancelar'">
+  <span pButtonLabel>Cancelar</span>
+</p-button>

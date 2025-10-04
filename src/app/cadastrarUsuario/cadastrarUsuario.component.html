@@ -1,236 +1,145 @@
 @if (showProgress) {
-  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  <p-progressBar mode="indeterminate" class="login-progress"></p-progressBar>
 }
-<div
-  class="container w-100 h-100 d-flex justify-content-center align-items-center"
-  >
-  <mat-card
-    style="width: 700px;"
-    class="d-flex justify-content-between flex-column"
-    >
-    <div class="div-header">
-      <img
-        src="assets/utfpr.jpg"
-        alt="Logo UTFPR"
-        width="50px"
-        style="margin-right: 10px"
-        />
-        <span>Sistema Laboratório - Cadastro</span>
-      </div>
-      <mat-card-content>
-        <form #form="ngForm" (submit)="submit()">
-          <div class="row">
-            <div class="col-md-6">
-              <mat-form-field style="width: 100%">
-                <mat-label for="nome">Nome</mat-label>
-                <input
-                  type="text"
-                  id="nome"
-                  name="nome"
-                  required="true"
-                  [(ngModel)]="usuario.nome"
-                  matInput
-                  />
-                </mat-form-field>
-                @if (
-                  form.controls['nome']?.touched &&
-                  form.controls['nome']?.hasError
-                  ) {
-                  <div
-                    class="invalid-feedback"
-                    style="display: block; margin-top: -20px"
-                    >
-                    @if (form.controls['nome'].errors?.['required']) {
-                      <div>
-                        <mat-error>Nome é obrigatório.</mat-error>
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
-              <div class="col-md-6">
-                <mat-form-field style="width: 100%">
-                  <mat-label for="email"
-                    >Email (&#64;utfpr ou &#64;alunos.utfpr)</mat-label
-                    >
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      required="true"
-                      length="6"
-                      [(ngModel)]="usuario.email"
-                      matInput
-                      />
-                    </mat-form-field>
-                    @if (
-                      form.controls['email']?.touched &&
-                      form.controls['email']?.hasError
-                      ) {
-                      <div
-                        style="display: block; margin-top: -20px"
-                        >
-                        @if (form.controls['email'].errors) {
-                          <div>
-                            <mat-error>Digite um email válido da UTFPR</mat-error>
-                          </div>
-                        }
-                      </div>
-                    }
-                  </div>
-                </div>
-                <div class="row" style="margin: 5px 0">
-                  <div class="col-md-6">
-                    <mat-form-field style="width: 100%">
-                      <mat-label for="documento">RA/SIAPE</mat-label>
-                      <input
-                        type="text"
-                        id="documento"
-                        name="documento"
-                        required="true"
-                        [(ngModel)]="usuario.documento"
-                        matInput
-                        />
-                      </mat-form-field>
-                      @if (
-                        form.controls['documento']?.touched &&
-                        form.controls['documento']?.hasError
-                        ) {
-                        <div
-                          class="invalid-feedback"
-                          style="display: block; margin-top: -20px"
-                          >
-                          @if (form.controls['documento'].errors?.['required']) {
-                            <div>
-                              <mat-error
-                                >Informe seu RA (aluno) ou SIAPE (servidor).</mat-error
-                                >
-                              </div>
-                            }
-                          </div>
-                        }
-                      </div>
-                      <div class="col-md-6">
-                        <mat-form-field style="width: 100%">
-                          <mat-label for="telefone">Telefone</mat-label>
-                          <input
-                            type="text"
-                            id="telefone"
-                            name="telefone"
-                            required="true"
-                            [(ngModel)]="usuario.telefone"
-                            matInput
-                            />
-                          </mat-form-field>
-                          @if (
-                            form.controls['telefone']?.touched &&
-                            form.controls['telefone']?.hasError
-                            ) {
-                            <div
-                              class="invalid-feedback"
-                              style="display: block; margin-top: -20px"
-                              >
-                              @if (form.controls['telefone'].errors?.['required']) {
-                                <div>
-                                  <mat-error>Informe seu telefone.</mat-error>
-                                </div>
-                              }
-                            </div>
-                          }
-                        </div>
-                      </div>
-                      <div class="row" style="margin: 5px 0">
-                        <div class="col-md-6">
-                          <mat-form-field style="width: 100%">
-                            <mat-label for="password">Senha</mat-label>
-                            <input
-                              type="password"
-                              id="password"
-                              name="password"
-                              required="true"
-                              [(ngModel)]="usuario.password"
-                              matInput
-                              />
-                            </mat-form-field>
-                            @if (
-                              form.controls['password']?.touched &&
-                              form.controls['password']?.hasError
-                              ) {
-                              <div
-                                class="invalid-feedback"
-                                style="display: block; margin-top: -20px"
-                                >
-                                @if (form.controls['password'].errors) {
-                                  <div>
-                                    <mat-error>As senhas devem ser iguais.</mat-error>
-                                    <mat-error
-                                      >As senhas devem ter pelo menos 6 caracteres.</mat-error
-                                      >
-                                    </div>
-                                  }
-                                </div>
-                              }
-                            </div>
-                            <div class="col-md-6">
-                              <mat-form-field style="width: 100%">
-                                <mat-label for="confirmPassword">Confirmar Senha</mat-label>
-                                <input
-                                  type="password"
-                                  id="confirmPassword"
-                                  name="confirmPassword"
-                                  required="true"
-                                  [(ngModel)]="usuario.confirmPassword"
-                                  matInput
-                                  />
-                                </mat-form-field>
-                                @if (
-                                  form.controls['confirmPassword']?.touched &&
-                                  form.controls['confirmPassword']?.hasError
-                                  ) {
-                                  <div
-                                    class="invalid-feedback"
-                                    style="display: block; margin-top: -20px"
-                                    >
-                                    @if (form.controls['password'].errors) {
-                                      <div>
-                                        <mat-error>As senhas devem ser iguais.</mat-error>
-                                        <mat-error
-                                          >As senhas devem ter pelo menos 6 caracteres.</mat-error
-                                          >
-                                        </div>
-                                      }
-                                    </div>
-                                  }
-                                </div>
-                              </div>
-                              <a
-                                (click)="goToLogin()"
-                                class="text-center mb-3"
-                                style="color: #222d43; cursor: pointer"
-                                >Já possui cadastro? voltar para a tela de autenticação</a
-                                >
 
-                                <div class="row justify-content-center mb-2">
-                                  <div class="col-md-6 d-flex justify-content-center">
-                                    <button
-                                      mat-stroked-button
-                                      type="submit"
-                                      class="w-100 br-25px"
-                                      color="primary"
-                                      >
-                                      Cadastrar
-                                    </button>
-                                  </div>
-                                  <span
-                                    class="text-center small"
-                                    style="color: #222d43; cursor: pointer"
-                                    >
-                                    *Após finalizar o cadastro será enviado um email de confirmação.
-                                    <br />
-                                    Verifique a caixa de entrada do seu email.</span
-                                    >
-                                  </div>
-                                </form>
-                              </mat-card-content>
-                            </mat-card>
-                          </div>
+<div class="login-page">
+  <section class="login-panel register-panel">
+    <header class="login-header">
+      <img alt="Logo UTFPR" class="login-logo" height="117" ngSrc="utfpr.jpg" width="335"/>
+      <span class="login-title">Sistema Laboratório - Cadastro</span>
+    </header>
+
+    <form
+      [formGroup]="form"
+      class="login-form"
+      (ngSubmit)="submit()"
+      novalidate
+    >
+      <div class="form-row">
+        <div class="form-field">
+          <input
+            pInputText
+            type="text"
+            id="nome"
+            formControlName="nome"
+            placeholder="Nome completo"
+            aria-label="Nome completo"
+            class="login-input"
+            [class.input-error]="form.get('nome')?.invalid && form.get('nome')?.touched"
+          />
+          @if (getErrorMessage('nome')) {
+            <small class="error-message">{{ getErrorMessage('nome') }}</small>
+          }
+        </div>
+
+        <div class="form-field">
+          <input
+            pInputText
+            type="email"
+            id="email"
+            formControlName="email"
+            placeholder="Email institucional (@utfpr.edu.br)"
+            aria-label="Email institucional"
+            class="login-input"
+            [class.input-error]="form.get('email')?.invalid && form.get('email')?.touched"
+          />
+          @if (getErrorMessage('email')) {
+            <small class="error-message">{{ getErrorMessage('email') }}</small>
+          }
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <input
+            pInputText
+            type="text"
+            id="documento"
+            formControlName="documento"
+            placeholder="RA/SIAPE"
+            aria-label="RA ou SIAPE"
+            class="login-input"
+            [class.input-error]="form.get('documento')?.invalid && form.get('documento')?.touched"
+          />
+          @if (getErrorMessage('documento')) {
+            <small class="error-message">{{ getErrorMessage('documento') }}</small>
+          }
+        </div>
+
+        <div class="form-field">
+          <input
+            pInputText
+            type="tel"
+            id="telefone"
+            formControlName="telefone"
+            placeholder="Telefone"
+            aria-label="Telefone"
+            class="login-input"
+            [class.input-error]="form.get('telefone')?.invalid && form.get('telefone')?.touched"
+          />
+          @if (getErrorMessage('telefone')) {
+            <small class="error-message">{{ getErrorMessage('telefone') }}</small>
+          }
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <input
+            pInputText
+            type="password"
+            id="password"
+            formControlName="password"
+            placeholder="Senha (mínimo 6 caracteres)"
+            aria-label="Senha"
+            autocomplete="new-password"
+            class="login-input"
+            [class.input-error]="form.get('password')?.invalid && form.get('password')?.touched"
+          />
+          @if (getErrorMessage('password')) {
+            <small class="error-message">{{ getErrorMessage('password') }}</small>
+          }
+        </div>
+
+        <div class="form-field">
+          <input
+            pInputText
+            type="password"
+            id="confirmPassword"
+            formControlName="confirmPassword"
+            placeholder="Confirmar senha"
+            aria-label="Confirmar senha"
+            autocomplete="new-password"
+            class="login-input"
+            [class.input-error]="(form.get('confirmPassword')?.invalid && form.get('confirmPassword')?.touched) || (form.errors?.['passwordMismatch'] && form.get('confirmPassword')?.touched)"
+          />
+          @if (getErrorMessage('confirmPassword')) {
+            <small class="error-message">{{ getErrorMessage('confirmPassword') }}</small>
+          }
+          @if (getPasswordMatchError()) {
+            <small class="error-message">{{ getPasswordMatchError() }}</small>
+          }
+        </div>
+      </div>
+
+      <menu class="login-links" role="list">
+        <button type="button" (click)="goToLogin()" class="login-link">
+          Já possui cadastro? Voltar para a tela de autenticação
+        </button>
+      </menu>
+
+      <button
+        type="submit"
+        [disabled]="form.invalid || showProgress"
+        class="login-submit"
+      >
+        Cadastrar
+      </button>
+
+      <p class="register-notice">
+        *Após finalizar o cadastro será enviado um email de confirmação.<br />
+        Verifique a caixa de entrada do seu email.
+      </p>
+    </form>
+  </section>
+</div>

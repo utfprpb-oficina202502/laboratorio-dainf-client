@@ -1,19 +1,28 @@
-import { HostListener, Injector, OnInit, Directive, Input, ContentChild, TemplateRef, OnDestroy, ElementRef, ViewChild } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  ContentChild,
+  Directive,
+  ElementRef,
+  HostListener,
+  Injector,
+  Input,
+  OnDestroy,
+  OnInit,
+  TemplateRef,
+  ViewChild
+} from '@angular/core';
 import {Router} from '@angular/router';
 import {CrudService} from '../service/crud.service';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import {Table} from 'primeng/table';
 import {MultiSelect} from 'primeng/multiselect';
-
-import {BottomSheetComponent} from '../../geral/bottomScheet/bottomSheet.component';
-import {MatBottomSheet} from '@angular/material/bottom-sheet';
 import Swal from 'sweetalert2';
 import {Exception} from '../../exception/exception';
 import {LoaderService} from '../loader/loader.service';
 import {LoginService} from '../../login/login.service';
 import {PermissionService} from '../service/permission.service';
-import {TableConfiguration, TableColumn, ColumnState} from '../model/table-config.interface';
-import {Subject, debounceTime, distinctUntilChanged, takeUntil} from 'rxjs';
+import {ColumnState, TableColumn, TableConfiguration} from '../model/table-config.interface';
+import {debounceTime, distinctUntilChanged, Subject, takeUntil} from 'rxjs';
 
 @Directive()
 export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy {
@@ -22,10 +31,10 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   protected router: Router;
   protected messageService: MessageService;
   protected confirmationService: ConfirmationService;
-  protected bottom: MatBottomSheet;
   protected loaderService: LoaderService;
   protected loginService: LoginService;
   protected permissionService: PermissionService;
+  protected cdr: ChangeDetectorRef | null = null;
 
   // Enhanced configuration system
   @Input() tableConfig: TableConfiguration = {
@@ -129,10 +138,10 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.initializeKeyboardShortcuts();
     this.setupUserPermissions();
 
-    if (this.tableConfig.preloadData !== false) {
-      this.findAll();
-    } else {
+    if (this.tableConfig.preloadData === false) {
       this.buildColumnsTable();
+    } else {
+      this.findAll();
     }
   }
 
@@ -143,16 +152,23 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.router = this.injector.get(Router);
     this.messageService = this.injector.get(MessageService);
     this.confirmationService = this.injector.get(ConfirmationService);
-    this.bottom = injector.get(MatBottomSheet);
     this.loaderService = injector.get(LoaderService);
     this.loginService = injector.get(LoginService);
     this.permissionService = injector.get(PermissionService);
+
+    // Get ChangeDetectorRef for OnPush components
+    try {
+      this.cdr = injector.get(ChangeDetectorRef);
+    } catch (e) {
+      this.cdr = null;
+    }
+
     this.displayedColumns = this.columnsTable;
     this.rows = this.pageSize;
     this.defaultStateKey = this.buildDefaultStateKey();
     this.stateKey = this.defaultStateKey;
 
-    // Setup debounced filtering
+    // Set up debounced filtering
     this.setupDebouncedFiltering();
   }
 
@@ -179,8 +195,9 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     const resizableColumns = this.tableConfig.resizableColumns !== false && this.tableConfig.resizable !== false;
     this.tableConfig.resizableColumns = resizableColumns;
     this.tableConfig.columnResizeMode = this.tableConfig.columnResizeMode || 'fit';
-    this.tableConfig.lazy = this.tableConfig.lazy !== false;
-    this.tableConfig.lazyLoadOnInit = this.tableConfig.lazyLoadOnInit !== false;
+    // Default to true for proper server-side pagination with totalRecords
+    this.tableConfig.lazy ??= true;
+    this.tableConfig.lazyLoadOnInit ??= false;
     this.tableConfig.preloadData = this.tableConfig.preloadData !== false;
     this.tableConfig.columnToggle = this.tableConfig.columnToggle !== false;
     this.tableConfig.keyboardShortcuts = this.tableConfig.keyboardShortcuts !== false;
@@ -323,7 +340,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     }
 
     const defaults = { columns: true, filters: true, sort: true, pagination: true, selection: true, expandedRows: true };
-    const props = { ...defaults, ...(this.tableConfig.stateProps || {}) } as { [key: string]: boolean };
+    const props = { ...defaults, ...(this.tableConfig.stateProps) } as { [key: string]: boolean };
 
     const state: any = {};
 
@@ -371,7 +388,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     }
 
     const defaults = { columns: true, filters: true, sort: true, pagination: true, selection: true, expandedRows: true };
-    const props = { ...defaults, ...(this.tableConfig.stateProps || {}) } as { [key: string]: boolean };
+    const props = { ...defaults, ...(this.tableConfig.stateProps) } as { [key: string]: boolean };
 
     try {
       const raw = this.stateStorageRef.getItem(this.stateKey);
@@ -382,12 +399,12 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       const state = JSON.parse(raw);
 
       if (props.columns && Array.isArray(state.columns) && this.tableConfig.columns) {
-        state.columns.forEach((saved: any) => {
+        for (const saved of state.columns) {
           const column = this.tableConfig.columns.find(col => col.field === saved.field);
           if (column) {
             column.visible = saved.visible !== false;
           }
-        });
+        }
         if (Array.isArray(state.columnToggleModel)) {
           this.columnToggleModel = state.columnToggleModel;
         }
@@ -489,12 +506,12 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     }
 
     const selectedSet = new Set(selectedFields);
-    this.tableConfig.columns.forEach(column => {
+    for (const column of this.tableConfig.columns) {
       if (column.toggleable === false || column.field === 'actions') {
-        return;
+        continue;
       }
       column.visible = selectedSet.has(column.field);
-    });
+    }
 
     this.columnToggleModel = selectedFields;
     this.updateDisplayedColumns();
@@ -525,7 +542,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     if (this.tableConfig.expandMode === 'single') {
       this.expandedRows = this.isRowExpanded(row) ? {} : { [key]: true };
     } else {
-      const updated = { ...(this.expandedRows || {}) };
+      const updated = { ...(this.expandedRows) };
       if (updated[key]) {
         delete updated[key];
       } else {
@@ -558,7 +575,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
     const key = this.getRowKey(row);
     if (key && this.expandedRows?.[key]) {
-      const updated = { ...(this.expandedRows || {}) };
+      const updated = { ...(this.expandedRows) };
       delete updated[key];
       this.expandedRows = updated;
     }
@@ -570,12 +587,12 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       return;
     }
     const expanded: { [key: string]: boolean } = {};
-    this.objects.forEach(row => {
+    for (const row of this.objects) {
       const key = this.getRowKey(row);
       if (key) {
         expanded[key] = true;
       }
-    });
+    }
     this.expandedRows = expanded;
     this.saveTableState();
   }
@@ -616,28 +633,82 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.applyFilter('');
   }
 
-  public handleInteractiveCell(event: KeyboardEvent | MouseEvent, id: ID): void {
-    if (this.displayedColumns?.includes('actions')) {
+  /**
+   * Handles interactive cell clicks for mobile/keyboard accessibility
+   *
+   * @deprecated Use custom context menu implementation with Popover instead.
+   * Legacy support maintained for backward compatibility.
+   * @param event - The click/keyboard/touch event
+   * @param id - The ID of the object
+   */
+  public handleInteractiveCell(event: Event, id: ID): void {
+    if (!this.bottomSheetEnabled) {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+    const isActionButton = target.closest('button, a, .action-button, [role="button"]');
+
+    if (isActionButton) {
+      event.stopPropagation();
       return;
     }
 
     if (event instanceof KeyboardEvent) {
-      const key = event.key?.toLowerCase();
-      if (key === ' ' || key === 'spacebar') {
+      const key = event.key;
+      if (key === 'Enter' || key === ' ') {
         event.preventDefault();
+        this.openBottomSheet(id);
       }
-
-      if (key && key !== 'enter' && key !== ' ' && key !== 'spacebar') {
-        return;
-      }
+    } else if (event instanceof MouseEvent || event instanceof TouchEvent) {
+      this.openBottomSheet(id);
     }
+  }
 
-    this.openBottomSheet(id);
+  /**
+   * Common handler for successful data loading
+   * Extracts duplicated logic from findAll(), onPageChange(), and loadData()
+   */
+  private handleDataLoadSuccess(response: any): void {
+    this.objects = response.content;
+    this.totalElements = response.totalElements;
+    this.pageSize = response.size;
+    this.pageIndex = response.number;
+
+    this.rows = this.pageSize;
+    this.first = this.pageIndex * this.pageSize;
+
+    this.restoreSelectionFromKeys();
+    this.loaderService.hide();
+    this.postFindAll();
+    this.saveTableState();
+
+    this.triggerChangeDetection();
+  }
+
+  /**
+   * Common handler for data loading errors
+   * Extracts duplicated error handling logic
+   */
+  private handleDataLoadError(error: any): void {
+    this.loaderService.hide();
+    this.showError(error);
+    this.triggerChangeDetection();
+  }
+
+  /**
+   * Triggers change detection for OnPush components
+   * Extracts duplicated change detection logic
+   */
+  private triggerChangeDetection(): void {
+    if (this.cdr) {
+      this.cdr.markForCheck();
+    }
   }
 
   // PrimeNG DataView pagination event handler
   onPageChange(event: any) {
-    this.loaderService.display(true);
+    this.loaderService.show();
     this.buildColumnsTable();
 
     this.first = event.first;
@@ -647,24 +718,8 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
     this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue)
       .subscribe(
-        e => {
-          this.objects = e.content;
-          this.totalElements = e.totalElements;
-          this.pageSize = e.size;
-          this.pageIndex = e.number;
-
-          this.rows = this.pageSize;
-          this.first = this.pageIndex * this.pageSize;
-
-          this.restoreSelectionFromKeys();
-          this.loaderService.display(false);
-          this.postFindAll();
-          this.saveTableState();
-        },
-        error => {
-          this.loaderService.display(false);
-          this.showError(error);
-        }
+        e => this.handleDataLoadSuccess(e),
+        error => this.handleDataLoadError(error)
       );
   }
 
@@ -678,30 +733,18 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   }
 
   findAll() {
-    this.loaderService.display(true);
-    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue || '')
-      .subscribe(e => {
-        this.objects = e.content;
-        this.totalElements = e.totalElements;
-        this.pageSize = e.size;
-        this.pageIndex = e.number;
-
-        this.rows = this.pageSize;
-        this.first = this.pageIndex * this.pageSize;
-
-        this.restoreSelectionFromKeys();
-        this.loaderService.display(false);
-        this.postFindAll();
-        this.saveTableState();
-      }, error => {
-        this.loaderService.display(false);
-        this.showError(error);
-      });
+    this.loaderService.show();
     this.buildColumnsTable();
+
+    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue || '')
+      .subscribe(
+        e => this.handleDataLoadSuccess(e),
+        error => this.handleDataLoadError(error)
+      );
   }
 
   findAllByUsername() {
-    this.loaderService.display(true);
+    this.loaderService.show();
     const u = localStorage.getItem('username');
     this.service.findAllByUsername(u)
       .subscribe(e => {
@@ -710,11 +753,11 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
         this.pageIndex = 0;
         this.first = 0;
         this.restoreSelectionFromKeys();
-        this.loaderService.display(false);
+        this.loaderService.hide();
         this.postFindAll();
         this.saveTableState();
       }, error => {
-        this.loaderService.display(false);
+        this.loaderService.hide();
         this.showError(error);
       });
   }
@@ -737,31 +780,40 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       cancelButtonText: 'Não'
     }).then((result) => {
       if (result.value) {
-        this.loaderService.display(true);
+        this.loaderService.show();
         this.service.delete(id)
           .subscribe(e => {
             Swal.fire('Sucesso!', 'Registro excluído com sucesso!', 'success');
             this.findAll();
-            this.loaderService.display(false);
+            this.loaderService.hide();
           }, error => {
-            this.loaderService.display(false);
+            this.loaderService.hide();
             this.showError(error);
           });
       }
     });
   }
 
-  openBottomSheet(id): void {
-    if (window.innerWidth <= 1200 && this.bottomSheetEnabled) {
-      const sheet = this.bottom.open(BottomSheetComponent);
-      sheet.afterDismissed().subscribe(action => {
-        if (action === 'E') {
-          this.edit(id);
-        } else if (action === 'R') {
-          this.delete(id);
-        }
-      });
-    }
+  /**
+   * Opens a bottom sheet for row actions
+   *
+   * @deprecated Bottom sheets have been replaced with context menus using Popover.
+   * Implement custom context menu in your component using openOptions() with Popover.
+   *
+   * Migration guide:
+   * 1. Add ViewChild for Popover: @ViewChild('actionsMenu') actionsMenu: Popover;
+   * 2. Create MenuItem array: contextMenuItems: MenuItem[] = [];
+   * 3. Implement openOptions(event: Event, id: ID) method
+   * 4. Use actionsMenu.toggle(event) to show menu
+   * 5. Replace template with: <p-popover #actionsMenu><p-menu [model]="contextMenuItems"></p-menu></p-popover>
+   *
+   * @param id - The ID of the object to show actions for
+   */
+  openBottomSheet(id: ID): void {
+    console.warn(
+      'openBottomSheet is deprecated. Use Popover context menus instead. ' +
+      'See method documentation for migration guide.'
+    );
   }
 
   openForm() {
@@ -809,22 +861,15 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
   // Centralized data loading method
   private loadData() {
-    this.loaderService.display(true);
+    this.loaderService.show();
     this.buildColumnsTable();
 
     this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue)
       .subscribe(
         e => {
-          this.objects = e.content;
-          this.totalElements = e.totalElements;
-          this.pageSize = e.size;
-          this.pageIndex = e.number;
-
-          this.rows = this.pageSize;
-          this.first = this.pageIndex * this.pageSize;
-
-          if (this.sortField && this.objects) {
-            this.objects.sort((a: any, b: any) => {
+          // Apply client-side sorting if needed
+          if (this.sortField && e.content) {
+            e.content.sort((a: any, b: any) => {
               const aVal = a[this.sortField];
               const bVal = b[this.sortField];
 
@@ -834,15 +879,9 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
             });
           }
 
-          this.restoreSelectionFromKeys();
-          this.loaderService.display(false);
-          this.postFindAll();
-          this.saveTableState();
+          this.handleDataLoadSuccess(e);
         },
-        error => {
-          this.loaderService.display(false);
-          this.showError(error);
-        }
+        error => this.handleDataLoadError(error)
       );
   }
 
@@ -899,7 +938,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
         const data: Blob = new Blob([buffer], {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
         });
-        module.default.saveAs(data, fileName + '_export_' + new Date().getTime() + '.xlsx');
+        module.default.saveAs(data, fileName + '_export_' + Date.now() + '.xlsx');
       }
     }).catch(error => {
       console.error('Error importing file-saver library:', error);
@@ -932,7 +971,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       cancelButtonText: 'Não'
     }).then((result) => {
       if (result.value) {
-        this.loaderService.display(true);
+        this.loaderService.show();
 
         // Extract IDs from selected items
         const ids = this.selectedItems.map((item: any) => item.id);
@@ -948,7 +987,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       // All deletions completed
       this.selectedItems = [];
       this.saveTableState();
-      this.loaderService.display(false);
+      this.loaderService.hide();
       Swal.fire('Sucesso!', `${total} registro(s) excluído(s) com sucesso!`, 'success');
       this.findAll();
       return;
@@ -961,7 +1000,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
           this.deleteItemsSequentially(ids, currentIndex + 1, total);
         },
         error => {
-          this.loaderService.display(false);
+          this.loaderService.hide();
           this.showError(error);
           Swal.fire('Erro!', `Erro ao excluir alguns registros. ${currentIndex} de ${total} foram excluídos.`, 'error');
         }

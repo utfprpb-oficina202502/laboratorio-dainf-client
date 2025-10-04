@@ -22,12 +22,16 @@
               "src/polyfills.ts"
             ],
             "tsConfig": "tsconfig.app.json",
-            "aot": true,
-            "assets": ["src/favicon.ico", "src/assets"],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "src/public",
+                "output": "/"
+              }
+            ],
             "styles": [
               "primeicons/primeicons.css",
               "font-awesome/css/font-awesome.css",
-              "bootstrap/dist/css/bootstrap.css",
               "src/app/framework/styles/theme-variables.css",
               "src/styles.css",
               "src/prime-tailwind-fallback.css"
@@ -49,23 +53,34 @@
                   "minify": true,
                   "inlineCritical": false
                   },
-                "fonts": true
+                "fonts": {
+                  "inline": false
+                }
               },
               "outputHashing": "all",
               "sourceMap": false,
               "namedChunks": false,
-              "aot": true,
               "extractLicenses": true,
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
+                  "maximumWarning": "1mb",
+                  "maximumError": "5mb"
+                },
+                {
+                  "type": "bundle",
+                  "maximumWarning": "1.5mb",
                   "maximumError": "5mb"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "6kb",
+                  "maximumWarning": "4kb",
                   "maximumError": "10kb"
+                },
+                {
+                  "type": "any",
+                  "maximumWarning": "500kb",
+                  "maximumError": "5mb"
                 }
               ]
             },
@@ -82,12 +97,13 @@
                   "minify": true,
                   "inlineCritical": false
                   },
-                "fonts": true
+                "fonts": {
+                  "inline": false
+                }
               },
               "outputHashing": "all",
               "sourceMap": false,
               "namedChunks": false,
-              "aot": true,
               "extractLicenses": true,
               "budgets": [
                 {
@@ -115,7 +131,9 @@
                   "minify": true,
                   "inlineCritical": false
                   },
-                "fonts": true
+                "fonts": {
+                  "inline": false
+                }
               },
               "outputHashing": "all",
               "sourceMap": false,
@@ -148,12 +166,13 @@
                   "minify": true,
                   "inlineCritical": false
                   },
-                "fonts": true
+                "fonts": {
+                  "inline": false
+                }
               },
               "outputHashing": "all",
               "sourceMap": false,
               "namedChunks": false,
-              "aot": true,
               "extractLicenses": true,
               "budgets": [
                 {
@@ -197,42 +216,13 @@
             "buildTarget": "tcc-client:build"
           }
         },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "main": "src/test.ts",
-            "polyfills": "src/polyfills.ts",
-            "tsConfig": "tsconfig.spec.json",
-            "karmaConfig": "karma.conf.js",
-            "assets": ["src/favicon.ico", "src/assets"],
-            "styles": [
-              "primeicons/primeicons.css",
-              "src/styles.css"
-            ],
-            "scripts": []
-          }
-        },
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@angular-eslint/builder:lint",
           "options": {
-            "tsConfig": [
-              "tsconfig.app.json",
-              "tsconfig.spec.json",
-              "e2e/tsconfig.json"
-            ],
-            "exclude": ["**/node_modules/**"]
-          }
-        },
-        "e2e": {
-          "builder": "@angular-devkit/build-angular:protractor",
-          "options": {
-            "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "tcc-client:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "tcc-client:serve:production"
-            }
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
           }
         }
       }

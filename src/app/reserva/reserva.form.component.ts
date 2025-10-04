@@ -1,207 +1,284 @@
-import { Component, ElementRef, Injector, ViewChild } from "@angular/core";
-import { CrudFormComponent } from "../framework/component/crud.form.component";
-import { Reserva } from "./reserva";
-import { ReservaService } from "./reserva.service";
-import { ReservaItem } from "./reservaItem";
-import {MatTable, MatTableModule} from "@angular/material/table";
-import { Item } from "../item/item";
-import { ItemService } from "../item/item.service";
-import { pt } from "../framework/constantes/calendarPt";
-import { DatePipe } from "@angular/common";
-import { Usuario } from "../usuario/usuario";
-import { ItemImage } from "../item/itemImage";
-import { environment } from "src/environments/environment";
-import Swal from "sweetalert2";
-import {Carousel} from "primeng/carousel";
-import {Dialog} from "primeng/dialog";
-import {CancelarModule} from "../geral/cancelar/cancelar.module";
-import {SalvarModule} from "../geral/salvar/salvar.module";
-import {VoltarModule} from "../geral/voltar/voltar.module";
-import {FormsModule} from "@angular/forms";
-import {Card} from "primeng/card";
-import {MatIconModule} from "@angular/material/icon";
-import {AutoComplete} from "primeng/autocomplete";
-import {CadastroRapidoModule} from "../geral/cadastroRapido/cadastroRapido.module";
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  Injector,
+  signal
+} from '@angular/core';
+import {CommonModule, NgOptimizedImage} from '@angular/common';
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+
+import {Reserva} from './reserva';
+import {ReservaService} from './reserva.service';
+import {
+  PrimeReactiveCrudFormComponent
+} from '../framework/component/prime-reactive-crud.form.component';
+import {Item} from '../item/item';
+import {ItemService} from '../item/item.service';
+import {ReservaItem} from './reservaItem';
+import {ItemImage} from '../item/itemImage';
+import {environment} from 'src/environments/environment';
+import Swal from 'sweetalert2';
+
+// PrimeNG
+import {CardModule} from 'primeng/card';
+import {InputTextModule} from 'primeng/inputtext';
+import {AutoCompleteModule} from 'primeng/autocomplete';
+import {DatePickerModule} from 'primeng/datepicker';
+import {ButtonModule} from 'primeng/button';
+import {TableModule} from 'primeng/table';
+import {TooltipModule} from 'primeng/tooltip';
+import {TextareaModule} from 'primeng/textarea';
+import {DialogModule} from 'primeng/dialog';
+import {CarouselModule} from 'primeng/carousel';
+
+// Custom components
+import {FormFieldComponent} from '../framework/component/form-field.component';
+import {VoltarComponent} from '../geral/voltar/voltar.component';
+import {CancelarComponent} from '../geral/cancelar/cancelar.component';
+import {SalvarComponent} from '../geral/salvar/salvar.component';
+import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.component';
 
 @Component({
-  selector: "app-form-reserva",
-  templateUrl: "./reserva.form.component.html",
-  styleUrls: ["./reserva.form.component.css"],
+  selector: 'app-form-reserva',
+  templateUrl: './reserva.form.component.html',
+  styleUrls: ['./reserva.form.component.css'],
   imports: [
-    Carousel,
-    Dialog,
-    CancelarModule,
-    SalvarModule,
-    VoltarModule,
+    CadastroRapidoComponent,
+    CommonModule,
+    ReactiveFormsModule,
     FormsModule,
-    Card,
-    MatTableModule,
-    MatIconModule,
-    AutoComplete,
-    CadastroRapidoModule
-  ]
+    // PrimeNG
+    CardModule,
+    InputTextModule,
+    AutoCompleteModule,
+    DatePickerModule,
+    ButtonModule,
+    TableModule,
+    TooltipModule,
+    TextareaModule,
+    DialogModule,
+    CarouselModule,
+    // Custom
+    FormFieldComponent,
+    VoltarComponent,
+    CancelarComponent,
+    SalvarComponent,
+    NgOptimizedImage
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ReservaFormComponent extends CrudFormComponent<Reserva, number> {
-  @ViewChild("table") table: MatTable<any>;
-  @ViewChild("itemToAdd") itemToAdd: ElementRef;
-  @ViewChild("qtdeToAdd") qtdeToAdd: ElementRef;
+export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva, number> {
+  protected reservaService: ReservaService;
+  protected injector: Injector;
 
-  datepipe: DatePipe = new DatePipe("pt-BR");
-  displayedColumns = ["item", "qtde", "actionsForm"];
-  reservaItem: ReservaItem;
-  itemList: Item[];
-  localePt: any;
-  images: ItemImage[];
-  dialogImagens = false;
-  minioUrl: string;
-  responsiveOptions;
+  private readonly fb = this.injector.get(FormBuilder);
+  private readonly itemService = this.injector.get(ItemService);
 
-  constructor(
-    protected reservaService: ReservaService,
-    protected injector: Injector,
-    private readonly itemService: ItemService
-  ) {
-    super(reservaService, injector, "/reserva");
-    this.minioUrl = environment.minio_url;
-    this.reservaItem = new ReservaItem();
-    this.localePt = pt;
-    this.responsiveOptions = [
-      {
-        breakpoint: "768px",
-        numVisible: 2,
-        numScroll: 2,
-      },
-      {
-        breakpoint: "560px",
-        numVisible: 1,
-        numScroll: 1,
-      },
-    ];
-  }
+  // Signals for state management
+  protected readonly itemList = signal<Item[]>([]);
+  protected readonly reservaItems = signal<ReservaItem[]>([]);
+  protected readonly images = signal<ItemImage[]>([]);
+  protected readonly dialogImagens = signal<boolean>(false);
+  protected readonly minioUrl = signal<string>(environment.minio_url);
 
-  initializeValues(): void {
-    this.object.usuario = new Usuario();
-    this.object.dataReserva = this.datepipe.transform(
-      new Date().toLocaleDateString(),
-      "dd/MM/yyyy"
-    );
-    this.setUsuarioResponsavel();
-  }
+  // Temporary signals for adding items (not part of main form)
+  protected readonly tempItem = signal<Item | null>(null);
+  protected readonly tempQtde = signal<number>(1);
 
-  setUsuarioResponsavel() {
-    this.loginService.getCurrentUser().subscribe((user) => {
-      this.object.usuario = user;
-    });
-  }
-
-  findProdutos($event) {
-    this.itemService.completeItem($event.query, true).subscribe((e) => {
-      this.itemList = e;
-    });
-  }
-
-  removeItem(id: number) {
-    let index;
-    this.object.reservaItem.forEach((empItem) => {
-      if (empItem.item.id === id) {
-        index = this.object.reservaItem.indexOf(empItem);
-      }
-    });
-    this.object.reservaItem.splice(index, 1);
-    this.table.renderRows();
-  }
-
-  getQtdeTotal() {
-    const valid = this?.object?.reservaItem;
-    if (valid) {
-      return this.object.reservaItem
-        .map((t) => t.qtde)
-        .reduce((acc, value) => Number(acc) + Number(value), 0);
+  // Carousel responsive options
+  protected readonly responsiveOptions = [
+    {
+      breakpoint: '768px',
+      numVisible: 2,
+      numScroll: 2
+    },
+    {
+      breakpoint: '560px',
+      numVisible: 1,
+      numScroll: 1
     }
+  ];
+
+  // Computed signals
+  protected readonly qtdeTotal = computed(() =>
+    this.calculateTotalQuantity(this.reservaItems())
+  );
+
+  protected readonly hasItems = computed(() => this.reservaItems().length > 0);
+
+  constructor() {
+    const reservaService = inject(ReservaService);
+    const injector = inject(Injector);
+
+    super(reservaService, injector, '/reserva', Reserva);
+
+    this.reservaService = reservaService;
+    this.injector = injector;
   }
 
-  insertItem() {
-    if (this.reservaItem.item && this.reservaItem.qtde) {
-      if (this.saldoItemIsValid(this.reservaItem.qtde)) {
-        if (!this.object.reservaItem) {
-          this.object.reservaItem = new Array();
-        }
-        const upQtde = this.object.reservaItem.some(
-          (value) => value.item.id === this.reservaItem.item.id
-        );
-        if (upQtde) {
-          this.object.reservaItem.forEach((empItem) => {
-            if (empItem.item.id === this.reservaItem.item.id) {
-              const novaQtde =
-                Number(empItem.qtde) + Number(this.reservaItem.qtde);
-              if (this.saldoItemIsValid(novaQtde)) {
-                empItem.qtde = novaQtde;
-              }
-            }
-          });
-        } else {
-          this.object.reservaItem.push(this.reservaItem);
-        }
-        this.postInsertItemList();
+  /**
+   * Build the reactive form with validators
+   */
+  protected override buildForm(): FormGroup {
+    return this.fb.group({
+      id: [{value: null, disabled: true}],
+      descricao: ['', Validators.required],
+      usuario: [{value: null, disabled: true}],
+      dataReserva: ['', Validators.required],
+      dataRetirada: ['', Validators.required],
+      observacao: ['']
+    });
+  }
+
+  /**
+   * Initialize form values
+   */
+  protected override initializeValues(): void {
+    this.setTodayAsDefaultDate('dataReserva');
+    this.setCurrentUserAsResponsible('usuario');
+  }
+
+  /**
+   * Autocomplete for Items
+   */
+  findProdutos(event: any): void {
+    this.itemService.completeItem(event.query, true).subscribe(e => {
+      this.itemList.set(e);
+    });
+  }
+
+  /**
+   * Set default quantity when item is selected
+   */
+  setQtdeDefaultItem(): void {
+    this.tempQtde.set(1);
+  }
+
+  /**
+   * Insert item into the list
+   */
+  insertItem(): void {
+    const item = this.tempItem();
+    const qtde = this.tempQtde();
+
+    if (!item || !qtde || typeof item !== 'object') {
+      this.showItemRequiredMessage();
+      return;
+    }
+
+    if (!this.validateItemSaldo(item, qtde)) {
+      return;
+    }
+
+    const currentItems = [...this.reservaItems()];
+    const existingIndex = currentItems.findIndex(ri => ri.item.id === item.id);
+
+    if (existingIndex >= 0) {
+      const novaQtde = Number(currentItems[existingIndex].qtde) + Number(qtde);
+      if (this.validateItemSaldo(item, novaQtde)) {
+        currentItems[existingIndex].qtde = novaQtde;
+      } else {
+        return;
       }
     } else {
-      this.messageService.add({
-        severity: "info",
-        detail: "Necessário informar o item e a quantidade.",
-      });
+      const newReservaItem = new ReservaItem();
+      newReservaItem.item = item;
+      newReservaItem.qtde = qtde;
+      currentItems.push(newReservaItem);
     }
+
+    this.reservaItems.set(currentItems);
+
+    // Reset temp values
+    this.tempItem.set(null);
+    this.tempQtde.set(1);
   }
 
-  postInsertItemList() {
-    this.reservaItem = new ReservaItem();
-    this.table.renderRows();
+  /**
+   * Remove item from the list
+   */
+  removeItem(id: number): void {
+    const updatedItems = this.removeItemById(this.reservaItems(), id, 'item.id');
+    this.reservaItems.set(updatedItems);
   }
 
-  setFocusInputItem() {
-    this.itemToAdd.nativeElement.focus();
-  }
+  /**
+   * Show dialog with item images
+   */
+  showDialogImagens(): void {
+    const item = this.tempItem();
+    if (!item) return;
 
-  setFocusQtdeToAdd() {
-    this.qtdeToAdd.nativeElement.focus();
-  }
-
-  saldoItemIsValid(qtdeInserir) {
-    const isValid =
-      this.reservaItem.item.saldo > 0 &&
-      qtdeInserir <= this.reservaItem.item.saldo;
-    if (!isValid) {
-      this.messageService.add({
-        severity: "info",
-        detail: "A quantidade é maior do que o saldo atual do item.",
-      });
-      return false;
-    }
-    return true;
-  }
-
-  save() {
-    if (!this.object.reservaItem || this.object.reservaItem.length <= 0) {
-      this.validExtra = false;
-    } else {
-      this.validExtra = true;
-    }
-    super.save();
-  }
-
-  showDialogImagens() {
-    this.loaderService.display(true);
-    console.log(this.reservaItem.item.imageItem[0]);
-    this.itemService.findAllImagesItem(this.reservaItem.item.id)
-      .subscribe(e => {
-        this.loaderService.display(false);
-        if (e.length > 0) {
-          this.images = e;
-          this.dialogImagens = true;
+    this.loaderService.show();
+    this.itemService.findAllImagesItem(item.id).subscribe({
+      next: (images) => {
+        this.loaderService.hide();
+        if (images.length > 0) {
+          this.images.set(images);
+          this.dialogImagens.set(true);
         } else {
           Swal.fire('Ops...', 'Esse item não possui imagens.', 'info');
         }
-      }, error => {
-        this.loaderService.display(false);
+      },
+      error: () => {
+        this.loaderService.hide();
+      }
+    });
+  }
+
+  /**
+   * Override save to validate items
+   */
+  override save(): void {
+    const items = this.reservaItems();
+
+    if (!items || items.length === 0) {
+      this.validExtra = false;
+      this.showMinimumItemsMessage();
+      return;
+    }
+
+    this.validExtra = true;
+    super.save();
+  }
+
+  /**
+   * Patch form with object data
+   */
+  protected override patchFormWithObject(object: Reserva): void {
+    const formGroup = this.form();
+    if (formGroup) {
+      formGroup.patchValue({
+        id: object.id,
+        descricao: object.descricao,
+        usuario: object.usuario,
+        dataReserva: object.dataReserva,
+        dataRetirada: object.dataRetirada,
+        observacao: object.observacao
       });
+    }
+
+    // Set items
+    if (object.reservaItem) {
+      this.reservaItems.set([...object.reservaItem]);
+    }
+  }
+
+  /**
+   * Prepare form value before saving
+   */
+  protected override prepareFormValue(formValue: Partial<Reserva>): Partial<Reserva> {
+    const formGroup = this.form();
+    const id = formGroup?.get('id')?.value;
+    const usuario = formGroup?.get('usuario')?.value;
+
+    return {
+      ...formValue,
+      ...(id && {id}),
+      usuario: usuario,
+      reservaItem: this.reservaItems()
+    };
   }
 }

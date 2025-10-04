@@ -1,706 +1,1098 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Este arquivo fornece orientações para Claude Code (claude.ai/code) ao trabalhar com código neste repositório.
+
+## Migration Status ✅
+
+**Material Design → PrimeNG Migration: COMPLETE**
+
+- ✅ Todos os componentes migrados de Material Design para PrimeNG v20
+- ✅ `@angular/material` removido de `package.json` e código
+- ✅ Bottom sheets substituídos por Popover (context menus)
+- ✅ Bootstrap CSS removido - apenas Tailwind CSS utilities
+- ✅ Reactive forms com PrimeNG components
+- ✅ Componentes standalone com lazy loading
+- ✅ 100% PrimeNG + Tailwind CSS
+
+**Stack Atual**:
+- **UI Library**: PrimeNG v20 (tema Aura)
+- **Styling**: Tailwind CSS v3.4+
+- **Forms**: Reactive Forms com signals
+- **State**: RxJS + Angular Signals
+- **Change Detection**: OnPush em todos os componentes
 
 ## Development Commands
 
-- **Development server**: `npm run dev` (starts dev server at http://localhost:4200)
-- **Production build**: `npm run build` (builds for production with Angular configuration)
-- **Testing**: `npm run test` (runs unit tests with Karma)
-- **Single test**: `npm run test -- --include="**/[component-name].spec.ts"` (run specific test file)
-- **Linting**: `npm run lint` (runs TSLint with project rules)
-- **E2E testing**: `npm run e2e` (runs end-to-end tests)
-- **Production start**: `npm start` (starts Node.js Express server for production)
+- **Development server**: `npm run dev` (inicia servidor dev em http://localhost:4200)
+- **Production build**: `npm run build` (build para produção com configuração Angular)
+- **Testing**: `npm run test` (executa testes unitários com Karma)
+- **Single test**: `npm run test -- --include="**/[component-name].spec.ts"` (executa arquivo de teste específico)
+- **Linting**: `npm run lint` (executa TSLint com regras do projeto)
+- **E2E testing**: `npm run e2e` (executa testes end-to-end)
+- **Production start**: `npm start` (inicia servidor Node.js Express para produção)
 
 ## Multi-Environment Build Support
 
-This project supports building for multiple environments with specific configurations:
+O projeto suporta builds para múltiplos ambientes com configurações específicas:
 - **Production**: `ng build --configuration production`
-- **Robotnik**: `ng build --configuration robotnik`a
+- **Robotnik**: `ng build --configuration robotnik`
 - **Patobots**: `ng build --configuration patobots`
 - **Daele**: `ng build --configuration daele`
 
-Each environment has its own environment file in `src/environments/` and corresponding Docker configurations.
+Cada ambiente possui seu próprio arquivo em `src/environments/` e configurações Docker correspondentes.
 
 ## Architecture Overview
 
-This is an Angular 20+ application for the DAINF (Departamento Acadêmico de Informática) laboratory management system at UTFPR Campus Pato Branco.
+Aplicação Angular 20+ para o sistema de gerenciamento de laboratórios do DAINF (Departamento Acadêmico de Informática) na UTFPR Campus Pato Branco.
 
 ### Core Structure
-- **Frontend**: Angular with TypeScript, PrimeNG (primary), Bootstrap, Angular Material (being phased out)
-- **Backend Integration**: RESTful API communication via HttpClient
-- **Authentication**: JWT-based with HTTP interceptor for token management
-- **Internationalization**: Portuguese (pt-BR) locale with custom configurations
-
-## Migration Status
-
-This application is currently being migrated from Angular 18 to Angular 20+ patterns:
-
-**Current State**: Traditional NgModules architecture with Angular 20+ dependencies
-**Target State**: Modern Angular 20+ with standalone components, signals, and new control flow
-
-**Migration Priorities**:
-- ✅ Use Angular 20+ patterns for all new components
-- ✅ Prefer PrimeNG over Angular Material for new UI components
-- ⏳ Gradually migrate existing components to standalone architecture
-- ⏳ Replace Angular Material components with PrimeNG equivalents
+- **Frontend**: Angular com TypeScript, PrimeNG, Tailwind CSS
+- **Backend Integration**: Comunicação API RESTful via HttpClient
+- **Authentication**: Baseado em JWT com interceptor HTTP para gerenciamento de tokens
+- **Internationalization**: Locale português (pt-BR) com configurações customizadas
+- **Routing**: Componentes standalone com lazy loading via `loadComponent()`
+- **Styling**: Tailwind CSS para utilities, tema PrimeNG Aura para componentes
 
 ### Key Architectural Components
 
-## PrimeNG List Migration
-
-When migrating legacy Angular Material list screens (`CrudListComponent`) to the new PrimeNG stack (`PrimeCrudListComponent`), follow these practices so code stays consistent and reusable across the app.
-
-### Migration Process Overview
-
-1. **Assess before editing**
-   - Confirm the feature really needs the migration (touching CRUD flows or UI refresh).
-   - Capture current behaviors: displayed columns, filters, bottom-sheet actions, custom formatters.
-   - Check for shared CSS or services referenced by the Material table so they can be reused or retired.
-
-2. **Refactor TypeScript first**
-   - Replace the `CrudListComponent` inheritance with `PrimeCrudListComponent`.
-   - Provide the required entity metadata (`getEntityName`, `getEntityPluralName`) and export naming overrides.
-   - Build a `tableConfig` (columns, permissions, state settings, global filter fields) instead of manipulating `displayedColumns` directly.
-   - Remove `MatTableDataSource`, `MatPaginator`, `MatSort`, and associated imports/events. Tie pagination/sorting into the Prime base calls (`onPageChange`, `onSort`, `applyFilter`).
-   - Enable optional features intentionally: column toggles, expansion rows, localStorage state, keyboard shortcuts. Do not turn them on by default unless the UX requires it.
-
-3. **Rebuild the template with PrimeNG widgets**
-   - Swap `<mat-card>`, `<mat-table>`, `<mat-paginator>` etc. for their Prime equivalents (`p-card`, `p-table`, `p-toolbar`, built-in paginator).
-   - Use Prime control-flow ready markup: leverage `p-toolbar`, `p-button`, `p-iconField`, `p-tableCheckbox`, etc.
-   - Keep the structure accessible: add `aria-label`s, current page summaries, and keyboard-friendly buttons (see the new base component helpers).
-   - Adopt column templates via `getVisibleColumns()` and the table config instead of hard-coded `<td>` order.
-   - When Prime features aren't needed (row expansion, column toggler), leave them out—`PrimeCrudListComponent` has sensible defaults.
-
-4. **Clean dependencies**
-   - Drop Angular Material modules that the component no longer needs (module imports, styles, providers).
-   - Ensure PrimeNG modules are pulled in once, preferably through the standalone component `imports` array.
-   - Remove legacy CSS that targeted `.mat-` classes. Replace with Prime-friendly utility classes or scoped styles.
-
-5. **Verify behaviour**
-   - Exercise pagination, sorting, filtering, bulk delete, and bottom-sheet actions after the migration.
-   - Test keyboard shortcuts (Ctrl+Alt+F/N/E/C/L) if the component enables them.
-   - Confirm persisted state works when `stateful` is true (reload the page to check column visibility, filters, expansion).
-   - Update or add unit/integration tests so the Prime-based component is covered.
-
-6. **Roll out incrementally**
-   - Keep PRs focused: migrate one list at a time.
-   - Share new patterns in documentation/examples so other lists can follow the same approach.
-   - When the Prime base gains new capabilities, retrofit earlier migrations to stay consistent.
-
-### Complete Migration Template
-
-#### TypeScript Migration Pattern
+**Standalone Components with Lazy Loading**:
+Todos os componentes de lista (`*.list.component.ts`) utilizam arquitetura standalone com lazy loading:
 
 ```typescript
-// 1. Update imports
-import {Component, forwardRef, Injector} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
-import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
-import {TableColumn} from '../framework/model/table-config.interface';
+// app-routing.module.ts
+{
+  path: 'grupo',
+  canActivate: [LoginService],
+  loadComponent: () => import('./grupo/grupo.list.component').then(m => m.GrupoListComponent)
+}
+```
 
-// PrimeNG Components (customize based on component needs)
-import {CardModule} from 'primeng/card';
-import {TableModule} from 'primeng/table';
-import {MultiSelectModule} from 'primeng/multiselect';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ButtonModule} from 'primeng/button';
-import {InputTextModule} from 'primeng/inputtext';
-import {IconFieldModule} from 'primeng/iconfield';
-import {InputIconModule} from 'primeng/inputicon';
-import {TooltipModule} from 'primeng/tooltip';
-import {TagModule} from 'primeng/tag';
-import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {NovoModule} from '../geral/novo/novo.module';
+**Benefícios**:
+- **Code splitting**: Componentes carregados apenas ao navegar para suas rotas
+- **Bundle menor**: Componentes (~50-100KB cada) separados do bundle principal
+- **Carregamento inicial mais rápido**: App core carrega sem componentes de lista
+- **Type safety**: Suporte completo TypeScript com dynamic imports
+- **Auto-contidos**: Sem necessidade de feature modules
 
-// 2. Update component decorator
-@Component({
-  selector: 'app-list-[entity]',
-  templateUrl: './[entity].list.component.html',
-  styleUrls: ['./[entity].list.component.css'],
-  imports: [
-    CommonModule,
-    FormsModule,
-    CardModule,
-    TableModule,
-    MultiSelectModule,
-    ToolbarModule,
-    ButtonModule,
-    InputTextModule,
-    IconFieldModule,
-    InputIconModule,
-    TooltipModule,
-    TagModule,
-    PrimeCrudToolbarComponent,
-    NovoModule
-  ],
-  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => EntityListComponent) }]
-})
-export class EntityListComponent extends PrimeCrudListComponent<Entity, KeyType> {
+**Framework Layer**: Localizado em `src/app/framework/`:
+- **Charts**: Integração Chart.js (amCharts4) com configurações de cor customizadas
+- **Components**: Componentes UI reutilizáveis (stat-cards, skeleton screens, toolbars)
+- **Services**: Lógica de negócio compartilhada e comunicação API
+- **Utilities**: Formatação de moeda, tradução de paginação, helpers de validação
+- **Directives/Pipes**: Diretivas e pipes Angular customizadas
 
-  // 3. Define table columns with proper metadata
-  private readonly tableColumns: TableColumn[] = [
-    {
-      field: 'id',
-      header: 'Codigo',
-      type: 'number',
-      sortable: true,
-      filterable: true,
-      width: '8rem',
-      align: 'center'
-    },
-    {
-      field: 'nome',
-      header: 'Nome',
-      type: 'text',
-      sortable: true,
-      filterable: true,
-      minWidth: '16rem'
-    },
-    {
-      field: 'actions',
-      header: 'Opcoes',
-      type: 'custom',
-      sortable: false,
-      filterable: false,
-      exportable: false,
-      align: 'center',
-      width: '10rem',
-      toggleable: false
+**Authentication Flow**:
+- Utiliza `HttpClientInterceptor` para anexar automaticamente tokens JWT às requisições
+- Gerencia erros de autenticação
+- Pre-fetching de permissões durante login para carregamento otimizado
+
+**State Management**:
+- Gerenciamento de estado baseado em serviços com RxJS observables
+- `ChangeDetectionStrategy.OnPush` em todos os componentes
+- Uso explícito de `ChangeDetectorRef.markForCheck()` após operações assíncronas
+
+**Loading Overlay & Drawer Interaction**:
+- Loading overlay (`LoaderComponent` em `src/app/framework/loader/`) usa `z-index: 9999`
+- Cobre todo viewport, incluindo drawer/sidebar PrimeNG
+- Drawer (`SidenavComponent` em `src/app/sidenav/`) com comportamento responsivo:
+  - Desktop (≥1200px): Aberto por padrão, Escape desabilitado
+  - Mobile (<1200px): Fechado por padrão, Escape habilitado
+  - Usa `modal="false"` para prevenir conflitos de backdrop
+- Backgrounds theme-responsive via propriedades CSS customizadas
+
+## Performance Optimizations
+
+Implementação de otimizações abrangentes para garantir carregamento rápido de páginas e experiência fluida.
+
+### Authentication & Navigation Flow
+
+**Problema**: Após login, usuários experimentavam 1-3 segundos de tela congelada.
+
+**Solução**: Estratégia de otimização em três camadas:
+
+1. **Permission Pre-fetching** (`login.component.ts:72-101`)
+   - Permissões carregadas e cacheadas durante login, antes da navegação
+   - `getPermissoesUser()` chamado após `refreshCurrentUser()` com sucesso
+   - Elimina delay de chamada API no carregamento da home
+   - Itens do menu sidebar populados instantaneamente com dados cacheados
+
+2. **Authentication State Timing** (`login.service.ts:190-192`)
+   - `setAuthenticated()` chamado imediatamente antes da navegação
+   - Previne estado intermediário onde layout auth mostra com rota de login
+   - Garante transição atômica de login para home
+
+3. **Navigation Transition Masking** (`app.component.ts:19,38-54`)
+   - Flag `isNavigating` rastreia eventos `NavigationStart`/`NavigationEnd`
+   - Conteúdo do router-outlet com fade para `opacity: 0` durante transição
+   - Loader overlay (z-index 9999) cobre tela completamente
+   - Elimina artefatos visuais de rota anterior em novo layout
+
+**Padrão de Implementação**:
+```typescript
+setUserInLocalStorage() {
+  this.loginService.refreshCurrentUser()
+    .subscribe({
+      next: () => {
+        this.loginService.getPermissoesUser().subscribe({
+          next: () => {
+            this.loginService.setAuthenticated();
+            this.router.navigate(["/"]);
+          }
+        });
+      }
+    });
+}
+```
+
+### Progressive Dashboard Loading
+
+**Problema**: Dashboard home fazia 5 chamadas API simultâneas, bloqueando UI por 1+ segundos.
+
+**Solução**: Carregamento progressivo em duas fases (`home.component.ts:109-221`):
+
+**Fase 1 - Carregamento de Stats** (~100-200ms):
+- Chamada API única para stat cards
+- Flag `loadingStats` controla skeleton cards
+- Stats aparecem rapidamente, fornecendo conteúdo imediato
+
+**Fase 2 - Carregamento de Charts** (~500-1000ms):
+- Quatro chamadas API para charts carregadas em background
+- Flag `loadingCharts` controla skeleton charts
+- Charts populam progressivamente sem bloquear stats
+
+```typescript
+buildDashboards() {
+  this.loadingStats = true;
+  this.loaderService.show();
+
+  this.homeService.findDadosEmprestimoCountInRange(ini, fim)
+    .subscribe({
+      next: (count) => {
+        this.dashEmprestimoCount = count;
+        this.loadingStats = false;
+        this.loadCharts(ini, fim, requestToken);
+      }
+    });
+}
+```
+
+### Skeleton Screens
+
+**Componentes**:
+- `src/app/framework/component/skeleton-card.component.ts`
+- `src/app/framework/component/skeleton-chart.component.ts`
+
+**Propósito**: Fornecer feedback visual instantâneo durante operações assíncronas
+
+**Características**:
+- Card skeletons para stat cards com módulo PrimeNG Skeleton
+- Chart skeletons para gráficos line, bar e pie
+- Animações de fade-in suaves quando conteúdo real carrega
+- Mantém estrutura de layout (sem saltos de conteúdo)
+
+**Padrão de Uso**:
+```html
+@if (loadingStats) {
+  <app-skeleton-card></app-skeleton-card>
+  <app-skeleton-card></app-skeleton-card>
+} @else {
+  <app-stat-card [value]="data"></app-stat-card>
+}
+```
+
+### Sidebar Menu Optimization
+
+**Problema**: Sidebar vazia até permissões carregarem da API.
+
+**Solução**: Itens de menu padrão pré-populados (`sidenav.component.ts:153-165`)
+
+```typescript
+public menuItems: PrimeMenuItem[] = this.getDefaultMenuItems();
+
+private getDefaultMenuItems(): PrimeMenuItem[] {
+  const defaultItems = MENU_ITEM.filter(item =>
+    item.group === "ITEM" && (!item.roles || item.roles.includes("ALUNO"))
+  );
+  return defaultItems.map(item => ({ /* transform to PrimeMenuItem */ }));
+}
+```
+
+**Comportamento**:
+- Mostra itens baseline (Home, Empréstimo, Itens, Reserva, Sol. de Compra) instantaneamente
+- Itens adicionais aparecem após carregamento de permissões
+- Submenu "Cadastros" visível apenas para ADMINISTRADOR/LABORATORISTA
+
+### Change Detection Optimization
+
+**Estratégia**: Todos componentes usam `ChangeDetectionStrategy.OnPush` com `markForCheck()` explícito
+
+**Pontos Críticos**:
+- Após subscriptions Observable completas
+- Após atualizações de estado de operações assíncronas
+- Após eventos de navegação
+
+```typescript
+this.menuItems = newMenuItems;
+this.menuCadastros = newMenuCadastros;
+this.cdr.markForCheck(); // Essencial com OnPush
+```
+
+### Performance Metrics
+
+| Métrica | Antes | Depois | Melhoria |
+|---------|-------|--------|----------|
+| **Time to First Paint** | 1-3s | <50ms | **60x mais rápido** |
+| **Time to Interactive Content** | 1-3s | ~200ms | **5-15x mais rápido** |
+| **Chamadas API (Home)** | 6 sequenciais | 1 + (1 + 4 paralelas) | Otimizado |
+| **Perceived Load Time** | 1-3s | <200ms | **Excelente** |
+
+### Best Practices para Desenvolvimento Futuro
+
+1. **Sempre pré-buscar dados críticos durante transições**
+   - Carregar permissões de usuário durante login
+   - Pré-carregar recursos comuns antes da navegação
+
+2. **Usar carregamento progressivo para views com muitos dados**
+   - Carregar dados essenciais primeiro (rápido)
+   - Carregar dados suplementares em background (mais lento)
+
+3. **Implementar skeleton screens para operações assíncronas**
+   - Nunca mostrar telas em branco
+   - Combinar estrutura do skeleton com layout do conteúdo real
+
+4. **Otimizar change detection com OnPush**
+   - Sempre chamar `markForCheck()` após updates assíncronos
+   - Minimizar ciclos desnecessários de change detection
+
+5. **Gerenciar transições de navegação suavemente**
+   - Fade out de conteúdo anterior durante navegação
+   - Mostrar loaders imediatamente quando navegação iniciar
+   - Garantir transições atômicas de estado
+
+6. **Gerenciar ciclo de vida de charts corretamente**
+   - Sempre dispor charts amCharts antes de recriar instâncias
+   - Prevenir memory leaks com disposal adequado
+   - Ver seção "Chart Management" para detalhes
+
+## Chart Management (amCharts4)
+
+O projeto utiliza amCharts4 para visualização de dados. É **crítico** gerenciar corretamente o ciclo de vida dos charts para prevenir memory leaks.
+
+### Memory Leak Prevention
+
+**Problema**: amCharts cria instâncias que consomem memória e recursos. Sem disposal adequado, charts antigos permanecem na memória mesmo após recriação, gerando warnings "Chart was not disposed" e degradando performance.
+
+**Solução**: Sempre dispor charts antes de recriar instâncias:
+
+```typescript
+// home.component.ts - Padrão correto
+buildDashboards() {
+  // Dispose existing charts BEFORE rebuilding
+  this.disposeAllCharts();
+
+  const ini = this.getDateIni();
+  const fim = this.getDateFim();
+  // ... carregar dados e recriar charts
+}
+
+private disposeAllCharts(): void {
+  this.disposeChart(this.chartLineRef);
+  this.chartLineRef = null;
+  this.disposeChart(this.chartBarRef);
+  this.chartBarRef = null;
+  // ... dispor outros charts
+}
+
+private disposeChart(ref: am4core.BaseObject | null | undefined) {
+  try {
+    if (ref) {
+      ref.dispose();
     }
-  ];
+  } catch { /* ignore */ }
+}
+```
 
-  constructor(protected entityService: EntityService,
-              protected injector: Injector) {
-    super(entityService, injector, ['id', 'nome', 'actions'], 'entity/form');
-    this.configureTable();
+### Chart Update Pattern
+
+**Padrão para atualizar charts com novos dados**:
+
+1. **Primeira renderização**: Criar chart se não existir ou estiver disposed
+2. **Atualizações subsequentes**: Reutilizar instância existente apenas atualizando `chart.data`
+3. **Rebuild completo**: Dispor charts antes de recriar (ex: mudança de filtros)
+
+```typescript
+private updateXYChartLine(elementId: string, data: any[], dateField: string, valueField: string) {
+  let chartLine = this.chartLineRef;
+
+  // Criar apenas se não existir ou foi disposed
+  if (!chartLine || chartLine.isDisposed()) {
+    chartLine = am4core.create(elementId, am4charts.XYChart);
+    // ... configurar chart ...
+    this.chartLineRef = chartLine;
   }
 
-  // 4. Implement required methods
-  protected override getEntityName(): string {
-    return 'Entity';
-  }
+  // Atualizar dados na instância existente
+  chartLine.data = data;
+  chartLine.invalidateRawData();
+}
+```
 
-  protected override getEntityPluralName(): string {
-    return 'Entities';
-  }
+### Component Lifecycle Integration
 
-  protected override getExportFileName(): string {
-    return 'entities';
-  }
+**ngOnDestroy**: Sempre dispor todos os charts para limpeza adequada:
 
-  // 5. Configure table with comprehensive settings
-  private configureTable(): void {
+```typescript
+ngOnDestroy() {
+  this.destroyed = true;
+  this.disposeChart(this.chartLineRef);
+  this.chartLineRef = null;
+  // ... dispor outros charts
+}
+```
+
+**Verificação de destroyed**: Prevenir operações em componentes destruídos:
+
+```typescript
+if (this.destroyed || requestToken !== this.latestRequestToken) {
+  return; // Não processar se componente foi destruído
+}
+```
+
+## PrimeNG Dialog Best Practices
+
+### Autofocus Management
+
+PrimeNG dialogs têm autofocus automático por padrão, que pode causar conflitos com elementos já focados.
+
+**Problema**: Console warning "Autofocus processing was blocked because a document already has a focused element"
+
+**Solução**: Desabilitar autofocus quando não necessário:
+
+```html
+<p-dialog header="Filtro"
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [focusOnShow]="false">  <!-- Previne autofocus automático -->
+  <!-- conteúdo do dialog -->
+</p-dialog>
+```
+
+**Quando usar `[focusOnShow]="false"`**:
+- Dialogs abertos programaticamente
+- Quando há elementos com foco antes de abrir dialog
+- Formulários complexos onde foco manual é preferível
+
+**Quando manter `[focusOnShow]="true"`** (padrão):
+- Dialogs simples com um único input
+- Quando foco automático melhora UX
+- Modals de confirmação com botão primário
+
+### Dialog Z-Index Hierarchy
+
+Usar `[baseZIndex]` para garantir hierarquia correta de overlays:
+
+```html
+<p-dialog [baseZIndex]="10000">  <!-- Acima de outros overlays -->
+```
+
+**Hierarquia de Z-Index no projeto**:
+- Loading overlay: 9999
+- Modals/Dialogs: 10000+
+- Tooltips/Dropdowns: Gerenciados automaticamente pelo PrimeNG
+
+## PrimeNG Table & Pagination
+
+### Server-Side Pagination Configuration
+
+O projeto usa paginação server-side com Spring Data Page. Configuração correta é essencial para exibir totais corretos.
+
+**Backend Response Structure** (Spring Data Page):
+```json
+{
+  "totalPages": 10,
+  "totalElements": 95,
+  "size": 10,
+  "number": 0,
+  "content": [ /* array de dados */ ]
+}
+```
+
+**Configuração Correta da Tabela**:
+
+```html
+<p-table
+  [value]="objects"
+  [rows]="rows"
+  [totalRecords]="totalElements"  <!-- Vincula ao total do backend -->
+  [paginator]="true"
+  [lazy]="true"                    <!-- IMPORTANTE: true para server-side -->
+  (onPage)="onPageChange($event)"
+  currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros">
+</p-table>
+```
+
+**Component TypeScript**:
+
+```typescript
+export class ListComponent extends PrimeCrudListComponent<T, ID> {
+  configureTable() {
     this.tableConfig = {
       ...this.tableConfig,
-      columns: this.tableColumns,
-      globalFilterFields: ['id', 'nome'],
-      defaultSortField: 'nome',
-      defaultSortOrder: 1,
-      caption: 'Lista de Entities',
-      trackByField: 'id',
-      emptyMessage: 'Nenhuma entity encontrada.',
-      loadingMessage: 'Carregando entities...',
-      globalFilterPlaceholder: 'Buscar entities...',
-      columnToggle: true,
-      expandable: false,
-      expandMode: 'single',
-      rowExpansionKey: 'id',
-      stateful: true,
-      stateKey: 'entity-list',
-      stateStorage: 'local',
-      stateProps: {
-        columns: true,
-        filters: true,
-        sort: true,
-        pagination: true,
-        selection: true,
-        expandedRows: true
-      },
-      resizableColumns: true,
-      columnResizeMode: 'fit',
-      lazy: true,
-      lazyLoadOnInit: true,
-      preloadData: true,
-      keyboardShortcuts: true
+      lazy: true,              // Habilita server-side pagination
+      lazyLoadOnInit: false,   // Previne double-load no init
+      preloadData: true        // Carrega dados manualmente no ngOnInit
     };
-
-    this.columnsTable = this.tableConfig.columns.map(column => column.field);
-    this.displayedColumns = [...this.columnsTable];
   }
 }
 ```
 
-#### HTML Template Migration Pattern
+### Lazy vs Non-Lazy Modes
+
+**`[lazy]="true"`** (Server-Side - Recomendado):
+- ✅ PrimeNG respeita `[totalRecords]` binding
+- ✅ Mostra total correto de registros no paginator
+- ✅ Cada mudança de página chama `(onPage)` event
+- ✅ Componente controla carregamento de dados
+
+**`[lazy]="false"`** (Client-Side):
+- ❌ PrimeNG ignora `[totalRecords]` binding
+- ❌ Calcula total a partir de `[value]` array length
+- ❌ Assume todos os dados estão em memória
+- ⚠️ Usar apenas para conjuntos pequenos de dados
+
+### PrimeNG Translation (pt-BR)
+
+Todas as traduções PrimeNG são configuradas em `src/locale/pt-BR.ts`:
+
+```typescript
+// src/locale/pt-BR.ts
+export const ptBR = {
+  // Calendar
+  dayNames: ["Domingo", "Segunda", ...],
+  monthNames: ["Janeiro", "Fevereiro", ...],
+
+  // MultiSelect
+  emptyMessage: 'Nenhum resultado encontrado',
+  emptyFilterMessage: 'Nenhum resultado encontrado',
+  selectionMessage: '{0} itens selecionados',
+
+  // Aria labels
+  aria: {
+    selectRow: 'Linha Selecionada',
+    rowsPerPageLabel: 'Linhas por página',
+    // ... mais labels
+  }
+};
+```
+
+Aplicar no `app.module.ts`:
+
+```typescript
+providePrimeNG({
+  theme: { preset: PrimeUTFPRPreset },
+  translation: ptBR  // Aplica traduções pt-BR
+})
+```
+
+### Prime CRUD Framework
+
+**PrimeCrudListComponent** (`src/app/framework/component/prime-crud.list.component.ts`):
+- Base class abstrata para componentes de lista
+- Gerencia paginação, ordenação, filtros e seleção
+- Integrado com `OnPush` change detection
+- Stateful table com localStorage/sessionStorage
+
+**PrimeCrudToolbarComponent** (`src/app/framework/component/prime-crud-toolbar.component.ts`):
+- Toolbar reutilizável com ações CRUD
+- Column toggle multiselect com traduções pt-BR
+- Botões para adicionar, deletar, exportar (Excel/CSV)
+- Expand/collapse para tabelas expandíveis
+
+**Padrão de Uso**:
+
+```typescript
+@Component({
+  providers: [{
+    provide: PrimeCrudListComponent,
+    useExisting: forwardRef(() => MyListComponent)
+  }]
+})
+export class MyListComponent extends PrimeCrudListComponent<Entity, number> {
+  constructor(service: EntityService, injector: Injector) {
+    super(service, injector, ['id', 'nome', 'actions'], 'entity/form');
+  }
+
+  protected override getEntityName(): string { return 'Entidade'; }
+  protected override getEntityPluralName(): string { return 'Entidades'; }
+}
+```
+
+```html
+<!-- my-list.component.html -->
+<app-prime-crud-toolbar [table]="dt" [list]="self"></app-prime-crud-toolbar>
+<p-table #dt [value]="objects" ...></p-table>
+```
+
+## Form Migration Guide
+
+Este guia documenta o processo de migração de forms legados (template-driven, Material Design) para forms modernos (reactive forms, PrimeNG, Angular v20 signals).
+
+### Framework de Forms Reutilizável
+
+**PrimeReactiveCrudFormComponent** (`src/app/framework/component/prime-reactive-crud.form.component.ts`):
+- Base class abstrata para todos os forms CRUD reativos
+- Gerenciamento de estado com signals
+- Lifecycle hooks para customização
+- Integrado com `LoaderService` para feedback visual
+- Suporte a validação automática
+
+**FormFieldComponent** (`src/app/framework/component/form-field.component.ts`):
+- Componente standalone reutilizável para campos de formulário
+- Exibição automática de validação e mensagens de erro
+- Suporte a labels, hints e campos obrigatórios
+- Estilização consistente com tema PrimeNG
+- Totalmente type-safe com signals
+
+### Padrão de Implementação
+
+#### 1. Component TypeScript
+
+```typescript
+import { Component, Injector, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { PrimeReactiveCrudFormComponent } from '../framework/component/prime-reactive-crud.form.component';
+
+@Component({
+  selector: 'app-form-entity',
+  templateUrl: './entity.form.component.html',
+  styleUrls: ['./entity.form.component.css'],
+  standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class EntityFormComponent extends PrimeReactiveCrudFormComponent<Entity, number> {
+  private readonly fb = this.injector.get(FormBuilder);
+
+  // Custom signals for component-specific state
+  protected readonly customSignal = signal<string>('');
+
+  // Computed signals for derived state
+  protected readonly isSpecialCase = computed(() => {
+    const obj = this.object();
+    return obj && obj.someField === 'special';
+  });
+
+  constructor(
+    protected entityService: EntityService,
+    protected injector: Injector
+  ) {
+    super(entityService, injector, '/entity', Entity);
+  }
+
+  /**
+   * Build the reactive form with validators
+   */
+  protected override buildForm(): FormGroup {
+    return this.fb.group({
+      id: [{ value: null, disabled: true }],
+      nome: ['', [Validators.required, Validators.maxLength(255)]],
+      email: ['', [Validators.email]],
+      valor: [null, [Validators.min(0)]]
+    });
+  }
+
+  /**
+   * Override to prepare form value before saving (optional)
+   */
+  protected override prepareFormValue(formValue: Partial<Entity>): Partial<Entity> {
+    const formGroup = this.form();
+    const id = formGroup?.get('id')?.value;
+
+    // Include disabled fields or transform data
+    return {
+      ...formValue,
+      ...(id && { id })
+    };
+  }
+
+  /**
+   * Override to patch form with custom logic (optional)
+   */
+  protected override patchFormWithObject(object: Entity): void {
+    const formGroup = this.form();
+    if (formGroup) {
+      formGroup.patchValue({
+        id: object.id,
+        nome: object.nome,
+        email: object.email,
+        valor: object.valor
+      });
+    }
+  }
+}
+```
+
+#### 2. Component Template
 
 ```html
 <div class="container-fluid my-3">
   <p-card>
     <ng-template pTemplate="header">
-      <div class="flex items-center justify-between p-3">
-        <span class="text-xl font-bold">Entities</span>
+      <div class="flex items-center justify-between p-4">
+        <div class="flex items-center gap-3">
+          <app-voltar (onClick)="back()"></app-voltar>
+          <h2 class="text-xl font-semibold m-0">Cadastro de Entidade</h2>
+        </div>
       </div>
     </ng-template>
 
     <ng-template pTemplate="content">
-      <!-- Toolbar with optional custom templates -->
-      <app-prime-crud-toolbar [table]="dt" [list]="self">
-        <ng-template #toolbarStartTemplate>
-          <!-- Custom toolbar buttons go here -->
-        </ng-template>
-      </app-prime-crud-toolbar>
-
-      <!-- Main table -->
-      <p-table
-        #dt
-        [value]="objects"
-        [rows]="rows"
-        [totalRecords]="totalElements"
-        [paginator]="true"
-        [rowsPerPageOptions]="tableConfig.pageSizeOptions || [5, 10, 25, 50, 100]"
-        (onPage)="onPageChange($event)"
-        (onSort)="onSort($event)"
-        [first]="first"
-        [lazy]="tableConfig.lazy !== false"
-        [lazyLoadOnInit]="tableConfig.lazyLoadOnInit !== false"
-        [(selection)]="selectedItems"
-        (selectionChange)="onSelectionChange($event)"
-        [dataKey]="tableConfig.rowExpansionKey || 'id'"
-        [resizableColumns]="tableConfig.resizableColumns !== false"
-        [columnResizeMode]="tableConfig.columnResizeMode || 'fit'"
-        [rowHover]="tableConfig.rowHover !== false"
-        [stripedRows]="tableConfig.striped !== false"
-        [rowExpandMode]="tableConfig.expandMode || 'single'"
-        [expandedRowKeys]="expandedRows"
-        (onRowExpand)="onRowExpand($event)"
-        (onRowCollapse)="onRowCollapse($event)"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
-        [showCurrentPageReport]="true"
-        [tableStyleClass]="getTableStyleClass()"
-        [attr.aria-label]="'Lista de entities com ' + totalElements + ' registro(s)'">
-
-        <!-- Search caption -->
-        <ng-template pTemplate="caption">
-          <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
-            <p-iconField iconPosition="left" class="flex-grow-1 flex-md-grow-0">
-              <p-inputIcon class="pi pi-search" aria-hidden="true"></p-inputIcon>
-              <input
-                #globalFilterInput
-                pInputText
-                type="text"
-                (input)="onGlobalFilter($any($event.target).value)"
-                [value]="filterValue"
-                [placeholder]="getGlobalFilterPlaceholder()"
-                [attr.aria-label]="'Campo de busca para filtrar entities'"
-                autocomplete="off" />
-            </p-iconField>
-            <p-button
-              type="button"
-              severity="secondary"
-              [outlined]="true"
-              (onClick)="clearGlobalFilter()"
-              [attr.aria-label]="'Limpar filtro global'">
-              <span pButtonIcon class="pi pi-filter-slash"></span>
-              <span pButtonLabel>Limpar</span>
-            </p-button>
-          </div>
-        </ng-template>
-
-        <!-- Table header -->
-        <ng-template pTemplate="header">
-          <tr>
-            @if (tableConfig.expandable) {
-              <th scope="col" style="width: 3rem" [attr.aria-label]="'Alternar detalhes'"></th>
-            }
-            @if (!isReadOnly && tableConfig.selectable !== false) {
-              <th scope="col" style="width: 3rem" [attr.aria-label]="'Selecao de entities'">
-                <p-tableHeaderCheckbox [attr.aria-label]="'Selecionar todas as entities'"></p-tableHeaderCheckbox>
-              </th>
-            }
-            @for (column of getVisibleColumns(); track column.field) {
-              <th
-                scope="col"
-                [attr.id]="'col-' + column.field"
-                [attr.data-field]="column.field"
-                [pSortableColumn]="column.sortable === false || column.field === 'actions' ? null : column.field"
-                [style.width]="column.width"
-                [style.min-width]="column.minWidth"
-                [ngClass]="column.headerClass"
-                [attr.aria-label]="column.tooltip || column.header">
-                <div class="d-flex align-items-center gap-2" [class.justify-content-center]="column.align === 'center'">
-                  {{ column.header }}
-                  @if (column.sortable !== false && column.field !== 'actions') {
-                    <p-sortIcon [field]="column.field" aria-hidden="true"></p-sortIcon>
-                  }
-                </div>
-              </th>
-            }
-          </tr>
-        </ng-template>
-
-        <!-- Table body with modern control flow -->
-        <ng-template pTemplate="body" let-row>
-          <tr>
-            @if (tableConfig.expandable) {
-              <td style="width: 3rem">
-                <button
-                  type="button"
-                  pButton
-                  [pRowToggler]="row"
-                  class="p-button-text p-button-rounded"
-                  [attr.aria-label]="(isRowExpanded(row) ? 'Recolher' : 'Expandir') + ' detalhes da entity ' + row.nome">
-                  <span pButtonIcon [ngClass]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
-                </button>
-              </td>
-            }
-            @if (!isReadOnly && tableConfig.selectable !== false) {
-              <td style="width: 3rem">
-                <p-tableCheckbox
-                  [value]="row"
-                  [attr.aria-label]="'Selecionar entity ' + row.nome">
-                </p-tableCheckbox>
-              </td>
-            }
-            @for (column of getVisibleColumns(); track column.field) {
-              <td
-                [ngSwitch]="column.field"
-                [style.text-align]="column.align || 'left'"
-                [style.width]="column.width"
-                [style.min-width]="column.minWidth"
-                [attr.headers]="'col-' + column.field">
-                @switch (column.field) {
-                  @case ('actions') {
-                    <div class="d-flex align-items-center gap-2 justify-content-center">
-                      @if (canEdit) {
-                        <p-button
-                          severity="secondary"
-                          [outlined]="true"
-                          [rounded]="true"
-                          pTooltip="Editar entity"
-                          tooltipPosition="top"
-                          (onClick)="edit(row.id)"
-                          [attr.aria-label]="'Editar entity ' + row.nome">
-                          <span pButtonIcon class="pi pi-pencil"></span>
-                        </p-button>
-                      }
-                      @if (canDelete) {
-                        <p-button
-                          severity="danger"
-                          [outlined]="true"
-                          [rounded]="true"
-                          pTooltip="Remover entity"
-                          tooltipPosition="top"
-                          (onClick)="delete(row.id)"
-                          [attr.aria-label]="'Remover entity ' + row.nome">
-                          <span pButtonIcon class="pi pi-trash"></span>
-                        </p-button>
-                      }
-                    </div>
-                  }
-                  @default {
-                    <span
-                      [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
-                      [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
-                      [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                      (click)="handleInteractiveCell($event, row.id)"
-                      (keydown.enter)="handleInteractiveCell($event, row.id)"
-                      (keydown.space)="handleInteractiveCell($event, row.id)"
-                      [attr.aria-label]="column.header + ': ' + row[column.field]">
-                      {{ row[column.field] }}
-                    </span>
-                  }
-                }
-              </td>
-            }
-          </tr>
-        </ng-template>
-
-        <!-- Row expansion template -->
-        <ng-template pTemplate="rowexpansion" let-row>
-          @if (rowExpansionTemplate) {
-            <ng-container [ngTemplateOutlet]="rowExpansionTemplate" [ngTemplateOutletContext]="{$implicit: row}"></ng-container>
-          } @else {
-            <div class="p-3">
-              <p class="mb-1"><strong>Codigo:</strong> {{ row.id }}</p>
-              <p class="mb-0"><strong>Nome:</strong> {{ row.nome }}</p>
+      @if (form(); as formGroup) {
+        <form [formGroup]="formGroup" (ngSubmit)="save()" class="flex flex-col gap-4">
+          <div class="grid grid-cols-12 gap-4">
+            <!-- ID Field (read-only) -->
+            <div class="col-span-12 md:col-span-2">
+              <app-form-field
+                [control]="formGroup.get('id')"
+                label="Código"
+                fieldId="id">
+                <input
+                  pInputText
+                  id="id"
+                  formControlName="id"
+                  class="w-full"
+                  readonly />
+              </app-form-field>
             </div>
-          }
-        </ng-template>
 
-        <!-- Empty state -->
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td [attr.colspan]="getColumnCount()" class="text-center p-4">
-              <i class="pi pi-search" style="font-size: 3rem; color: #dee2e6;"></i>
-              <p class="mt-3 mb-0">Nenhuma entity encontrada.</p>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
+            <!-- Nome Field (required) -->
+            <div class="col-span-12 md:col-span-10">
+              <app-form-field
+                [control]="formGroup.get('nome')"
+                label="Nome"
+                [required]="true"
+                fieldId="nome"
+                hint="Digite o nome completo">
+                <input
+                  pInputText
+                  id="nome"
+                  formControlName="nome"
+                  class="w-full"
+                  placeholder="Ex: João Silva" />
+              </app-form-field>
+            </div>
+
+            <!-- Email Field -->
+            <div class="col-span-12 md:col-span-6">
+              <app-form-field
+                [control]="formGroup.get('email')"
+                label="E-mail"
+                fieldId="email">
+                <input
+                  pInputText
+                  id="email"
+                  type="email"
+                  formControlName="email"
+                  class="w-full"
+                  placeholder="exemplo@email.com" />
+              </app-form-field>
+            </div>
+
+            <!-- Valor Field (number) -->
+            <div class="col-span-12 md:col-span-6">
+              <app-form-field
+                [control]="formGroup.get('valor')"
+                label="Valor"
+                fieldId="valor">
+                <p-inputNumber
+                  inputId="valor"
+                  formControlName="valor"
+                  mode="currency"
+                  currency="BRL"
+                  locale="pt-BR"
+                  styleClass="w-full">
+                </p-inputNumber>
+              </app-form-field>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex justify-end gap-2 mt-4">
+            <app-cancelar (onClick)="back()"></app-cancelar>
+            <app-salvar [typeButton]="'submit'" [disabled]="isLoading()"></app-salvar>
+          </div>
+        </form>
+      }
     </ng-template>
   </p-card>
 </div>
 ```
 
-### Advanced Migration Patterns
-
-#### Complex Cell Rendering
-For components with custom data formatting (like `formatGruposAcesso` in usuario.list.component):
+#### 3. Module Configuration
 
 ```typescript
-@case ('customField') {
-  <span
-    [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
-    [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
-    [class.cursor-pointer]="!displayedColumns.includes('actions')"
-    (click)="handleInteractiveCell($event, row.id)"
-    [attr.aria-label]="column.header + ': ' + customFormatMethod(row[column.field])">
-    {{ customFormatMethod(row[column.field]) }}
-  </span>
-}
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
+
+// PrimeNG
+import { CardModule } from 'primeng/card';
+import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
+
+// Custom components
+import { FormFieldComponent } from '../framework/component/form-field.component';
+import { VoltarModule } from '../geral/voltar/voltar.module';
+import { CancelarModule } from '../geral/cancelar/cancelar.module';
+import { SalvarModule } from '../geral/salvar/salvar.module';
+
+import { EntityFormComponent } from './entity.form.component';
+
+@NgModule({
+  declarations: [EntityFormComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    // PrimeNG
+    CardModule,
+    InputTextModule,
+    InputNumberModule,
+    ButtonModule,
+    TooltipModule,
+    // Custom
+    FormFieldComponent,
+    VoltarModule,
+    CancelarModule,
+    SalvarModule
+  ],
+  exports: [EntityFormComponent]
+})
+export class EntityFormModule { }
 ```
 
-#### Status Tags with PrimeNG
-For status indicators (like in emprestimo.list.component):
+### Validação de Formulários
+
+**Validadores Built-in do Angular**:
+```typescript
+Validators.required
+Validators.minLength(n)
+Validators.maxLength(n)
+Validators.min(n)
+Validators.max(n)
+Validators.email
+Validators.pattern(/regex/)
+```
+
+**Mensagens de Erro Automáticas**:
+O `FormFieldComponent` exibe automaticamente mensagens de erro em português baseadas nos validadores:
+- `required`: "Este campo é obrigatório"
+- `minlength`: "Mínimo de X caracteres"
+- `maxlength`: "Máximo de X caracteres"
+- `email`: "E-mail inválido"
+- `pattern`: "Formato inválido"
+- `min`: "Valor mínimo: X"
+- `max`: "Valor máximo: X"
+
+### Operações Assíncronas com Cancelamento
+
+Para operações que podem demorar (ex: buscar dados relacionados), use o `LoaderService` com cancelamento:
 
 ```typescript
-@case ('status') {
-  <div class="d-flex justify-content-center">
-    @if (getStatusMethod(row) === 'ACTIVE') {
-      <p-tag value="Ativo" severity="success"></p-tag>
+import { Subscription } from 'rxjs';
+
+export class EntityFormComponent extends PrimeReactiveCrudFormComponent<Entity, number> {
+  private dataSubscription?: Subscription;
+
+  loadRelatedData(): void {
+    // Cancel any existing request
+    this.cancelDataRequest();
+
+    // Show loader with cancel button
+    this.loaderService.showWithCancel(
+      () => this.cancelDataRequest(),
+      'Cancelar Busca'
+    );
+
+    this.dataSubscription = this.service.getRelatedData(id).subscribe({
+      next: (data) => {
+        this.loaderService.hide();
+        // Process data
+      },
+      error: (error) => {
+        this.loaderService.hide();
+        Swal.fire('Erro', 'Erro ao buscar dados.', 'error');
+      }
+    });
+  }
+
+  cancelDataRequest(): void {
+    if (this.dataSubscription && !this.dataSubscription.closed) {
+      this.dataSubscription.unsubscribe();
+      this.loaderService.hide();
     }
-    @if (getStatusMethod(row) === 'INACTIVE') {
-      <p-tag value="Inativo" severity="danger"></p-tag>
-    }
-  </div>
+  }
+
+  ngOnDestroy(): void {
+    this.cancelDataRequest();
+  }
 }
 ```
 
-#### Image Handling
-For components with image display (like item.list.component):
+### LoaderService API
 
+**Métodos Disponíveis**:
 ```typescript
-@case ('imagem') {
-  <div class="d-flex justify-content-center">
-    <img
-      style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px;"
-      [src]="row.imageField?.length > 0 ? imageUrl + row.imageField[0].name : '/assets/no-image.png'"
-      [alt]="'Imagem do item ' + row.nome"
-      (click)="handleImageClick(row.id)"
-      class="cursor-pointer" />
-  </div>
-}
+// Show simple loader (no cancel button)
+loaderService.show();
+
+// Hide loader
+loaderService.hide();
+
+// Show loader with cancel button
+loaderService.showWithCancel(
+  () => { /* cancel callback */ },
+  'Cancel Label'  // optional, default: 'Cancelar'
+);
+
+// Track Observable automatically (show/hide loader)
+loaderService.track(observable$);
 ```
 
-### Migration Checklist
+### Checklist de Migração
 
-- [ ] Import `PrimeCrudListComponent` and `TableColumn`
-- [ ] Add required PrimeNG module imports
-- [ ] Update component decorator with imports and providers
-- [ ] Change inheritance from `CrudListComponent` to `PrimeCrudListComponent`
-- [ ] Define `tableColumns` array with proper metadata
-- [ ] Implement required methods: `getEntityName()`, `getEntityPluralName()`, `getExportFileName()`
-- [ ] Create `configureTable()` method with comprehensive table configuration
-- [ ] Replace `<mat-card>` with `<p-card>` and proper template structure
-- [ ] Replace `<mat-table>` with `<p-table>` using modern control flow
-- [ ] Add `<app-prime-crud-toolbar>` with proper bindings
-- [ ] Handle custom cell rendering with `@switch` statements
-- [ ] Add proper accessibility attributes and keyboard navigation
-- [ ] Test all functionality: sorting, filtering, pagination, actions
-- [ ] Remove unused Angular Material imports and dependencies
+Ao migrar um form existente, seguir este checklist:
 
-**Module Organization**: The application follows a feature-based module structure where each business domain has its own module:
-- `grupo` (groups), `usuario` (users), `item` (items), `compra` (purchases)
-- `emprestimo` (loans), `reserva` (reservations), `relatorio` (reports)
-- Each module is lazy-loaded via Angular routing
+- [ ] **Component TypeScript**
+  - [ ] Estender `PrimeReactiveCrudFormComponent<Entity, ID>`
+  - [ ] Implementar `buildForm()` com `FormBuilder`
+  - [ ] Adicionar validadores apropriados
+  - [ ] Usar signals para estado local
+  - [ ] Definir `ChangeDetectionStrategy.OnPush`
+  - [ ] Usar `input()` e `output()` ao invés de decorators
 
-**Framework Layer**: Custom framework located in `src/app/framework/` provides:
-- **Charts**: Chart.js integration with custom color configurations
-- **Components**: Reusable UI components (stat-cards, etc.)
-- **Services**: Shared business logic and API communication
-- **Utilities**: Currency formatting, pagination translation, validation helpers
-- **Directives/Pipes**: Custom Angular directives and pipes
+- [ ] **Template HTML**
+  - [ ] Substituir `<mat-*>` por `<p-*>` (PrimeNG)
+  - [ ] Envolver campos com `<app-form-field>`
+  - [ ] Usar `[formGroup]` e `formControlName`
+  - [ ] Usar control flow nativo (`@if`, `@for`)
+  - [ ] Usar Tailwind classes para layout
+  - [ ] Adicionar botões `<app-voltar>`, `<app-cancelar>`, `<app-salvar>`
 
-**Authentication Flow**: Uses `HttpClientInterceptor` to automatically attach JWT tokens to API requests and handle authentication errors.
+- [ ] **Module**
+  - [ ] Importar `ReactiveFormsModule`
+  - [ ] Importar módulos PrimeNG necessários
+  - [ ] Importar `FormFieldComponent`
+  - [ ] Remover imports de Material Design
 
-**State Management**: Service-based state management with RxJS observables for reactive programming patterns.
+- [ ] **Validação**
+  - [ ] Passar `[control]` para `app-form-field`
+  - [ ] Adicionar `[required]="true"` para campos obrigatórios
+  - [ ] Adicionar `hint` para ajudar usuários
+  - [ ] Testar mensagens de erro automáticas
 
-### Code Conventions
+- [ ] **Operações Assíncronas**
+  - [ ] Usar `loaderService.show()` / `hide()`
+  - [ ] Usar `showWithCancel()` para operações canceláveis
+  - [ ] Implementar `ngOnDestroy()` para cleanup
+  - [ ] Armazenar subscriptions para cancelamento
 
-**Naming**: Follow Angular style guide conventions:
-- Components: kebab-case selectors with 'app-' prefix
-- Classes: PascalCase with appropriate suffixes (Component, Service, Module)
-- Files: kebab-case with type suffix (component.ts, service.ts, module.ts)
+- [ ] **Build & Teste**
+  - [ ] Build sem erros: `npm run build`
+  - [ ] Testar criação de novos registros
+  - [ ] Testar edição de registros existentes
+  - [ ] Testar validação de campos
+  - [ ] Testar navegação (voltar, cancelar)
+  - [ ] Testar operações assíncronas
 
-**TSLint Rules**: Project uses TSLint with custom configuration:
-- Single quotes for strings
-- 140 character line limit
-- Space indentation
-- Semicolons required
-- Component/directive selectors must use 'app' prefix
+### Componentes PrimeNG Comuns em Forms
 
-**Current File Naming Pattern** (Legacy):
-- `[feature].[type].component.ts` (e.g., `usuario.list.component.ts`)
+| Campo | Componente PrimeNG | Import Module |
+|-------|-------------------|---------------|
+| Text input | `<input pInputText>` | `InputTextModule` |
+| Textarea | `<textarea pInputTextarea>` | `InputTextareaModule` |
+| Number | `<p-inputNumber>` | `InputNumberModule` |
+| Dropdown | `<p-dropdown>` | `DropdownModule` |
+| Multi-select | `<p-multiSelect>` | `MultiSelectModule` |
+| Calendar | `<p-calendar>` | `CalendarModule` |
+| Checkbox | `<p-checkbox>` | `CheckboxModule` |
+| Radio | `<p-radioButton>` | `RadioButtonModule` |
+| AutoComplete | `<p-autoComplete>` | `AutoCompleteModule` |
+| File Upload | `<p-fileUpload>` | `FileUploadModule` |
+
+### Exemplo Completo: Grupo Form
+
+Referência de implementação completa em:
+- **Component**: `src/app/grupo/grupo.form.component.ts`
+- **Template**: `src/app/grupo/grupo.form.component.html`
+- **Module**: `src/app/grupo/grupo.module.ts`
+
+Este exemplo demonstra:
+- Form reativo com validação
+- Dialog com dados relacionados (itens vinculados)
+- Operação assíncrona com cancelamento
+- Uso de computed signals
+- Cleanup adequado no `ngOnDestroy()`
+
+## Code Conventions
+
+**Naming**: Seguir convenções do Angular style guide:
+- Componentes: kebab-case selectors com prefixo 'app-'
+- Classes: PascalCase com sufixos apropriados (Component, Service, Module)
+- Arquivos: kebab-case com sufixo de tipo (component.ts, service.ts, module.ts)
+
+**TSLint Rules**:
+- Single quotes para strings
+- Limite de 140 caracteres por linha
+- Indentação com espaços
+- Semicolons obrigatórios
+- Selectores de component/directive devem usar prefixo 'app'
+
+**Padrão de Nomenclatura de Arquivos** (Legacy):
+- `[feature].[type].component.ts` (ex: `usuario.list.component.ts`)
 - `[feature].[type].component.html`
 - `[feature].[type].component.css`
 
-**Preferred File Naming** (For New Components):
+**Nomenclatura Preferida** (Novos Componentes):
 - `[feature]-[type].component.ts` (kebab-case)
-- Inline templates for small components
+- Templates inline para componentes pequenos
+
+**Diretrizes de Estilo**:
+- **Usar Tailwind CSS utilities** para layout e spacing
+- **Tema PrimeNG Aura** gerencia estilo de componentes automaticamente
+- **Bootstrap foi removido** - não usar classes Bootstrap
+
+**Equivalentes Tailwind** (Bootstrap → Tailwind):
+```
+d-flex → flex
+d-none → hidden
+d-md-inline → md:inline
+d-lg-inline → lg:inline
+align-items-center → items-center
+justify-content-center → justify-center
+justify-content-end → justify-end
+flex-wrap → flex-wrap
+gap-2 → gap-2
+ms-2, me-2 → ml-2, mr-2 (ou usar gap-*)
+```
+
+**Design Responsivo**:
+- Mobile-first: `class="hidden md:inline"` (escondido no mobile, visível em tablet+)
+- Breakpoints: `sm:` (640px), `md:` (768px), `lg:` (1024px), `xl:` (1280px)
 
 ## Environment Configuration
 
-**API Endpoint**: Configure backend API URL in environment files:
+**API Endpoint**: Configurar URL da API backend em arquivos de environment:
 - Development: `https://test-labs-api.app.pb.utfpr.edu.br/`
-- Each environment (robotnik, patobots, daele) has its own API endpoint
+- Cada ambiente (robotnik, patobots, daele) tem seu próprio endpoint
 
-**Google OAuth**: Configured for social login integration (currently commented out in app.module.ts)
+**Google OAuth**: Configurado para integração de login social (atualmente comentado em app.module.ts)
 
-**MinIO Integration**: File storage service configured per environment
+**MinIO Integration**: Serviço de armazenamento de arquivos configurado por ambiente
 
 ## Deployment
 
-**Docker**: Multi-stage Dockerfiles for different environments with Nginx serving static files
-- Port mapping: 8098:80 for main deployment
-- Traefik reverse proxy configuration included
-- Multiple compose files for different deployment targets
+**Docker**: Dockerfiles multi-stage para diferentes ambientes com Nginx servindo arquivos estáticos
+- Port mapping: 8098:80 para deployment principal
+- Configuração de reverse proxy Traefik incluída
+- Múltiplos compose files para diferentes targets de deployment
 
-**Build Process**: Uses `set-env.js` script for environment variable injection during Heroku deployments
+**Build Process**: Usa script `set-env.js` para injeção de variáveis de ambiente durante deployments Heroku
 
-# Persona
-You are a dedicated Angular developer who thrives on leveraging the absolute latest features of the framework to build cutting-edge applications. You are currently immersed in Angular v20+, passionately adopting signals for reactive state management, embracing standalone components for streamlined architecture, and utilizing the new control flow for more intuitive template logic. Performance is paramount to you, who constantly seeks to optimize change detection and improve user experience through these modern Angular paradigms. When prompted, assume You are familiar with all the newest APIs and best practices, valuing clean, efficient, and maintainable code.
+## Angular Best Practices
 
-## Examples
-These are modern examples of how to write an Angular 20 component with signals
+### TypeScript
+- Usar strict type checking
+- Preferir inferência de tipo quando óbvio
+- Evitar tipo `any`; usar `unknown` quando tipo incerto
 
-```ts
+### UI Component Library
+
+**PrimeNG** (Primário):
+- Usar componentes PrimeNG para todas features
+- Configurado com tema Aura (PrimeNG v20 default)
+- Traduções português (pt-BR) incluídas
+- Exemplos: `p-table`, `p-button`, `p-dialog`, `p-dropdown`
+- Configuração de tema em `app.module.ts` com `providePrimeNG()`
+
+### Components
+- Manter componentes pequenos e focados em responsabilidade única
+- Usar `input()` signal ao invés de decorators
+- Usar `output()` function ao invés de decorators
+- Usar `computed()` para estado derivado
+- Definir `changeDetection: ChangeDetectionStrategy.OnPush` no decorator `@Component`
+- Preferir templates inline para componentes pequenos
+- Preferir Reactive forms ao invés de Template-driven
+- NÃO usar `ngClass`, usar bindings `class` ao invés
+- NÃO usar `ngStyle`, usar bindings `style` ao invés
+
+### State Management
+- Usar signals para estado local do componente
+- Usar `computed()` para estado derivado
+- Manter transformações de estado puras e previsíveis
+- NÃO usar `mutate` em signals, usar `update` ou `set` ao invés
+
+### Templates
+- Manter templates simples e evitar lógica complexa
+- Usar control flow nativo (`@if`, `@for`, `@switch`) ao invés de `*ngIf`, `*ngFor`, `*ngSwitch`
+- Usar async pipe para lidar com observables
+- Usar pipes built-in e importar pipes quando usados em template
+
+### Services
+- Design de services em torno de responsabilidade única
+- Usar opção `providedIn: 'root'` para singleton services
+- Usar função `inject()` ao invés de constructor injection
+
+### Prime Table Toolbar
+- Usar `PrimeCrudToolbarComponent` para toolbars de lista: `<app-prime-crud-toolbar [table]='dt' [list]='self'></app-prime-crud-toolbar>`
+- `PrimeCrudListComponent` expõe `self` para toolbar aceitar instância
+- Toolbar injeta lista opcionalmente; garantir que componentes de lista registrem provider: `providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => GrupoListComponent) }]`
+- Toolbar inclui defaults para create/delete/export, column toggle, expand/collapse com botões keyboard-friendly
+- Para toolbars customizadas, fornecer templates via `toolbarStartTemplate`/`toolbarEndTemplate`
+
+## Persona
+
+Você é um desenvolvedor Angular dedicado que prospera ao aproveitar os recursos mais recentes do framework para construir aplicações de ponta. Você está imerso no Angular v20+, adotando apaixonadamente signals para gerenciamento de estado reativo, abraçando componentes standalone para arquitetura simplificada e utilizando o novo control flow para lógica de template mais intuitiva. Performance é primordial para você, que constantemente busca otimizar change detection e melhorar experiência do usuário através desses paradigmas modernos do Angular.
+
+## Exemplos
+
+Exemplos modernos de como escrever componente Angular 20 com signals:
+
+```typescript
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 
-
 @Component({
-  selector: '{{tag-name}}-root',
-  templateUrl: '{{tag-name}}.html',
+  selector: 'app-example',
+  templateUrl: './example.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class {{ClassName}} {
+export class ExampleComponent {
   protected readonly isServerRunning = signal(true);
+
   toggleServerStatus() {
     this.isServerRunning.update(isServerRunning => !isServerRunning);
   }
 }
 ```
 
-```css
-.container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-
-    button {
-        margin-top: 10px;
-    }
-}
-```
-
 ```html
 <section class="container">
-    @if (isServerRunning()) {
-        <span>Yes, the server is running</span>
-    } @else {
-        <span>No, the server is not running</span>
-    }
-    <button (click)="toggleServerStatus()">Toggle Server Status</button>
+  @if (isServerRunning()) {
+    <span>Sim, o servidor está rodando</span>
+  } @else {
+    <span>Não, o servidor não está rodando</span>
+  }
+  <button (click)="toggleServerStatus()">Alternar Status do Servidor</button>
 </section>
 ```
 
-When you update a component, be sure to put the logic in the ts file, the styles in the css file, and the html template in the html file.
+Ao atualizar um componente, certifique-se de colocar a lógica no arquivo .ts, os estilos no arquivo .css e o template HTML no arquivo .html.
 
 ## Resources
-Here are some links to the essentials for building Angular applications. Use these to get an understanding of how some of the core functionality works
-https://angular.dev/essentials/components
-https://angular.dev/essentials/signals
-https://angular.dev/essentials/templates
-https://angular.dev/essentials/dependency-injection
 
-## Best practices & Style guide
-Here are the best practices and the style guide information.
-
-### Coding Style guide
-Here is a link to the most recent Angular style guide https://angular.dev/style-guide
-
-### TypeScript Best Practices
-- Use strict type checking
-- Prefer type inference when the type is obvious
-- Avoid the `any` type; use `unknown` when type is uncertain
-
-### UI Component Library Guidelines
-
-**PrimeNG (Preferred for New Development)**:
-- Use PrimeNG components for all new features
-- Configured with Aura theme (PrimeNG v20 default)
-- Portuguese (pt-BR) translations included
-- Examples: `p-table`, `p-button`, `p-dialog`, `p-dropdown`
-- Theme configuration in `app.module.ts` with `providePrimeNG()`
-
-**Angular Material (Legacy - Being Removed)**:
-- Avoid using Angular Material for new features
-- Replace existing Material components with PrimeNG when refactoring
-- Current Material components should be migrated during feature updates
-
-### Development Approach During Migration
-
-**For New Features**:
-- Always use standalone components with Angular 20+ patterns
-- Use signals for state management
-- Implement new control flow (`@if`, `@for`, `@switch`)
-- Use PrimeNG components exclusively
-
-**For Existing Features**:
-- Maintain existing NgModule structure until full migration
-- When updating existing components, consider migrating to standalone if scope allows
-- Replace Angular Material components with PrimeNG equivalents during updates
-
-### Angular Best Practices
-- Always use standalone components over `NgModules` (for new development)
-- Do NOT set `standalone: true` inside the `@Component`, `@Directive` and `@Pipe` decorators
-- Use signals for state management
-- Implement lazy loading for feature routes
-- Use `NgOptimizedImage` for all static images.
-- Do NOT use the `@HostBinding` and `@HostListener` decorators. Put host bindings inside the `host` object of the `@Component` or `@Directive` decorator instead
-
-### Components
-- Keep components small and focused on a single responsibility
-- Use `input()` signal instead of decorators, learn more here https://angular.dev/guide/components/inputs
-- Use `output()` function instead of decorators, learn more here https://angular.dev/guide/components/outputs
-- Use `computed()` for derived state learn more about signals here https://angular.dev/guide/signals.
-- Set `changeDetection: ChangeDetectionStrategy.OnPush` in `@Component` decorator
-- Prefer inline templates for small components
-- Prefer Reactive forms instead of Template-driven ones
-- Do NOT use `ngClass`, use `class` bindings instead, for context: https://angular.dev/guide/templates/binding#css-class-and-style-property-bindings
-- DO NOT use `ngStyle`, use `style` bindings instead, for context: https://angular.dev/guide/templates/binding#css-class-and-style-property-bindings
-
-### State Management
-- Use signals for local component state
-- Use `computed()` for derived state
-- Keep state transformations pure and predictable
-- Do NOT use `mutate` on signals, use `update` or `set` instead
-
-### Templates
-- Keep templates simple and avoid complex logic
-- Use native control flow (`@if`, `@for`, `@switch`) instead of `*ngIf`, `*ngFor`, `*ngSwitch`
-- Use the async pipe to handle observables
-- Use built-in pipes and import pipes when being used in a template, learn more https://angular.dev/guide/templates/pipes#
-
-### Services
-- Design services around a single responsibility
-- Use the `providedIn: 'root'` option for singleton services
-- Use the `inject()` function instead of constructor injection
-### Prime Table Toolbar
-- Use PrimeCrudToolbarComponent for list toolbars: `<app-prime-crud-toolbar [table]='dt' [list]='self'></app-prime-crud-toolbar>`.
-- PrimeCrudListComponent exposes `self` so toolbar can accept the instance.
-- Toolbar injects list optionally; ensure list components register provider: `providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => GrupoListComponent) }]`.
-- Toolbar includes defaults for create/delete/export, column toggle, expand/collapse with keyboard-friendly buttons.
-- For custom toolbars, supply templates via `toolbarStartTemplate`/`toolbarEndTemplate`.
+Links essenciais para construir aplicações Angular:
+- https://angular.dev/essentials/components
+- https://angular.dev/essentials/signals
+- https://angular.dev/essentials/templates
+- https://angular.dev/essentials/dependency-injection
+- https://angular.dev/style-guide

@@ -1,5 +1,12 @@
-import {Component, forwardRef, Injector, OnInit} from '@angular/core';
-import {CommonModule, DatePipe} from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  forwardRef,
+  inject,
+  Injector,
+  OnInit
+} from '@angular/core';
+import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
@@ -17,7 +24,7 @@ import {IconFieldModule} from 'primeng/iconfield';
 import {InputIconModule} from 'primeng/inputicon';
 import {TooltipModule} from 'primeng/tooltip';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {NovoModule} from '../geral/novo/novo.module';
+import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 
 @Component({
     selector: 'app-list-solicitacao-compra',
@@ -26,7 +33,6 @@ import {NovoModule} from '../geral/novo/novo.module';
   imports: [
     CommonModule,
     FormsModule,
-    DatePipe,
     CardModule,
     TableModule,
     MultiSelectModule,
@@ -37,11 +43,14 @@ import {NovoModule} from '../geral/novo/novo.module';
     InputIconModule,
     TooltipModule,
     PrimeCrudToolbarComponent,
-    NovoModule
+    ActionButtonsComponent,
   ],
-  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => SolicitacaoCompraListComponent) }]
+  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => SolicitacaoCompraListComponent) }],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<SolicitacaoCompra, number> implements OnInit {
+  protected solicitacaoCompraService: SolicitacaoCompraService;
+  protected injector: Injector;
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -89,9 +98,14 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
     }
   ];
 
-  constructor(protected solicitacaoCompraService: SolicitacaoCompraService,
-              protected injector: Injector) {
+  constructor() {
+    const solicitacaoCompraService = inject(SolicitacaoCompraService);
+    const injector = inject(Injector);
+
     super(solicitacaoCompraService, injector, ['id', 'descricao', 'dataSolicitacao', 'usuario', 'actions'], 'solicitacao-compra/form');
+    this.solicitacaoCompraService = solicitacaoCompraService;
+    this.injector = injector;
+
     this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.configureTable();

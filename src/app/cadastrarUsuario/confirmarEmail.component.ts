@@ -1,69 +1,70 @@
-import { Component, OnInit, ViewChild } from "@angular/core";
-import { NgForm } from "@angular/forms";
-import { ActivatedRoute, Router } from "@angular/router";
-import { MessageService } from "primeng/api";
-import { CadastrarUsuarioService } from "./cadastrarUsuario.service";
-import { EmailConfirmacao } from "./emailConfirmacao";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit} from "@angular/core";
+import {CommonModule, NgOptimizedImage} from "@angular/common";
+import {ActivatedRoute, Router} from "@angular/router";
+import {MessageService} from "primeng/api";
+import {ProgressBar} from "primeng/progressbar";
+import {CadastrarUsuarioService} from "./cadastrarUsuario.service";
 
 @Component({
     selector: "app-confirmarvalidar-email",
     templateUrl: "./confirmarEmail.component.html",
     styleUrls: ["./confirmarEmail.component.css"],
-    standalone: false
+  imports: [
+    CommonModule,
+    NgOptimizedImage,
+    ProgressBar
+  ],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConfirmarEmailComponent implements OnInit {
-  emailConfirmacao: EmailConfirmacao;
-  showProgress = false;
-  @ViewChild("form", { static: true }) form: NgForm;
+  private readonly router = inject(Router);
+  private readonly messageService = inject(MessageService);
+  private readonly cadastrarUsuarioService = inject(CadastrarUsuarioService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly cdr = inject(ChangeDetectorRef);
 
-  constructor(
-    private router: Router,
-    private messageService: MessageService,
-    private cadastrarUsuarioService: CadastrarUsuarioService,
-    private route: ActivatedRoute
-  ) {}
+  showProgress = false;
+  code = '';
 
   ngOnInit() {
-    this.emailConfirmacao = new EmailConfirmacao();
-
     this.route.params.subscribe((params) => {
       if (params.code) {
-        this.emailConfirmacao.code = params.code;
+        this.code = params.code;
+        this.cdr.markForCheck();
       }
     });
   }
 
   submit() {
     this.showProgress = true;
-    this.cadastrarUsuarioService
-      .confirmarEmail(this.emailConfirmacao)
-      .subscribe({
-        next: (e) => {
-          this.showProgress = false;
-          this.messageService.add({
-            severity: "success",
-            summary: "Sucesso",
-            detail:
-              "Email validado com sucesso, agora será possível realizar autenticação no sistema.",
-          });
-          this.router.navigate(["/login"]);
-        },
-        error: (error) => {
-          this.showProgress = false;
-          this.messageService.add({
-            severity: "error",
-            summary: "Atenção",
-            detail:
-              "Falha ao confirmar o email, entre em contato com os responsáveis pelos laboratórios.",
-          });
-        },
-      });
+    this.cdr.markForCheck();
+
+    const emailConfirmacao = { code: this.code };
+
+    this.cadastrarUsuarioService.confirmarEmail(emailConfirmacao).subscribe({
+      next: (e) => {
+        this.showProgress = false;
+        this.cdr.markForCheck();
+        this.messageService.add({
+          severity: "success",
+          summary: "Sucesso",
+          detail: "Email validado com sucesso, agora será possível realizar autenticação no sistema.",
+        });
+        this.router.navigate(["/login"]);
+      },
+      error: (error) => {
+        this.showProgress = false;
+        this.cdr.markForCheck();
+        this.messageService.add({
+          severity: "error",
+          summary: "Atenção",
+          detail: "Falha ao confirmar o email, entre em contato com os responsáveis pelos laboratórios.",
+        });
+      },
+    });
   }
 
   goToLogin() {
     this.router.navigate(["/login"]);
-  }
-  goToCadastro() {
-    this.router.navigate(["/cadastrar-usuario"]);
   }
 }

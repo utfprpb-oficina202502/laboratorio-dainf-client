@@ -1,21 +1,14 @@
-import {
-  HttpEvent,
-  HttpHandler,
-  HttpInterceptor,
-  HttpRequest,
-} from "@angular/common/http";
-import { LoginService } from "./login/login.service";
-import { MessageService } from "primeng/api";
-import { Observable } from "rxjs";
-import { tap } from "rxjs/operators";
-import { Injectable } from "@angular/core";
+import {HttpEvent, HttpHandler, HttpInterceptor, HttpRequest,} from "@angular/common/http";
+import {LoginService} from "./login/login.service";
+import {MessageService} from "primeng/api";
+import {Observable} from "rxjs";
+import {tap} from "rxjs/operators";
+import {inject, Injectable} from "@angular/core";
 
 @Injectable()
 export class HttpClientInterceptor implements HttpInterceptor {
-  constructor(
-    private messageService: MessageService,
-    private loginService: LoginService
-  ) {}
+  private readonly messageService = inject(MessageService);
+  private readonly loginService = inject(LoginService);
 
   intercept(
     req: HttpRequest<any>,

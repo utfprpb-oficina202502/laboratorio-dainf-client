@@ -1,8 +1,6 @@
-.mat-form-field {
-  font-size: 14px;
-  width: 100%;
-}
+/* Estado List Component Styles */
 
-td, th {
-  width: 25%;
+/* Custom styles for estado list can be added here */
+.cursor-pointer {
+  cursor: pointer;
 }

@@ -1,4 +1,3 @@
-//Install express server
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -65,7 +64,7 @@ app.use(helmet({
 
 app.use(express.static(outputPath,
   {index: false, maxAge: '1y', immutable: true, etag: true}));
-app.get('/*', limiter, function (req, res) {
+app.get(/.*/, limiter, function (req, res) {
   res.set('Cache-Control', 'no-store');
   res.sendFile(path.join(outputPath, 'index.html'));
 });
@@ -73,4 +72,3 @@ app.get('/*', limiter, function (req, res) {
 app.listen(port, () => {
   console.log(`✅ Server listening on ${port} | static: ${outputPath}`);
 });
-

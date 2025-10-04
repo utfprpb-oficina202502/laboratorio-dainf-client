@@ -1,4 +1,4 @@
-import {Inject, Injectable} from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {CrudService} from '../framework/service/crud.service';
 import {Reserva} from './reserva';
 import { HttpClient } from '@angular/common/http';
@@ -8,7 +8,9 @@ import {Observable} from 'rxjs';
 @Injectable()
 export class ReservaService extends CrudService<Reserva, number> {
 
-  constructor(@Inject(HttpClient) http: HttpClient) {
+  constructor() {
+    const http = inject<HttpClient>(HttpClient);
+
     super(`${environment.api_url}reserva/`, http);
   }
 

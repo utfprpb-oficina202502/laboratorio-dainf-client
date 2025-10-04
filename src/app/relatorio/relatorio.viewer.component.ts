@@ -1,4 +1,6 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
 import {ActivatedRoute, Router} from '@angular/router';
 import {RelatorioService} from './relatorio.service';
 import {LoaderService} from '../framework/loader/loader.service';
@@ -7,28 +9,51 @@ import {Relatorio} from './relatorio';
 import {pt} from '../framework/constantes/calendarPt';
 import {RelatorioParamsValue} from './relatorioParamsValue';
 import {StringUtils} from '../framework/util/string.utils';
-import {DateUtil} from '../framework/util/dateUtil';
+
+// PrimeNG
+import {CardModule} from 'primeng/card';
+import {ButtonModule} from 'primeng/button';
+import {InputTextModule} from 'primeng/inputtext';
+import {DialogModule} from 'primeng/dialog';
+import {DatePickerModule} from 'primeng/datepicker';
+
+// Custom modules
+import {VoltarComponent} from '../geral/voltar/voltar.component';
+
+// Validation
+import {OnlyNumberDirective} from '../framework/directives/onlyNumber/onlyNumber.directive';
 
 @Component({
     selector: 'app-viewer-relatorio',
     templateUrl: './relatorio.viewer.component.html',
     styleUrls: ['./relatorio.viewer.component.css'],
-    standalone: false
+  imports: [
+    CommonModule,
+    FormsModule,
+    // PrimeNG
+    CardModule,
+    ButtonModule,
+    InputTextModule,
+    DialogModule,
+    DatePickerModule,
+    // Custom
+    VoltarComponent,
+    // Validation
+    OnlyNumberDirective
+  ]
 })
 export class RelatorioViewerComponent implements OnInit {
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly loaderService = inject(LoaderService);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly relatorioService = inject(RelatorioService);
 
   reportHTML: any;
   relatorioCurrent: Relatorio;
   dialogFiltroRelatorio = false;
   localePt: any;
   relatorioParamValue: RelatorioParamsValue[];
-
-  constructor(private router: Router,
-              private route: ActivatedRoute,
-              private loaderService: LoaderService,
-              private sanitizer: DomSanitizer,
-              private relatorioService: RelatorioService) {
-  }
 
   ngOnInit(): void {
     this.localePt = pt;
@@ -61,7 +86,7 @@ export class RelatorioViewerComponent implements OnInit {
   }
 
   generateReport(id: number, params: RelatorioParamsValue[]) {
-    this.loaderService.display(true);
+    this.loaderService.show();
     const mapToSend: Map<string, any> = new Map<string, any>();
     mapToSend.set("idRel", id);
     mapToSend.set("params", params);
@@ -74,9 +99,9 @@ export class RelatorioViewerComponent implements OnInit {
     this.relatorioService.generateReport(convMap)
       .subscribe(e => {
         let file = new Blob([e], {type: 'application/pdf'});
-        var fileURL = URL.createObjectURL(file);
+        let fileURL = URL.createObjectURL(file);
         this.reportHTML = this.getSafeUrl(fileURL);
-        this.loaderService.display(false);
+        this.loaderService.hide();
       });
   }
 
@@ -113,10 +138,10 @@ export class RelatorioViewerComponent implements OnInit {
   }
 
   onChangeValueParam($event: any, tipoFiltro: string, nameFiltro: string) {
-    if (tipoFiltro !== 'D') {
-      this.updateParamsValue(tipoFiltro, nameFiltro, $event.target.value);
-    } else {
+    if (tipoFiltro === 'D') {
       this.updateParamsValue(tipoFiltro, nameFiltro, new Date($event).toLocaleDateString());
+    } else {
+      this.updateParamsValue(tipoFiltro, nameFiltro, $event.target.value);
     }
   }
 

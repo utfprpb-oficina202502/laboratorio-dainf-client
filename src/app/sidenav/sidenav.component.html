@@ -1,66 +1,78 @@
-<p-drawer
-  #drawer
-  [(visible)]="sidebarVisible"
-  position="left"
-  [modal]="false"
-  closable="false"
-  [dismissible]="false"
-  styleClass="custom-drawer"
-  [blockScroll]="false">
+<!-- Custom Aside Navigation Sidebar -->
+<aside
+  [class.sidebar-hidden]="!sidebarVisible"
+  [class.sidebar-visible]="sidebarVisible"
+  class="sidebar">
 
-  <ng-template pTemplate="content">
-    <div class="sidebar-content">
-      <!-- Main menu items -->
-      <nav class="sidebar-nav">
-        @for (menuItem of menuItems; track menuItem.id) {
+  <div class="sidebar-content">
+    <!-- Main menu items -->
+    <nav class="sidebar-nav">
+      @for (menuItem of menuItems; track menuItem.id) {
+        <a
+          [id]="menuItem.id"
+          [routerLink]="menuItem.routerLink"
+          routerLinkActive="active-menu-item"
+          class="sidebar-menu-item">
+          <i [class]="menuItem.icon" class="sidebar-menu-icon"></i>
+          <span class="sidebar-menu-label">{{ menuItem.label }}</span>
+        </a>
+      }
+
+      <!-- Cadastros submenu -->
+      @if (showCadastros) {
+        <div class="cadastros-section">
           <a
-            [id]="menuItem.id"
-            [routerLink]="menuItem.routerLink"
-            routerLinkActive="active-menu-item"
-            class="sidebar-menu-item">
-            <i [class]="menuItem.icon" class="sidebar-menu-icon"></i>
-            <span class="sidebar-menu-label">{{ menuItem.label }}</span>
+            class="sidebar-menu-item submenu-toggle"
+            (click)="toggleSubMenuCadastro()"
+            role="button"
+            tabindex="0"
+            [attr.aria-expanded]="showSubMenuCadastro"
+            (keydown.enter)="toggleSubMenuCadastro()"
+            (keydown.space)="toggleSubMenuCadastro(); $event.preventDefault()">
+            <i class="fa fa-pencil sidebar-menu-icon"></i>
+            <span class="sidebar-menu-label">Cadastros</span>
+            <i [class]="showSubMenuCadastro ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+               class="submenu-arrow"></i>
           </a>
-        }
 
-        <!-- Cadastros submenu -->
-        @if (showCadastros) {
-          <div class="cadastros-section">
-            <a
-              class="sidebar-menu-item submenu-toggle"
-              (click)="toggleSubMenuCadastro()">
-              <i class="fa fa-pencil sidebar-menu-icon"></i>
-              <span class="sidebar-menu-label">Cadastros</span>
-              <i [class]="showSubMenuCadastro ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
-                 class="submenu-arrow"></i>
-            </a>
-
-            @if (showSubMenuCadastro) {
-              <div class="submenu-content">
-                @for (menuItem of menuCadastros; track menuItem.id) {
-                  <a
-                    [id]="menuItem.id"
-                    [routerLink]="menuItem.routerLink"
-                    routerLinkActive="active-menu-item"
-                    class="sidebar-menu-item submenu-item">
-                    <i [class]="menuItem.icon" class="sidebar-menu-icon"></i>
-                    <span class="sidebar-menu-label">{{ menuItem.label }}</span>
-                  </a>
-                }
-              </div>
-            }
-          </div>
-        }
-      </nav>
-
-      <!-- Theme Toggle at bottom -->
-      <div class="theme-toggle-section">
-        <div class="theme-toggle-divider"></div>
-        <div class="theme-toggle-container">
-          <span class="theme-toggle-label">Tema</span>
-          <app-theme-toggle></app-theme-toggle>
+          @if (showSubMenuCadastro) {
+            <div class="submenu-content">
+              @for (menuItem of menuCadastros; track menuItem.id) {
+                <a
+                  [id]="menuItem.id"
+                  [routerLink]="menuItem.routerLink"
+                  routerLinkActive="active-menu-item"
+                  class="sidebar-menu-item submenu-item">
+                  <i [class]="menuItem.icon" class="sidebar-menu-icon"></i>
+                  <span class="sidebar-menu-label">{{ menuItem.label }}</span>
+                </a>
+              }
+            </div>
+          }
         </div>
+      }
+    </nav>
+
+    <!-- Theme Toggle at bottom -->
+    <div class="theme-toggle-section">
+      <div class="theme-toggle-divider"></div>
+      <div class="theme-toggle-container">
+        <span class="theme-toggle-label">Tema</span>
+        <app-theme-toggle></app-theme-toggle>
       </div>
     </div>
-  </ng-template>
-</p-drawer>
+  </div>
+</aside>
+
+<!-- Backdrop for mobile view -->
+@if (!isDesktopView && sidebarVisible) {
+  <div
+    class="sidebar-backdrop"
+    (click)="closeSidebar()"
+    role="button"
+    tabindex="0"
+    aria-label="Fechar menu"
+    (keydown.enter)="closeSidebar()"
+    (keydown.space)="closeSidebar(); $event.preventDefault()">
+  </div>
+}

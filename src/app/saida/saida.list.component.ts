@@ -1,5 +1,5 @@
-import {Component, forwardRef, Injector} from '@angular/core';
-import {CommonModule, DatePipe} from '@angular/common';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
+import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
@@ -20,6 +20,7 @@ import {InputIconModule} from 'primeng/inputicon';
 import {TooltipModule} from 'primeng/tooltip';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
+import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 
 @Component({
     selector: 'app-list-saida',
@@ -28,7 +29,6 @@ import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolb
   imports: [
     CommonModule,
     FormsModule,
-    DatePipe,
     CardModule,
     TableModule,
     MultiSelectModule,
@@ -39,11 +39,15 @@ import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolb
     InputIconModule,
     TooltipModule,
     ConfirmDialogModule,
-    PrimeCrudToolbarComponent
+    PrimeCrudToolbarComponent,
+    ActionButtonsComponent
   ],
-  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => SaidaListComponent) }]
+  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => SaidaListComponent) }],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
+  protected saidaService: SaidaService;
+  protected injector: Injector;
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -100,9 +104,14 @@ export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
     }
   ];
 
-  constructor(protected saidaService: SaidaService,
-              protected injector: Injector) {
+  constructor() {
+    const saidaService = inject(SaidaService);
+    const injector = inject(Injector);
+
     super(saidaService, injector, ['id', 'dataSaida', 'qtde', 'usuarioResponsavel', 'observacao', 'actions'], 'saida/form');
+    this.saidaService = saidaService;
+    this.injector = injector;
+
     this.configureTable();
   }
 

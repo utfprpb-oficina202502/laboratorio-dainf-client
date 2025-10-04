@@ -1,14 +1,13 @@
-import {Component, EventEmitter, Output} from '@angular/core';
+import {Component, output} from '@angular/core';
+import {ButtonModule} from 'primeng/button';
 
 @Component({
-    selector: 'app-cancelar',
-    templateUrl: './cancelar.component.html',
-    styleUrls: ['./cancelar.component.css'],
-    standalone: false
+  selector: 'app-cancelar',
+  templateUrl: './cancelar.component.html',
+  imports: [ButtonModule]
 })
 export class CancelarComponent {
-
-  @Output() onClick: EventEmitter<any> = new EventEmitter();
+  readonly onClick = output<void>();
 
   click(): void {
     this.onClick.emit();

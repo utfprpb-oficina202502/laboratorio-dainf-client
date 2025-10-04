@@ -1,34 +1,52 @@
-import {Directive, ElementRef, Input, OnInit} from '@angular/core';
+import {Directive, ElementRef, inject, Input, Renderer2} from '@angular/core';
 import {NgControl} from '@angular/forms';
-import $ from 'jquery';
 import {ValidationService} from './validation.service';
 
 @Directive({
     selector: '[validation]',
-    standalone: false
 })
-export class ValidationDirective implements OnInit {
+export class ValidationDirective {
+  private readonly el = inject(ElementRef);
+  private readonly formControl = inject(NgControl);
+  private readonly validationService = inject(ValidationService);
+  private readonly renderer = inject(Renderer2);
 
   @Input('validationMessage') customMessage: string;
 
-  private target: any;
-  private formGroup: any;
+  private readonly targetElement: HTMLElement;
+  private readonly formGroupElement: HTMLElement | null;
 
-  constructor(private el: ElementRef, private formControl: NgControl, private validationService: ValidationService) {
-    this.target = $(el.nativeElement);
-    this.formGroup = this.target.closest('.form-group');
+  constructor() {
+    this.targetElement = this.el.nativeElement;
+    this.formGroupElement = this.findFormGroup(this.targetElement);
 
-    this.formControl.valueChanges.subscribe((newValue) => {
+    this.formControl.valueChanges?.subscribe(() => {
       this.checkValidation();
     });
   }
 
-  ngOnInit() {
+  private findFormGroup(element: HTMLElement): HTMLElement | null {
+    let current = element.parentElement;
+    while (current) {
+      if (current.classList.contains('form-group')) {
+        return current;
+      }
+      current = current.parentElement;
+    }
+    return null;
   }
 
   resetFormGroup() {
-    this.formGroup.removeClass('has-error');
-    this.formGroup.find('.help-block').remove();
+    if (!this.formGroupElement) return;
+
+    this.renderer.removeClass(this.formGroupElement, 'has-error');
+
+    const helpBlocks = this.formGroupElement.querySelectorAll('.help-block');
+    // Convert NodeList to Array for proper iteration in strict mode
+    Array.from(helpBlocks).forEach(block => {
+      this.renderer.removeChild(this.formGroupElement, block);
+    });
+
     if (typeof this.formControl.name === 'string') {
       this.validationService.removeValidation(this.formControl.name);
     }
@@ -40,11 +58,11 @@ export class ValidationDirective implements OnInit {
     } else if (error) {
       return this.validationService.getMessageByError(error);
     } else {
-      return 'Please enter a correct value';
+      return 'Por favor, insira um valor correto';
     }
   }
 
-  getError(errors: any): string {
+  getError(errors: any): string | null {
     for (const key in errors) {
       if (errors.hasOwnProperty(key)) {
         return key;
@@ -56,27 +74,34 @@ export class ValidationDirective implements OnInit {
   checkValidation() {
     this.resetFormGroup();
 
-    if ((this.formControl.dirty || this.formControl.touched) && !this.formControl.valid) {
+    if (!this.formGroupElement) return;
 
+    if ((this.formControl.dirty || this.formControl.touched) && !this.formControl.valid) {
       const error = this.getError(this.formControl.errors);
 
       if (error) {
         const message = this.getMessage(error);
-        const helpBlock = `<span class="help-block">${message}</span>`;
-        this.formGroup.addClass('has-error');
-        this.formGroup.append(helpBlock);
 
-        let campo = null;
-        if (this.formGroup.find('label').length > 1) {
-          campo = $(this.formGroup.find('label')[0]).text();
-        } else {
-          campo = this.formGroup.find('label').text();
+        // Add 'has-error' class
+        this.renderer.addClass(this.formGroupElement, 'has-error');
+
+        // Create and append help block
+        const helpBlock = this.renderer.createElement('span');
+        this.renderer.addClass(helpBlock, 'help-block');
+        const text = this.renderer.createText(message);
+        this.renderer.appendChild(helpBlock, text);
+        this.renderer.appendChild(this.formGroupElement, helpBlock);
+
+        let campo = '';
+        const labels = this.formGroupElement.querySelectorAll('label');
+        if (labels.length > 0) {
+          campo = labels[0].textContent?.trim() || '';
         }
 
         this.validationService.addValidation({
           name: this.formControl.name as string,
-          campo: campo as string,
-          message: message as string,
+          campo: campo,
+          message: message,
           el: this.el
         });
       }

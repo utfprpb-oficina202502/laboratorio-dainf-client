@@ -31,8 +31,8 @@
              [attr.aria-label]="'Lista de reservas com ' + totalElements + ' registro(s)'">
 
       <ng-template pTemplate="caption">
-        <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
-          <p-iconField iconPosition="left" class="flex-grow-1 flex-md-grow-0">
+        <div class="flex items-center justify-end gap-2 flex-wrap">
+          <p-iconField iconPosition="left" style="flex: 0 1 auto; min-width: 200px; max-width: 300px;">
             <p-inputIcon class="pi pi-search" aria-hidden="true"></p-inputIcon>
             <input
               #globalFilterInput
@@ -79,44 +79,32 @@
               [style.min-width]="column.minWidth">
               @switch (column.field) {
                 @case ('id') {
-                  <span (click)="openOptions(rowData)" style="cursor: pointer;">{{ rowData.id }}</span>
+                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData.id }}</span>
                 }
                 @case ('descricao') {
-                  <span (click)="openOptions(rowData)" style="cursor: pointer;">{{ rowData.descricao }}</span>
+                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData.descricao }}</span>
                 }
                 @case ('dataReserva') {
-                  <span (click)="openOptions(rowData)" style="cursor: pointer;">{{ rowData.dataReserva | date:'dd/MM/yyyy' }}</span>
+                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData.dataReserva }}</span>
                 }
                 @case ('dataRetirada') {
-                  <span (click)="openOptions(rowData)" style="cursor: pointer;">{{ rowData.dataRetirada | date:'dd/MM/yyyy' }}</span>
+                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData.dataRetirada }}</span>
                 }
                 @case ('usuario') {
-                  <span (click)="openOptions(rowData)" style="cursor: pointer;">{{ rowData.usuario?.nome || 'N/A' }}</span>
+                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData.usuario?.nome || 'N/A' }}</span>
                 }
                 @case ('actions') {
-                  <div class="d-flex align-items-center gap-1 justify-content-center">
-                    <p-button
-                      icon="pi pi-pencil"
-                      [outlined]="true"
-                      severity="secondary"
-                      size="small"
-                      pTooltip="Editar"
-                      tooltipPosition="top"
-                      (onClick)="edit(rowData.id)">
-                    </p-button>
-                    <p-button
-                      icon="pi pi-trash"
-                      [outlined]="true"
-                      severity="danger"
-                      size="small"
-                      pTooltip="Remover"
-                      tooltipPosition="top"
-                      (onClick)="delete(rowData.id)">
-                    </p-button>
-                  </div>
+                  <app-action-buttons
+                    [showEdit]="true"
+                    [showDelete]="true"
+                    [editTooltip]="'Editar'"
+                    [deleteTooltip]="'Remover'"
+                    (edit)="edit(rowData.id)"
+                    (delete)="delete(rowData.id)">
+                  </app-action-buttons>
                 }
                 @default {
-                  <span (click)="openOptions(rowData)" style="cursor: pointer;">{{ rowData[column.field] }}</span>
+                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData[column.field] }}</span>
                 }
               }
             </td>
@@ -148,3 +136,8 @@
     </p-table>
   </p-card>
 </div>
+
+<!-- Actions Popover -->
+<p-popover #actionsMenu>
+  <p-menu [model]="contextMenuItems" [style]="{border: 'none'}"></p-menu>
+</p-popover>

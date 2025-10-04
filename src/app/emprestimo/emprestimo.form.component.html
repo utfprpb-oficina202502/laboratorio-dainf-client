@@ -1,363 +1,341 @@
-<div class="container" style="margin-bottom: 500px">
+<div class="container-fluid my-3">
   <p-card>
     <ng-template pTemplate="header">
-      <div class="d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center">
+      <div class="flex items-center justify-between p-4">
+        <div class="flex items-center gap-3">
           <app-voltar (onClick)="back()"></app-voltar>
-          <h4 class="m-0">Cadastro de Empréstimo</h4>
+          <h2 class="text-xl font-semibold m-0">Cadastro de Empréstimo</h2>
         </div>
-        @if (object.dataDevolucao) {
-          <span
-            class="badge badge-success float-right"
-            style="font-size: 15px"
-            >Empréstimo Finalizado</span
-            >
-          }
-        </div>
-      </ng-template>
+        @if (isEmprestimoFinalizado()) {
+          <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
+            Empréstimo Finalizado
+          </span>
+        }
+      </div>
+    </ng-template>
 
-      <form #form="ngForm">
-        <div class="row">
-          <div class="col-md-2">
-            <div class="form-group">
-              <label for="id">Código</label>
-              <input
-                type="text"
-                id="id"
-                name="id"
-                disabled
-                class="form-control"
-                [(ngModel)]="object.id"
-                pInputText
-                />
-              </div>
+    <ng-template pTemplate="content">
+      @if (form(); as formGroup) {
+        <form [formGroup]="formGroup" (ngSubmit)="save()" class="flex flex-col gap-4">
+          <!-- Row 1: Código, Usuário, Documento -->
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-12 md:col-span-2">
+              <app-form-field
+                [control]="formGroup.get('id')"
+                label="Código"
+                fieldId="id">
+                <input
+                  pInputText
+                  id="id"
+                  formControlName="id"
+                  class="w-full"
+                  readonly />
+              </app-form-field>
             </div>
 
-            <div class="col-md-8">
-              <div class="form-group">
-                <label for="usuarioEmprestimo">Aluno/Professor</label>
-                <span class="field-required">*</span>
+            <div class="col-span-12 md:col-span-8">
+              <app-form-field
+                [control]="formGroup.get('usuarioEmprestimo')"
+                label="Aluno/Professor"
+                [required]="true"
+                fieldId="usuarioEmprestimo">
                 <p-autoComplete
-                  id="usuarioEmprestimo"
-                  name="usuarioEmprestimo"
-                  required
-                  validation
-                  appendTo="body"
-                  field="nome"
-                  [style]="{ width: '100%' }"
-                  [inputStyle]="{ width: '95%' }"
+                  inputId="usuarioEmprestimo"
+                  formControlName="usuarioEmprestimo"
+                  optionLabel="nome"
+                  dataKey="id"
+                  [suggestions]="usuarioList()"
+                  (completeMethod)="findUsuarios($event)"
+                  (onSelect)="onUsuarioEmprestimoChange($event)"
                   [forceSelection]="true"
                   [dropdown]="true"
-                  [(ngModel)]="object.usuarioEmprestimo"
-              (ngModelChange)="
-                documentoUsuario = object.usuarioEmprestimo.documento
-              "
-                  [suggestions]="usuarioList"
-                  [disabled]="disableForm"
-                  (onClear)="object.usuarioEmprestimo = null"
-                  (completeMethod)="findUsuarios($event)"
-                  >
+                  [disabled]="disableForm()"
+                  placeholder="Selecione o aluno/professor"
+                  styleClass="w-full"
+                  [inputStyle]="{ width: '100%' }">
                 </p-autoComplete>
-              </div>
+              </app-form-field>
             </div>
 
-            <div class="col-md-2">
-              <div class="form-group">
-                <label for="documento">RA/SIAPE</label>
+            <div class="col-span-12 md:col-span-2">
+              <app-form-field
+                label="RA/SIAPE"
+                fieldId="documento">
                 <input
-                  type="text"
-                  id="documento"
-                  name="documento"
-                  class="form-control"
                   pInputText
-                  [(ngModel)]="documentoUsuario"
-                  disabled
-                  />
-                </div>
-              </div>
+                  id="documento"
+                  [value]="documentoUsuario()"
+                  class="w-full"
+                  readonly />
+              </app-form-field>
+            </div>
+          </div>
+
+          <!-- Row 2: Usuário Responsável, Datas -->
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-12 md:col-span-4">
+              <app-form-field
+                label="Usuário Responsável"
+                fieldId="usuarioResponsavel">
+                <input
+                  pInputText
+                  id="usuarioResponsavel"
+                  [value]="formGroup.get('usuarioResponsavel')?.value?.nome || ''"
+                  class="w-full"
+                  readonly />
+              </app-form-field>
             </div>
 
-            <div class="row">
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label for="usuarioResponsavel">Usuário Responsável</label>
-                  <input
-                    type="text"
-                    id="usuarioResponsavel"
-                    name="usuarioResponsavel"
-                    class="form-control"
-                    pInputText
-                    [(ngModel)]="object.usuarioResponsavel.nome"
-                    disabled
-                    />
-                  </div>
-                </div>
+            <div class="col-span-12 md:col-span-3">
+              <app-form-field
+                [control]="formGroup.get('dataEmprestimo')"
+                label="Data do Empréstimo"
+                [required]="true"
+                fieldId="dataEmprestimo">
+                <p-datepicker
+                  inputId="dataEmprestimo"
+                  formControlName="dataEmprestimo"
+                  dateFormat="dd/mm/yy"
+                  dataType="string"
+                  [maxDate]="maxDateEmprestimo()"
+                  [disabled]="disableForm()"
+                  [showIcon]="true"
+                  (onSelect)="setDateMinPrazoDevolucao()"
+                  styleClass="w-full"
+                  [inputStyle]="{ width: '100%' }">
+                </p-datepicker>
+              </app-form-field>
+            </div>
 
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label for="dataEmprestimo">Data do Empréstimo</label>
-                    <span class="field-required">*</span>
-                    <p-datePicker
-                      name="dataEmprestimo"
-                      id="dataEmprestimo"
-                      required
-                      validation
-                      dataType="string"
-                      dateFormat="dd/mm/yy"
-                      inputStyleClass="form-control"
-                      (onSelect)="setDateMinPrazoDevolucao()"
-                      [disabled]="disableForm"
-                      [maxDate]="maxDateEmprestimo"
-                      [style]="{ width: '100%' }"
-                      [(ngModel)]="object.dataEmprestimo"
-                      >
-                    </p-datePicker>
-                  </div>
-                </div>
+            <div class="col-span-12 md:col-span-3">
+              <app-form-field
+                [control]="formGroup.get('prazoDevolucao')"
+                label="Prazo de Devolução"
+                [required]="true"
+                fieldId="prazoDevolucao">
+                <p-datepicker
+                  inputId="prazoDevolucao"
+                  formControlName="prazoDevolucao"
+                  dateFormat="dd/mm/yy"
+                  dataType="string"
+                  [minDate]="minDatePrazoDevolucao()"
+                  [disabled]="disableForm()"
+                  [showIcon]="true"
+                  styleClass="w-full"
+                  [inputStyle]="{ width: '100%' }">
+                </p-datepicker>
+              </app-form-field>
+            </div>
 
-                <div class="col-md-3">
-                  <div class="form-group">
-                    <label for="prazoDevolucao">Prazo de Devolução</label>
-                    <span class="field-required">*</span>
-                    <p-datePicker
-                      name="prazoDevolucao"
-                      id="prazoDevolucao"
-                      required
-                      validation
-                      dataType="string"
-                      dateFormat="dd/mm/yy"
-                      inputStyleClass="form-control"
-                      [disabled]="disableForm"
-                      [minDate]="minDatePrazoDevolucao"
-                      [style]="{ width: '100%' }"
-                      [(ngModel)]="object.prazoDevolucao"
-                      >
-                    </p-datePicker>
-                  </div>
-                </div>
+            <div class="col-span-12 md:col-span-2">
+              <app-form-field
+                label="Data de Devolução"
+                fieldId="dataDevolucao">
+                <p-datepicker
+                  inputId="dataDevolucao"
+                  formControlName="dataDevolucao"
+                  dateFormat="dd/mm/yy"
+                  dataType="string"
+                  [showIcon]="true"
+                  styleClass="w-full"
+                  [inputStyle]="{ width: '100%' }">
+                </p-datepicker>
+              </app-form-field>
+            </div>
+          </div>
 
-                <div class="col-md-2">
-                  <div class="form-group">
-                    <label for="dataDevolucao">Data de Devolução</label>
-                    <p-datePicker
-                      name="dataDevolucao"
-                      id="dataDevolucao"
-                      dataType="string"
-                      dateFormat="dd/mm/yy"
-                      inputStyleClass="form-control"
-                      disabled
-                      [style]="{ width: '100%' }"
-                      [(ngModel)]="object.dataDevolucao"
-                      >
-                    </p-datePicker>
-                  </div>
-                </div>
+          <!-- Add Item Section (only if not disabled) -->
+          @if (!disableForm()) {
+            <div class="grid grid-cols-12 gap-4 mt-4">
+              <div class="col-span-12">
+                <h3 class="text-lg font-semibold mb-3">Adicionar Itens</h3>
               </div>
 
-              @if (!disableForm) {
-                <div class="row mb-3">
-                  <div class="col-md-6">
-                    <div class="form-group">
-                      <label for="item">Item</label>
-                      &nbsp;
-                      @if (emprestimoItem?.item) {
-                        <span class="float-right"
-                          >Saldo: {{ emprestimoItem?.item?.saldo }}</span
-                          >
-                      }
+              <div class="col-span-12 md:col-span-6">
+                <app-form-field label="Item" fieldId="item">
+                  <div class="flex flex-col gap-1">
+                    <div class="flex items-center gap-2">
+                      <p-autoComplete
+                        inputId="item"
+                        [(ngModel)]="tempItem"
+                        [ngModelOptions]="{standalone: true}"
+                        optionLabel="nome"
+                        dataKey="id"
+                        [suggestions]="itemList()"
+                        (completeMethod)="findProdutos($event)"
+                        (onSelect)="setDevolucaoItem()"
+                        [dropdown]="true"
+                        placeholder="Selecione o item"
+                        class="w-full"
+                        [inputStyle]="{ width: '100%' }">
+                        <ng-template let-item pTemplate="item">
+                          <div class="flex items-center gap-2">
+                            @if (item.imageItem && item.imageItem.length > 0) {
+                              <img
+                                ngSrc="minioUrl() + item.imageItem[0].nameImage"
+                                class="w-16 h-16 object-cover rounded"
+                                alt="Item" fill/>
+                            }
+                            <div class="flex flex-col">
+                              <span>{{ item.nome }}</span>
+                              @if (item.patrimonio) {
+                                <span class="text-gray-500 text-sm">{{ item.patrimonio }}</span>
+                              }
+                            </div>
+                          </div>
+                        </ng-template>
+                      </p-autoComplete>
                       <app-cadastroRapido
                         [href]="'/item/form'"
-                        [id]="emprestimoItem?.item?.id"
-                      ></app-cadastroRapido>
-                      <p-autoComplete
-                        id="item"
-                        name="item"
-                        appendTo="body"
-                        field="nome"
-                        #itemToAdd
-                        [style]="{ width: '100%' }"
-                        [inputStyle]="{ width: '95%' }"
-                        [dropdown]="true"
-                        (keyup.control.arrowRight)="setFocusInputQtde()"
-                        (keyup.control.enter)="insertItem()"
-                        [(ngModel)]="emprestimoItem.item"
-                        (onSelect)="setDevolucaoItem()"
-                        [suggestions]="itemList"
-                        (onClear)="clearNewItem()"
-                        (completeMethod)="findProdutos($event)"
-                        >
-                        <ng-template let-item pTemplate="item">
-                          <img
-                  src="{{
-                    item.imageItem.length > 0
-                      ? minioUrl + item.imageItem[0].nameImage
-                      : ''
-                  }}"
-                            [class]="'mr-2 flag'"
-                            style="width: 70px"
-                            />
-                            &nbsp;
-                            <span>{{ item.nome }}</span>
-                            <span class="autocomplete-separator-field">{{
-                              item.patrimonio
-                            }}</span>
-                          </ng-template>
-                        </p-autoComplete>
-                      </div>
+                        [id]="tempItem()?.id">
+                      </app-cadastroRapido>
                     </div>
-                    <div class="col-md-2">
-                      <div class="form-group">
-                        <label for="devolvido">Devolver</label>
-                        <p-select
-                          [options]="yesNoDropdown"
-                          [(ngModel)]="itemDevolver"
-                          [style]="{ width: '100%' }"
-                          [disabled]="true"
-                          id="devolvido"
-                          name="devolvido"
-                          >
-                        </p-select>
-                      </div>
-                    </div>
-                    <div class="col-md-2">
-                      <div class="form-group">
-                        <label for="qtde">Quantidade</label>
-                        <input
-                          type="number"
-                          id="qtde"
-                          autocomplete="off"
-                          #qtdeToAdd
-                          onlyNumber
-                          [disabled]="emprestimoItem?.item?.patrimonio != null"
-                          [(ngModel)]="emprestimoItem.qtde"
-                          (keyup.control.arrowLeft)="setFocusInputItem()"
-                          (keyup.control.enter)="insertItem()"
-                          name="qtde"
-                          class="form-control"
-                          pInputText
-                          />
-                        </div>
-                      </div>
-                      <div class="col-md-2">
-                        <div class="form-group">
-                          <label class="invisible">Action</label>
-                          <button
-                            type="button"
-              style="
-                height: 35px;
-                justify-content: center;
-                display: flex;
-                align-items: center;
-              "
-                            class="form-control"
-                            (click)="insertItem()"
-                            mat-stroked-button
-                            >
-                            <mat-icon>done</mat-icon> <span>Adicionar</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  }
-
-                  @if (object?.emprestimoItem?.length > 0) {
-                    <div
-                      class="example-container mat-elevation-z8"
-                      >
-                      <mat-table #table="matTable" [dataSource]="object.emprestimoItem">
-                        <ng-container matColumnDef="item">
-                          <mat-header-cell *matHeaderCellDef> Item</mat-header-cell>
-                          <mat-cell *matCellDef="let itemEmprestimo">
-                            <p>{{ itemEmprestimo?.item?.nome }}</p>
-                            @if (itemEmprestimo?.item?.patrimonio) {
-                              <p class="ml-2">
-                                | {{ itemEmprestimo.item.patrimonio }}
-                              </p>
-                            }
-                          </mat-cell>
-                          <mat-footer-cell *matFooterCellDef class="font-weight-bolder">
-                            Total</mat-footer-cell
-                            >
-                          </ng-container>
-                          <ng-container matColumnDef="devolver">
-                            <mat-header-cell *matHeaderCellDef> Devolver</mat-header-cell>
-                            <mat-cell *matCellDef="let itemEmprestimo">
-                              @if (itemEmprestimo.item.tipoItem === 'C') {
-                                <span>Sim</span>
-                              }
-                              @if (itemEmprestimo.item.tipoItem === 'P') {
-                                <span>Não</span>
-                              }
-                            </mat-cell>
-                            <mat-footer-cell *matFooterCellDef></mat-footer-cell>
-                          </ng-container>
-                          <ng-container matColumnDef="qtde">
-                            <mat-header-cell *matHeaderCellDef> Qtde</mat-header-cell>
-                            <mat-cell *matCellDef="let itemEmprestimo">
-                              {{ itemEmprestimo.qtde }}
-                            </mat-cell>
-                            <mat-footer-cell *matFooterCellDef>
-                              {{ getQtdeTotal() }}
-                            </mat-footer-cell>
-                          </ng-container>
-                          <ng-container matColumnDef="actionsForm">
-                            <mat-header-cell *matHeaderCellDef> Opções</mat-header-cell>
-                            <mat-cell *matCellDef="let itemEmprestimo">
-                              <button
-                                class="btn btn-outline-primary rounded"
-                                type="button"
-                                pTooltip="Remover"
-                                [disabled]="disableForm"
-                                (click)="removeItem(itemEmprestimo.item.id)"
-                                >
-                                <i class="fa fa-trash-o"></i>
-                              </button>
-                            </mat-cell>
-                            <mat-footer-cell *matFooterCellDef></mat-footer-cell>
-                          </ng-container>
-                          <mat-header-row
-                            *matHeaderRowDef="displayedColumns; sticky: true"
-                          ></mat-header-row>
-                          <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
-                          <mat-footer-row
-                            *matFooterRowDef="displayedColumns; sticky: true"
-                            class="font-weight-bolder"
-                          ></mat-footer-row>
-                        </mat-table>
-                      </div>
+                    @if (tempItem()) {
+                      <small class="text-gray-600">Saldo: {{ tempItem()?.saldo }}</small>
                     }
-
-                    <div class="row">
-                      <div class="col-md-12">
-                        <div class="form-group">
-                          <label for="observacao">Observação</label>
-                          <textarea
-                            id="observacao"
-                            name="observacao"
-                            rows="1"
-                            class="form-control"
-                            pInputTextarea
-                            [disabled]="disableForm"
-                            [(ngModel)]="object.observacao"
-                            autoResize="autoResize"
-                            >
-                          </textarea>
-                        </div>
-                      </div>
-                    </div>
-
-                    @if (!disableForm) {
-                      <div class="row">
-                        <div class="col-md-12 d-flex justify-content-end">
-                          <app-cancelar (onClick)="back()"></app-cancelar>
-                          <app-salvar
-                            (onClick)="save()"
-                            [typeButton]="'button'"
-                            [disabled]="object.dataDevolucao"
-                          ></app-salvar>
-                        </div>
-                      </div>
-                    }
-                  </form>
-                </p-card>
+                  </div>
+                </app-form-field>
               </div>
+
+              <div class="col-span-12 md:col-span-2">
+                <app-form-field label="Devolver" fieldId="devolver">
+                  <p-select
+                    inputId="devolver"
+                    [options]="yesNoDropdown"
+                    [(ngModel)]="tempDevolver"
+                    [ngModelOptions]="{standalone: true}"
+                    [disabled]="true"
+                    styleClass="w-full">
+                  </p-select>
+                </app-form-field>
+              </div>
+
+              <div class="col-span-12 md:col-span-2">
+                <app-form-field label="Quantidade" fieldId="qtde">
+                  <input
+                    pInputText
+                    type="number"
+                    id="qtde"
+                    [(ngModel)]="tempQtde"
+                    [ngModelOptions]="{standalone: true}"
+                    [disabled]="tempItem()?.patrimonio !== null"
+                    (keyup.enter)="insertItem()"
+                    class="w-full" />
+                </app-form-field>
+              </div>
+
+              <div class="col-span-12 md:col-span-2">
+                <app-form-field label="Adicionar" fieldId="btnAdicionar">
+                  <p-button
+                    type="button"
+                    severity="success"
+                    (onClick)="insertItem()"
+                    styleClass="w-full"
+                    [attr.aria-label]="'Adicionar item'">
+                    <span pButtonIcon class="pi pi-plus"></span>
+                    <span pButtonLabel>Adicionar</span>
+                  </p-button>
+                </app-form-field>
+              </div>
+            </div>
+          }
+
+          <!-- Items Table -->
+          @if (hasItems()) {
+            <div class="mt-4">
+              <p-table
+                [value]="emprestimoItems()"
+                [scrollable]="true"
+                scrollHeight="400px"
+                styleClass="p-datatable-sm">
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th>Item</th>
+                    <th style="width: 120px">Devolver</th>
+                    <th style="width: 100px">Qtde</th>
+                    <th style="width: 100px">Opções</th>
+                  </tr>
+                </ng-template>
+
+                <ng-template pTemplate="body" let-emprestimoItem>
+                  <tr>
+                    <td>
+                      <div class="flex items-center gap-2">
+                        <span>{{ emprestimoItem.item.nome }}</span>
+                        @if (emprestimoItem.item.patrimonio) {
+                          <span class="text-gray-500">| {{ emprestimoItem.item.patrimonio }}</span>
+                        }
+                      </div>
+                    </td>
+                    <td>
+                      @if (emprestimoItem.item.tipoItem === 'C') {
+                        <span>Sim</span>
+                      }
+                      @if (emprestimoItem.item.tipoItem === 'P') {
+                        <span>Não</span>
+                      }
+                    </td>
+                    <td>{{ emprestimoItem.qtde }}</td>
+                    <td>
+                      <p-button
+                        type="button"
+                        severity="danger"
+                        [outlined]="true"
+                        size="small"
+                        pTooltip="Remover"
+                        [disabled]="disableForm()"
+                        (onClick)="removeItem(emprestimoItem.item.id)"
+                        [attr.aria-label]="'Remover item'">
+                        <span pButtonIcon class="pi pi-trash"></span>
+                      </p-button>
+                    </td>
+                  </tr>
+                </ng-template>
+
+                <ng-template pTemplate="footer">
+                  <tr>
+                    <td><strong>Total</strong></td>
+                    <td></td>
+                    <td><strong>{{ qtdeTotal() }}</strong></td>
+                    <td></td>
+                  </tr>
+                </ng-template>
+              </p-table>
+            </div>
+          }
+
+          <!-- Observação -->
+          <div class="grid grid-cols-12 gap-4 mt-4">
+            <div class="col-span-12">
+              <app-form-field
+                [control]="formGroup.get('observacao')"
+                label="Observação"
+                fieldId="observacao">
+                <textarea
+                  pTextarea
+                  id="observacao"
+                  formControlName="observacao"
+                  rows="3"
+                  [disabled]="disableForm()"
+                  class="w-full"
+                  [autoResize]="true">
+                </textarea>
+              </app-form-field>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          @if (!disableForm()) {
+            <div class="flex justify-end gap-2 mt-4">
+              <app-cancelar (onClick)="back()"></app-cancelar>
+              <app-salvar
+                [typeButton]="'submit'"
+                [disabled]="isLoading() || isEmprestimoFinalizado()">
+              </app-salvar>
+            </div>
+          }
+        </form>
+      }
+    </ng-template>
+  </p-card>
+</div>

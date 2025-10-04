@@ -1,16 +1,15 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ToggleButtonModule } from 'primeng/togglebutton';
-import { ThemeService } from '../services/theme.service';
+import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
+
+import {ToggleButtonModule} from 'primeng/togglebutton';
+import {ThemeService} from '../services/theme.service';
 import {FormsModule} from "@angular/forms";
 
 @Component({
   selector: 'app-theme-toggle',
   imports: [
-    CommonModule,
     ToggleButtonModule,
     FormsModule
-  ],
+],
   template: `
     <div class="toggle-wrapper">
       <p-toggleButton
@@ -48,8 +47,12 @@ import {FormsModule} from "@angular/forms";
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ThemeToggleComponent {
+  readonly themeService = inject(ThemeService);
+
   checked = false;
-  constructor(public readonly themeService: ThemeService) {
+  constructor() {
+    const themeService = this.themeService;
+
     this.checked = themeService.isDarkMode();
   }
 

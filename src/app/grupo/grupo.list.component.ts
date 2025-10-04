@@ -1,4 +1,4 @@
-import {Component, forwardRef, Injector} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {Grupo} from './grupo';
@@ -18,7 +18,7 @@ import {InputIconModule} from 'primeng/inputicon';
 import {TooltipModule} from 'primeng/tooltip';
 import {TagModule} from 'primeng/tag';
 import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {NovoModule} from '../geral/novo/novo.module';
+import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 
 @Component({
     selector: 'app-list-grupo',
@@ -38,11 +38,14 @@ import {NovoModule} from '../geral/novo/novo.module';
     TooltipModule,
     TagModule,
     PrimeCrudToolbarComponent,
-    NovoModule
+    ActionButtonsComponent,
   ],
-  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => GrupoListComponent) }]
+  providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => GrupoListComponent) }],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GrupoListComponent extends PrimeCrudListComponent<Grupo, number> {
+  protected grupoService: GrupoService;
+  protected injector: Injector;
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -75,9 +78,14 @@ export class GrupoListComponent extends PrimeCrudListComponent<Grupo, number> {
     }
   ];
 
-  constructor(protected grupoService: GrupoService,
-              protected injector: Injector) {
+  constructor() {
+    const grupoService = inject(GrupoService);
+    const injector = inject(Injector);
+
     super(grupoService, injector, ['id', 'descricao', 'actions'], 'grupo/form');
+    this.grupoService = grupoService;
+    this.injector = injector;
+
     this.configureTable();
   }
 
@@ -124,7 +132,7 @@ export class GrupoListComponent extends PrimeCrudListComponent<Grupo, number> {
       resizableColumns: true,
       columnResizeMode: 'fit',
       lazy: true,
-      lazyLoadOnInit: true,
+      lazyLoadOnInit: false,
       preloadData: true,
       keyboardShortcuts: true
     };

@@ -1,27 +1,57 @@
-/* Custom PrimeNG Drawer Styles */
-::ng-deep .custom-drawer {
-  width: 260px !important;
-  height: calc(100vh - 50px) !important;
-  top: 50px !important;
-  border: none;
-  border-radius: 0;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
+/* Custom Aside Sidebar - Base Styles */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 56px; /* Below navbar */
+  width: 260px;
+  height: calc(100vh - 56px);
+  z-index: 1000;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--p-content-background) !important;
+  border-right: 1px solid var(--p-content-border-color);
 }
 
-/* Theme-responsive background */
-:root ::ng-deep .custom-drawer {
-  background: linear-gradient(0deg, var(--color-bg-secondary, #F8F9FA) 0px, var(--color-bg-primary, #FFFFFF) 100%);
+/* Fallback for themes that don't define --p-content-background */
+:root[data-theme="light"] .sidebar,
+:root:not([data-theme]) .sidebar {
+  background-color: #ffffff !important;
 }
 
-:root.theme-dark ::ng-deep .custom-drawer {
-  background: linear-gradient(0deg, #334873 0px, #222d43 100%);
+:root[data-theme="dark"] .sidebar {
+  background-color: #1e293b !important;
+}
+
+/* Sidebar visibility states */
+.sidebar-visible {
+  transform: translateX(0);
+}
+
+.sidebar-hidden {
+  transform: translateX(-100%);
 }
 
 /* Responsive behavior */
 @media (max-width: 1199px) {
-  ::ng-deep .custom-drawer {
-    border-radius: 0;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  .sidebar {
+    z-index: 1050; /* Higher z-index for mobile overlay - above navbar and backdrop */
+    top: 0; /* Start from top of viewport on mobile */
+    height: 100vh; /* Full viewport height on mobile */
+    /* Start hidden on mobile to prevent flash */
+    transform: translateX(-100%);
+  }
+
+  /* Only show when explicitly visible */
+  .sidebar.sidebar-visible {
+    transform: translateX(0);
+  }
+}
+
+/* Desktop: Always visible by default */
+@media (min-width: 1200px) {
+  .sidebar {
+    transform: translateX(0) !important;
   }
 }
 
@@ -31,21 +61,33 @@
   display: flex;
   flex-direction: column;
   font-family: 'Poppins', sans-serif;
+  padding: 0;
+  margin: 0;
 }
 
 /* Theme-responsive text color */
-:root .sidebar-content {
+:root[data-theme="light"] .sidebar-content,
+:root:not([data-theme]) .sidebar-content {
   color: var(--color-text-primary, #212529);
 }
 
-:root.theme-dark .sidebar-content {
+:root[data-theme="dark"] .sidebar-content {
   color: #FFFFFF;
 }
 
 /* Navigation container */
 .sidebar-nav {
   flex: 1;
-  padding: 1rem 0;
+  padding: 0;
+  padding-top: 0.5rem; /* Space from top/navbar */
+  overflow-y: auto;
+}
+
+/* Mobile: Add more top padding to account for full-height sidebar */
+@media (max-width: 1199px) {
+  .sidebar-nav {
+    padding-top: 66px; /* Space for navbar (56px) + extra padding */
+  }
 }
 
 /* Menu item styling */
@@ -58,37 +100,43 @@
   text-transform: uppercase;
   transition: all 0.3s ease;
   position: relative;
+  cursor: pointer;
 }
 
 /* Theme-responsive menu item colors */
-:root .sidebar-menu-item {
+:root[data-theme="light"] .sidebar-menu-item,
+:root:not([data-theme]) .sidebar-menu-item {
   color: var(--color-text-primary, #212529);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-:root .sidebar-menu-item:hover {
+:root[data-theme="light"] .sidebar-menu-item:hover,
+:root:not([data-theme]) .sidebar-menu-item:hover {
   background-color: rgba(0, 0, 0, 0.05);
   color: var(--color-text-primary, #212529);
 }
 
-:root .sidebar-menu-item.active-menu-item {
+:root[data-theme="light"] .sidebar-menu-item.active-menu-item,
+:root:not([data-theme]) .sidebar-menu-item.active-menu-item {
   background-color: rgba(0, 0, 0, 0.1);
   color: var(--color-text-primary, #212529);
+  font-weight: 600;
 }
 
-:root.theme-dark .sidebar-menu-item {
+:root[data-theme="dark"] .sidebar-menu-item {
   color: #FFFFFF;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-:root.theme-dark .sidebar-menu-item:hover {
+:root[data-theme="dark"] .sidebar-menu-item:hover {
   background-color: rgba(255, 255, 255, 0.1);
   color: #FFFFFF;
 }
 
-:root.theme-dark .sidebar-menu-item.active-menu-item {
+:root[data-theme="dark"] .sidebar-menu-item.active-menu-item {
   background-color: #1b2231;
   color: #FFFFFF;
+  font-weight: 600;
 }
 
 /* Menu item icons and labels */
@@ -104,13 +152,15 @@
 }
 
 /* Theme-responsive icon and label colors */
-:root .sidebar-menu-icon,
-:root .sidebar-menu-label {
+:root[data-theme="light"] .sidebar-menu-icon,
+:root:not([data-theme]) .sidebar-menu-icon,
+:root[data-theme="light"] .sidebar-menu-label,
+:root:not([data-theme]) .sidebar-menu-label {
   color: var(--color-text-primary, #212529);
 }
 
-:root.theme-dark .sidebar-menu-icon,
-:root.theme-dark .sidebar-menu-label {
+:root[data-theme="dark"] .sidebar-menu-icon,
+:root[data-theme="dark"] .sidebar-menu-label {
   color: #FFFFFF;
 }
 
@@ -130,19 +180,21 @@
 }
 
 /* Theme-responsive submenu toggle and arrow */
-:root .submenu-toggle:hover {
+:root[data-theme="light"] .submenu-toggle:hover,
+:root:not([data-theme]) .submenu-toggle:hover {
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-:root .submenu-arrow {
+:root[data-theme="light"] .submenu-arrow,
+:root:not([data-theme]) .submenu-arrow {
   color: var(--color-text-primary, #212529);
 }
 
-:root.theme-dark .submenu-toggle:hover {
+:root[data-theme="dark"] .submenu-toggle:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-:root.theme-dark .submenu-arrow {
+:root[data-theme="dark"] .submenu-arrow {
   color: #FFFFFF;
 }
 
@@ -152,12 +204,13 @@
 }
 
 /* Theme-responsive submenu content */
-:root .submenu-content {
+:root[data-theme="light"] .submenu-content,
+:root:not([data-theme]) .submenu-content {
   background-color: rgba(0, 0, 0, 0.05);
   border-left: 3px solid rgba(0, 0, 0, 0.2);
 }
 
-:root.theme-dark .submenu-content {
+:root[data-theme="dark"] .submenu-content {
   background-color: rgba(0, 0, 0, 0.2);
   border-left: 3px solid rgba(255, 255, 255, 0.3);
 }
@@ -168,27 +221,30 @@
 }
 
 /* Theme-responsive submenu item */
-:root .submenu-item {
+:root[data-theme="light"] .submenu-item,
+:root:not([data-theme]) .submenu-item {
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-:root .submenu-item:hover {
+:root[data-theme="light"] .submenu-item:hover,
+:root:not([data-theme]) .submenu-item:hover {
   background-color: rgba(0, 0, 0, 0.08);
 }
 
-:root .submenu-item.active-menu-item {
+:root[data-theme="light"] .submenu-item.active-menu-item,
+:root:not([data-theme]) .submenu-item.active-menu-item {
   background-color: rgba(0, 0, 0, 0.15);
 }
 
-:root.theme-dark .submenu-item {
+:root[data-theme="dark"] .submenu-item {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-:root.theme-dark .submenu-item:hover {
+:root[data-theme="dark"] .submenu-item:hover {
   background-color: rgba(255, 255, 255, 0.08);
 }
 
-:root.theme-dark .submenu-item.active-menu-item {
+:root[data-theme="dark"] .submenu-item.active-menu-item {
   background-color: #1b2231;
 }
 
@@ -204,11 +260,12 @@
 }
 
 /* Theme-responsive divider */
-:root .theme-toggle-divider {
+:root[data-theme="light"] .theme-toggle-divider,
+:root:not([data-theme]) .theme-toggle-divider {
   background-color: rgba(0, 0, 0, 0.2);
 }
 
-:root.theme-dark .theme-toggle-divider {
+:root[data-theme="dark"] .theme-toggle-divider {
   background-color: rgba(255, 255, 255, 0.2);
 }
 
@@ -227,11 +284,12 @@
 }
 
 /* Theme-responsive label */
-:root .theme-toggle-label {
+:root[data-theme="light"] .theme-toggle-label,
+:root:not([data-theme]) .theme-toggle-label {
   color: var(--color-text-primary, #212529);
 }
 
-:root.theme-dark .theme-toggle-label {
+:root[data-theme="dark"] .theme-toggle-label {
   color: #FFFFFF;
 }
 
@@ -239,11 +297,9 @@
   width: 100%;
 }
 
+/* Theme toggle button styling - square with border */
 .theme-toggle-container app-theme-toggle ::ng-deep .theme-toggle-button.p-togglebutton {
-  border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  background: rgba(0, 0, 0, 0.02);
-  color: var(--color-text-primary, #212529);
+  border-radius: 6px; /* Square with slight rounding */
   font-weight: 600;
   letter-spacing: 0.05em;
   display: flex;
@@ -258,23 +314,62 @@
   font-size: 1rem;
 }
 
-:root.theme-dark .theme-toggle-container app-theme-toggle ::ng-deep .theme-toggle-button.p-togglebutton {
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.04);
-  color: #FFFFFF;
+/* Light mode: outlined style */
+:root[data-theme="light"] .theme-toggle-container app-theme-toggle ::ng-deep .theme-toggle-button.p-togglebutton,
+:root:not([data-theme]) .theme-toggle-container app-theme-toggle ::ng-deep .theme-toggle-button.p-togglebutton {
+  border: 2px solid var(--p-surface-400);
+  background: transparent;
+  color: var(--p-text-color);
 }
 
-:root.theme-dark .theme-toggle-container app-theme-toggle ::ng-deep .theme-toggle-button.p-togglebutton.p-highlight {
-  color: #0b162f;
+:root[data-theme="light"] .theme-toggle-container app-theme-toggle ::ng-deep .theme-toggle-button.p-togglebutton:hover,
+:root:not([data-theme]) .theme-toggle-container app-theme-toggle ::ng-deep .theme-toggle-button.p-togglebutton:hover {
+  background: var(--p-surface-50);
 }
 
-@keyframes slideDown {
+/* Dark mode: outlined style (consistent with light) */
+:root[data-theme="dark"] .theme-toggle-container app-theme-toggle ::ng-deep .theme-toggle-button.p-togglebutton {
+  border: 2px solid var(--p-surface-400);
+  background: transparent;
+  color: var(--p-text-color);
+}
+
+:root[data-theme="dark"] .theme-toggle-container app-theme-toggle ::ng-deep .theme-toggle-button.p-togglebutton:hover {
+  background: var(--p-surface-700);
+}
+
+/* Highlighted/checked state - filled */
+:root[data-theme="light"] .theme-toggle-container app-theme-toggle ::ng-deep .theme-toggle-button.p-togglebutton.p-highlight,
+:root:not([data-theme]) .theme-toggle-container app-theme-toggle ::ng-deep .theme-toggle-button.p-togglebutton.p-highlight {
+  background: var(--p-primary-color);
+  border-color: var(--p-primary-color);
+  color: var(--p-primary-contrast-color);
+}
+
+:root[data-theme="dark"] .theme-toggle-container app-theme-toggle ::ng-deep .theme-toggle-button.p-togglebutton.p-highlight {
+  background: var(--p-primary-color);
+  border-color: var(--p-primary-color);
+  color: var(--p-primary-contrast-color);
+}
+
+/* Mobile backdrop */
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999; /* Below sidebar but above content and navbar */
+  cursor: pointer;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
   from {
-    max-height: 0;
     opacity: 0;
   }
   to {
-    max-height: 500px;
     opacity: 1;
   }
 }
@@ -286,22 +381,42 @@
 }
 
 /* Theme-responsive focus styling */
-:root .sidebar-menu-item:focus,
-:root .submenu-toggle:focus {
+:root[data-theme="light"] .sidebar-menu-item:focus,
+:root:not([data-theme]) .sidebar-menu-item:focus,
+:root[data-theme="light"] .submenu-toggle:focus,
+:root:not([data-theme]) .submenu-toggle:focus {
   outline: 2px solid rgba(0, 0, 0, 0.5);
 }
 
-:root.theme-dark .sidebar-menu-item:focus,
-:root.theme-dark .submenu-toggle:focus {
+:root[data-theme="dark"] .sidebar-menu-item:focus,
+:root[data-theme="dark"] .submenu-toggle:focus {
   outline: 2px solid rgba(255, 255, 255, 0.5);
 }
 
-/* PrimeNG Drawer overrides for proper positioning */
-::ng-deep .p-drawer-mask {
-  display: none !important;
+/* Scrollbar styling for sidebar navigation */
+.sidebar-nav::-webkit-scrollbar {
+  width: 8px;
 }
 
-::ng-deep .custom-drawer .p-drawer-content {
-  padding: 0 !important;
-  height: 100% !important;
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+:root[data-theme="light"] .sidebar-nav::-webkit-scrollbar-thumb,
+:root:not([data-theme]) .sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+:root[data-theme="dark"] .sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="dark"] .sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }

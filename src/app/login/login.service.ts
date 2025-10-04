@@ -1,4 +1,4 @@
-import { Injectable } from "@angular/core";
+import { Injectable, inject } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import {
   ActivatedRouteSnapshot,
@@ -12,10 +12,13 @@ import { environment } from "../../environments/environment";
 import { catchError, finalize, map, shareReplay, tap } from "rxjs/operators";
 import { UsuarioService } from "../usuario/usuario.service";
 import { Permissao } from "../usuario/permissao";
-import { TokenDto } from "./token-dto";
 
 @Injectable()
 export class LoginService {
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly usuarioService = inject(UsuarioService);
+
   url: string;
   isAuthenticated = new Subject<boolean>();
   isRunningRequest = false;
@@ -91,11 +94,7 @@ export class LoginService {
     }
   }
 
-  constructor(
-    private readonly http: HttpClient,
-    private readonly router: Router,
-    private readonly usuarioService: UsuarioService
-  ) {
+  constructor() {
     this.url = environment.api_url + "login";
   }
 
@@ -184,13 +183,10 @@ export class LoginService {
   }
 
   login(usuario: Usuario): Observable<string> {
-    return this.http
-      .post<string>(this.url, usuario, { responseType: "text" as "json" })
-      .pipe(
-        map((value) => {
-          this.isAuthenticated.next(true);
-          return value;
-        })
-      );
+    return this.http.post<string>(this.url, usuario, { responseType: "text" as "json" });
+  }
+
+  setAuthenticated() {
+    this.isAuthenticated.next(true);
   }
 }

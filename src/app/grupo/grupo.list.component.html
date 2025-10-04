@@ -19,8 +19,7 @@
         (onPage)="onPageChange($event)"
         (onSort)="onSort($event)"
         [first]="first"
-        [lazy]="tableConfig.lazy !== false"
-        [lazyLoadOnInit]="tableConfig.lazyLoadOnInit !== false"
+        [lazy]="true"
         [(selection)]="selectedItems"
         (selectionChange)="onSelectionChange($event)"
         [dataKey]="tableConfig.rowExpansionKey || 'id'"
@@ -38,8 +37,8 @@
         [attr.aria-label]="'Lista de grupos com ' + totalElements + ' registro(s)'">
 
         <ng-template pTemplate="caption">
-          <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
-            <p-iconField iconPosition="left" class="flex-grow-1 flex-md-grow-0">
+          <div class="flex items-center justify-end gap-2 flex-wrap">
+            <p-iconField iconPosition="left" style="flex: 0 1 auto; min-width: 200px; max-width: 300px;">
               <p-inputIcon class="pi pi-search" aria-hidden="true"></p-inputIcon>
               <input
                 #globalFilterInput
@@ -63,109 +62,92 @@
           </div>
         </ng-template>
 
-        <ng-template pTemplate="header">
-          <tr>
-            @if (tableConfig.expandable) {
-              <th scope="col" style="width: 3rem" [attr.aria-label]="'Alternar detalhes'"></th>
-            }
-            @if (!isReadOnly && tableConfig.selectable !== false) {
-              <th scope="col" style="width: 3rem" [attr.aria-label]="'Selecao de grupos'">
-                <p-tableHeaderCheckbox [attr.aria-label]="'Selecionar todos os grupos'"></p-tableHeaderCheckbox>
-              </th>
-            }
-            @for (column of getVisibleColumns(); track column.field) {
-              <th
-                scope="col"
-                [attr.id]="'col-' + column.field"
-                [attr.data-field]="column.field"
-                [pSortableColumn]="column.sortable === false || column.field === 'actions' ? null : column.field"
-                [style.width]="column.width"
-                [style.min-width]="column.minWidth"
-                [ngClass]="column.headerClass"
-                [attr.aria-label]="column.tooltip || column.header">
-                <div class="d-flex align-items-center gap-2" [class.justify-content-center]="column.align === 'center'">
-                  {{ column.header }}
-                  @if (column.sortable !== false && column.field !== 'actions') {
-                    <p-sortIcon [field]="column.field" aria-hidden="true"></p-sortIcon>
-                  }
-                </div>
-              </th>
-            }
-          </tr>
-        </ng-template>
+          <ng-template pTemplate="header">
+            <tr>
+              @if (tableConfig.expandable) {
+                <th scope="col" style="width: 3rem" [attr.aria-label]="'Alternar detalhes'"></th>
+              }
+              @if (!isReadOnly && tableConfig.selectable !== false) {
+                <th scope="col" style="width: 3rem" [attr.aria-label]="'Selecao de grupos'">
+                  <p-tableHeaderCheckbox [attr.aria-label]="'Selecionar todos os grupos'"></p-tableHeaderCheckbox>
+                </th>
+              }
+              @for (column of getVisibleColumns(); track column.field) {
+                <th
+                  scope="col"
+                  [attr.id]="'col-' + column.field"
+                  [attr.data-field]="column.field"
+                  [pSortableColumn]="column.sortable === false || column.field === 'actions' ? null : column.field"
+                  [style.width]="column.width"
+                  [style.min-width]="column.minWidth"
+                  [ngClass]="column.headerClass"
+                  [attr.aria-label]="column.tooltip || column.header">
+                  <div class="flex items-center gap-2" [class.justify-center]="column.align === 'center'">
+                    {{ column.header }}
+                    @if (column.sortable !== false && column.field !== 'actions') {
+                      <p-sortIcon [field]="column.field" aria-hidden="true"></p-sortIcon>
+                    }
+                  </div>
+                </th>
+              }
+            </tr>
+          </ng-template>
 
-        <ng-template pTemplate="body" let-row>
-          <tr>
-            @if (tableConfig.expandable) {
-              <td style="width: 3rem">
-                <button
-                  type="button"
-                  pButton
-                  [pRowToggler]="row"
-                  class="p-button-text p-button-rounded"
-                  [attr.aria-label]="(isRowExpanded(row) ? 'Recolher' : 'Expandir') + ' detalhes do grupo ' + row.descricao">
-                  <span pButtonIcon [ngClass]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
-                </button>
-              </td>
-            }
-            @if (!isReadOnly && tableConfig.selectable !== false) {
-              <td style="width: 3rem">
-                <p-tableCheckbox
-                  [value]="row"
-                  [attr.aria-label]="'Selecionar grupo ' + row.descricao">
-                </p-tableCheckbox>
-              </td>
-            }
-            @for (column of getVisibleColumns(); track column.field) {
-              <td
-                [ngSwitch]="column.field"
-                [style.text-align]="column.align || 'left'"
-                [style.width]="column.width"
-                [style.min-width]="column.minWidth"
-                [attr.headers]="'col-' + column.field">
-                @switch (column.field) {
-                  @case ('actions') {
-                    <div class="d-flex align-items-center gap-2 justify-content-center">
-                      @if (canEdit) {
-                        <p-button
-                          severity="secondary"
-                          [outlined]="true"
-                          [rounded]="true"
-                          pTooltip="Editar grupo"
-                          tooltipPosition="top"
-                          (onClick)="edit(row.id)"
-                          [attr.aria-label]="'Editar grupo ' + row.descricao">
-                          <span pButtonIcon class="pi pi-pencil"></span>
-                        </p-button>
-                      }
-                      @if (canDelete) {
-                        <p-button
-                          severity="danger"
-                          [outlined]="true"
-                          [rounded]="true"
-                          pTooltip="Remover grupo"
-                          tooltipPosition="top"
-                          (onClick)="delete(row.id)"
-                          [attr.aria-label]="'Remover grupo ' + row.descricao">
-                          <span pButtonIcon class="pi pi-trash"></span>
-                        </p-button>
-                      }
-                    </div>
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              @if (tableConfig.expandable) {
+                <td style="width: 3rem">
+                  <button
+                    type="button"
+                    pButton
+                    [pRowToggler]="row"
+                    class="p-button-text p-button-rounded"
+                    [attr.aria-label]="(isRowExpanded(row) ? 'Recolher' : 'Expandir') + ' detalhes do grupo ' + row.descricao">
+                    <span pButtonIcon [ngClass]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
+                  </button>
+                </td>
+              }
+              @if (!isReadOnly && tableConfig.selectable !== false) {
+                <td style="width: 3rem">
+                  <p-tableCheckbox
+                    [value]="row"
+                    [attr.aria-label]="'Selecionar grupo ' + row.descricao">
+                  </p-tableCheckbox>
+                </td>
+              }
+              @for (column of getVisibleColumns(); track column.field) {
+                <td
+                  [style.text-align]="column.align || 'left'"
+                  [style.width]="column.width"
+                  [style.min-width]="column.minWidth"
+                  [attr.headers]="'col-' + column.field">
+                  @switch (column.field) {
+                    @case ('actions') {
+                      <app-action-buttons
+                        [showEdit]="canEdit"
+                        [showDelete]="canDelete"
+                        [editTooltip]="'Editar grupo'"
+                        [deleteTooltip]="'Remover grupo'"
+                        [editAriaLabel]="'Editar grupo ' + row.descricao"
+                        [deleteAriaLabel]="'Remover grupo ' + row.descricao"
+                        (edit)="edit(row.id)"
+                        (delete)="delete(row.id)">
+                      </app-action-buttons>
+                    }
+                    @default {
+                      <span
+                        [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
+                        [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
+                        [class.cursor-pointer]="!displayedColumns.includes('actions')"
+                        (click)="handleInteractiveCell($event, row.id)"
+                        (keydown.enter)="handleInteractiveCell($event, row.id)"
+                        (keydown.space)="handleInteractiveCell($event, row.id)"
+                        [attr.aria-label]="column.header + ': ' + row[column.field]">
+                        {{ row[column.field] }}
+                      </span>
+                    }
                   }
-                  @default {
-                    <span
-                      [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
-                      [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
-                      [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                      (click)="handleInteractiveCell($event, row.id)"
-                      (keydown.enter)="handleInteractiveCell($event, row.id)"
-                      (keydown.space)="handleInteractiveCell($event, row.id)"
-                      [attr.aria-label]="column.header + ': ' + row[column.field]">
-                      {{ row[column.field] }}
-                    </span>
-                  }
-                }
-              </td>
+                </td>
             }
           </tr>
         </ng-template>

@@ -1,0 +1,106 @@
+import {ApplicationConfig, DEFAULT_CURRENCY_CODE, LOCALE_ID} from '@angular/core';
+import {provideRouter} from '@angular/router';
+import {provideAnimations} from '@angular/platform-browser/animations';
+import {HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
+import {DatePipe} from '@angular/common';
+import {ConfirmationService, MessageService} from 'primeng/api';
+import {providePrimeNG} from 'primeng/config';
+import {CURRENCY_MASK_CONFIG} from 'ng2-currency-mask';
+
+import {routes} from './app.routes';
+import {HttpClientInterceptor} from './http-client.interceptor';
+import {LoginService} from './login/login.service';
+import {LoaderService} from './framework/loader/loader.service';
+import {CustomCurrencyMaskConfig} from './framework/util/currency.mask.config';
+import {ptBR} from '../locale/pt-BR';
+import PrimeUTFPRPreset from './theme/prime-utfpr-theme-preset';
+
+// Feature Services
+import {UsuarioService} from './usuario/usuario.service';
+import {CidadeService} from './cidade/cidade.service';
+import {CompraService} from './compra/compra.service';
+import {EmprestimoService} from './emprestimo/emprestimo.service';
+import {EstadoService} from './estado/estado.service';
+import {FornecedorService} from './fornecedor/fornecedor.service';
+import {GrupoService} from './grupo/grupo.service';
+import {HomeService} from './home/home.service';
+import {ItemService} from './item/item.service';
+import {PaisService} from './pais/pais.service';
+import {RelatorioService} from './relatorio/relatorio.service';
+import {ReservaService} from './reserva/reserva.service';
+import {SaidaService} from './saida/saida.service';
+import {SolicitacaoCompraService} from './solicitacaoCompra/solicitacaoCompra.service';
+import {ValidationService} from './framework/validation/validation.service';
+import {SidenavService} from './sidenav/sidenav.service';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    // Router
+    provideRouter(routes),
+
+    // Animations
+    provideAnimations(),
+
+    // HTTP Client
+    provideHttpClient(withInterceptorsFromDi()),
+
+    // Core Services
+    MessageService,
+    LoginService,
+    ConfirmationService,
+    LoaderService,
+    DatePipe,
+
+    // Feature Services
+    UsuarioService,
+    CidadeService,
+    CompraService,
+    EmprestimoService,
+    EstadoService,
+    FornecedorService,
+    GrupoService,
+    HomeService,
+    ItemService,
+    PaisService,
+    RelatorioService,
+    ReservaService,
+    SaidaService,
+    SolicitacaoCompraService,
+    ValidationService,
+    SidenavService,
+
+    // HTTP Interceptor
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: HttpClientInterceptor,
+      multi: true
+    },
+
+    // Locale Configuration
+    {
+      provide: LOCALE_ID,
+      useValue: 'pt-BR'
+    },
+    {
+      provide: DEFAULT_CURRENCY_CODE,
+      useValue: 'BRL'
+    },
+    {
+      provide: CURRENCY_MASK_CONFIG,
+      useValue: CustomCurrencyMaskConfig
+    },
+
+    // PrimeNG Configuration
+    providePrimeNG({
+      theme: {
+        preset: PrimeUTFPRPreset,
+        options: {
+          prefix: 'p',
+          darkModeSelector: '.theme-dark',
+          cssLayer: false
+        }
+      },
+      translation: ptBR
+    })
+  ]
+};

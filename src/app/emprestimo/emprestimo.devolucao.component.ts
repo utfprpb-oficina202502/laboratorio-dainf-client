@@ -1,25 +1,75 @@
-import {Component, Injector, ViewChild} from '@angular/core';
+import {Component, inject, Injector, ViewChild} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule, NgForm} from '@angular/forms';
 import {CrudFormComponent} from '../framework/component/crud.form.component';
 import {Emprestimo} from './emprestimo';
 import {EmprestimoService} from './emprestimo.service';
-import {MatTable} from '@angular/material/table';
-import {NgForm} from '@angular/forms';
-import {CdkDragDrop, moveItemInArray, transferArrayItem} from '@angular/cdk/drag-drop';
-import {MatMenuTrigger} from '@angular/material/menu';
+import {
+  CdkDragDrop,
+  DragDropModule,
+  moveItemInArray,
+  transferArrayItem
+} from '@angular/cdk/drag-drop';
 import {EmprestimoDevolucaoItem, StatusDevolucao} from './emprestimoDevolucaoItem';
+import {MenuItem} from 'primeng/api';
+import {Menu, MenuModule} from 'primeng/menu';
 import Swal from 'sweetalert2';
+
+// PrimeNG
+import {CardModule} from 'primeng/card';
+import {InputTextModule} from 'primeng/inputtext';
+import {AutoCompleteModule} from 'primeng/autocomplete';
+import {DatePickerModule} from 'primeng/datepicker';
+import {SelectModule} from 'primeng/select';
+import {ButtonModule} from 'primeng/button';
+import {TableModule} from 'primeng/table';
+import {TooltipModule} from 'primeng/tooltip';
+import {DialogModule} from 'primeng/dialog';
+import {ScrollPanelModule} from 'primeng/scrollpanel';
+import {TextareaModule} from 'primeng/textarea';
+import {TagModule} from 'primeng/tag';
+
+// Custom components
+import {VoltarComponent} from '../geral/voltar/voltar.component';
+import {CancelarComponent} from '../geral/cancelar/cancelar.component';
+import {SalvarComponent} from '../geral/salvar/salvar.component';
 
 @Component({
     selector: 'app-devolucao-emprestimo',
     templateUrl: './emprestimo.devolucao.component.html',
     styleUrls: ['./emprestimo.devolucao.component.css'],
-    standalone: false
+  imports: [
+    CommonModule,
+    FormsModule,
+    // PrimeNG
+    CardModule,
+    InputTextModule,
+    AutoCompleteModule,
+    DatePickerModule,
+    SelectModule,
+    ButtonModule,
+    TableModule,
+    TooltipModule,
+    DialogModule,
+    ScrollPanelModule,
+    TextareaModule,
+    MenuModule,
+    TagModule,
+    // Angular CDK
+    DragDropModule,
+    // Custom
+    VoltarComponent,
+    CancelarComponent,
+    SalvarComponent,
+
+  ]
 })
 export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, number> {
+  protected emprestimoService: EmprestimoService;
+  protected injector: Injector;
 
   @ViewChild('form') frm: NgForm;
-  @ViewChild('table') table: MatTable<any>;
-  @ViewChild(MatMenuTrigger) contextMenu: MatMenuTrigger;
+  @ViewChild('contextMenu') contextMenu: Menu;
 
   itensPendentes = [];
   itensDevolvidos = [];
@@ -28,14 +78,18 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
   itemIsEditing: EmprestimoDevolucaoItem;
   dialogDuplicaItem = false;
 
-  contextMenuPosition = {x: '0px', y: '0px'};
-  optionDuplicateDisable = false;
-  optionRemoveDuplicateDisable = false;
+  contextMenuPosition = {x: 0, y: 0};
+  contextMenuItems: MenuItem[] = [];
   documentoUsuario: string;
 
-  constructor(protected emprestimoService: EmprestimoService,
-              protected injector: Injector) {
+  constructor() {
+    const emprestimoService = inject(EmprestimoService);
+    const injector = inject(Injector);
+
     super(emprestimoService, injector, '/emprestimo');
+
+    this.emprestimoService = emprestimoService;
+    this.injector = injector;
   }
 
   postEdit(): void {
@@ -44,7 +98,7 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
   }
 
   buildItensKanban() {
-    this.object.emprestimoDevolucaoItem.forEach(empDevItem => {
+    for (const empDevItem of this.object.emprestimoDevolucaoItem) {
       switch (empDevItem.statusDevolucao) {
         case StatusDevolucao.P: {
           this.itensPendentes.push(empDevItem);
@@ -58,36 +112,35 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
           this.itensSaida.push(empDevItem);
           break;
       }
-    });
+    }
   }
 
   saveDevolucao() {
-    //if (this.itensPendentes.length === 0) {
-      this.loaderService.display(true);
-      this.object.emprestimoDevolucaoItem.forEach(empDevItem => {
-        this.itensPendentes.forEach(pendente => {
+      this.loaderService.show();
+      for (const empDevItem of this.object.emprestimoDevolucaoItem) {
+        for (const pendente of this.itensPendentes) {
           if (empDevItem.id === pendente.id) {
             empDevItem.statusDevolucao = StatusDevolucao.P;
           }
-        });
-        this.itensDevolvidos.forEach(devolvido => {
+        }
+        for (const devolvido of this.itensDevolvidos) {
           if (empDevItem.id === devolvido.id) {
             empDevItem.statusDevolucao = StatusDevolucao.D;
           }
-        });
-        this.itensSaida.forEach(saida => {
+        }
+        for (const saida of this.itensSaida) {
           if (empDevItem.id === saida.id) {
             empDevItem.statusDevolucao = StatusDevolucao.S;
           }
-        });
-      });
-      this.emprestimoService.saveDevolucao(this.object)
+        }
+      }
+    this.emprestimoService.saveDevolucao(this.object)
         .subscribe(e => {
-          this.loaderService.display(false);
+          this.loaderService.hide();
           Swal.fire('Sucesso!', 'Devolução efetuada com sucesso!', 'success');
           this.back();
         }, error => {
-          this.loaderService.display(false);
+          this.loaderService.hide();
           Swal.fire('Atenção!', 'Ocorreu um erro ao salvar a devolução!', 'error');
         });
     //} else {
@@ -108,7 +161,7 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
 
   duplicarItem() {
     if (!this.disableBtnSaveDuplicar()) {
-      const itemDuplicado = JSON.parse(JSON.stringify(this.itemIsEditing));
+      const itemDuplicado = structuredClone(this.itemIsEditing);
       itemDuplicado.qtde = this.qtdeItemDuplicado;
       itemDuplicado.id = null;
       this.itensPendentes.push(itemDuplicado);
@@ -119,20 +172,17 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
     }
   }
 
-  verificaOptionsEnabled(item: EmprestimoDevolucaoItem) {
+  verificaOptionsEnabled(item: EmprestimoDevolucaoItem): {canDuplicate: boolean, canRemoveDuplicates: boolean} {
     let count = 0;
-    this.object.emprestimoDevolucaoItem.forEach(empDevItem => {
+    for (const empDevItem of this.object.emprestimoDevolucaoItem) {
       if (empDevItem.item.id === item.item.id) {
         count++;
       }
-    });
-    if (count === 1) {
-      this.optionDuplicateDisable = false;
-      this.optionRemoveDuplicateDisable = true;
-    } else {
-      this.optionDuplicateDisable = true;
-      this.optionRemoveDuplicateDisable = false;
     }
+    return {
+      canDuplicate: count === 1,
+      canRemoveDuplicates: count > 1
+    };
   }
 
   openDialogDuplicarItem(item: EmprestimoDevolucaoItem) {
@@ -142,12 +192,28 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
 
   onContextMenu(event: MouseEvent, item: EmprestimoDevolucaoItem) {
     event.preventDefault();
-    this.contextMenuPosition.x = event.clientX + 'px';
-    this.contextMenuPosition.y = event.clientY + 'px';
-    this.contextMenu.menuData = {item};
-    this.contextMenu.menu.focusFirstItem('mouse');
-    this.contextMenu.openMenu();
-    this.verificaOptionsEnabled(item);
+    this.contextMenuPosition.x = event.clientX;
+    this.contextMenuPosition.y = event.clientY;
+    this.itemIsEditing = item;
+
+    const options = this.verificaOptionsEnabled(item);
+
+    this.contextMenuItems = [
+      {
+        label: 'Duplicar Item',
+        icon: 'fa fa-copy',
+        disabled: !options.canDuplicate,
+        command: () => this.onClickMenuDuplicateItem(item)
+      },
+      {
+        label: 'Remover Itens Duplicados',
+        icon: 'fa fa-trash',
+        disabled: !options.canRemoveDuplicates,
+        command: () => this.onClickMenuRemoveDuplicates(item)
+      }
+    ];
+
+    this.contextMenu?.show(event);
   }
 
   onClickMenuDuplicateItem(item: EmprestimoDevolucaoItem) {
@@ -160,24 +226,24 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
 
   removeItensDuplicadosByItem(item: EmprestimoDevolucaoItem) {
     let qtdeTotal = 0;
-    let empDetItemToRemove;
-    this.object.emprestimoDevolucaoItem.forEach(empDevItem => {
+    let empDetItemToRemove: EmprestimoDevolucaoItem;
+    for (const empDevItem of this.object.emprestimoDevolucaoItem) {
       if (empDevItem.item.id === item.item.id) {
         qtdeTotal += Number(empDevItem.qtde);
       }
       if (empDevItem.id == null) {
         empDetItemToRemove = empDevItem;
       }
-    });
+    }
     this.object.emprestimoDevolucaoItem.splice(this.object.emprestimoDevolucaoItem
       .indexOf(empDetItemToRemove), 1);
     this.itensPendentes.splice(this.itensPendentes.indexOf(empDetItemToRemove, 1));
 
-    this.object.emprestimoDevolucaoItem.forEach(empDevItem => {
+    for (const empDevItem of this.object.emprestimoDevolucaoItem) {
       if (empDevItem.item.id === item.item.id) {
         empDevItem.qtde = qtdeTotal;
       }
-    });
+    }
   }
 
   disableBtnSaveDuplicar() {

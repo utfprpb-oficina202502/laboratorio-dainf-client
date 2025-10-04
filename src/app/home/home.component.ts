@@ -1,8 +1,19 @@
-import {Component, OnInit, OnDestroy, AfterViewInit, effect, inject} from "@angular/core";
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  effect,
+  inject,
+  OnDestroy,
+  OnInit
+} from "@angular/core";
+import {CommonModule, DatePipe} from '@angular/common';
+import {RouterLink} from '@angular/router';
+import {FormsModule} from '@angular/forms';
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4charts from "@amcharts/amcharts4/charts";
-import {DatePipe} from '@angular/common';
-import {forkJoin, finalize} from 'rxjs';
+import {finalize, forkJoin} from 'rxjs';
 
 import {DashboardEmprestimoCountRange} from "./dashboard/dashboardEmprestimoCountRange";
 import {HomeService} from "./home.service";
@@ -11,15 +22,51 @@ import {DateUtil} from "../framework/util/dateUtil";
 import {pt} from "../framework/constantes/calendarPt";
 import {LoaderService} from "../framework/loader/loader.service";
 import {ThemeService} from "../framework/services/theme.service";
-import {chartColorSchemes, ChartColorsConfig, getAlternatingColor} from "../framework/charts/chart-colors.config";
+import {
+  chartColorSchemes,
+  ChartColorsConfig,
+  getAlternatingColor
+} from "../framework/charts/chart-colors.config";
+
+// PrimeNG
+import {DialogModule} from 'primeng/dialog';
+import {TooltipModule} from 'primeng/tooltip';
+import {DatePickerModule} from 'primeng/datepicker';
+import {PanelModule} from 'primeng/panel';
+import {ButtonModule} from 'primeng/button';
+
+// Custom Components
+import {StatCardComponent} from '../components/stat-card/stat-card.component';
+import {SkeletonCardComponent} from '../framework/component/skeleton-card.component';
+import {SkeletonChartComponent} from '../framework/component/skeleton-chart.component';
 
 @Component({
   selector: "app-home",
   templateUrl: "./home.component.html",
   styleUrls: ["./home.component.css"],
-  standalone: false
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule,
+    RouterLink,
+    FormsModule,
+    // PrimeNG
+    DialogModule,
+    TooltipModule,
+    DatePickerModule,
+    PanelModule,
+    ButtonModule,
+    // Custom
+    StatCardComponent,
+    SkeletonCardComponent,
+    SkeletonChartComponent,
+  ]
 })
 export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
+  private readonly homeService = inject(HomeService);
+  private readonly loginService = inject(LoginService);
+  private readonly loaderService = inject(LoaderService);
+  private readonly cdr = inject(ChangeDetectorRef);
+
   datepipe: DatePipe = inject(DatePipe);
   dashEmprestimoCount: DashboardEmprestimoCountRange;
   dialodFiltroData = false;
@@ -35,19 +82,18 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   private viewInitialized = false;
   private pendingDashboardBuild = false;
   showDashboardAluno = false;
+  hasDashboardData = false;
+  private latestRequestToken = 0;
   private destroyed = false;
+  loadingStats = false;
+  loadingCharts = false;
 
-  constructor(
-    private readonly homeService: HomeService,
-    private readonly loginService: LoginService,
-    private readonly loaderService: LoaderService
-  ) {
+  constructor() {
     this.dashEmprestimoCount = new DashboardEmprestimoCountRange();
     this.localePt = pt;
     effect(() => {
       const mode = this.themeService.themeMode();
-      const themeColors = chartColorSchemes[mode] ?? chartColorSchemes.light;
-      this.chartColors = themeColors;
+      this.chartColors = chartColorSchemes[mode] ?? chartColorSchemes.light;
       if (!this.destroyed) {
         this.applyThemeToExistingCharts();
       }
@@ -55,18 +101,26 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit() {
+    this.loaderService.show();
+
     this.loginService.userLoggedIsAlunoOrProfessor().then((value) => {
       if (this.destroyed) {
+        this.loaderService.hide();
         return;
       }
       this.showDashboardAluno = !!value;
-      if (!this.showDashboardAluno) {
-        if (this.viewInitialized) {
-          this.buildDashboards();
-        } else {
-          this.pendingDashboardBuild = true;
-        }
+      this.cdr.markForCheck();
+
+      if (this.showDashboardAluno) {
+        this.loaderService.hide();
+      } else if (this.viewInitialized) {
+        this.buildDashboards();
+      } else {
+        this.pendingDashboardBuild = true;
       }
+    }).catch(() => {
+      this.loaderService.hide();
+      this.cdr.markForCheck();
     });
   }
 
@@ -91,45 +145,117 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   buildDashboards() {
-    if (this.destroyed) {
-      return;
-    }
-    if (!this.viewInitialized) {
-      this.pendingDashboardBuild = true;
+    if (this.destroyed || !this.viewInitialized) {
+      this.pendingDashboardBuild = !this.viewInitialized;
       return;
     }
     this.pendingDashboardBuild = false;
 
+    // Dispose existing charts before rebuilding to prevent memory leaks
+    this.disposeAllCharts();
+
     const ini = this.getDateIni();
     const fim = this.getDateFim();
-    const batch = forkJoin({
-      count: this.homeService.findDadosEmprestimoCountInRange(ini, fim),
+    const requestToken = ++this.latestRequestToken;
+
+    this.loadingStats = true;
+    this.loaderService.show();
+    this.cdr.markForCheck();
+
+    this.homeService.findDadosEmprestimoCountInRange(ini, fim)
+      .pipe(finalize(() => {
+        this.loadingStats = false;
+        this.loaderService.hide(); // Hide loader immediately after stats load
+        this.cdr.markForCheck();
+      }))
+      .subscribe({
+        next: (count) => {
+          if (this.destroyed || requestToken !== this.latestRequestToken) {
+            return;
+          }
+          this.dashEmprestimoCount = count;
+
+          const hasStatData = (
+            (this.dashEmprestimoCount?.total ?? 0) > 0 ||
+            (this.dashEmprestimoCount?.emAndamento ?? 0) > 0 ||
+            (this.dashEmprestimoCount?.emAtraso ?? 0) > 0 ||
+            (this.dashEmprestimoCount?.finalizado ?? 0) > 0
+          );
+
+          this.cdr.markForCheck();
+
+          if (hasStatData) {
+            this.loadCharts(ini, fim, requestToken);
+          } else {
+            this.hasDashboardData = false;
+            this.cdr.markForCheck();
+          }
+        },
+        error: () => {
+          this.hasDashboardData = false;
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  private loadCharts(ini: string, fim: string, requestToken: number) {
+    this.loadingCharts = true;
+    const chartBatch = forkJoin({
       byDay: this.homeService.findDadosEmprestimoByDayInRange(ini, fim),
       emprestados: this.homeService.findItensMaisEmprestados(ini, fim),
       adquiridos: this.homeService.findItensMaisAdquiridos(ini, fim),
       saidas: this.homeService.findItensMaisSaidas(ini, fim)
     });
 
-    this.loaderService.show();
-    batch.pipe(finalize(() => this.loaderService.hide())).subscribe(({
-                                                                       count,
-                                                                       byDay,
-                                                                       emprestados,
-                                                                       adquiridos,
-                                                                       saidas
-                                                                     }) => {
-      if (this.destroyed) {
-        return;
+    chartBatch.pipe(finalize(() => {
+      this.loadingCharts = false;
+      this.cdr.markForCheck();
+    })).subscribe({
+      next: ({ byDay, emprestados, adquiridos, saidas }) => {
+        if (this.destroyed || requestToken !== this.latestRequestToken) {
+          return;
+        }
+
+        const byDayProcessed = this.processByDay(byDay, 'dtEmprestimo');
+        const emprestadosTop = Array.isArray(emprestados)
+          ? [...emprestados].sort((a, b) => (b?.qtde || 0) - (a?.qtde || 0)).slice(0, 10)
+          : [];
+        const adquiridosList = Array.isArray(adquiridos) ? adquiridos : [];
+        const saidasList = Array.isArray(saidas) ? saidas : [];
+
+        this.hasDashboardData = (
+          (this.dashEmprestimoCount?.total ?? 0) > 0 ||
+          (this.dashEmprestimoCount?.emAndamento ?? 0) > 0 ||
+          (this.dashEmprestimoCount?.emAtraso ?? 0) > 0 ||
+          (this.dashEmprestimoCount?.finalizado ?? 0) > 0 ||
+          byDayProcessed.length > 0 ||
+          emprestadosTop.length > 0 ||
+          adquiridosList.length > 0 ||
+          saidasList.length > 0
+        );
+
+        if (!this.hasDashboardData) {
+          this.disposeAllCharts();
+          this.cdr.markForCheck();
+          return;
+        }
+
+        this.cdr.markForCheck();
+
+        setTimeout(() => {
+          if (this.destroyed || !this.hasDashboardData) {
+            return;
+          }
+          this.updateXYChartLine("chartdiv2", byDayProcessed, "_dtParsed", "qtde");
+          this.updateXYChartBar("chartdiv4", emprestadosTop, "item", "qtde");
+          this.updatePieChart("chartdivPie1", adquiridosList, "item", "qtde");
+          this.updatePieChart("chartdivPie2", saidasList, "item", "qtde");
+        }, 0);
+      },
+      error: () => {
+        this.hasDashboardData = (this.dashEmprestimoCount?.total ?? 0) > 0;
+        this.cdr.markForCheck();
       }
-      this.dashEmprestimoCount = count;
-      const byDayProcessed = this.processByDay(byDay, 'dtEmprestimo');
-      this.updateXYChartLine("chartdiv2", byDayProcessed, "_dtParsed", "qtde");
-      const emprestadosTop = Array.isArray(emprestados)
-        ? [...emprestados].sort((a, b) => (b?.qtde || 0) - (a?.qtde || 0)).slice(0, 10)
-        : [];
-      this.updateXYChartBar("chartdiv4", emprestadosTop, "item", "qtde");
-      this.updatePieChart("chartdivPie1", adquiridos, "item", "qtde");
-      this.updatePieChart("chartdivPie2", saidas, "item", "qtde");
     });
   }
 
@@ -140,6 +266,17 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     } catch { /* ignore */
     }
+  }
+
+  private disposeAllCharts(): void {
+    this.disposeChart(this.chartLineRef);
+    this.chartLineRef = null;
+    this.disposeChart(this.chartBarRef);
+    this.chartBarRef = null;
+    this.disposeChart(this.chartPie1Ref);
+    this.chartPie1Ref = null;
+    this.disposeChart(this.chartPie2Ref);
+    this.chartPie2Ref = null;
   }
 
   private processByDay(data: any[], dateField: string) {
@@ -159,8 +296,12 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         }
         return {...d, _dtParsed: new Date(d[dateField])};
       })
-      .filter(d => !isNaN(d._dtParsed?.getTime?.()))
+      .filter(d => !Number.isNaN(d._dtParsed?.getTime?.()))
       .sort((a, b) => a._dtParsed.getTime() - b._dtParsed.getTime());
+  }
+
+  openFilterDialog(): void {
+    this.dialodFiltroData = true;
   }
 
   filtrar() {
@@ -210,7 +351,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       series.slices.template.strokeWidth = 1;
       series.slices.template.strokeOpacity = 1;
       series.slices.template.adapter.add("fill", (fill, target) => {
-        if (target.dataItem?.index !== undefined) {
+        if (target?.dataItem?.index !== undefined) {
           const color = getAlternatingColor(target.dataItem.index, this.chartColors.pie.palette);
           return am4core.color(color);
         }
@@ -257,13 +398,6 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       pieChart.legend.itemContainers.template.events.on('over', ev => setLegendHover(ev, true));
       pieChart.legend.itemContainers.template.events.on('out', ev => setLegendHover(ev, false));
 
-      const label = pieChart.chartContainer.createChild(am4core.Label);
-      label.text = 'Sem dados';
-      label.align = 'center';
-      label.isMeasured = false;
-      label.y = am4core.percent(50);
-      (pieChart as any).noDataLabel = label;
-
       if (elementId === 'chartdivPie1') {
         this.chartPie1Ref = pieChart;
       } else {
@@ -273,11 +407,6 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
     const safeData = Array.isArray(data) ? data : [];
     pieChart.data = safeData;
-    const noDataLabel: am4core.Label | undefined = (pieChart as any).noDataLabel;
-    if (noDataLabel) {
-      noDataLabel.fill = am4core.color(this.chartColors.text);
-      noDataLabel.visible = safeData.length === 0;
-    }
 
     const pieSeries = pieChart.series.getIndex(0);
     if (pieSeries) {
@@ -288,10 +417,15 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       pieSeries.slices.template.stroke = am4core.color(this.chartColors.background);
     }
 
+    const noDataMessage = elementId === 'chartdivPie1'
+      ? 'Nenhum item adquirido no periodo.'
+      : elementId === 'chartdivPie2'
+        ? 'Nenhum item com saidas no periodo.'
+        : 'Sem dados disponiveis.';
+    this.updateNoDataLabel(pieChart, safeData.length > 0, noDataMessage);
     this.applyThemeToPieChart(pieChart);
     pieChart.invalidateRawData();
   }
-
   private updateXYChartBar(elementId: string, data: any[], nameField: string, nameValue: string) {
     let chart = this.chartBarRef;
 
@@ -328,20 +462,22 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       hoverState.properties.fillOpacity = 1;
 
       series.columns.template.adapter.add("fill", (fill, target) => {
-        if (target.dataItem?.index !== undefined) {
+        if (target?.dataItem?.index !== undefined) {
           const color = getAlternatingColor(target.dataItem.index, this.chartColors.bar.palette);
           return am4core.color(color);
         }
         return fill;
       });
+
       this.chartBarRef = chart;
     }
 
     const sortedData = Array.isArray(data) ? [...data].sort((a, b) => (b?.[nameValue] || 0) - (a?.[nameValue] || 0)) : [];
     chart.data = sortedData;
 
+    const hasData = sortedData.length > 0;
     const isSmallScreen = this.isSmallScreen();
-    const needsInteraction = sortedData.length > 8;
+    const needsInteraction = hasData && sortedData.length > 8;
 
     const categoryAxis = chart.xAxes.getIndex(0) as am4charts.CategoryAxis;
     if (categoryAxis) {
@@ -374,17 +510,19 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     }
 
+    this.updateNoDataLabel(chart, hasData, 'Nenhum item emprestado no periodo.');
+
     if (needsInteraction) {
       if (!chart.scrollbarX) {
         chart.scrollbarX = new am4core.Scrollbar();
       }
       chart.scrollbarX.disabled = false;
-      if (!chart.cursor) {
+      if (chart.cursor) {
+        chart.cursor.lineY.disabled = true;
+      } else {
         const cursor = new am4charts.XYCursor();
         cursor.lineY.disabled = true;
         chart.cursor = cursor;
-      } else {
-        chart.cursor.lineY.disabled = true;
       }
       chart.cursor.behavior = "panX";
     } else {
@@ -399,7 +537,6 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.applyThemeToBarChart(chart);
     chart.invalidateRawData();
   }
-
   private updateXYChartLine(elementId: string, data: any[], dateField: string, valueField: string) {
     let chartLine = this.chartLineRef;
 
@@ -410,7 +547,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       const dateAxis = chartLine.xAxes.push(new am4charts.DateAxis());
       dateAxis.baseInterval = {timeUnit: 'day', count: 1};
       dateAxis.skipEmptyPeriods = true;
+
       chartLine.yAxes.push(new am4charts.ValueAxis());
+
       const series = chartLine.series.push(new am4charts.LineSeries());
       series.dataFields.valueY = valueField;
       series.dataFields.dateX = dateField;
@@ -431,6 +570,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
       const bullethover = bullet.states.create("hover");
       bullethover.properties.scale = 1.3;
+
       this.chartLineRef = chartLine;
     }
 
@@ -442,6 +582,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       dateAxis.renderer.labels.template.fill = am4core.color(this.chartColors.text);
       dateAxis.renderer.grid.template.stroke = am4core.color(this.chartColors.gridLines);
     }
+
     const valueAxis = chartLine.yAxes.getIndex(0) as am4charts.ValueAxis;
     if (valueAxis) {
       valueAxis.renderer.labels.template.fill = am4core.color(this.chartColors.text);
@@ -464,18 +605,21 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       });
     }
 
-    const needsPan = safeData.length > 30;
-    if (needsPan) {
-      if (!chartLine.cursor) {
+    const hasData = safeData.length > 0;
+    this.updateNoDataLabel(chartLine, hasData, 'Nenhum emprestimo diario registrado no periodo.');
+
+    const needsPan = hasData && safeData.length > 30 && !!series;
+    if (needsPan && series) {
+      if (chartLine.cursor) {
+        chartLine.cursor.xAxis = dateAxis;
+        chartLine.cursor.snapToSeries = series;
+        chartLine.cursor.lineY.disabled = true;
+      } else {
         const cursor = new am4charts.XYCursor();
         cursor.xAxis = dateAxis;
         cursor.snapToSeries = series;
         cursor.lineY.disabled = true;
         chartLine.cursor = cursor;
-      } else {
-        chartLine.cursor.xAxis = dateAxis;
-        chartLine.cursor.snapToSeries = series;
-        chartLine.cursor.lineY.disabled = true;
       }
       chartLine.cursor.visible = true;
 
@@ -489,15 +633,15 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         chartLine.scrollbarX.disabled = false;
       }
 
-      if (!chartLine.scrollbarY) {
+      if (chartLine.scrollbarY) {
+        chartLine.scrollbarY.parent = chartLine.leftAxesContainer;
+        chartLine.scrollbarY.toBack();
+        chartLine.scrollbarY.disabled = false;
+      } else {
         const scrollbarY = new am4core.Scrollbar();
         scrollbarY.parent = chartLine.leftAxesContainer;
         scrollbarY.toBack();
         chartLine.scrollbarY = scrollbarY;
-      } else {
-        chartLine.scrollbarY.parent = chartLine.leftAxesContainer;
-        chartLine.scrollbarY.toBack();
-        chartLine.scrollbarY.disabled = false;
       }
     } else {
       if (chartLine.cursor) {
@@ -513,6 +657,80 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.applyThemeToLineChart(chartLine);
     chartLine.invalidateRawData();
+  }
+  private updateNoDataLabel(chart: am4charts.Chart, hasData: boolean, message = 'Sem dados'): void {
+    if (!chart) {
+      return;
+    }
+
+    const existingLabel = (chart as any).noDataLabel as am4core.Label | undefined;
+
+    if (hasData) {
+      if (existingLabel && !existingLabel.isDisposed?.()) {
+        existingLabel.visible = false;
+      }
+      const plotContainer = (chart as any).plotContainer as am4core.Container | undefined;
+      if (plotContainer) {
+        plotContainer.disabled = false;
+        plotContainer.visible = true;
+        plotContainer.opacity = 1;
+      }
+      const seriesContainer = (chart as any).seriesContainer as am4core.Container | undefined;
+      if (seriesContainer) {
+        seriesContainer.disabled = false;
+        seriesContainer.visible = true;
+        seriesContainer.opacity = 1;
+      }
+      if (chart.legend) {
+        chart.legend.disabled = false;
+        chart.legend.visible = true;
+      }
+      return;
+    }
+
+    const plotContainer = (chart as any).plotContainer as am4core.Container | undefined;
+    if (plotContainer) {
+      plotContainer.disabled = true;
+      plotContainer.visible = false;
+    }
+    const seriesContainer = (chart as any).seriesContainer as am4core.Container | undefined;
+    if (seriesContainer) {
+      seriesContainer.disabled = true;
+      seriesContainer.visible = false;
+    }
+
+    let label = existingLabel;
+    if (!label || label.isDisposed?.()) {
+      const container: am4core.Container = (chart as any).chartContainer ?? (chart as any).seriesContainer ?? (chart as any);
+      label = container.createChild(am4core.Label);
+      label.horizontalCenter = 'middle';
+      label.verticalCenter = 'middle';
+      label.align = 'center';
+      label.valign = 'middle';
+      label.textAlign = 'middle';
+      label.textValign = 'middle';
+      label.wrap = true;
+      label.maxWidth = 320;
+      label.width = am4core.percent(80);
+      label.height = am4core.percent(100);
+      label.x = am4core.percent(50);
+      label.y = am4core.percent(50);
+      label.isMeasured = false;
+      label.interactionsEnabled = false;
+      label.fontSize = 14;
+      label.fontWeight = '600';
+      label.zIndex = 1000;
+      (chart as any).noDataLabel = label;
+    }
+
+    label.text = message;
+    label.fill = am4core.color(this.chartColors.text);
+    label.visible = true;
+
+    if (chart.legend) {
+      chart.legend.disabled = true;
+      chart.legend.visible = false;
+    }
   }
 
   private isSmallScreen(): boolean {
@@ -584,15 +802,18 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         series.tooltip.label.fill = am4core.color(colors.tooltip.text);
       }
       if (series instanceof am4charts.ColumnSeries) {
-        (series).columns.template.stroke = am4core.color(colors.background);
+        series.columns.template.stroke = am4core.color(colors.background);
       }
     });
+    const noDataLabel: am4core.Label | undefined = (chart as any).noDataLabel;
+    if (noDataLabel) {
+      noDataLabel.fill = am4core.color(colors.text);
+    }
     if (chart.cursor instanceof am4charts.XYCursor) {
       chart.cursor.lineX.stroke = am4core.color(colors.text);
       chart.cursor.lineY.stroke = am4core.color(colors.text);
     }
   }
-
   private applyThemeToLineChart(chart: am4charts.XYChart): void {
     const colors = this.chartColors;
     chart.background.fill = am4core.color(colors.background);
@@ -621,17 +842,15 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         });
       }
     });
+    const noDataLabel = (chart as any).noDataLabel as am4core.Label | undefined;
+    if (noDataLabel) {
+      noDataLabel.fill = am4core.color(colors.text);
+    }
     if (chart.cursor instanceof am4charts.XYCursor) {
       chart.cursor.lineX.stroke = am4core.color(colors.text);
       chart.cursor.lineY.stroke = am4core.color(colors.text);
     }
   }
+
 }
-
-
-
-
-
-
-
 

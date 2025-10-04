@@ -1,6 +1,6 @@
 import {ActivatedRoute, Router} from '@angular/router';
 import {CrudService} from '../service/crud.service';
-import { Injector, OnInit, Directive } from '@angular/core';
+import {Directive, Injector, OnInit} from '@angular/core';
 import {MessageService} from 'primeng/api';
 import {BaseFormComponent} from './base.form.component';
 import Swal from 'sweetalert2';
@@ -24,7 +24,7 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
   constructor(protected service: CrudService<T, ID>,
               protected injector: Injector,
               protected urlList: string,
-              private type?: new () => T) {
+              private readonly type?: new () => T) {
     super();
     this.router = this.injector.get(Router);
     this.route = this.injector.get(ActivatedRoute);
@@ -40,7 +40,7 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
     this.preOnInit();
     this.route.params.subscribe(params => {
       if (params.id) {
-        if (isNaN(params.id)) {
+        if (Number.isNaN(params.id)) {
           this.initializeValues();
         } else {
           this.edit(params.id);
@@ -52,23 +52,23 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
   }
 
   save() {
-    this.loaderService.display(true);
+    this.loaderService.show();
     if (this.isValid() && this.validExtra) {
       this.service.save(this.object)
         .subscribe(e => {
           this.object = e;
           this.postSave(value => {
-            this.loaderService.display(false);
+            this.loaderService.hide();
             Swal.fire('Sucesso!', 'Registro salvo com sucesso!', 'success');
             this.back();
           });
         }, error => {
-          this.loaderService.display(false);
+          this.loaderService.hide();
           Swal.fire('Atenção!', 'Ocorreu um erro ao salvar o registro!', 'error');
           console.log(error);
         });
     } else {
-      this.loaderService.display(false);
+      this.loaderService.hide();
       this.messageService.add({severity: 'info', summary: 'Atenção', detail: 'Necessário preencher todos os campos corretamente!'});
       this.validarFormulario();
     }
@@ -88,15 +88,15 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
   }
 
   edit(id: ID) {
-    this.loaderService.display(true);
+    this.loaderService.show();
     this.service.findOne(id)
       .subscribe(e => {
         this.object = e;
         this.editando = true;
         this.postEdit();
-        this.loaderService.display(false);
+        this.loaderService.hide();
       }, error => {
-        this.loaderService.display(false);
+        this.loaderService.hide();
         Swal.fire('Atenção!', 'Ocorreu um erro ao buscar o registro!', 'error');
       });
   }

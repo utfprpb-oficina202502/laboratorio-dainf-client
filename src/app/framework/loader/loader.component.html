@@ -1,19 +1,22 @@
-<!--<div [hidden]="!display" class="loader">-->
-<!--  <div [hidden]="!display" class="loader-content">-->
-<!--    <mat-progress-spinner-->
-<!--      class="example-margin"-->
-<!--      color="primary"-->
-<!--      mode="indeterminate">-->
-<!--    </mat-progress-spinner>-->
-<!--    <span>Carregando...</span>-->
-<!--  </div>-->
-<!--</div>-->
+@if (loading()) {
+  <div class="loader-overlay">
+    <div class="loader-content">
+      <p-progressSpinner
+        class="loader-spinner"
+        strokeWidth="3"
+        animationDuration="1s"
+        aria-label="Carregando conteúdo" />
+      <span class="loader-text">Carregando...</span>
 
-<div [hidden]="!display" class="loader-container">
-  <div class="loader-content">
-    <div class="text-center">
-      <div id="loader"></div>
-      <span class="my-5" id="span-loading">Carregando...</span>
+      @if (cancelAction()) {
+        <button
+          type="button"
+          class="loader-cancel-btn"
+          (click)="onCancel()"
+          [attr.aria-label]="cancelLabel()">
+          {{ cancelLabel() }}
+        </button>
+      }
     </div>
   </div>
-</div>
+}

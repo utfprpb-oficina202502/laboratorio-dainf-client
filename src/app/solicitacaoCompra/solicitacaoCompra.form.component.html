@@ -1,236 +1,219 @@
 <div class="container-fluid my-3">
-  <mat-card>
-    <mat-card-title>
-      <div class="d-flex align-items-center">
-        <app-voltar (onClick)="back()"></app-voltar>
-        <h4 class="m-0">Cadastro de Solicitação de Compra</h4>
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="flex items-center justify-between p-4">
+        <div class="flex items-center gap-3">
+          <app-voltar (onClick)="back()"></app-voltar>
+          <h2 class="text-xl font-semibold m-0">Cadastro de Solicitação de Compra</h2>
+        </div>
       </div>
-    </mat-card-title>
-    <mat-card-content>
-      <form #form="ngForm">
-        <div class="row">
-          <div class="col-md-2">
-            <div class="form-group">
-              <label for="id">Código</label>
-              <input
-                type="text"
-                id="id"
-                name="id"
-                disabled
-                class="form-control"
-                [(ngModel)]="object.id"
-                pInputText
-                />
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      @if (form(); as formGroup) {
+        <form [formGroup]="formGroup" (ngSubmit)="save()" class="flex flex-col gap-4">
+          <div class="grid grid-cols-12 gap-4">
+            <!-- ID Field -->
+            <div class="col-span-12 md:col-span-2">
+              <app-form-field
+                [control]="formGroup.get('id')"
+                label="Código"
+                fieldId="id">
+                <input
+                  pInputText
+                  id="id"
+                  formControlName="id"
+                  class="w-full"
+                  readonly />
+              </app-form-field>
+            </div>
+
+            <!-- Descricao Field -->
+            <div class="col-span-12 md:col-span-10">
+              <app-form-field
+                [control]="formGroup.get('descricao')"
+                label="Descrição"
+                [required]="true"
+                fieldId="descricao">
+                <input
+                  pInputText
+                  id="descricao"
+                  formControlName="descricao"
+                  class="w-full"
+                  placeholder="Digite a descrição da solicitação" />
+              </app-form-field>
+            </div>
+
+            <!-- Usuario Field -->
+            <div class="col-span-12 md:col-span-8">
+              <app-form-field
+                [control]="formGroup.get('usuario')"
+                label="Usuário"
+                fieldId="usuario">
+                <input
+                  pInputText
+                  id="usuario"
+                  [value]="formGroup.get('usuario')?.value?.nome || ''"
+                  class="w-full"
+                  readonly />
+              </app-form-field>
+            </div>
+
+            <!-- Data Solicitacao Field -->
+            <div class="col-span-12 md:col-span-4">
+              <app-form-field
+                [control]="formGroup.get('dataSolicitacao')"
+                label="Data da Solicitação"
+                [required]="true"
+                fieldId="dataSolicitacao">
+                <p-datePicker
+                  inputId="dataSolicitacao"
+                  formControlName="dataSolicitacao"
+                  dataType="string"
+                  dateFormat="dd/mm/yy"
+                  styleClass="w-full">
+                </p-datePicker>
+              </app-form-field>
+            </div>
+          </div>
+
+          <!-- Add Item Section -->
+          <div class="grid grid-cols-12 gap-4">
+            <!-- Item AutoComplete -->
+            <div class="col-span-12 md:col-span-7">
+              <label for="item" class="block mb-2 font-medium">
+                Item
+                @if (tempItem()) {
+                  <span class="float-right text-sm text-gray-600">Saldo: {{tempItem()?.saldo}}</span>
+                }
+              </label>
+              <div class="flex items-center gap-2">
+                <app-cadastroRapido
+                  [href]="'/item/form'"
+                  [id]="tempItem()?.id">
+                </app-cadastroRapido>
+                <p-autoComplete
+                  inputId="item"
+                  [(ngModel)]="tempItem"
+                  [ngModelOptions]="{standalone: true}"
+                  [suggestions]="itemList()"
+                  (completeMethod)="findProdutos($event)"
+                  (onSelect)="setQtdeDefaultItem()"
+                  optionLabel="nome"
+                  dataKey="id"
+                  [dropdown]="true"
+                  appendTo="body"
+                  styleClass="w-full"
+                  [forceSelection]="true">
+                  <ng-template let-item pTemplate="item">
+                    <div class="flex items-center gap-2">
+                      <span>{{item.nome}}</span>
+                      @if (item.patrimonio) {
+                        <span class="text-gray-500">| {{item.patrimonio}}</span>
+                      }
+                    </div>
+                  </ng-template>
+                </p-autoComplete>
               </div>
             </div>
 
-            <div class="col-md-10">
-              <div class="form-group">
-                <label for="descricao">Descrição</label>
-                <span class="field-required">*</span>
-                <input
-                  type="text"
-                  id="descricao"
-                  name="descricao"
-                  class="form-control"
-                  required
-                  validation
-                  [(ngModel)]="object.descricao"
-                  pInputText
-                  />
-                </div>
-              </div>
+            <!-- Quantidade Field -->
+            <div class="col-span-12 md:col-span-4">
+              <label for="qtde" class="block mb-2 font-medium">Quantidade</label>
+              <input
+                pInputText
+                type="number"
+                id="qtde"
+                [(ngModel)]="tempQtde"
+                [ngModelOptions]="{standalone: true}"
+                class="w-full"
+                min="1" />
+            </div>
 
-              <div class="col-md-8">
-                <div class="form-group">
-                  <label for="usuario">Usuário</label>
-                  <input
-                    type="text"
-                    id="usuario"
-                    name="usuario"
-                    class="form-control"
-                    [(ngModel)]="object.usuario.nome"
-                    pInputText
-                    disabled
-                    />
-                  </div>
-                </div>
-
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label for="dataReserva">Data da Solicitação</label>
-                    <span class="field-required">*</span>
-                    <p-datePicker
-                      name="dataReserva"
-                      id="dataReserva"
-                      required
-                      validation
-                      dataType="string"
-                      dateFormat="dd/mm/yy"
-                      [style]="{ width: '100%' }"
-                      inputStyleClass="form-control"
-                      [(ngModel)]="object.dataSolicitacao"
-                      >
-                    </p-datePicker>
-                  </div>
-                </div>
-              </div>
-
-              <div class="row">
-                <div class="col-md-7">
-                  <div class="form-group">
-                    <label for="item">Item</label>
-                    <app-cadastroRapido
-                      [href]="'/item/form'"
-                      [id]="solicitacaoCompraItem?.item?.id"
-                    ></app-cadastroRapido>
-                    <p-autoComplete
-                      id="item"
-                      name="item"
-                      appendTo="body"
-                      field="nome"
-                      #itemToAdd
-                      [style]="{ width: '100%' }"
-                      [inputStyle]="{ width: '95%' }"
-                      [forceSelection]="true"
-                      [dropdown]="true"
-                      (onSelect)="solicitacaoCompraItem.qtde = 1"
-                      (keyup.control.enter)="insertItem()"
-                      (keyup.control.arrowRight)="setFocusQtdeToAdd()"
-                      [(ngModel)]="solicitacaoCompraItem.item"
-                      [suggestions]="itemList"
-                      (onClear)="solicitacaoCompraItem.item = null"
-                      (completeMethod)="findProdutos($event)"
-                      >
-                      <ng-template let-item pTemplate="item">
-                        <span>{{ item.nome }}</span>
-                        <span class="autocomplete-separator-field">{{
-                          item.patrimonio
-                        }}</span>
-                      </ng-template>
-                    </p-autoComplete>
-                  </div>
-                </div>
-
-                <div class="col-md-4">
-                  <div class="form-group">
-                    <label for="qtde">Quantidade</label>
-                    @if (solicitacaoCompraItem?.item) {
-                      <span class="float-right"
-                        >Saldo: {{ solicitacaoCompraItem?.item?.saldo }}</span
-                        >
-                    }
-                    <input
-                      type="number"
-                      id="qtde"
-                      autocomplete="off"
-                      #qtdeToAdd
-                      onlyNumber
-                      (keyup.control.arrowLeft)="setFocusInputItem()"
-                      (keyup.control.enter)="insertItem()"
-                      [(ngModel)]="solicitacaoCompraItem.qtde"
-                      name="qtde"
-                      class="form-control"
-                      pInputText
-                      />
-                    </div>
-                  </div>
-
-                  <div class="col-md-1">
-                    <div class="form-group">
-                      <label class="invisible">Action</label>
-                      <button
-                        type="button"
-                        style="height: 35px"
-                        class="form-control"
-                        (click)="insertItem()"
-                        mat-stroked-button
-                        >
-                        <mat-icon>done</mat-icon>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                @if (object?.solicitacaoItem?.length > 0) {
-                  <div
-                    class="example-container mat-elevation-z8"
-                    >
-                    <mat-table #table="matTable" [dataSource]="object.solicitacaoItem">
-                      <ng-container matColumnDef="item">
-                        <mat-header-cell *matHeaderCellDef> Item</mat-header-cell>
-                        <mat-cell *matCellDef="let itemReserva">
-                          <p>{{ itemReserva?.item?.nome }}</p>
-                          @if (itemReserva?.item?.patrimonio) {
-                            <p class="ml-2">
-                              | {{ itemReserva.item.patrimonio }}
-                            </p>
-                          }
-                        </mat-cell>
-                        <mat-footer-cell *matFooterCellDef class="font-weight-bolder">
-                          Total</mat-footer-cell
-                          >
-                        </ng-container>
-                        <ng-container matColumnDef="qtde">
-                          <mat-header-cell *matHeaderCellDef> Qtde</mat-header-cell>
-                          <mat-cell *matCellDef="let itemReserva">
-                            {{ itemReserva.qtde }}
-                          </mat-cell>
-                          <mat-footer-cell *matFooterCellDef>
-                            {{ getQtdeTotal() }}
-                          </mat-footer-cell>
-                        </ng-container>
-                        <ng-container matColumnDef="actionsForm">
-                          <mat-header-cell *matHeaderCellDef> Opções</mat-header-cell>
-                          <mat-cell *matCellDef="let itemReserva">
-                            <button
-                              class="btn btn-outline-primary rounded"
-                              type="button"
-                              pTooltip="Remover"
-                              (click)="removeItem(itemReserva.item.id)"
-                              >
-                              <i class="fa fa-trash-o"></i>
-                            </button>
-                          </mat-cell>
-                          <mat-footer-cell *matFooterCellDef></mat-footer-cell>
-                        </ng-container>
-                        <mat-header-row
-                          *matHeaderRowDef="displayedColumns; sticky: true"
-                        ></mat-header-row>
-                        <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
-                        <mat-footer-row
-                          *matFooterRowDef="displayedColumns; sticky: true"
-                          class="font-weight-bolder"
-                        ></mat-footer-row>
-                      </mat-table>
-                    </div>
-                  }
-
-                  <div class="row">
-                    <div class="col-md-12">
-                      <div class="form-group">
-                        <label for="observacao">Observação</label>
-                        <textarea
-                          id="observacao"
-                          name="observacao"
-                          rows="1"
-                          class="form-control"
-                          pInputTextarea
-                          [(ngModel)]="object.observacao"
-                          autoResize="autoResize"
-                          >
-                        </textarea>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="row">
-                    <div class="col-md-12 d-flex justify-content-end">
-                      <app-cancelar (onClick)="back()"></app-cancelar>
-                      <app-salvar (onClick)="save()"></app-salvar>
-                    </div>
-                  </div>
-                </form>
-              </mat-card-content>
-            </mat-card>
+            <!-- Add Button -->
+            <div class="col-span-12 md:col-span-1">
+              <label class="block mb-2 font-medium invisible">Action</label>
+              <p-button
+                icon="pi pi-check"
+                (onClick)="insertItem()"
+                severity="success"
+                styleClass="w-full"
+                pTooltip="Adicionar Item">
+              </p-button>
+            </div>
           </div>
+
+          <!-- Items Table -->
+          @if (hasItems()) {
+            <div class="mt-4">
+              <p-table [value]="solicitacaoItems()" styleClass="p-datatable-sm">
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th>Item</th>
+                    <th class="text-center" style="width: 150px">Qtde</th>
+                    <th class="text-center" style="width: 100px">Opções</th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-solicitacaoItem>
+                  <tr>
+                    <td>
+                      <div class="flex items-center gap-2">
+                        <span>{{solicitacaoItem.item?.nome}}</span>
+                        @if (solicitacaoItem.item?.patrimonio) {
+                          <span class="text-gray-500">| {{solicitacaoItem.item.patrimonio}}</span>
+                        }
+                      </div>
+                    </td>
+                    <td class="text-center">{{solicitacaoItem.qtde}}</td>
+                    <td class="text-center">
+                      <p-button
+                        icon="pi pi-trash"
+                        (onClick)="removeItem(solicitacaoItem.item.id)"
+                        severity="danger"
+                        [text]="true"
+                        [rounded]="true"
+                        pTooltip="Remover">
+                      </p-button>
+                    </td>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="footer">
+                  <tr>
+                    <td class="font-bold">Total</td>
+                    <td class="text-center font-bold">{{qtdeTotal()}}</td>
+                    <td></td>
+                  </tr>
+                </ng-template>
+              </p-table>
+            </div>
+          }
+
+          <!-- Observacao Field -->
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-12">
+              <app-form-field
+                [control]="formGroup.get('observacao')"
+                label="Observação"
+                fieldId="observacao">
+                <textarea
+                  pInputTextarea
+                  id="observacao"
+                  formControlName="observacao"
+                  rows="3"
+                  class="w-full"
+                  [autoResize]="true">
+                </textarea>
+              </app-form-field>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex justify-end gap-2 mt-4">
+            <app-cancelar (onClick)="back()"></app-cancelar>
+            <app-salvar [typeButton]="'submit'" [disabled]="isLoading()"></app-salvar>
+          </div>
+        </form>
+      }
+    </ng-template>
+  </p-card>
+</div>

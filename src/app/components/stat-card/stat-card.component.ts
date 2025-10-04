@@ -1,4 +1,12 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output, OnChanges, SimpleChanges} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges
+} from '@angular/core';
 import {NgClass, NgStyle} from "@angular/common";
 
 @Component({
@@ -42,7 +50,9 @@ export class StatCardComponent implements OnChanges {
     if (h.startsWith('#')) h = h.substring(1);
     if (h.length === 3) { h = h.split('').map(c=>c+c).join(''); }
     if (h.length !== 6) return `rgba(0,0,0,${alpha})`;
-    const r = parseInt(h.slice(0,2),16); const g = parseInt(h.slice(2,4),16); const b = parseInt(h.slice(4,6),16);
+    const r = Number.parseInt(h.slice(0, 2), 16);
+    const g = Number.parseInt(h.slice(2, 4), 16);
+    const b = Number.parseInt(h.slice(4, 6), 16);
     return `rgba(${r},${g},${b},${alpha})`;
   }
 

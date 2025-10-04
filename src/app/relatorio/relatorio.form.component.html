@@ -1,185 +1,193 @@
 <div class="container-fluid my-3">
-  <mat-card>
-    <mat-card-title>
-      <div class="d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center">
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="flex items-center justify-between p-4">
+        <div class="flex items-center gap-3">
           <app-voltar (onClick)="back()"></app-voltar>
-          <h4 class="m-0">Cadastro de Relatório</h4>
+          <h2 class="text-xl font-semibold m-0">Cadastro de Relatório</h2>
         </div>
       </div>
-    </mat-card-title>
-    <mat-card-content>
-      <form #form="ngForm" (submit)="preSave()"
-        enctype="multipart/form-data">
-        <div class="row">
-          <div class="col-md-2">
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      <form #form="ngForm" (submit)="preSave()" enctype="multipart/form-data">
+        <div class="grid grid-cols-12 gap-4">
+          <div class="col-span-12 md:col-span-2">
             <div class="form-group">
               <label for="id">Código</label>
-              <input type="text"
+              <input
+                pInputText
+                type="text"
                 id="id"
                 name="id"
                 disabled
                 [(ngModel)]="object.id"
-                class="form-control"
-                pInputText>
-              </div>
+                class="w-full">
             </div>
+          </div>
 
-            <div class="col-md-10">
-              <div class="form-group">
-                <label for="descricao">Nome</label>
-                <span class="field-required">*</span>
-                <i class="fa fa-question-circle-o float-right"
-                  pTooltip="Campo responsável pelo nome que irá aparecer na parte superior da tela de geração do relatório">
-                </i>
-                <input type="text"
-                  id="descricao"
-                  name="descricao"
-                  required
-                  validation
-                  [(ngModel)]="object.nome"
-                  class="form-control"
-                  pInputText>
-                </div>
-              </div>
+          <div class="col-span-12 md:col-span-10">
+            <div class="form-group">
+              <label for="descricao">Nome</label>
+              <span class="field-required">*</span>
+              <i class="fa fa-question-circle-o float-right"
+                pTooltip="Campo responsável pelo nome que irá aparecer na parte superior da tela de geração do relatório">
+              </i>
+              <input
+                pInputText
+                type="text"
+                id="descricao"
+                name="descricao"
+                required
+                validation
+                [(ngModel)]="object.nome"
+                class="w-full">
             </div>
+          </div>
+        </div>
 
-            <div class="row">
-              <div class="col-md-12">
-                <p-fileUpload name="anexo"
-                  #fileUpload
-                  [url]="getUrlUploadImages()"
-                  (onUpload)="onUpload($event)"
-                  [showUploadButton]="false"
-                  chooseLabel="Inserir Arquivo Jrxml"
-                  cancelLabel="Remover"
-                  accept=".jrxml"
-                  maxFileSize="1000000">
-                  <ng-template pTemplate="content">
-                    @if (uploadedFiles.length) {
-                      <ul>
-                        @for (file of uploadedFiles; track file) {
-                          <li>{{file.name}} - {{file.size}} bytes</li>
-                        }
-                      </ul>
+        <div class="grid grid-cols-12 gap-4 mt-4">
+          <div class="col-span-12">
+            <p-fileUpload
+              name="anexo"
+              #fileUpload
+              [url]="getUrlUploadImages()"
+              (onUpload)="onUpload($event)"
+              [showUploadButton]="false"
+              chooseLabel="Inserir Arquivo Jrxml"
+              cancelLabel="Remover"
+              accept=".jrxml"
+              maxFileSize="1000000">
+              <ng-template pTemplate="content">
+                @if (uploadedFiles.length) {
+                  <ul>
+                    @for (file of uploadedFiles; track file) {
+                      <li>{{file.name}} - {{file.size}} bytes</li>
                     }
-                  </ng-template>
-                </p-fileUpload>
-              </div>
-            </div>
+                  </ul>
+                }
+              </ng-template>
+            </p-fileUpload>
+          </div>
+        </div>
 
-            <p-fieldset legend="Parâmetros">
-              <form (submit)="insertParam()">
-                <div class="row">
-                  <div class="col-md-4">
-                    <div class="form-group">
-                      <label for="nameParam">Nome do Parâmetro</label>
-                      <i class="fa fa-question-circle-o float-right"
-                        pTooltip="O nome do parâmetro deverá ser exatamente igual ao informado na criação do relatório Jasper.">
-                      </i>
-                      <input type="text"
-                        id="nameParam"
-                        name="nameParam"
-                        #nomeParam
-                        [(ngModel)]="relatorioParams.nameParam"
-                        class="form-control"
-                        pInputText>
-                      </div>
-                    </div>
-
-                    <div class="col-md-4">
-                      <div class="form-group">
-                        <label for="aliasParam">Alias do Parâmetro</label>
-                        <i class="fa fa-question-circle-o float-right"
-                          pTooltip="O alias é o nome que será utilizado no filtro do relatório, ao executá-lo no sistema.">
-                        </i>
-                        <input type="text"
-                          id="aliasParam"
-                          name="aliasParam"
-                          [(ngModel)]="relatorioParams.aliasParam"
-                          class="form-control"
-                          pInputText>
-                        </div>
-                      </div>
-
-                      <div class="col-md-3">
-                        <div class="form-group">
-                          <label for="aliasParam">Tipo do Parâmetro</label>
-                          <p-select [options]="tipoParamDropdown"
-                            [style]="{width: '100%'}"
-                            [(ngModel)]="relatorioParams.tipoParam"
-                            id="devolver"
-                            name="devolver">
-                          </p-select>
-                        </div>
-                      </div>
-
-                      <div class="col-md-1">
-                        <div class="form-group">
-                          <label class="invisible">Action</label>
-                          <button type="submit"
-                            style="height: 35px"
-                            class="form-control"
-                            mat-stroked-button>
-                            <mat-icon>done</mat-icon>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </form>
-
-                  @if (object?.paramsList?.length > 0) {
-                    <div class="example-container mat-elevation-z8 mb-1">
-                      <mat-table #table="matTable" [dataSource]="object.paramsList">
-                        <ng-container matColumnDef="nameParam">
-                          <mat-header-cell *matHeaderCellDef>Nome Parâmetro</mat-header-cell>
-                          <mat-cell *matCellDef="let param"> {{param.nameParam}} </mat-cell>
-                        </ng-container>
-                        <ng-container matColumnDef="aliasParam">
-                          <mat-header-cell *matHeaderCellDef>Alias Parâmetro</mat-header-cell>
-                          <mat-cell *matCellDef="let param"> {{param.aliasParam}} </mat-cell>
-                        </ng-container>
-                        <ng-container matColumnDef="tipoParam">
-                          <mat-header-cell *matHeaderCellDef>Tipo Parâmetro</mat-header-cell>
-                          <mat-cell *matCellDef="let param">
-                            @if (param.tipoParam === 'S') {
-                              <span>String</span>
-                            }
-                            @if (param.tipoParam === 'N') {
-                              <span>Number</span>
-                            }
-                            @if (param.tipoParam === 'D') {
-                              <span>Date</span>
-                            }
-                          </mat-cell>
-                        </ng-container>
-                        <ng-container matColumnDef="actionsForm">
-                          <mat-header-cell *matHeaderCellDef> Opções</mat-header-cell>
-                          <mat-cell *matCellDef="let param">
-                            <button class="btn btn-outline-primary rounded"
-                              type="button"
-                              (click)="removeParam(param.nomeParam)"
-                              pTooltip="Remover">
-                              <i class="fa fa-trash-o"></i>
-                            </button>
-                          </mat-cell>
-                        </ng-container>
-                        <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
-                        <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
-                      </mat-table>
-                    </div>
-                  }
-                </p-fieldset>
-
-                <div class="row mt-3">
-                  <div class="col-md-12 d-flex justify-content-end">
-                    <app-cancelar (onClick)="back()"></app-cancelar>
-                    <app-salvar [typeButton]="'submit'"></app-salvar>
+        <div class="mt-4">
+          <p-fieldset legend="Parâmetros">
+            <form (submit)="insertParam()">
+              <div class="grid grid-cols-12 gap-4">
+                <div class="col-span-12 md:col-span-4">
+                  <div class="form-group">
+                    <label for="nameParam">Nome do Parâmetro</label>
+                    <i class="fa fa-question-circle-o float-right"
+                      pTooltip="O nome do parâmetro deverá ser exatamente igual ao informado na criação do relatório Jasper.">
+                    </i>
+                    <input
+                      pInputText
+                      type="text"
+                      id="nameParam"
+                      name="nameParam"
+                      #nomeParam
+                      [(ngModel)]="relatorioParams.nameParam"
+                      class="w-full">
                   </div>
                 </div>
-              </form>
-            </mat-card-content>
-          </mat-card>
+
+                <div class="col-span-12 md:col-span-4">
+                  <div class="form-group">
+                    <label for="aliasParam">Alias do Parâmetro</label>
+                    <i class="fa fa-question-circle-o float-right"
+                      pTooltip="O alias é o nome que será utilizado no filtro do relatório, ao executá-lo no sistema.">
+                    </i>
+                    <input
+                      pInputText
+                      type="text"
+                      id="aliasParam"
+                      name="aliasParam"
+                      [(ngModel)]="relatorioParams.aliasParam"
+                      class="w-full">
+                  </div>
+                </div>
+
+                <div class="col-span-12 md:col-span-3">
+                  <div class="form-group">
+                    <label for="tipoParam">Tipo do Parâmetro</label>
+                    <p-select
+                      [options]="tipoParamDropdown"
+                      [(ngModel)]="relatorioParams.tipoParam"
+                      inputId="tipoParam"
+                      name="tipoParam"
+                      styleClass="w-full">
+                    </p-select>
+                  </div>
+                </div>
+
+                <div class="col-span-12 md:col-span-1">
+                  <div class="form-group">
+                    <label class="invisible">Action</label>
+                    <p-button
+                      type="submit"
+                      icon="fa fa-check"
+                      severity="secondary"
+                      [outlined]="true"
+                      styleClass="w-full">
+                    </p-button>
+                  </div>
+                </div>
+              </div>
+            </form>
+
+            @if (object?.paramsList?.length > 0) {
+              <div class="mt-4">
+                <p-table #table [value]="object.paramsList" styleClass="p-datatable-sm">
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th>Nome Parâmetro</th>
+                      <th>Alias Parâmetro</th>
+                      <th>Tipo Parâmetro</th>
+                      <th class="w-24">Opções</th>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-param>
+                    <tr>
+                      <td>{{param.nameParam}}</td>
+                      <td>{{param.aliasParam}}</td>
+                      <td>
+                        @if (param.tipoParam === 'S') {
+                          <span>String</span>
+                        }
+                        @if (param.tipoParam === 'N') {
+                          <span>Number</span>
+                        }
+                        @if (param.tipoParam === 'D') {
+                          <span>Date</span>
+                        }
+                      </td>
+                      <td>
+                        <p-button
+                          type="button"
+                          icon="fa fa-trash"
+                          severity="danger"
+                          [outlined]="true"
+                          size="small"
+                          (onClick)="removeParam(param.nameParam)"
+                          pTooltip="Remover">
+                        </p-button>
+                      </td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              </div>
+            }
+          </p-fieldset>
         </div>
+
+        <div class="flex justify-end gap-2 mt-4">
+          <app-cancelar (onClick)="back()"></app-cancelar>
+          <app-salvar [typeButton]="'submit'"></app-salvar>
+        </div>
+      </form>
+    </ng-template>
+  </p-card>
+</div>
 
 

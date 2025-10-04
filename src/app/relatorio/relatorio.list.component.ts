@@ -1,13 +1,14 @@
-import {Component, forwardRef, Injector} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Relatorio} from './relatorio';
 import {RelatorioService} from './relatorio.service';
-import {NgClass, NgSwitch, NgTemplateOutlet} from "@angular/common";
+import {NgClass, NgTemplateOutlet} from "@angular/common";
 import {Button} from "primeng/button";
 import {TableModule} from "primeng/table";
 import {Card} from "primeng/card";
 import {PrimeCrudToolbarComponent} from "../framework/component/prime-crud-toolbar.component";
+import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 import {InputIconModule} from "primeng/inputicon";
 import {IconFieldModule} from "primeng/iconfield";
 
@@ -22,16 +23,19 @@ import {IconFieldModule} from "primeng/iconfield";
   imports: [
     NgTemplateOutlet,
     Button,
-    NgSwitch,
     TableModule,
     NgClass,
     Card,
     PrimeCrudToolbarComponent,
+    ActionButtonsComponent,
     InputIconModule,
     IconFieldModule
-  ]
+],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RelatorioListComponent extends PrimeCrudListComponent<Relatorio, number> {
+  protected relatorioService: RelatorioService;
+  protected injector: Injector;
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -62,9 +66,14 @@ export class RelatorioListComponent extends PrimeCrudListComponent<Relatorio, nu
     }
   ];
 
-  constructor(protected relatorioService: RelatorioService,
-              protected injector: Injector) {
+  constructor() {
+    const relatorioService = inject(RelatorioService);
+    const injector = inject(Injector);
+
     super(relatorioService, injector, ['id', 'nome', 'actions'], 'relatorio/form');
+    this.relatorioService = relatorioService;
+    this.injector = injector;
+
     this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.configureTable();
@@ -122,7 +131,7 @@ export class RelatorioListComponent extends PrimeCrudListComponent<Relatorio, nu
   }
 
   generateReport(id: number): void {
-    this.loaderService.display(true);
+    this.loaderService.show();
     this.router.navigate(['relatorio/view', id]);
   }
 

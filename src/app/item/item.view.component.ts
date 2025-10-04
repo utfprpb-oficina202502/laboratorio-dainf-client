@@ -1,33 +1,44 @@
-import {Component, Injector, OnInit} from '@angular/core';
+import {Component, inject, Injector, OnInit} from '@angular/core';
+import {CommonModule} from '@angular/common';
 import {Item} from './item';
 import {ItemService} from './item.service';
-import {CrudListComponent} from '../framework/component/crud.list.component';
-import {MatBottomSheet} from '@angular/material/bottom-sheet';
-import {BottomSheetItemComponent} from './bottomScheetItem/bottomSheetItem.component';
-import {ReservaService} from '../reserva/reserva.service';
-import Swal from "sweetalert2";
 import {Reserva} from '../reserva/reserva';
-import { environment } from 'src/environments/environment';
-import { LoginService } from '../login/login.service';
+import {environment} from 'src/environments/environment';
+import {LoginService} from '../login/login.service';
+
+// PrimeNG
+import {DataViewModule} from 'primeng/dataview';
+import {TagModule} from 'primeng/tag';
+import {ButtonModule} from 'primeng/button';
+import {CardModule} from 'primeng/card';
 
 @Component({
     selector: 'app-view-item',
     templateUrl: './item.view.component.html',
     styleUrls: ['./item.view.component.css'],
-    standalone: false
+  imports: [
+    CommonModule,
+    // PrimeNG
+    DataViewModule,
+    TagModule,
+    ButtonModule,
+    CardModule
+  ]
 })
 export class ItemViewComponent implements OnInit {
+  protected itemService = inject(ItemService);
+  protected injector = inject(Injector);
+  private readonly loginService = inject(LoginService);
+
   isAlunoOrProfessor = false;
   reservasItem: Reserva[];
   dialogReservaitem = false;
   displayedColumnsReserva = ['dataRetirada', 'qtde'];
-  layout: string = 'grid';
-  minioUrl: String;
+  layout: 'grid' | 'list' = 'grid';
+  minioUrl: string;
   itens: Item[];
 
-  constructor(protected itemService: ItemService,
-              protected injector: Injector,
-              private loginService: LoginService,) {
+  constructor() {
     this.minioUrl = environment.minio_url;
   }
 
@@ -39,7 +50,7 @@ export class ItemViewComponent implements OnInit {
     this.loginService.userLoggedIsAlunoOrProfessor().then(value => this.isAlunoOrProfessor = value);
   }
 
-  applyFilter(event: Event) {
-
+  applyFilter(valor: string) {
+    //todo ver pq isso aqui tá vazio
   }
 }

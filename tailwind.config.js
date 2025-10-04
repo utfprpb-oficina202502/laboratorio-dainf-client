@@ -1,15 +1,19 @@
-/** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
     "./src/**/*.{html,ts}",
+    "!./src/**/*.spec.ts",  // Exclude tests
   ],
   theme: {
     extend: {
       screens: {
-        'xs': '426px', // custom breakpoint between base and sm
-        'mdp': '769px', // acima de 768px
+        'xs': '426px',
+        'mdp': '769px',
+      },
+      colors: {
+        'primary': 'var(--color-primary)',
+        'secondary': 'var(--color-secondary)',
       },
     },
-  },
-  plugins: [],
+    plugins: [],
+  }
 }
