@@ -1,0 +1,57 @@
+<p-toolbar [style.height.px]="56">
+  <ng-template pTemplate="start">
+    <div class="flex items-center gap-2">
+      <!-- Hamburger menu: Show on mobile/tablet (<1200px), hide on desktop (≥1200px) -->
+      <button
+        id="btn-sidenav"
+        type="button"
+        pButton
+        class="p-button-text p-button-plain p-button-icon-only navbar-hamburger"
+        (click)="toggleSidenav()"
+        aria-label="Alternar navegação lateral"
+      >
+        <i class="pi pi-bars"></i>
+      </button>
+      <img src="/logo.png" alt="Logo Laboratório DAINF" class="w-10 h-10 object-contain" />
+      <!-- Long title: hidden on small screens -->
+      <a
+        routerLinkActive="active"
+        routerLink="/"
+        class="uppercase font-poppins no-underline ml-2 text-sm lg:text-base hover:text-primary transition-colors hidden sm:block"
+      >Sistema de Gerenciamento da Sala de Apoio do DAINF</a>
+      <!-- Short title: shown on small screens -->
+      <a
+        routerLinkActive="active"
+        routerLink="/"
+        class="uppercase font-poppins no-underline ml-2 text-sm hover:text-primary transition-colors sm:hidden"
+      >Lab DAINF</a>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="end">
+    <div class="flex items-center gap-3">
+      <!-- User menu button: Responsive - full text on desktop, icon on mobile -->
+      <button
+        type="button"
+        pButton
+        class="p-button-text p-button-plain navbar-user-menu"
+        (click)="menu.toggle($event)"
+        aria-label="Menu do usuário"
+      >
+        <!-- Desktop: Show username + icon -->
+        <span class="navbar-user-full">
+          <span class="text-sm">Olá, {{ getUserLogado() }}</span>
+          <i class="pi pi-chevron-down text-xs ml-2"></i>
+        </span>
+        <!-- Mobile: Show icon only -->
+        <i class="pi pi-user navbar-user-icon"></i>
+      </button>
+
+      <p-tieredMenu
+        #menu
+        [model]="items"
+        [popup]="true"
+        appendTo="body"
+        [style]="{'min-width': '200px'}"></p-tieredMenu>
+    </div>
+  </ng-template>
+</p-toolbar>
