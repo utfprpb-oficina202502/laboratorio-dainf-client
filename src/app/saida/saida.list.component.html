@@ -1,10 +1,15 @@
 <div class="container-fluid my-3">
   <p-card>
     <ng-template pTemplate="header">
-      <app-prime-crud-toolbar [table]='dt' [list]='self'></app-prime-crud-toolbar>
+      <div class="flex items-center justify-between p-3">
+        <span class="text-xl font-bold">Saídas</span>
+      </div>
     </ng-template>
 
-    <p-table #dt
+    <ng-template pTemplate="content">
+      <app-prime-crud-toolbar [list]="self" [table]="dt"></app-prime-crud-toolbar>
+
+      <p-table #dt
              [value]="objects"
              [rows]="rows"
              [totalRecords]="totalElements"
@@ -29,7 +34,7 @@
              (onRowCollapse)="onRowCollapse($event)"
              currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
              [showCurrentPageReport]="true"
-             [attr.aria-label]="'Lista de saidas com ' + totalElements + ' registro(s)'">
+               [attr.aria-label]="'Lista de saídas com ' + totalElements + ' registro(s)'">
 
       <ng-template pTemplate="caption">
         <div class="flex items-center justify-end gap-2 flex-wrap">
@@ -41,8 +46,8 @@
               type="text"
               (input)="onGlobalFilter($any($event.target).value)"
               [value]="filterValue"
-              [placeholder]="'Buscar saidas...'"
-              [attr.aria-label]="'Campo de busca para filtrar saidas'"
+              [attr.aria-label]="'Campo de busca para filtrar saídas'"
+              [placeholder]="'Buscar saídas...'"
               autocomplete="off" />
           </p-iconField>
           <p-button
@@ -93,7 +98,7 @@
                 }
                 @case ('observacao') {
                   <span class="text-truncate d-block" [title]="rowData?.observacao">
-                    {{ rowData?.observacao || 'Nenhuma observacao' }}
+                    {{ rowData?.observacao || 'Nenhuma observação' }}
                   </span>
                 }
                 @case ('actions') {
@@ -136,5 +141,6 @@
         </tr>
       </ng-template>
     </p-table>
+    </ng-template>
   </p-card>
 </div>

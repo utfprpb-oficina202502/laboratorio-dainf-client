@@ -42,7 +42,7 @@ export class ConfirmarEmailComponent implements OnInit {
     const emailConfirmacao = { code: this.code };
 
     this.cadastrarUsuarioService.confirmarEmail(emailConfirmacao).subscribe({
-      next: (e) => {
+      next: () => {
         this.showProgress = false;
         this.cdr.markForCheck();
         this.messageService.add({
@@ -52,7 +52,7 @@ export class ConfirmarEmailComponent implements OnInit {
         });
         this.router.navigate(["/login"]);
       },
-      error: (error) => {
+      error: () => {
         this.showProgress = false;
         this.cdr.markForCheck();
         this.messageService.add({

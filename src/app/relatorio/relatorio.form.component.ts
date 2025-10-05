@@ -62,11 +62,11 @@ export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number>
   protected override type = undefined;
   protected cdr = inject(ChangeDetectorRef);
 
-  @ViewChild('table') table: Table;
-  @ViewChild('fileUpload') fileUpload: FileUpload;
-  @ViewChild('nomeParam') nomeParam: ElementRef;
+  @ViewChild('table') table!: Table;
+  @ViewChild('fileUpload') fileUpload!: FileUpload;
+  @ViewChild('nomeParam') nomeParam!: ElementRef;
   uploadedFiles: any[] = [];
-  callback: Function;
+  callback!: Function;
   tipoParamDropdown: SelectItem[];
   relatorioParams: RelatorioParams;
 
@@ -83,7 +83,7 @@ export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number>
     this.relatorioParams.tipoParam = this.tipoParamDropdown[0].value;
   }
 
-  onUpload($event: any) {
+  onUpload() {
     this.callback();
   }
 
@@ -107,7 +107,7 @@ export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number>
   postInsertParam() {
     this.relatorioParams = new RelatorioParams();
     this.relatorioParams.tipoParam = this.tipoParamDropdown[0].value;
-    this.cdr.markForCheck();
+    this.cdr?.markForCheck();
     this.nomeParam.nativeElement.focus();
   }
 
@@ -118,14 +118,11 @@ export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number>
   }
 
   removeParam(nameParam: string) {
-    let index: number;
-    for (const param of this.object.paramsList) {
-      if (param.nameParam === nameParam) {
-        index = this.object.paramsList.indexOf(param);
-      }
+    const index = this.object.paramsList.findIndex(param => param.nameParam === nameParam);
+    if (index !== -1) {
+      this.object.paramsList.splice(index, 1);
+      this.cdr?.markForCheck();
     }
-    this.object.paramsList.splice(index, 1);
-    this.cdr.markForCheck();
   }
 
   preSave() {

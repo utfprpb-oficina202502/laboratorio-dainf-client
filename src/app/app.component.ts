@@ -55,19 +55,21 @@ export class AppComponent implements OnDestroy {
   title = 'tcc-client';
   isAuthenticated = false;
   isNavigating = false;
-  subscription: Subscription;
+  subscription!: Subscription;
 
   // BFCache cleanup subscriptions
   private readonly bfCacheCleanupHandlers: Array<() => void> = [];
 
   constructor() {
-    // Theme service initialized via inject() - applies theme in its constructor
-    // PWA service initialized via inject() - manages service worker updates automatically
+    // Ensure services are initialized (they're needed for side effects)
+    void this.themeService; // Theme service applies theme in its constructor
+    void this.pwaService; // PWA service manages service worker updates automatically
+
     this.loginService.isAuthenticated.asObservable()
     .subscribe({
       next: (authenticated) => {
         this.isAuthenticated = authenticated;
-        this.cdr.markForCheck();
+        this.cdr?.markForCheck();
       }
     });
     this.buildSubscriptionEvent();
@@ -84,10 +86,10 @@ export class AppComponent implements OnDestroy {
       next: (event) => {
         if (event instanceof NavigationStart) {
           this.isNavigating = true;
-          this.cdr.markForCheck();
+          this.cdr?.markForCheck();
         } else if (event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError) {
           this.isNavigating = false;
-          this.cdr.markForCheck();
+          this.cdr?.markForCheck();
           browserChange.next(true);
         }
       }
@@ -127,16 +129,16 @@ export class AppComponent implements OnDestroy {
         // Re-trigger authentication check to ensure session is still valid
         this.loginService.refreshCurrentUser().subscribe({
           next: () => {
-            this.cdr.markForCheck();
+            this.cdr?.markForCheck();
           },
           error: () => {
-            this.cdr.markForCheck();
+            this.cdr?.markForCheck();
           }
         });
       }
 
       // Trigger change detection to refresh UI
-      this.cdr.markForCheck();
+      this.cdr?.markForCheck();
     });
     this.bfCacheCleanupHandlers.push(restoredHandler);
 

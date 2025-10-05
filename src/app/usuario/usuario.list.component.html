@@ -2,7 +2,7 @@
   <p-card>
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-3">
-        <span class="text-xl font-bold">Usuarios</span>
+        <span class="text-xl font-bold">Usuários</span>
       </div>
     </ng-template>
 
@@ -36,7 +36,7 @@
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
         [showCurrentPageReport]="true"
         [tableStyleClass]="getTableStyleClass()"
-        [attr.aria-label]="'Lista de usuarios com ' + totalElements + ' registro(s)'">
+        [attr.aria-label]="'Lista de usuários com ' + totalElements + ' registro(s)'">
 
         <ng-template pTemplate="caption">
           <div class="flex items-center justify-end gap-2 flex-wrap">
@@ -49,7 +49,7 @@
                 (input)="onGlobalFilter($any($event.target).value)"
                 [value]="filterValue"
                 [placeholder]="getGlobalFilterPlaceholder()"
-                [attr.aria-label]="'Campo de busca para filtrar usuarios'"
+                [attr.aria-label]="'Campo de busca para filtrar usuários'"
                 autocomplete="off"/>
             </p-iconField>
             <p-button
@@ -80,10 +80,10 @@
                 scope="col"
                 [attr.id]="'col-' + column.field"
                 [attr.data-field]="column.field"
-                [pSortableColumn]="column.sortable === false || column.field === 'actions' ? null : column.field"
+                  [pSortableColumn]="column.sortable === false || column.field === 'actions' ? undefined : column.field"
                 [style.width]="column.width"
                 [style.min-width]="column.minWidth"
-                [ngClass]="column.headerClass"
+                  [class]="column.headerClass"
                 [attr.aria-label]="column.tooltip || column.header">
                 <div class="flex items-center gap-2"
                      [class.justify-center]="column.align === 'center'">
@@ -108,7 +108,7 @@
                   class="p-button-text p-button-rounded"
                   [attr.aria-label]="(isRowExpanded(row) ? 'Recolher' : 'Expandir') + ' detalhes do usuario ' + row.nome">
                   <span pButtonIcon
-                        [ngClass]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
+                        [class]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
                 </button>
               </td>
             }

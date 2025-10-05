@@ -45,10 +45,10 @@ export class RelatorioViewerComponent implements OnInit {
   private readonly relatorioService = inject(RelatorioService);
 
   reportHTML: any;
-  relatorioCurrent: Relatorio;
+  relatorioCurrent!: Relatorio;
   dialogFiltroRelatorio = false;
   localePt: any;
-  relatorioParamValue: RelatorioParamsValue[];
+  relatorioParamValue!: RelatorioParamsValue[];
 
   ngOnInit(): void {
     this.localePt = pt;
@@ -70,7 +70,7 @@ export class RelatorioViewerComponent implements OnInit {
         if (this.relatorioCurrent.paramsList.length > 0) {
           this.openFiltro();
         } else {
-          this.generateReport(id, null);
+          this.generateReport(id, []);
         }
       });
   }
@@ -86,7 +86,7 @@ export class RelatorioViewerComponent implements OnInit {
     mapToSend.set("idRel", id);
     mapToSend.set("params", params);
 
-    const convMap = {};
+    const convMap: Record<string, any> = {};
     mapToSend.forEach((val: string, key: string) => {
       convMap[key] = val;
     });
@@ -100,7 +100,7 @@ export class RelatorioViewerComponent implements OnInit {
       });
   }
 
-  getSafeUrl(url) {
+  getSafeUrl(url: string) {
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 

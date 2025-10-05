@@ -2,7 +2,7 @@
   <p-card>
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-3">
-        <span class="text-xl font-bold">Paises</span>
+        <span class="text-xl font-bold">Países</span>
       </div>
     </ng-template>
 
@@ -34,7 +34,7 @@
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
         [showCurrentPageReport]="true"
         [tableStyleClass]="getTableStyleClass()"
-        [attr.aria-label]="'Lista de paises com ' + totalElements + ' registro(s)'">
+        [attr.aria-label]="'Lista de países com ' + totalElements + ' registro(s)'">
 
         <!-- Search caption -->
         <ng-template pTemplate="caption">
@@ -48,7 +48,7 @@
                 (input)="onGlobalFilter($any($event.target).value)"
                 [value]="filterValue"
                 [placeholder]="getGlobalFilterPlaceholder()"
-                [attr.aria-label]="'Campo de busca para filtrar paises'"
+                [attr.aria-label]="'Campo de busca para filtrar países'"
                 autocomplete="off" />
               </p-iconField>
               <p-button
@@ -67,8 +67,9 @@
           <ng-template pTemplate="header">
             <tr>
               @if (!isReadOnly && tableConfig.selectable !== false) {
-                <th scope="col" style="width: 3rem" [attr.aria-label]="'Selecao de paises'">
-                  <p-tableHeaderCheckbox [attr.aria-label]="'Selecionar todos os paises'"></p-tableHeaderCheckbox>
+                <th scope="col" style="width: 3rem" [attr.aria-label]="'Seleção de países'">
+                  <p-tableHeaderCheckbox
+                    [attr.aria-label]="'Selecionar todos os países'"></p-tableHeaderCheckbox>
                 </th>
               }
               @for (column of getVisibleColumns(); track column.field) {
@@ -76,10 +77,10 @@
                   scope="col"
                   [attr.id]="'col-' + column.field"
                   [attr.data-field]="column.field"
-                  [pSortableColumn]="column.sortable === false || column.field === 'actions' ? null : column.field"
+                    [pSortableColumn]="column.sortable === false || column.field === 'actions' ? undefined : column.field"
                   [style.width]="column.width"
                   [style.min-width]="column.minWidth"
-                  [ngClass]="column.headerClass"
+                    [class]="column.headerClass"
                   [attr.aria-label]="column.tooltip || column.header">
                   <div class="flex items-center gap-2" [class.justify-center]="column.align === 'center'">
                     {{ column.header }}
@@ -99,7 +100,7 @@
                 <td style="width: 3rem">
                   <p-tableCheckbox
                     [value]="row"
-                    [attr.aria-label]="'Selecionar pais ' + row.nome">
+                    [attr.aria-label]="'Selecionar país ' + row.nome">
                   </p-tableCheckbox>
                 </td>
               }
@@ -114,10 +115,10 @@
                       <app-action-buttons
                         [showEdit]="canEdit"
                         [showDelete]="canDelete"
-                        [editTooltip]="'Editar pais'"
-                        [deleteTooltip]="'Remover pais'"
-                        [editAriaLabel]="'Editar pais ' + row.nome"
-                        [deleteAriaLabel]="'Remover pais ' + row.nome"
+                        [editTooltip]="'Editar país'"
+                        [deleteTooltip]="'Remover país'"
+                        [editAriaLabel]="'Editar país ' + row.nome"
+                        [deleteAriaLabel]="'Remover país ' + row.nome"
                         (edit)="edit(row.id)"
                         (delete)="delete(row.id)">
                       </app-action-buttons>

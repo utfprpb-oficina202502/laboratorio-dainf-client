@@ -17,7 +17,6 @@ import {DashboardEmprestimoCountRange} from "./dashboard/dashboardEmprestimoCoun
 import {HomeService} from "./home.service";
 import {LoginService} from "../login/login.service";
 import {DateUtil} from "../framework/util/dateUtil";
-import {LoaderService} from "../framework/loader/loader.service";
 import {ChartService} from "../framework/charts/chart.service";
 
 // PrimeNG
@@ -61,7 +60,6 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   // Signals - UI State
   protected readonly dialogVisible = signal(false);
   private readonly loginService = inject(LoginService);
-  private readonly loaderService = inject(LoaderService);
   private readonly chartService = inject(ChartService);
   protected readonly dtIniFiltro = signal<string | null>(null);
   protected readonly dtFimFiltro = signal<string | null>(null);

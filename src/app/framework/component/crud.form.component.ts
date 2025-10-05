@@ -25,7 +25,7 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
   public validExtra = true;
   public editando = false;
   public isAlunosOrProfessor = false;
-  public object: T;
+  public object!: T;
 
   constructor() {
     super();
@@ -58,7 +58,7 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
       .subscribe({
         next: (e) => {
           this.object = e;
-          this.postSave(value => {
+          this.postSave((_value: any) => {
             this.loaderService.hide();
             Swal.fire('Sucesso!', 'Registro salvo com sucesso!', 'success');
             this.back();
@@ -90,7 +90,7 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
         this.editando = true;
         this.loaderService.hide();
       },
-      error: (error) => {
+      error: () => {
         this.loaderService.hide();
         Swal.fire('Atenção!', 'Ocorreu um erro ao buscar o registro!', 'error');
       }

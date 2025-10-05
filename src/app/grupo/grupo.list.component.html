@@ -78,10 +78,10 @@
                   scope="col"
                   [attr.id]="'col-' + column.field"
                   [attr.data-field]="column.field"
-                  [pSortableColumn]="column.sortable === false || column.field === 'actions' ? null : column.field"
+                    [pSortableColumn]="column.sortable === false || column.field === 'actions' ? undefined : column.field"
                   [style.width]="column.width"
                   [style.min-width]="column.minWidth"
-                  [ngClass]="column.headerClass"
+                    [class]="column.headerClass"
                   [attr.aria-label]="column.tooltip || column.header">
                   <div class="flex items-center gap-2" [class.justify-center]="column.align === 'center'">
                     {{ column.header }}
@@ -104,7 +104,8 @@
                     [pRowToggler]="row"
                     class="p-button-text p-button-rounded"
                     [attr.aria-label]="(isRowExpanded(row) ? 'Recolher' : 'Expandir') + ' detalhes do grupo ' + row.descricao">
-                    <span pButtonIcon [ngClass]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
+                    <span pButtonIcon
+                          [class]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
                   </button>
                 </td>
               }

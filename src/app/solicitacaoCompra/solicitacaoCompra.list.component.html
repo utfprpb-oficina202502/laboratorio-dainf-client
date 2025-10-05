@@ -1,10 +1,15 @@
 <div class="container-fluid my-3">
   <p-card>
     <ng-template pTemplate="header">
-      <app-prime-crud-toolbar [table]='dt' [list]='self'></app-prime-crud-toolbar>
+      <div class="flex items-center justify-between p-3">
+        <span class="text-xl font-bold">Solicitações de Compra</span>
+      </div>
     </ng-template>
 
-    <p-table #dt
+    <ng-template pTemplate="content">
+      <app-prime-crud-toolbar [list]="self" [table]="dt"></app-prime-crud-toolbar>
+
+      <p-table #dt
              [value]="objects"
              [rows]="rows"
              [totalRecords]="totalElements"
@@ -29,7 +34,7 @@
              (onRowCollapse)="onRowCollapse($event)"
              currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
              [showCurrentPageReport]="true"
-             [attr.aria-label]="'Lista de solicitacoes de compra com ' + totalElements + ' registro(s)'">
+               [attr.aria-label]="'Lista de solicitações de compra com ' + totalElements + ' registro(s)'">
 
       <ng-template pTemplate="caption">
         <div class="flex items-center justify-end gap-2 flex-wrap">
@@ -41,8 +46,8 @@
               type="text"
               (input)="onGlobalFilter($any($event.target).value)"
               [value]="filterValue"
-              [placeholder]="'Buscar solicitacoes de compra...'"
-              [attr.aria-label]="'Campo de busca para filtrar solicitacoes de compra'"
+              [attr.aria-label]="'Campo de busca para filtrar solicitações de compra'"
+              [placeholder]="'Buscar solicitações de compra...'"
               autocomplete="off" />
           </p-iconField>
           <p-button
@@ -131,5 +136,6 @@
         </tr>
       </ng-template>
     </p-table>
+    </ng-template>
   </p-card>
 </div>

@@ -69,19 +69,19 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
   protected override urlList = '/emprestimo';
   protected override type = undefined;
 
-  @ViewChild('form') frm: NgForm;
-  @ViewChild('contextMenu') contextMenu: Menu;
+  @ViewChild('form') frm!: NgForm;
+  @ViewChild('contextMenu') contextMenu!: Menu;
 
-  itensPendentes = [];
-  itensDevolvidos = [];
-  itensSaida = [];
-  qtdeItemDuplicado: number;
-  itemIsEditing: EmprestimoDevolucaoItem;
+  itensPendentes: EmprestimoDevolucaoItem[] = [];
+  itensDevolvidos: EmprestimoDevolucaoItem[] = [];
+  itensSaida: EmprestimoDevolucaoItem[] = [];
+  qtdeItemDuplicado: number | undefined;
+  itemIsEditing!: EmprestimoDevolucaoItem;
   dialogDuplicaItem = false;
 
   contextMenuPosition = {x: 0, y: 0};
   contextMenuItems: MenuItem[] = [];
-  documentoUsuario: string;
+  documentoUsuario!: string;
 
   constructor() {
     super();
@@ -136,12 +136,12 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
       }
     this.emprestimoService.saveDevolucao(this.object)
     .subscribe({
-      next: (e) => {
+      next: () => {
         this.loaderService.hide();
         Swal.fire('Sucesso!', 'Devolução efetuada com sucesso!', 'success');
         this.back();
       },
-      error: (error) => {
+      error: () => {
         this.loaderService.hide();
         Swal.fire('Atenção!', 'Ocorreu um erro ao salvar a devolução!', 'error');
       }
@@ -162,12 +162,12 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
   duplicarItem() {
     if (!this.disableBtnSaveDuplicar()) {
       const itemDuplicado = structuredClone(this.itemIsEditing);
-      itemDuplicado.qtde = this.qtdeItemDuplicado;
-      itemDuplicado.id = null;
+      itemDuplicado.qtde = this.qtdeItemDuplicado!;
+      itemDuplicado.id = 0;
       this.itensPendentes.push(itemDuplicado);
       this.object.emprestimoDevolucaoItem.push(itemDuplicado);
-      this.itemIsEditing.qtde = this.itemIsEditing.qtde - this.qtdeItemDuplicado;
-      this.qtdeItemDuplicado = null;
+      this.itemIsEditing.qtde = this.itemIsEditing.qtde - this.qtdeItemDuplicado!;
+      this.qtdeItemDuplicado = undefined;
       this.dialogDuplicaItem = false;
     }
   }
@@ -226,7 +226,7 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
 
   removeItensDuplicadosByItem(item: EmprestimoDevolucaoItem) {
     let qtdeTotal = 0;
-    let empDetItemToRemove: EmprestimoDevolucaoItem;
+    let empDetItemToRemove: EmprestimoDevolucaoItem | undefined;
     for (const empDevItem of this.object.emprestimoDevolucaoItem) {
       if (empDevItem.item.id === item.item.id) {
         qtdeTotal += Number(empDevItem.qtde);
@@ -235,13 +235,15 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
         empDetItemToRemove = empDevItem;
       }
     }
-    this.object.emprestimoDevolucaoItem.splice(this.object.emprestimoDevolucaoItem
+    if (empDetItemToRemove) {
+      this.object.emprestimoDevolucaoItem.splice(this.object.emprestimoDevolucaoItem
       .indexOf(empDetItemToRemove), 1);
-    this.itensPendentes.splice(this.itensPendentes.indexOf(empDetItemToRemove, 1));
+      this.itensPendentes.splice(this.itensPendentes.indexOf(empDetItemToRemove), 1);
 
-    for (const empDevItem of this.object.emprestimoDevolucaoItem) {
-      if (empDevItem.item.id === item.item.id) {
-        empDevItem.qtde = qtdeTotal;
+      for (const empDevItem of this.object.emprestimoDevolucaoItem) {
+        if (empDevItem.item.id === item.item.id) {
+          empDevItem.qtde = qtdeTotal;
+        }
       }
     }
   }

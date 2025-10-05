@@ -61,9 +61,9 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
   protected override columnsTable = ['id', 'descricao', 'dataReserva', 'dataRetirada', 'usuario', 'actions'];
   protected override urlForm = 'reserva/form';
 
-  @ViewChild('actionsMenu') actionsMenu: Popover;
+  @ViewChild('actionsMenu') actionsMenu!: Popover;
   contextMenuItems: MenuItem[] = [];
-  selectedReserva: Reserva;
+  selectedReserva!: Reserva;
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -178,7 +178,7 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
     );
 
     this.actionsMenu.toggle(event);
-    this.cdr.markForCheck();
+    this.cdr?.markForCheck();
   }
 
   private configureTable(): void {
@@ -220,7 +220,7 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
     this.displayedColumns = [...this.columnsTable];
   }
 
-  finalizarReserva(reserva) {
+  finalizarReserva(reserva: Reserva) {
     localStorage.setItem('reserva-to-emprestimo', JSON.stringify(reserva));
     this.router.navigate(['emprestimo/form/reserva']);
   }

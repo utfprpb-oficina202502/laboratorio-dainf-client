@@ -57,7 +57,7 @@ export class ReenviarEmailConfirmacaoUsuarioComponent implements OnInit {
     const emailConfirmacao = { email: this.form.value.email };
 
     this.cadastrarUsuarioService.resendConfirmEmail(emailConfirmacao).subscribe({
-      next: (e) => {
+      next: () => {
         this.showProgress = false;
         this.cdr.markForCheck();
         this.messageService.add({
@@ -67,7 +67,7 @@ export class ReenviarEmailConfirmacaoUsuarioComponent implements OnInit {
         });
         this.router.navigate(["/login"]);
       },
-      error: (error) => {
+      error: () => {
         this.showProgress = false;
         this.cdr.markForCheck();
         this.messageService.add({

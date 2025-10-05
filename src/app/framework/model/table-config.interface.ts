@@ -1,4 +1,4 @@
-import { TemplateRef } from '@angular/core';
+import {TemplateRef} from '@angular/core';
 
 /**
  * Configuration interface for table columns with full customization support

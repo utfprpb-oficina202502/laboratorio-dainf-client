@@ -51,7 +51,7 @@ export class CidadeListComponent extends PrimeCrudListComponent<Cidade, number> 
   private readonly tableColumns: TableColumn[] = [
     {
       field: 'id',
-      header: 'Codigo',
+      header: 'Código',
       type: 'number',
       sortable: true,
       filterable: true,
@@ -76,7 +76,7 @@ export class CidadeListComponent extends PrimeCrudListComponent<Cidade, number> 
     },
     {
       field: 'actions',
-      header: 'Opcoes',
+      header: 'Opções',
       type: 'custom',
       sortable: false,
       filterable: false,

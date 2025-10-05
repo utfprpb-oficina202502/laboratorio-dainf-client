@@ -114,11 +114,11 @@ export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
   }
 
   protected override getEntityName(): string {
-    return 'Saida';
+    return 'Saída';
   }
 
   protected override getEntityPluralName(): string {
-    return 'Saidas';
+    return 'Saídas';
   }
 
   protected override getExportFileName(): string {
@@ -132,11 +132,11 @@ export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
       globalFilterFields: ['id', 'dataSaida', 'usuarioResponsavel', 'observacao'],
       defaultSortField: 'dataSaida',
       defaultSortOrder: -1,
-      caption: 'Lista de Saidas',
+      caption: 'Lista de Saídas',
       trackByField: 'id',
-      emptyMessage: 'Nenhuma saida encontrada.',
-      loadingMessage: 'Carregando saidas...',
-      globalFilterPlaceholder: 'Buscar saidas...',
+      emptyMessage: 'Nenhuma saída encontrada.',
+      loadingMessage: 'Carregando saídas...',
+      globalFilterPlaceholder: 'Buscar saídas...',
       columnToggle: true,
       expandable: false,
       expandMode: 'single',

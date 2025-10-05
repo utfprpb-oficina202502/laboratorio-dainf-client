@@ -33,9 +33,9 @@ export class LoginComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  usuario: Usuario;
+  usuario!: Usuario;
   showProgress = false;
-  @ViewChild("form", { static: true }) form: NgForm;
+  @ViewChild("form", {static: true}) form!: NgForm;
 
   ngOnInit() {
     this.usuario = new Usuario();
@@ -43,16 +43,16 @@ export class LoginComponent implements OnInit {
 
   login() {
     this.showProgress = true;
-    this.cdr.markForCheck();
+    this.cdr?.markForCheck();
     this.loginService.login(this.usuario).subscribe({
-      next: (e) => {
+      next: (e: string) => {
         localStorage.setItem("token", e);
         localStorage.setItem("username", this.usuario.username);
         this.setUserInLocalStorage();
       },
-      error: (error) => {
+      error: () => {
         this.showProgress = false;
-        this.cdr.markForCheck();
+        this.cdr?.markForCheck();
         this.messageService.add({
           severity: "error",
           summary: "Atenção",
@@ -83,7 +83,7 @@ export class LoginComponent implements OnInit {
       )),
       finalize(() => {
         this.showProgress = false;
-        this.cdr.markForCheck();
+        this.cdr?.markForCheck();
       })
     )
       .subscribe({

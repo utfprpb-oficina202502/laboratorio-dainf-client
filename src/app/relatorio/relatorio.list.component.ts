@@ -3,7 +3,7 @@ import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.com
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Relatorio} from './relatorio';
 import {RelatorioService} from './relatorio.service';
-import {NgClass, NgTemplateOutlet} from "@angular/common";
+import {NgTemplateOutlet} from "@angular/common";
 import {Button} from "primeng/button";
 import {TableModule} from "primeng/table";
 import {Card} from "primeng/card";
@@ -25,7 +25,6 @@ import {InputTextModule} from "primeng/inputtext";
     NgTemplateOutlet,
     Button,
     TableModule,
-    NgClass,
     Card,
     PrimeCrudToolbarComponent,
     ActionButtonsComponent,

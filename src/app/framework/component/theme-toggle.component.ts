@@ -56,7 +56,8 @@ export class ThemeToggleComponent {
     this.checked = themeService.isDarkMode();
   }
 
-  onToggle(checked: boolean): void {
+  onToggle(checked: boolean | undefined): void {
+    if (checked === undefined) return;
     this.themeService.setTheme(checked ? 'dark' : 'light');
   }
 }

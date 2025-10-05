@@ -4,9 +4,9 @@
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
           <app-voltar (backClick)="back()"></app-voltar>
-          <h2 class="text-xl font-semibold m-0">{{relatorioCurrent?.nome}}</h2>
+          <h2 class="text-xl font-semibold m-0">{{ relatorioCurrent.nome }}</h2>
         </div>
-        @if (relatorioCurrent?.paramsList.length > 0) {
+        @if (relatorioCurrent.paramsList.length > 0) {
           <button
             type="button"
             pButton
@@ -28,7 +28,7 @@
   </p-card>
 </div>
 
-@if (relatorioCurrent?.paramsList.length > 0) {
+@if (relatorioCurrent.paramsList.length > 0) {
   <p-dialog header="Filtro"
     [(visible)]="dialogFiltroRelatorio"
     [style]="{minWidth: '400px'}"
@@ -36,7 +36,7 @@
     [baseZIndex]="10000"
     [focusOnShow]="false">
     <form #formFiltro="ngForm">
-      @for (param of relatorioCurrent?.paramsList; track param) {
+      @for (param of relatorioCurrent.paramsList; track param) {
         <div class="grid grid-cols-12 gap-4 mb-4">
           <div class="col-span-12">
             <div class="form-group">

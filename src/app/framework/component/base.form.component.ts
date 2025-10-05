@@ -5,7 +5,7 @@ import {Directive, ViewChild} from '@angular/core';
 export abstract class BaseFormComponent {
 
   @ViewChild(NgForm)
-  public form: NgForm;
+  public form!: NgForm;
 
   validarFormulario(form?: NgForm): void {
     if (!form) {
@@ -41,6 +41,6 @@ export abstract class BaseFormComponent {
   }
 
   isValid(): boolean {
-    return this.form.valid;
+    return this.form.valid ?? false;
   }
 }

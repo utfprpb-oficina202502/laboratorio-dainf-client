@@ -96,7 +96,7 @@ export class RecuperarSenhaComponent implements OnInit {
       };
 
       this.cadastrarUsuarioService.recuperarSenha(recuperarSenha).subscribe({
-        next: (e) => {
+        next: () => {
           this.showProgress = false;
           this.cdr.markForCheck();
           this.messageService.add({
@@ -106,7 +106,7 @@ export class RecuperarSenhaComponent implements OnInit {
           });
           this.router.navigate(["/login"]);
         },
-        error: (error) => {
+        error: () => {
           this.showProgress = false;
           this.cdr.markForCheck();
           this.messageService.add({
@@ -121,7 +121,7 @@ export class RecuperarSenhaComponent implements OnInit {
       const emailConfirmacao = { email: this.form.value.email };
 
       this.cadastrarUsuarioService.requisitarRecuperarSenha(emailConfirmacao).subscribe({
-        next: (e) => {
+        next: () => {
           this.showProgress = false;
           this.cdr.markForCheck();
           this.messageService.add({
@@ -131,7 +131,7 @@ export class RecuperarSenhaComponent implements OnInit {
           });
           this.router.navigate(["/login"]);
         },
-        error: (error) => {
+        error: () => {
           this.showProgress = false;
           this.cdr.markForCheck();
           this.messageService.add({

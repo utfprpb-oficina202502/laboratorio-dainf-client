@@ -49,7 +49,7 @@ export class EstadoListComponent extends PrimeCrudListComponent<Estado, number> 
   private readonly tableColumns: TableColumn[] = [
     {
       field: 'id',
-      header: 'Codigo',
+      header: 'Código',
       type: 'number',
       sortable: true,
       filterable: true,
@@ -75,7 +75,7 @@ export class EstadoListComponent extends PrimeCrudListComponent<Estado, number> 
     },
     {
       field: 'pais',
-      header: 'Pais',
+      header: 'País',
       type: 'text',
       sortable: true,
       filterable: true,
@@ -83,7 +83,7 @@ export class EstadoListComponent extends PrimeCrudListComponent<Estado, number> 
     },
     {
       field: 'actions',
-      header: 'Opcoes',
+      header: 'Opções',
       type: 'custom',
       sortable: false,
       filterable: false,

@@ -49,7 +49,7 @@ export class PaisListComponent extends PrimeCrudListComponent<Pais, number> {
   private readonly tableColumns: TableColumn[] = [
     {
       field: 'id',
-      header: 'Codigo',
+      header: 'Código',
       type: 'number',
       sortable: true,
       filterable: true,
@@ -74,7 +74,7 @@ export class PaisListComponent extends PrimeCrudListComponent<Pais, number> {
     },
     {
       field: 'actions',
-      header: 'Opcoes',
+      header: 'Opções',
       type: 'custom',
       sortable: false,
       filterable: false,
@@ -92,11 +92,11 @@ export class PaisListComponent extends PrimeCrudListComponent<Pais, number> {
   }
 
   protected override getEntityName(): string {
-    return 'Pais';
+    return 'País';
   }
 
   protected override getEntityPluralName(): string {
-    return 'Paises';
+    return 'Países';
   }
 
   protected override getExportFileName(): string {
@@ -110,11 +110,11 @@ export class PaisListComponent extends PrimeCrudListComponent<Pais, number> {
       globalFilterFields: ['id', 'nome', 'sigla'],
       defaultSortField: 'nome',
       defaultSortOrder: 1,
-      caption: 'Lista de Paises',
+      caption: 'Lista de Países',
       trackByField: 'id',
-      emptyMessage: 'Nenhum pais encontrado.',
-      loadingMessage: 'Carregando paises...',
-      globalFilterPlaceholder: 'Buscar paises...',
+      emptyMessage: 'Nenhum país encontrado.',
+      loadingMessage: 'Carregando países...',
+      globalFilterPlaceholder: 'Buscar países...',
       columnToggle: true,
       expandable: false,
       stateful: true,

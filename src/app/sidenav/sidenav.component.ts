@@ -160,7 +160,7 @@ export class SidenavComponent implements OnInit {
     this.loginService.getPermissoesUser().subscribe((permissoes) => {
       const userRoles = new Set(permissoes.map((x: any) => x.nome.replaceAll("ROLE_", "")));
       this.showCadastros = userRoles.has("ADMINISTRADOR") || userRoles.has("LABORATORISTA");
-      const items = [];
+      const items: any[] = [];
 
       MENU_ITEM.forEach((menu: any) => {
         if (menu.roles == null || menu.roles.some((value: any) => userRoles.has(value))) {
@@ -189,7 +189,7 @@ export class SidenavComponent implements OnInit {
 
       this.menuItems = newMenuItems;
       this.menuCadastros = newMenuCadastros;
-      this.cdr.markForCheck();
+      this.cdr?.markForCheck();
     });
   }
 
@@ -220,19 +220,19 @@ export class SidenavComponent implements OnInit {
       } else {
         this.sidebarVisible = !hide;
       }
-      this.cdr.markForCheck();
+      this.cdr?.markForCheck();
     });
   }
 
   toggleSubMenuCadastro() {
     this.showSubMenuCadastro = !this.showSubMenuCadastro;
-    this.cdr.markForCheck();
+    this.cdr?.markForCheck();
   }
 
   closeSidebar() {
     if (!this.isDesktopView) {
       this.sidebarVisible = false;
-      this.cdr.markForCheck();
+      this.cdr?.markForCheck();
     }
   }
 
@@ -250,16 +250,16 @@ export class SidenavComponent implements OnInit {
     if (!this.viewportInitialized) {
       this.sidebarVisible = isDesktop;
       this.viewportInitialized = true;
-      this.cdr.markForCheck();
+      this.cdr?.markForCheck();
       return;
     }
 
     if (!wasDesktop && isDesktop) {
       this.sidebarVisible = true;
-      this.cdr.markForCheck();
+      this.cdr?.markForCheck();
     } else if (wasDesktop && !isDesktop) {
       this.sidebarVisible = false;
-      this.cdr.markForCheck();
+      this.cdr?.markForCheck();
     }
   }
 }

@@ -22,8 +22,7 @@ export abstract class CrudService<T, ID> {
     return this.http.get<T>(this.getUrl() + id);
   }
 
-  findAllPaged(page: number, size: number, filter?: string) {
-    filter = filter ?? '';
+  findAllPaged(page: number, size: number, filter: string = '') {
     page = Math.max(0, Number(page));
     size = Math.max(1, Number(size));
     const params = new HttpParams()

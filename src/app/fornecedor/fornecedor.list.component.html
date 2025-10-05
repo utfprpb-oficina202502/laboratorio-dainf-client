@@ -1,10 +1,15 @@
 <div class="container-fluid my-3">
   <p-card>
     <ng-template pTemplate="header">
-      <app-prime-crud-toolbar [table]='dt' [list]='self'></app-prime-crud-toolbar>
+      <div class="flex items-center justify-between p-3">
+        <span class="text-xl font-bold">Fornecedores</span>
+      </div>
     </ng-template>
 
-    <p-table #dt
+    <ng-template pTemplate="content">
+      <app-prime-crud-toolbar [list]="self" [table]="dt"></app-prime-crud-toolbar>
+
+      <p-table #dt
              [loading]="loading()"
              [value]="objects"
              [rows]="rows"
@@ -147,5 +152,6 @@
         </tr>
       </ng-template>
     </p-table>
+    </ng-template>
   </p-card>
 </div>

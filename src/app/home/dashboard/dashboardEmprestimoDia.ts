@@ -1,4 +1,4 @@
 export class DashboardEmprestimoDia {
-  qtde: number;
-  dtEmprestimo: string;
+  qtde!: number;
+  dtEmprestimo!: string;
 }

@@ -27,7 +27,7 @@ export class NavbarComponent implements OnInit {
   private readonly sidenavService = inject(SidenavService);
   private readonly router = inject(Router);
 
-  items: MenuItem[];
+  items: MenuItem[] = [];
 
   ngOnInit() {
     this.optionDropdown();

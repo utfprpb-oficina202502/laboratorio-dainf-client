@@ -258,7 +258,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   /**
    * Handle file upload complete
    */
-  onUpload($event: any): void {
+  onUpload(): void {
     if (this.callback) {
       this.callback();
     }

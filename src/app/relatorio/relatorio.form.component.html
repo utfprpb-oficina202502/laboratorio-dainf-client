@@ -52,7 +52,7 @@
               name="anexo"
               #fileUpload
               [url]="getUrlUploadImages()"
-              (onUpload)="onUpload($event)"
+              (onUpload)="onUpload()"
               [showUploadButton]="false"
               chooseLabel="Inserir Arquivo Jrxml"
               cancelLabel="Remover"
@@ -136,7 +136,7 @@
               </div>
             </form>
 
-            @if (object?.paramsList?.length > 0) {
+            @if (object.paramsList && object.paramsList.length > 0) {
               <div class="mt-4">
                 <p-table #table [value]="object.paramsList" styleClass="p-datatable-sm">
                   <ng-template pTemplate="header">

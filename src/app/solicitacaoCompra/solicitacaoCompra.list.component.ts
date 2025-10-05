@@ -102,11 +102,11 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
   }
 
   protected override getEntityName(): string {
-    return 'Solicitacao de Compra';
+    return 'Solicitação de Compra';
   }
 
   protected override getEntityPluralName(): string {
-    return 'Solicitacoes de Compra';
+    return 'Solicitações de Compra';
   }
 
   protected override getExportFileName(): string {
@@ -129,11 +129,11 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
       globalFilterFields: ['id', 'descricao', 'dataSolicitacao'],
       defaultSortField: 'dataSolicitacao',
       defaultSortOrder: -1,
-      caption: 'Lista de Solicitacoes de Compra',
+      caption: 'Lista de Solicitações de Compra',
       trackByField: 'id',
-      emptyMessage: 'Nenhuma solicitacao de compra encontrada.',
-      loadingMessage: 'Carregando solicitacoes de compra...',
-      globalFilterPlaceholder: 'Buscar solicitacoes de compra...',
+      emptyMessage: 'Nenhuma solicitação de compra encontrada.',
+      loadingMessage: 'Carregando solicitações de compra...',
+      globalFilterPlaceholder: 'Buscar solicitações de compra...',
       columnToggle: true,
       expandable: false,
       expandMode: 'single',

@@ -65,13 +65,13 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
 
   private readonly reservaService = inject(ReservaService);
 
-  @ViewChild('actionsMenu') actionsMenu: Popover;
+  @ViewChild('actionsMenu') actionsMenu!: Popover;
   protected override urlForm = "item/form";
   contextMenuItems: MenuItem[] = [];
-  selectedItem: Item;
+  selectedItem!: Item;
 
   isAlunoOrProfessor = false;
-  reservasItem: Reserva[];
+  reservasItem: Reserva[] = [];
   dialogReservaitem = false;
   displayedColumnsReserva = ["dataRetirada", "qtde"];
   minioUrl: string;
@@ -206,7 +206,7 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
       .userLoggedIsAlunoOrProfessor()
       .then((value) => {
         this.isAlunoOrProfessor = value;
-        this.cdr.markForCheck();
+        this.cdr?.markForCheck();
       });
   }
 
@@ -252,10 +252,10 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
     }
 
     this.actionsMenu.toggle(event);
-    this.cdr.markForCheck();
+    this.cdr?.markForCheck();
   }
 
-  findReservasItem(id) {
+  findReservasItem(id: number): void {
     this.loaderService.show();
     this.reservaService.findAllByIdItem(id).subscribe(
       (e) => {
@@ -263,19 +263,19 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
         if (e.length > 0) {
           this.reservasItem = e;
           this.dialogReservaitem = true;
-          this.cdr.markForCheck();
+          this.cdr?.markForCheck();
         } else {
           Swal.fire("Ops...", "Este item não possui nenhuma reserva.", "info");
         }
       },
-      (error) => {
+      () => {
         this.loaderService.hide();
         Swal.fire("Erro", "Erro ao buscar reservas do item.", "error");
       }
     );
   }
 
-  copyItem(id) {
+  copyItem(id: number): void {
     this.router.navigate(["item/form/copy", id]);
   }
 }

@@ -70,18 +70,18 @@ import {NovoComponent} from '../geral/novo/novo.component';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, number> implements OnInit{
-  @ViewChild('actionsMenu') actionsMenu: Popover;
-  @ViewChild('novaData') novaData: DatePicker;
+  @ViewChild('actionsMenu') actionsMenu!: Popover;
+  @ViewChild('novaData') novaData!: DatePicker;
   contextMenuItems: MenuItem[] = [];
   protected override service = inject(EmprestimoService);
-  selectedEmprestimoId: number;
+  selectedEmprestimoId!: number;
   dialogFiltroEmprestimo = false;
-  emprestimoFilter: EmprestimoFilter;
-  statusDropdown: SelectItem[];
-  usuarioEmprestimoList: Usuario[];
-  usuarioResponsalvel: Usuario[];
-  dtNovaData: string;
-  idEmprestimoToChangePrazoDev: number;
+  emprestimoFilter = new EmprestimoFilter();
+  statusDropdown: SelectItem[] = [];
+  usuarioEmprestimoList: Usuario[] = [];
+  usuarioResponsalvel: Usuario[] = [];
+  dtNovaData!: string;
+  idEmprestimoToChangePrazoDev!: number;
   protected override columnsTable = ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status', 'actions'];
   protected override urlForm = 'emprestimo/form';
   private readonly usuarioService = inject(UsuarioService);
@@ -196,7 +196,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     }
 
     this.actionsMenu.toggle(event);
-    this.cdr.markForCheck();
+    this.cdr?.markForCheck();
   }
 
   findUsuarios($event: any) {
@@ -218,7 +218,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
 
     this.loginService.userLoggedIsAlunoOrProfessor().then(value => {
       this.isAlunoOrProfessor = value;
-      this.cdr.markForCheck();
+      this.cdr?.markForCheck();
       this.isAlunoOrProfessor ? this.findAllByUsername() : this.findAll();
     });
   }
@@ -255,13 +255,13 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
         this.totalElements = e.length;
         this.loaderService.hide();
       },
-      error: (error) => {
+      error: () => {
         this.loaderService.hide();
       }
       });
   }
 
-  openDevolucao(id) {
+  openDevolucao(id: number) {
     this.router.navigate(['emprestimo/devolucao', id]);
   }
 
@@ -298,12 +298,12 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
         this.loaderService.show();
         this.emprestimoService.changePrazoDevolucao(this.idEmprestimoToChangePrazoDev, this.dtNovaData)
         .subscribe({
-          next: (e) => {
+          next: () => {
             Swal.fire('Sucesso!', 'Prazo de devolução alterado com sucesso!', 'success');
             this.findAll();
             this.loaderService.hide();
           },
-          error: (error) => {
+          error: () => {
             this.loaderService.hide();
             Swal.fire('Atenção!', 'Ocorreu um erro ao alterar a data do prazo de devolução!', 'error');
           }
@@ -333,7 +333,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   setUserLogadoInFilter(): Promise<void> {
     return new Promise<void>(resolve => {
       const u = new Usuario();
-      u.username = localStorage.getItem('username');
+      u.username = localStorage.getItem('username') ?? '';
       this.emprestimoFilter.usuarioEmprestimo = u;
       resolve();
     });
@@ -354,11 +354,11 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       globalFilterFields: ['id', 'dataEmprestimo', 'prazoDevolucao'],
       defaultSortField: 'dataEmprestimo',
       defaultSortOrder: -1,
-      caption: 'Lista de Emprestimos',
+      caption: 'Lista de Empréstimos',
       trackByField: 'id',
-      emptyMessage: 'Nenhum emprestimo encontrado.',
-      loadingMessage: 'Carregando emprestimos...',
-      globalFilterPlaceholder: 'Buscar emprestimos...',
+      emptyMessage: 'Nenhum empréstimo encontrado.',
+      loadingMessage: 'Carregando empréstimos...',
+      globalFilterPlaceholder: 'Buscar empréstimos...',
       columnToggle: true,
       expandable: false,
       expandMode: 'single',

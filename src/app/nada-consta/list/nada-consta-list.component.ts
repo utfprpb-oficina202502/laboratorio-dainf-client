@@ -1,4 +1,4 @@
-﻿import {
+import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -43,19 +43,19 @@ export class NadaConstaListComponent implements OnInit, OnDestroy {
 
   carregarLista() {
     this.carregando = true;
-    this.cdr.markForCheck();
+    this.cdr?.markForCheck();
     this.nadaConstaService.listarTodos()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (dados) => {
           this.dataSource = dados;
           this.carregando = false;
-          this.cdr.markForCheck();
+          this.cdr?.markForCheck();
         },
         error: () => {
           this.dataSource = [];
           this.carregando = false;
-          this.cdr.markForCheck();
+          this.cdr?.markForCheck();
         }
       });
   }

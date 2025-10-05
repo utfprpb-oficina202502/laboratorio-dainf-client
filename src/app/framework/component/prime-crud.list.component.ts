@@ -647,6 +647,10 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   findAllByUsername() {
     this.loading.set(true);
     const u = localStorage.getItem('username');
+    if (!u) {
+      this.loading.set(false);
+      return;
+    }
     this.service.findAllByUsername(u)
     .subscribe({
       next: (e) => {
@@ -764,7 +768,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
         this.loaderService.show();
         this.service.delete(id)
         .subscribe({
-          next: (e) => {
+          next: () => {
             Swal.fire('Sucesso!', 'Registro excluído com sucesso!', 'success');
             this.findAll();
             this.loaderService.hide();
@@ -921,7 +925,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
    */
   private triggerChangeDetection(): void {
     if (this.cdr) {
-      this.cdr.markForCheck();
+      this.cdr?.markForCheck();
     }
   }
 
@@ -1027,7 +1031,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
     this.service.delete(ids[currentIndex])
     .subscribe({
-      next: (e) => {
+      next: () => {
           // Continue with next item
           this.deleteItemsSequentially(ids, currentIndex + 1, total);
         },

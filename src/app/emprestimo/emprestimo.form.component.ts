@@ -104,7 +104,7 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
 
   protected readonly isEmprestimoFinalizado = computed(() => {
     const obj = this.object();
-    return obj && 'dataDevolucao' in obj && !!obj.dataDevolucao;
+    return !!(obj && 'dataDevolucao' in obj && obj.dataDevolucao);
   });
 
   constructor() {
@@ -188,7 +188,9 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
         summary: 'Atenção',
         detail: 'Necessário preencher todos os campos corretamente!'
       });
-      this.markFormAsTouched(formGroup);
+      if (formGroup) {
+        this.markFormAsTouched(formGroup);
+      }
       return;
     }
 

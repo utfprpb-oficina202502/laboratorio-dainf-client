@@ -176,7 +176,7 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
           formGroup.reset();
           this.dialogChangeSenha.set(false);
         },
-        error: (error) => {
+        error: () => {
           this.loaderService.hide();
           this.messageService.add({
             severity: 'error',

@@ -6,30 +6,18 @@ export class DateUtil {
   }
 
   static dtIsBeforeToday(dt: Date | string): boolean {
-    let dtCompare: Date;
-    if (typeof dt === 'string') {
-      dtCompare = this.parseStringToDate(dt);
-    }
-    return dtCompare.getTime() < new Date().getTime();
+    const dtCompare: Date = typeof dt === 'string' ? this.parseStringToDate(dt) : dt;
+    return dtCompare.getTime() < Date.now();
   }
 
   static dtIsAfterToday(dt: Date | string): boolean {
-    let dtCompare: Date;
-    if (typeof dt === 'string') {
-      dtCompare = this.parseStringToDate(dt);
-    }
-    return dtCompare.getTime() > new Date().getTime();
+    const dtCompare: Date = typeof dt === 'string' ? this.parseStringToDate(dt) : dt;
+    return dtCompare.getTime() > Date.now();
   }
 
   static dtIsAfterDtLimit(dt: Date | string, dtLimite: Date | string): boolean {
-    let dtCompare: Date;
-    let dtLimit: Date;
-    if (typeof dt === 'string') {
-      dtCompare = this.parseStringToDate(dt);
-    }
-    if (typeof dtLimite === 'string') {
-      dtLimit = this.parseStringToDate(dtLimite);
-    }
+    const dtCompare: Date = typeof dt === 'string' ? this.parseStringToDate(dt) : dt;
+    const dtLimit: Date = typeof dtLimite === 'string' ? this.parseStringToDate(dtLimite) : dtLimite;
     return dtCompare.getTime() > dtLimit.getTime();
   }
 

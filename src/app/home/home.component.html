@@ -26,28 +26,28 @@
       } @else {
         <app-stat-card
           title="Total de Empréstimos"
-          [value]="dashEmprestimoCount()?.total"
+          [value]="dashEmprestimoCount().total"
           icon="sync"
           iconLibrary="pi"
           accentColor="#3B82F6">
         </app-stat-card>
         <app-stat-card
           title="Empréstimos em Andamento"
-          [value]="dashEmprestimoCount()?.emAndamento"
+          [value]="dashEmprestimoCount().emAndamento"
           icon="clock"
           iconLibrary="pi"
           accentColor="#F97316">
         </app-stat-card>
         <app-stat-card
           title="Empréstimos em Atraso"
-          [value]="dashEmprestimoCount()?.emAtraso"
+          [value]="dashEmprestimoCount().emAtraso"
           icon="exclamation-triangle"
           iconLibrary="pi"
           accentColor="#EF4444">
         </app-stat-card>
         <app-stat-card
           title="Empréstimos Finalizados"
-          [value]="dashEmprestimoCount()?.finalizado"
+          [value]="dashEmprestimoCount().finalizado"
           icon="check"
           iconLibrary="pi"
           accentColor="#22C55E">

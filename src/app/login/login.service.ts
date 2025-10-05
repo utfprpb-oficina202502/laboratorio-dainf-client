@@ -20,7 +20,6 @@ export class LoginService {
   private readonly currentUserSubject = new BehaviorSubject<Usuario | null>(this.loadUserFromStorage());
   private currentUserRequest$: Observable<Usuario> | null = null;
   private authValidation$: Observable<boolean> | null = null;
-  private hasValidatedSession = false;
 
   private loadUserFromStorage(): Usuario | null {
     const stored = localStorage.getItem("userLogged");
@@ -36,7 +35,7 @@ export class LoginService {
 
   canActivate(
     route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot
+    _state: RouterStateSnapshot
   ):
     | Observable<boolean | UrlTree>
     | Promise<boolean | UrlTree>
@@ -64,11 +63,10 @@ export class LoginService {
           this.currentUserSubject.next(user);
         }
         this.isAuthenticated.next(true);
-        this.hasValidatedSession = true;
         this.redirectIfProfileIncomplete(route);
       }),
       map(() => true),
-      catchError((err) => {
+      catchError(() => {
         this.logout();
         return throwError(() => new Error('O usuario nao esta autenticado!'));
       }),
@@ -180,7 +178,7 @@ export class LoginService {
     this.currentUserSubject.next(null);
     this.currentUserRequest$ = null;
     this.authValidation$ = null;
-    this.hasValidatedSession = false;
+    // this._hasValidatedSession = false;
     this.isAuthenticated.next(false);
     this.router.navigate(["/login"]);
   }

@@ -11,7 +11,7 @@ export class ValidationDirective {
   private readonly validationService = inject(ValidationService);
   private readonly renderer = inject(Renderer2);
 
-  @Input() validationMessage: string;
+  @Input() validationMessage!: string;
 
   private readonly targetElement: HTMLElement;
   private readonly formGroupElement: HTMLElement | null;

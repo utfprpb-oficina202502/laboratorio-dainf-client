@@ -103,11 +103,11 @@ export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number
   }
 
   protected override getEntityName(): string {
-    return 'Usuario';
+    return 'Usuário';
   }
 
   protected override getEntityPluralName(): string {
-    return 'Usuarios';
+    return 'Usuários';
   }
 
   // Override export filename for usuarios
@@ -122,11 +122,11 @@ export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number
       globalFilterFields: ['id', 'nome', 'username'],
       defaultSortField: 'nome',
       defaultSortOrder: 1,
-      caption: 'Lista de Usuarios',
+      caption: 'Lista de Usuários',
       trackByField: 'id',
-      emptyMessage: 'Nenhum usuario encontrado.',
-      loadingMessage: 'Carregando usuarios...',
-      globalFilterPlaceholder: 'Buscar usuarios...',
+      emptyMessage: 'Nenhum usuário encontrado.',
+      loadingMessage: 'Carregando usuários...',
+      globalFilterPlaceholder: 'Buscar usuários...',
       columnToggle: true,
       expandable: false,
       expandMode: 'single',

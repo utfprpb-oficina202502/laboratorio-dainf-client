@@ -1,6 +1,6 @@
-import { Injectable, signal } from '@angular/core';
-import { Observable } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import {Injectable, signal} from '@angular/core';
+import {Observable} from 'rxjs';
+import {finalize} from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class LoaderService {

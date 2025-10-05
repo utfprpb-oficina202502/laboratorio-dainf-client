@@ -92,7 +92,7 @@ export class CadastrarUsuarioComponent implements OnInit {
     };
 
     this.cadastrarUsuarioService.saveUser(usuario).subscribe({
-      next: (e) => {
+      next: () => {
         this.showProgress = false;
         this.cdr.markForCheck();
         this.messageService.add({
@@ -103,7 +103,7 @@ export class CadastrarUsuarioComponent implements OnInit {
         });
         this.router.navigate(["/login"]);
       },
-      error: (error) => {
+      error: () => {
         this.showProgress = false;
         this.cdr.markForCheck();
         this.messageService.add({

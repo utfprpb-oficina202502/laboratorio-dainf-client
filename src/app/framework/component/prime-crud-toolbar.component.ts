@@ -45,7 +45,7 @@ import {Table} from 'primeng/table';
                   [disabled]="!list.selectedItems || !list.selectedItems.length"
                   [pTooltip]="'Deletar '+ entityPluralName +' selecionados'"
                   tooltipPosition="bottom"
-                  [attr.aria-label]="'Deletar ' + (list.selectedItems?.length || 0) + ' registro(s)'">
+                  [attr.aria-label]="'Deletar ' + (list.selectedItems.length || 0) + ' registro(s)'">
                   <span pButtonIcon class="pi pi-trash"></span>
                   <span pButtonLabel class="hidden md:inline ml-2">Deletar</span>
                 </p-button>

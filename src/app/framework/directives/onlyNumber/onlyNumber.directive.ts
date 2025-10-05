@@ -1,4 +1,4 @@
-import {Directive, ElementRef, inject} from '@angular/core';
+import {Directive} from '@angular/core';
 
 @Directive({
   selector: '[appOnlyNumber]',
@@ -7,8 +7,6 @@ import {Directive, ElementRef, inject} from '@angular/core';
   }
 })
 export class OnlyNumberDirective {
-  private readonly el = inject<ElementRef<HTMLInputElement>>(ElementRef);
-
   onKeyDown(e: KeyboardEvent) {
     const alwaysAllowed = [
       'Delete', 'Backspace', 'Tab', 'Escape', 'Enter',

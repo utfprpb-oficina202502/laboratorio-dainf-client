@@ -7,22 +7,18 @@ import {
   Output,
   SimpleChanges
 } from '@angular/core';
-import {NgClass, NgStyle} from "@angular/common";
 
 @Component({
   selector: 'app-stat-card',
   templateUrl: './stat-card.component.html',
   styleUrls: ['./stat-card.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    NgStyle,
-    NgClass
-  ]
+  standalone: true
 })
 export class StatCardComponent implements OnChanges {
-  @Input() title: string;
+  @Input() title!: string;
   @Input() value: number | string | null | undefined;
-  @Input() icon: string; // ex: 'handshake', 'clock-o'
+  @Input() icon!: string; // ex: 'handshake', 'clock-o'
   @Input() accentColor = '#3B82F6';
   @Input() clickable = false;
   @Input() iconLibrary: 'pi' | 'fa' = 'fa'; // padrão agora Font Awesome
