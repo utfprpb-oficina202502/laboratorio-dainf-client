@@ -7,16 +7,12 @@
     </ng-template>
 
     <ng-template pTemplate="content">
-      <!-- Toolbar with optional custom templates -->
-      <app-prime-crud-toolbar [table]="dt" [list]="self">
-        <ng-template #toolbarStartTemplate>
-          <!-- Custom toolbar buttons go here -->
-        </ng-template>
-      </app-prime-crud-toolbar>
+      <app-prime-crud-toolbar [list]="self" [table]="dt"></app-prime-crud-toolbar>
 
       <!-- Main table -->
       <p-table
         #dt
+        [loading]="loading()"
         [value]="objects"
         [rows]="rows"
         [totalRecords]="totalElements"
@@ -57,18 +53,18 @@
                 [placeholder]="getGlobalFilterPlaceholder()"
                 [attr.aria-label]="'Campo de busca para filtrar relatórios'"
                 autocomplete="off" />
-              </p-iconField>
-              <p-button
-                type="button"
-                severity="secondary"
-                [outlined]="true"
-                (onClick)="clearGlobalFilter()"
-                [attr.aria-label]="'Limpar filtro global'">
-                <span pButtonIcon class="pi pi-filter-slash"></span>
-                <span pButtonLabel>Limpar</span>
-              </p-button>
-            </div>
-          </ng-template>
+            </p-iconField>
+            <p-button
+              (onClick)="clearGlobalFilter()"
+              [attr.aria-label]="'Limpar filtro global'"
+              [outlined]="true"
+              severity="secondary"
+              type="button">
+              <span class="pi pi-filter-slash" pButtonIcon></span>
+              <span class="hidden sm:inline" pButtonLabel>Limpar</span>
+            </p-button>
+          </div>
+        </ng-template>
 
           <!-- Table header -->
           <ng-template pTemplate="header">
@@ -82,7 +78,7 @@
                 </th>
               }
               @for (column of getVisibleColumns(); track column.field) {
-                <th
+                <th scope="col"
                   scope="col"
                   [attr.id]="'col-' + column.field"
                   [attr.data-field]="column.field"
@@ -157,14 +153,7 @@
                       </div>
                     }
                     @default {
-                      <span
-                        [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
-                        [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
-                        [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                        (click)="handleInteractiveCell($event, row.id)"
-                        (keydown.enter)="handleInteractiveCell($event, row.id)"
-                        (keydown.space)="handleInteractiveCell($event, row.id)"
-                        [attr.aria-label]="column.header + ': ' + row[column.field]">
+                      <span [attr.aria-label]="column.header + ': ' + row[column.field]">
                         {{ row[column.field] }}
                       </span>
                     }
@@ -187,11 +176,23 @@
         </ng-template>
 
         <!-- Empty state -->
+        <ng-template pTemplate="loadingbody">
+          <tr>
+            <td [attr.colspan]="getColumnCount()">
+              <div class="text-center py-4">
+                <p class="text-muted mt-2 mb-0">{{ tableConfig.loadingMessage }}</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td [attr.colspan]="getColumnCount()" class="text-center p-4">
-              <i class="pi pi-search" style="font-size: 3rem; color: #dee2e6;"></i>
-              <p class="mt-3 mb-0">Nenhum relatório encontrado.</p>
+            <td [attr.colspan]="getColumnCount()">
+              <div class="text-center py-4">
+                <i class="pi pi-info-circle text-muted" style="font-size: 2rem;"></i>
+                <p class="text-muted mt-2 mb-0">{{ tableConfig.emptyMessage }}</p>
+              </div>
             </td>
           </tr>
         </ng-template>

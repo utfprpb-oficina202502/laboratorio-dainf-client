@@ -4,7 +4,6 @@ import {
   computed,
   effect,
   inject,
-  Injector,
   OnDestroy,
   signal,
   ViewChild
@@ -82,11 +81,11 @@ interface TipoItemOption {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, number> implements OnDestroy {
-  protected itemService: ItemService;
-  protected injector: Injector;
-
-  private readonly fb = this.injector.get(FormBuilder);
-  private readonly grupoService = this.injector.get(GrupoService);
+  protected override service = inject(ItemService);
+  protected override urlList = '/item';
+  protected override type = Item;
+  private readonly fb = inject(FormBuilder);
+  private readonly grupoService = inject(GrupoService);
   private grupoSubscription?: Subscription;
   private imagesSubscription?: Subscription;
 
@@ -129,12 +128,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   private callback?: Function;
 
   constructor() {
-    const itemService = inject(ItemService);
-    const injector = inject(Injector);
-
-    super(itemService, injector, '/item', Item);
-    this.itemService = itemService;
-    this.injector = injector;
+    super();
 
     // Effect to handle form fields enable/disable based on user role
     effect(() => {
@@ -201,7 +195,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
    * Post edit hook for copy functionality
    */
   protected override postEdit(): void {
-    if (window.location.href.includes('copy')) {
+    if (globalThis.location.href.includes('copy')) {
       this.isEditing.set(false);
       const formGroup = this.form();
       if (formGroup) {
@@ -324,7 +318,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     this.loadingImages.set(true);
     this.loaderService.show();
 
-    this.imagesSubscription = this.itemService.findAllImagesItem(obj.id).subscribe({
+    this.imagesSubscription = this.service.findAllImagesItem(obj.id).subscribe({
       next: (images) => {
         this.loadingImages.set(false);
         this.loaderService.hide();
@@ -385,7 +379,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     }
 
     this.loaderService.show();
-    this.itemService.deleteImage(image, obj.id).subscribe({
+    this.service.deleteImage(image, obj.id).subscribe({
       next: () => {
         this.deleteImageInObject(image);
         this.loaderService.hide();

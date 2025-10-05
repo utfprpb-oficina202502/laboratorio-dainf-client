@@ -1,4 +1,10 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  inject,
+  OnDestroy
+} from '@angular/core';
 import {
   NavigationCancel,
   NavigationEnd,
@@ -10,6 +16,9 @@ import {
 import {LoginService} from './login/login.service';
 import {Subject, Subscription} from 'rxjs';
 import {LoaderService} from './framework/loader/loader.service';
+import {ThemeService} from './framework/services/theme.service';
+import {BFCacheService} from './framework/services/bfcache.service';
+import {PwaService} from './framework/services/pwa.service';
 import {NavbarComponent} from './navbar/navbar.component';
 import {SidenavComponent} from './sidenav/sidenav.component';
 import {LoaderComponent} from './framework/loader/loader.component';
@@ -34,10 +43,13 @@ export const browserChange = new Subject<boolean>();
   ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AppComponent {
+export class AppComponent implements OnDestroy {
   private readonly loginService = inject(LoginService);
   private readonly router = inject(Router);
   private readonly loaderService = inject(LoaderService);
+  private readonly themeService = inject(ThemeService); // Initialize theme service early
+  private readonly bfCacheService = inject(BFCacheService); // Initialize BFCache service
+  private readonly pwaService = inject(PwaService); // Initialize PWA service for updates
   private readonly cdr = inject(ChangeDetectorRef);
 
   title = 'tcc-client';
@@ -45,15 +57,22 @@ export class AppComponent {
   isNavigating = false;
   subscription: Subscription;
 
-  constructor() {
-    const loginService = this.loginService;
+  // BFCache cleanup subscriptions
+  private readonly bfCacheCleanupHandlers: Array<() => void> = [];
 
-    loginService.isAuthenticated.asObservable()
-      .subscribe(e => {
-        this.isAuthenticated = e;
+  constructor() {
+    // Theme service initialized via inject() - applies theme in its constructor
+    // PWA service initialized via inject() - manages service worker updates automatically
+    this.loginService.isAuthenticated.asObservable()
+    .subscribe({
+      next: (authenticated) => {
+        this.isAuthenticated = authenticated;
         this.cdr.markForCheck();
-      });
+      }
+    });
     this.buildSubscriptionEvent();
+    this.setupBFCache();
+    this.setupPWA();
   }
 
   verifyAccess(role: string): boolean {
@@ -61,20 +80,74 @@ export class AppComponent {
   }
 
   buildSubscriptionEvent() {
-    this.subscription = this.router.events.subscribe((event) => {
-      if (event instanceof NavigationStart) {
-        this.isNavigating = true;
-        this.loaderService.show();
-        this.cdr.markForCheck();
-      } else if (event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError) {
-        if (event instanceof NavigationError) {
-          console.error('[NavigationError]', event.error);
+    this.subscription = this.router.events.subscribe({
+      next: (event) => {
+        if (event instanceof NavigationStart) {
+          this.isNavigating = true;
+          this.cdr.markForCheck();
+        } else if (event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError) {
+          this.isNavigating = false;
+          this.cdr.markForCheck();
+          browserChange.next(true);
         }
-        this.isNavigating = false;
-        this.loaderService.hide();
-        this.cdr.markForCheck();
-        browserChange.next(true);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    // Clean up router subscription
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+
+    // Clean up BFCache handlers
+    this.bfCacheCleanupHandlers.forEach(cleanup => cleanup());
+  }
+
+  /**
+   * Setup PWA (Progressive Web App) capabilities
+   * Enables automatic update detection and management
+   */
+  private setupPWA(): void {
+    // PWA service handles everything automatically:
+    // - Update detection and user prompts
+    // - Online/offline status tracking
+    // - Service worker lifecycle management
+  }
+
+  /**
+   * Setup BFCache (Back/Forward Cache) optimization
+   * Handles page restoration and cleanup for browser navigation cache
+   */
+  private setupBFCache(): void {
+    // Handle page restoration from BFCache
+    const restoredHandler = this.bfCacheService.onRestored(() => {
+      // Refresh authentication state if needed
+      if (this.isAuthenticated) {
+        // Re-trigger authentication check to ensure session is still valid
+        this.loginService.refreshCurrentUser().subscribe({
+          next: () => {
+            this.cdr.markForCheck();
+          },
+          error: () => {
+            this.cdr.markForCheck();
+          }
+        });
+      }
+
+      // Trigger change detection to refresh UI
+      this.cdr.markForCheck();
+    });
+    this.bfCacheCleanupHandlers.push(restoredHandler);
+
+    // Handle page being stored in BFCache (cleanup)
+    const hideHandler = this.bfCacheService.onPageHide(() => {
+      // Hide loader to prevent frozen UI state
+      this.loaderService.hide();
+
+      // No need to close HTTP connections - browser handles this
+      // Just ensure no active UI state that would confuse users
+    });
+    this.bfCacheCleanupHandlers.push(hideHandler);
   }
 }

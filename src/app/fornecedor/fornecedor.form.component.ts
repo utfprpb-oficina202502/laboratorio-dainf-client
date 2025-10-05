@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, inject, Injector, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Fornecedor} from './fornecedor';
@@ -26,9 +26,6 @@ import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
 
 // Directives
-import {OnlyNumberDirective} from '../framework/directives/onlyNumber/onlyNumber.directive';
-import {CnpjDirective} from '../framework/directives/cnpj/cnpj.directive';
-import {TelefoneFormatDirective} from '../framework/directives/telefone/telefone.format.directive';
 
 @Component({
   selector: 'app-form-fornecedor',
@@ -48,34 +45,24 @@ import {TelefoneFormatDirective} from '../framework/directives/telefone/telefone
     FormFieldComponent,
     VoltarComponent,
     CancelarComponent,
-    SalvarComponent,
-    // Directives
-    OnlyNumberDirective,
-    CnpjDirective,
-    TelefoneFormatDirective
+    SalvarComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FornecedorFormComponent extends PrimeReactiveCrudFormComponent<Fornecedor, number> {
-  protected fornecedorService: FornecedorService;
-  protected injector: Injector;
-
-  private readonly fb = this.injector.get(FormBuilder);
-  private readonly cidadeService = this.injector.get(CidadeService);
-  private readonly estadoService = this.injector.get(EstadoService);
+  protected override service = inject(FornecedorService);
+  protected override urlList = '/fornecedor';
+  protected override type = Fornecedor;
+  private readonly fb = inject(FormBuilder);
+  private readonly cidadeService = inject(CidadeService);
+  private readonly estadoService = inject(EstadoService);
 
   // Signals for autocomplete lists
   protected readonly cidadeList = signal<Cidade[]>([]);
   protected readonly estadoList = signal<Estado[]>([]);
 
   constructor() {
-    const fornecedorService = inject(FornecedorService);
-    const injector = inject(Injector);
-
-    super(fornecedorService, injector, '/fornecedor', Fornecedor);
-
-    this.fornecedorService = fornecedorService;
-    this.injector = injector;
+    super();
   }
 
   /**

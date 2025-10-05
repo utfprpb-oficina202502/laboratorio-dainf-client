@@ -13,6 +13,7 @@
       <!-- Main table -->
       <p-table
         #dt
+        [loading]="loading()"
         [value]="objects"
         [rows]="rows"
         [totalRecords]="totalElements"
@@ -61,7 +62,7 @@
                 (onClick)="clearGlobalFilter()"
                 [attr.aria-label]="'Limpar filtro global'">
                 <span pButtonIcon class="pi pi-filter-slash"></span>
-                <span pButtonLabel>Limpar</span>
+                <span class="hidden sm:inline" pButtonLabel>Limpar</span>
               </p-button>
             </div>
           </ng-template>
@@ -78,7 +79,7 @@
                 </th>
               }
               @for (column of getVisibleColumns(); track column.field) {
-                <th
+                <th scope="col"
                   scope="col"
                   [attr.id]="'col-' + column.field"
                   [attr.data-field]="column.field"
@@ -141,26 +142,12 @@
                       </app-action-buttons>
                     }
                     @case ('pais') {
-                      <span
-                        [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
-                        [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
-                        [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                        (click)="handleInteractiveCell($event, row.id)"
-                        (keydown.enter)="handleInteractiveCell($event, row.id)"
-                        (keydown.space)="handleInteractiveCell($event, row.id)"
-                        [attr.aria-label]="column.header + ': ' + row.pais.nome">
+                      <span [attr.aria-label]="column.header + ': ' + row.pais.nome">
                         {{ row.pais.nome }}
                       </span>
                     }
                     @default {
-                      <span
-                        [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
-                        [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
-                        [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                        (click)="handleInteractiveCell($event, row.id)"
-                        (keydown.enter)="handleInteractiveCell($event, row.id)"
-                        (keydown.space)="handleInteractiveCell($event, row.id)"
-                        [attr.aria-label]="column.header + ': ' + row[column.field]">
+                      <span [attr.aria-label]="column.header + ': ' + row[column.field]">
                         {{ row[column.field] }}
                       </span>
                     }
@@ -185,11 +172,23 @@
         </ng-template>
 
         <!-- Empty state -->
+        <ng-template pTemplate="loadingbody">
+          <tr>
+            <td [attr.colspan]="getColumnCount()">
+              <div class="text-center py-4">
+                <p class="text-muted mt-2 mb-0">{{ tableConfig.loadingMessage }}</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td [attr.colspan]="getColumnCount()" class="text-center p-4">
-              <i class="pi pi-search" style="font-size: 3rem; color: #dee2e6;"></i>
-              <p class="mt-3 mb-0">Nenhum estado encontrado.</p>
+            <td [attr.colspan]="getColumnCount()">
+              <div class="text-center py-4">
+                <i class="pi pi-info-circle text-muted" style="font-size: 2rem;"></i>
+                <p class="text-muted mt-2 mb-0">{{ tableConfig.emptyMessage }}</p>
+              </div>
             </td>
           </tr>
         </ng-template>

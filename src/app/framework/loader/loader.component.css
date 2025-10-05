@@ -10,6 +10,11 @@
   animation: fadeIn 0.15s ease-in;
 }
 
+/* Dark theme: lighter overlay for better contrast */
+:host-context([data-theme="dark"]) .loader-overlay {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
 .loader-content {
   display: flex;
   flex-direction: column;

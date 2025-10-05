@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, inject, Injector, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Cidade} from './cidade';
@@ -44,23 +44,17 @@ import {SalvarComponent} from '../geral/salvar/salvar.component';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CidadeFormComponent extends PrimeReactiveCrudFormComponent<Cidade, number> {
-  protected cidadeService: CidadeService;
-  protected injector: Injector;
-
-  private readonly fb = this.injector.get(FormBuilder);
-  private readonly estadoService = this.injector.get(EstadoService);
+  protected override service = inject(CidadeService);
+  protected override urlList = '/cidade';
+  protected override type = Cidade;
+  private readonly fb = inject(FormBuilder);
+  private readonly estadoService = inject(EstadoService);
 
   // Signal for autocomplete suggestions
   protected readonly estadosList = signal<Estado[]>([]);
 
   constructor() {
-    const cidadeService = inject(CidadeService);
-    const injector = inject(Injector);
-
-    super(cidadeService, injector, '/cidade', Cidade);
-
-    this.cidadeService = cidadeService;
-    this.injector = injector;
+    super();
   }
 
   /**

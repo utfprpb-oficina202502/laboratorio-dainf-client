@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  Injector,
-  signal
-} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Usuario} from './usuario';
@@ -63,10 +56,10 @@ interface PermissaoSelectItem {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario, number> {
-  protected usuarioService: UsuarioService;
-  protected injector: Injector;
-
-  private readonly fb = this.injector.get(FormBuilder);
+  protected override service = inject(UsuarioService);
+  protected override urlList = '/usuario';
+  protected override type = Usuario;
+  private readonly fb = inject(FormBuilder);
 
   // Signals for dropdown options and dialog state
   protected readonly grupoAcessoDropdown = signal<PermissaoSelectItem[]>([]);
@@ -90,13 +83,7 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
   protected readonly canShowPasswordChange = computed(() => this.isEditMode());
 
   constructor() {
-    const usuarioService = inject(UsuarioService);
-    const injector = inject(Injector);
-
-    super(usuarioService, injector, '/usuario', Usuario);
-    this.usuarioService = usuarioService;
-    this.injector = injector;
-
+    super();
     this.buildGrupoDeAcesso();
     this.buildPasswordChangeForm();
   }
@@ -135,7 +122,7 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
    * Load permission options for dropdown
    */
   buildGrupoDeAcesso(): void {
-    this.usuarioService.findAllPermissao()
+    this.service.findAllPermissao()
       .subscribe({
         next: (permissoes) => {
           if (permissoes && permissoes.length > 0) {
@@ -165,7 +152,7 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
    * Format permission name for display
    */
   formatRule(nome: string): string {
-    let toReturn = nome.replace('ROLE_', '');
+    let toReturn = nome.replaceAll('ROLE_', '');
     toReturn = toReturn.charAt(0).toUpperCase() + toReturn.slice(1).toLowerCase();
     return toReturn;
   }
@@ -214,7 +201,7 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
       this.loaderService.show();
 
       const usuarioComNovaSenha = { ...obj, password: novaSenha };
-      this.usuarioService.changeSenha(usuarioComNovaSenha, senhaAtual)
+      this.service.changeSenha(usuarioComNovaSenha, senhaAtual)
         .subscribe({
           next: () => {
             this.loaderService.hide();

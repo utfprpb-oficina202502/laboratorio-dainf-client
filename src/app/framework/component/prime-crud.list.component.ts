@@ -4,10 +4,12 @@ import {
   Directive,
   ElementRef,
   HostListener,
+  inject,
   Injector,
   Input,
   OnDestroy,
   OnInit,
+  signal,
   TemplateRef,
   ViewChild
 } from '@angular/core';
@@ -27,14 +29,19 @@ import {debounceTime, distinctUntilChanged, Subject, takeUntil} from 'rxjs';
 @Directive()
 export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy {
 
-  // Core services
-  protected router: Router;
-  protected messageService: MessageService;
-  protected confirmationService: ConfirmationService;
-  protected loaderService: LoaderService;
-  protected loginService: LoginService;
-  protected permissionService: PermissionService;
-  protected cdr: ChangeDetectorRef | null = null;
+  // Loading state signal for skeleton screens
+  public readonly loading = signal<boolean>(false);
+  // Core services - now injected in child classes
+  protected abstract service: CrudService<T, ID>;
+  protected abstract columnsTable: string[];
+  protected abstract urlForm: string;
+  protected readonly router: Router;
+  protected readonly messageService: MessageService;
+  protected readonly confirmationService: ConfirmationService;
+  protected readonly loaderService: LoaderService;
+  protected readonly loginService: LoginService;
+  protected readonly permissionService: PermissionService;
+  protected readonly cdr: ChangeDetectorRef | null = null;
 
   // Enhanced configuration system
   @Input() tableConfig: TableConfiguration = {
@@ -85,7 +92,6 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   public pageIndex = 0;
   public first = 0;
   public rows = 10;
-  public bottomSheetEnabled = true;
   public hostListenerColumnEnable = true;
 
   // Permission and user management
@@ -109,6 +115,8 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   public readonly self = this as PrimeCrudListComponent<T, ID>;
 
   // Advanced features
+  protected readonly injector: Injector;
+
   protected columnFilters: { [key: string]: any } = {};
   protected columnState: ColumnState[] = [];
   protected destroy$ = new Subject<void>();
@@ -145,25 +153,25 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     }
   }
 
-  constructor(protected service: CrudService<T, ID>,
-              protected injector: Injector,
-              protected columnsTable: string[],
-              protected urlForm: string) {
-    this.router = this.injector.get(Router);
-    this.messageService = this.injector.get(MessageService);
-    this.confirmationService = this.injector.get(ConfirmationService);
-    this.loaderService = injector.get(LoaderService);
-    this.loginService = injector.get(LoginService);
-    this.permissionService = injector.get(PermissionService);
+  constructor() {
+    // Inject all required services using inject() function
+    this.injector = inject(Injector);
+    this.router = inject(Router);
+    this.messageService = inject(MessageService);
+    this.confirmationService = inject(ConfirmationService);
+    this.loaderService = inject(LoaderService);
+    this.loginService = inject(LoginService);
+    this.permissionService = inject(PermissionService);
 
-    // Get ChangeDetectorRef for OnPush components
+    // Get ChangeDetectorRef for OnPush components (optional)
     try {
-      this.cdr = injector.get(ChangeDetectorRef);
+      this.cdr = inject(ChangeDetectorRef);
     } catch (e) {
       this.cdr = null;
     }
 
-    this.displayedColumns = this.columnsTable;
+    // Initialize displayedColumns as an empty array, will be set in buildColumnsTable()
+    this.displayedColumns = [];
     this.rows = this.pageSize;
     this.defaultStateKey = this.buildDefaultStateKey();
     this.stateKey = this.defaultStateKey;
@@ -216,11 +224,6 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.rows = this.pageSize;
   }
 
-  private buildDefaultStateKey(): string {
-    const cleaned = this.urlForm ? this.urlForm.replace(/\//g, '-') : 'default';
-    return 'prime-crud-' + cleaned;
-  }
-
   private initializeColumnHandling(): void {
     if (!this.tableConfig.columns) {
       this.tableConfig.columns = [];
@@ -250,24 +253,21 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.updateGlobalFilterFields();
   }
 
-  private initializeStateStorage(): void {
-    if (!this.tableConfig.stateful) {
-      this.stateStorageRef = undefined;
-      return;
-    }
+  // PrimeNG DataView pagination event handler
+  onPageChange(event: any) {
+    this.loading.set(true);
+    this.buildColumnsTable();
 
-    if (typeof window === 'undefined') {
-      this.stateStorageRef = undefined;
-      return;
-    }
+    this.first = event.first;
+    this.rows = event.rows;
+    this.pageIndex = Math.floor(event.first / event.rows);
+    this.pageSize = event.rows;
 
-    try {
-      this.stateKey = this.tableConfig.stateKey || this.defaultStateKey;
-      this.stateStorageRef = this.tableConfig.stateStorage === 'session' ? window.sessionStorage : window.localStorage;
-    } catch (error) {
-      console.warn('Table state storage unavailable', error);
-      this.stateStorageRef = undefined;
-    }
+    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue)
+    .subscribe({
+      next: (e) => this.handleDataLoadSuccess(e),
+      error: (error) => this.handleDataLoadError(error)
+    });
   }
 
   private initializeKeyboardShortcuts(): void {
@@ -633,35 +633,295 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.applyFilter('');
   }
 
-  /**
-   * Handles interactive cell clicks for mobile/keyboard accessibility
-   *
-   * @deprecated Use custom context menu implementation with Popover instead.
-   * Legacy support maintained for backward compatibility.
-   * @param event - The click/keyboard/touch event
-   * @param id - The ID of the object
-   */
-  public handleInteractiveCell(event: Event, id: ID): void {
-    if (!this.bottomSheetEnabled) {
-      return;
-    }
+  findAll() {
+    this.loading.set(true);
+    this.buildColumnsTable();
 
-    const target = event.target as HTMLElement;
-    const isActionButton = target.closest('button, a, .action-button, [role="button"]');
+    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue || '')
+    .subscribe({
+      next: (e) => this.handleDataLoadSuccess(e),
+      error: (error) => this.handleDataLoadError(error)
+    });
+  }
 
-    if (isActionButton) {
-      event.stopPropagation();
-      return;
-    }
-
-    if (event instanceof KeyboardEvent) {
-      const key = event.key;
-      if (key === 'Enter' || key === ' ') {
-        event.preventDefault();
-        this.openBottomSheet(id);
+  findAllByUsername() {
+    this.loading.set(true);
+    const u = localStorage.getItem('username');
+    this.service.findAllByUsername(u)
+    .subscribe({
+      next: (e) => {
+        this.objects = e;
+        this.totalElements = e.length;
+        this.pageIndex = 0;
+        this.first = 0;
+        this.restoreSelectionFromKeys();
+        this.loading.set(false);
+        this.postFindAll();
+        this.saveTableState();
+      },
+      error: (error) => {
+        this.loading.set(false);
+        this.showError(error);
       }
-    } else if (event instanceof MouseEvent || event instanceof TouchEvent) {
-      this.openBottomSheet(id);
+    });
+  }
+
+  applyFilter(filterValue: string) {
+    this.filterValue = (filterValue ?? '').trim();
+    // Reset to the first page when filtering
+    this.pageIndex = 0;
+    this.first = 0;
+
+    this.loadData();
+  }
+
+  // Export functionality - can be overridden in child components for custom export logic
+  exportExcel() {
+    if (!this.objects || this.objects.length === 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Aviso',
+        detail: 'Não há dados para exportar'
+      });
+      return;
+    }
+
+    import('exceljs').then(async (ExcelJS) => {
+      const data = this.prepareExportData();
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Dados');
+
+      // Add headers from first data object
+      if (data.length > 0) {
+        const headers = Object.keys(data[0]);
+        worksheet.addRow(headers);
+
+        // Add data rows
+        data.forEach((row: any) => {
+          worksheet.addRow(Object.values(row));
+        });
+
+        // Auto-fit columns
+        worksheet.columns.forEach((column: any) => {
+          let maxLength = 0;
+          column.eachCell({includeEmpty: true}, (cell: any) => {
+            const columnLength = cell.value ? cell.value.toString().length : 10;
+            if (columnLength > maxLength) {
+              maxLength = columnLength;
+            }
+          });
+          column.width = Math.min(maxLength + 2, 50);
+        });
+      }
+
+      // Generate buffer and download
+      const buffer = await workbook.xlsx.writeBuffer();
+      this.saveAsExcelFile(buffer, this.getExportFileName());
+    }).catch(error => {
+      console.error('Error exporting to Excel:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao exportar dados para Excel'
+      });
+    });
+  }
+
+  saveAsExcelFile(buffer: ArrayBuffer, fileName: string): void {
+    try {
+      // Use modern File System Access API with fallback
+      const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      const url = globalThis.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${fileName}_export_${Date.now()}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      globalThis.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error saving Excel file:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao salvar arquivo Excel'
+      });
+    }
+  }
+
+  delete(id: any) {
+    Swal.fire({
+      title: `Tem certeza que deseja remover o registro?`,
+      text: 'A ação não poderá ser desfeita.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim',
+      cancelButtonText: 'Não'
+    }).then((result) => {
+      if (result.value) {
+        this.loaderService.show();
+        this.service.delete(id)
+        .subscribe({
+          next: (e) => {
+            Swal.fire('Sucesso!', 'Registro excluído com sucesso!', 'success');
+            this.findAll();
+            this.loaderService.hide();
+          },
+          error: (error) => {
+            this.loaderService.hide();
+            this.showError(error);
+          }
+        });
+      }
+    });
+  }
+
+  edit(id: number) {
+    this.router.navigate([this.urlForm, id]);
+  }
+
+  postFindAll(): void {
+    //editar caso seja necessário trabalhar com os itens do findAll
+  }
+
+  @HostListener('window:resize', ['$event'])
+  buildColumnsTable() {
+    if (!this.hostListenerColumnEnable) {
+      this.displayedColumns = [...this.columnsTable];
+      return;
+    }
+
+    let responsiveColumns = [...this.columnsTable];
+
+    if (globalThis.innerWidth <= 1200) {
+      responsiveColumns = responsiveColumns.filter(column => column !== 'actions');
+    } else if (!responsiveColumns.includes('actions') && this.columnsTable.includes('actions')) {
+      responsiveColumns = [...responsiveColumns, 'actions'];
+    }
+
+    this.displayedColumns = responsiveColumns;
+  }
+
+  // PrimeNG Sort event handler
+  onSort(event: any) {
+    this.sortField = event.field;
+    this.sortOrder = event.order;
+
+    // Reset to the first page when sorting
+    this.pageIndex = 0;
+    this.first = 0;
+
+    this.loadData();
+  }
+
+  openForm() {
+    this.router.navigate([this.urlForm]);
+  }
+
+  showError(error: any): void {
+    Exception.addMessage(error);
+  }
+
+  // Override this method in child components for custom export data preparation
+  protected prepareExportData(): any[] {
+    const exportableColumns = this.getExportableColumns();
+
+    return this.objects.map(item => {
+      const exportItem: any = {};
+
+      exportableColumns.forEach(column => {
+        const header = column.header || column.field;
+        const value = this.getFieldValue(item, column.field);
+
+        // Handle different column types for export
+        if (column.type === 'custom' && value && typeof value === 'object') {
+          // For custom columns with objects, try to get a display value
+          if (value.hasOwnProperty('descricao')) {
+            exportItem[header] = value.descricao;
+          } else if (value.hasOwnProperty('nome')) {
+            exportItem[header] = value.nome;
+          } else if (value.hasOwnProperty('id')) {
+            exportItem[header] = value.id;
+          } else {
+            exportItem[header] = '';
+          }
+        } else {
+          exportItem[header] = value ?? '';
+        }
+      });
+
+      return exportItem;
+    });
+  }
+
+  /**
+   * Resolves a field value from an object, supporting nested properties
+   * @param obj - The object to get the value from
+   * @param field - The field path (e.g., 'nome' or 'grupo.descricao')
+   * @returns The resolved value or undefined
+   */
+  protected getFieldValue(obj: any, field: string): any {
+    if (!obj || !field) return undefined;
+
+    // Handle nested properties (e.g., 'grupo.descricao')
+    const parts = field.split('.');
+    let value = obj;
+
+    for (const part of parts) {
+      if (value?.hasOwnProperty(part)) {
+        value = value[part];
+      } else {
+        return undefined;
+      }
+    }
+
+    return value;
+  }
+
+  // Override this method in child components for a custom filename
+  protected getExportFileName(): string {
+    return 'dados';
+  }
+
+  // Global filter handler for backend integration
+  onGlobalFilter(value: string) {
+    this.onGlobalFilterDebounced(value);
+  }
+
+  private initializeStateStorage(): void {
+    if (!this.tableConfig.stateful) {
+      this.stateStorageRef = undefined;
+      return;
+    }
+
+    if (typeof globalThis === 'undefined') {
+      this.stateStorageRef = undefined;
+      return;
+    }
+
+    try {
+      this.stateKey = this.tableConfig.stateKey || this.defaultStateKey;
+      this.stateStorageRef = this.tableConfig.stateStorage === 'session' ? globalThis.sessionStorage : globalThis.localStorage;
+    } catch (error) {
+      console.warn('Table state storage unavailable', error);
+      this.stateStorageRef = undefined;
+    }
+  }
+
+  private buildDefaultStateKey(): string {
+    const cleaned = this.urlForm ? this.urlForm.replaceAll('/', '-') : 'default';
+    return 'prime-crud-' + cleaned;
+  }
+
+  /**
+   * Triggers change detection for OnPush components
+   * Extracts duplicated change detection logic
+   */
+  private triggerChangeDetection(): void {
+    if (this.cdr) {
+      this.cdr.markForCheck();
     }
   }
 
@@ -679,7 +939,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.first = this.pageIndex * this.pageSize;
 
     this.restoreSelectionFromKeys();
-    this.loaderService.hide();
+    this.loading.set(false);
     this.postFindAll();
     this.saveTableState();
 
@@ -691,182 +951,19 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
    * Extracts duplicated error handling logic
    */
   private handleDataLoadError(error: any): void {
-    this.loaderService.hide();
+    this.loading.set(false);
     this.showError(error);
     this.triggerChangeDetection();
   }
 
-  /**
-   * Triggers change detection for OnPush components
-   * Extracts duplicated change detection logic
-   */
-  private triggerChangeDetection(): void {
-    if (this.cdr) {
-      this.cdr.markForCheck();
-    }
-  }
-
-  // PrimeNG DataView pagination event handler
-  onPageChange(event: any) {
-    this.loaderService.show();
-    this.buildColumnsTable();
-
-    this.first = event.first;
-    this.rows = event.rows;
-    this.pageIndex = Math.floor(event.first / event.rows);
-    this.pageSize = event.rows;
-
-    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue)
-      .subscribe(
-        e => this.handleDataLoadSuccess(e),
-        error => this.handleDataLoadError(error)
-      );
-  }
-
-  applyFilter(filterValue: string) {
-    this.filterValue = (filterValue ?? '').trim();
-    // Reset to the first page when filtering
-    this.pageIndex = 0;
-    this.first = 0;
-
-    this.loadData();
-  }
-
-  findAll() {
-    this.loaderService.show();
-    this.buildColumnsTable();
-
-    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue || '')
-      .subscribe(
-        e => this.handleDataLoadSuccess(e),
-        error => this.handleDataLoadError(error)
-      );
-  }
-
-  findAllByUsername() {
-    this.loaderService.show();
-    const u = localStorage.getItem('username');
-    this.service.findAllByUsername(u)
-      .subscribe(e => {
-        this.objects = e;
-        this.totalElements = e.length;
-        this.pageIndex = 0;
-        this.first = 0;
-        this.restoreSelectionFromKeys();
-        this.loaderService.hide();
-        this.postFindAll();
-        this.saveTableState();
-      }, error => {
-        this.loaderService.hide();
-        this.showError(error);
-      });
-  }
-
-  edit(id: number) {
-    this.router.navigate([this.urlForm, id]);
-  }
-
-  postFindAll(): void {
-    //editar caso seja necessário trabalhar com os itens do findAll
-  }
-
-  delete(id: any) {
-    Swal.fire({
-      title: `Tem certeza que deseja remover o registro?`,
-      text: 'A ação não poderá ser desfeita.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sim',
-      cancelButtonText: 'Não'
-    }).then((result) => {
-      if (result.value) {
-        this.loaderService.show();
-        this.service.delete(id)
-          .subscribe(e => {
-            Swal.fire('Sucesso!', 'Registro excluído com sucesso!', 'success');
-            this.findAll();
-            this.loaderService.hide();
-          }, error => {
-            this.loaderService.hide();
-            this.showError(error);
-          });
-      }
-    });
-  }
-
-  /**
-   * Opens a bottom sheet for row actions
-   *
-   * @deprecated Bottom sheets have been replaced with context menus using Popover.
-   * Implement custom context menu in your component using openOptions() with Popover.
-   *
-   * Migration guide:
-   * 1. Add ViewChild for Popover: @ViewChild('actionsMenu') actionsMenu: Popover;
-   * 2. Create MenuItem array: contextMenuItems: MenuItem[] = [];
-   * 3. Implement openOptions(event: Event, id: ID) method
-   * 4. Use actionsMenu.toggle(event) to show menu
-   * 5. Replace template with: <p-popover #actionsMenu><p-menu [model]="contextMenuItems"></p-menu></p-popover>
-   *
-   * @param id - The ID of the object to show actions for
-   */
-  openBottomSheet(id: ID): void {
-    console.warn(
-      'openBottomSheet is deprecated. Use Popover context menus instead. ' +
-      'See method documentation for migration guide.'
-    );
-  }
-
-  openForm() {
-    this.router.navigate([this.urlForm]);
-  }
-
-  @HostListener('window:resize', ['$event'])
-  buildColumnsTable() {
-    if (!this.hostListenerColumnEnable) {
-      this.displayedColumns = [...this.columnsTable];
-      return;
-    }
-
-    let responsiveColumns = [...this.columnsTable];
-
-    if (window.innerWidth <= 1200) {
-      responsiveColumns = responsiveColumns.filter(column => column !== 'actions');
-    } else if (!responsiveColumns.includes('actions') && this.columnsTable.includes('actions')) {
-      responsiveColumns = [...responsiveColumns, 'actions'];
-    }
-
-    this.displayedColumns = responsiveColumns;
-  }
-
-  showError(error: any): void {
-    Exception.addMessage(error);
-  }
-
-  // PrimeNG Sort event handler
-  onSort(event: any) {
-    this.sortField = event.field;
-    this.sortOrder = event.order;
-
-    // Reset to first page when sorting
-    this.pageIndex = 0;
-    this.first = 0;
-
-    this.loadData();
-  }
-
-  // Global filter handler for backend integration
-  onGlobalFilter(value: string) {
-    this.onGlobalFilterDebounced(value);
-  }
-
   // Centralized data loading method
   private loadData() {
-    this.loaderService.show();
+    this.loading.set(true);
     this.buildColumnsTable();
 
     this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue)
-      .subscribe(
-        e => {
+    .subscribe({
+      next: (e) => {
           // Apply client-side sorting if needed
           if (this.sortField && e.content) {
             e.content.sort((a: any, b: any) => {
@@ -881,72 +978,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
           this.handleDataLoadSuccess(e);
         },
-        error => this.handleDataLoadError(error)
-      );
-  }
-
-  // Export functionality - can be overridden in child components for custom export logic
-  exportExcel() {
-    if (!this.objects || this.objects.length === 0) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Aviso',
-        detail: 'Não há dados para exportar'
-      });
-      return;
-    }
-
-    import('xlsx').then((xlsx) => {
-      const data = this.prepareExportData();
-
-      const worksheet = xlsx.utils.json_to_sheet(data);
-      const workbook = { Sheets: { data: worksheet }, SheetNames: ['data'] };
-      const excelBuffer: any = xlsx.write(workbook, { bookType: 'xlsx', type: 'array' });
-
-      this.saveAsExcelFile(excelBuffer, this.getExportFileName());
-    }).catch(error => {
-      console.error('Error importing xlsx library:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Erro',
-        detail: 'Erro ao exportar dados para Excel'
-      });
-    });
-  }
-
-  // Override this method in child components for custom export data preparation
-  protected prepareExportData(): any[] {
-    return this.objects.map(item => {
-      const exportItem: any = {};
-
-      // Default export fields - can be customized in child components
-      if (item.hasOwnProperty('id')) exportItem['Código'] = (item as any).id;
-      if (item.hasOwnProperty('descricao')) exportItem['Descrição'] = (item as any).descricao;
-
-      return exportItem;
-    });
-  }
-
-  // Override this method in child components for custom filename
-  protected getExportFileName(): string {
-    return 'dados';
-  }
-
-  saveAsExcelFile(buffer: any, fileName: string): void {
-    import('file-saver').then((module) => {
-      if (module?.default) {
-        const data: Blob = new Blob([buffer], {
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
-        });
-        module.default.saveAs(data, fileName + '_export_' + Date.now() + '.xlsx');
-      }
-    }).catch(error => {
-      console.error('Error importing file-saver library:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Erro',
-        detail: 'Erro ao salvar arquivo Excel'
-      });
+      error: (error) => this.handleDataLoadError(error)
     });
   }
 
@@ -994,17 +1026,17 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     }
 
     this.service.delete(ids[currentIndex])
-      .subscribe(
-        e => {
+    .subscribe({
+      next: (e) => {
           // Continue with next item
           this.deleteItemsSequentially(ids, currentIndex + 1, total);
         },
-        error => {
+      error: (error) => {
           this.loaderService.hide();
           this.showError(error);
           Swal.fire('Erro!', `Erro ao excluir alguns registros. ${currentIndex} de ${total} foram excluídos.`, 'error');
         }
-      );
+    });
   }
 
   // CSV Export using PrimeNG built-in functionality

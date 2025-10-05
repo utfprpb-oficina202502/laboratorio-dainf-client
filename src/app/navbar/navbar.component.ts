@@ -1,12 +1,12 @@
-import { Component, OnInit, ChangeDetectionStrategy, inject } from "@angular/core";
-import { RouterLink, RouterLinkActive, Router } from "@angular/router";
-import { LoginService } from "../login/login.service";
-import { SidenavService } from "../sidenav/sidenav.service";
-import { MenuItem } from "primeng/api";
-import { ToolbarModule as PrimeToolbarModule } from 'primeng/toolbar';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
-import { TieredMenuModule } from 'primeng/tieredmenu';
+import {ChangeDetectionStrategy, Component, inject, OnInit} from "@angular/core";
+import {Router, RouterLink, RouterLinkActive} from "@angular/router";
+import {LoginService} from "../login/login.service";
+import {SidenavService} from "../sidenav/sidenav.service";
+import {MenuItem} from "primeng/api";
+import {ToolbarModule as PrimeToolbarModule} from 'primeng/toolbar';
+import {ButtonModule} from 'primeng/button';
+import {TooltipModule} from 'primeng/tooltip';
+import {TieredMenuModule} from 'primeng/tieredmenu';
 
 @Component({
     selector: "app-navbar",
@@ -38,7 +38,6 @@ export class NavbarComponent implements OnInit {
   }
 
   toggleSidenav() {
-    // Just toggle the service - the sidebar component handles its own state
     this.sidenavService.toggle();
   }
 
@@ -62,7 +61,23 @@ export class NavbarComponent implements OnInit {
   }
 
   openEditForm() {
-    const id = JSON.parse(localStorage.getItem("userLogged")).id;
-    this.router.navigate([`/usuario/edit/${id}`]);
+    const userLogged = localStorage.getItem("userLogged");
+    if (userLogged) {
+      try {
+        const user = JSON.parse(userLogged);
+        if (user?.id) {
+          this.router.navigate([`/usuario/edit/${user.id}`]);
+        } else {
+          console.error('ID do usuário não encontrado');
+          this.logout();
+        }
+      } catch (error) {
+        console.error('Erro ao processar dados do usuário', error);
+        this.logout();
+      }
+    } else {
+      console.error('Dados do usuário não encontrados');
+      this.logout();
+    }
   }
 }

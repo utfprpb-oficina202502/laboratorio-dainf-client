@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {Grupo} from './grupo';
@@ -44,8 +44,9 @@ import {ActionButtonsComponent} from '../framework/component/action-buttons.comp
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GrupoListComponent extends PrimeCrudListComponent<Grupo, number> {
-  protected grupoService: GrupoService;
-  protected injector: Injector;
+  protected override service = inject(GrupoService);
+  protected override columnsTable = ['id', 'descricao', 'actions'];
+  protected override urlForm = 'grupo/form';
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -79,12 +80,7 @@ export class GrupoListComponent extends PrimeCrudListComponent<Grupo, number> {
   ];
 
   constructor() {
-    const grupoService = inject(GrupoService);
-    const injector = inject(Injector);
-
-    super(grupoService, injector, ['id', 'descricao', 'actions'], 'grupo/form');
-    this.grupoService = grupoService;
-    this.injector = injector;
+    super();
 
     this.configureTable();
   }

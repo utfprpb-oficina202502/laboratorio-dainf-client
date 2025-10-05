@@ -1,17 +1,12 @@
-import { Injectable, inject } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
-import {
-  ActivatedRouteSnapshot,
-  Router,
-  RouterStateSnapshot,
-  UrlTree,
-} from "@angular/router";
-import { BehaviorSubject, Observable, Subject, throwError, of, firstValueFrom } from "rxjs";
-import { Usuario } from "../usuario/usuario";
-import { environment } from "../../environments/environment";
-import { catchError, finalize, map, shareReplay, tap } from "rxjs/operators";
-import { UsuarioService } from "../usuario/usuario.service";
-import { Permissao } from "../usuario/permissao";
+import {inject, Injectable} from "@angular/core";
+import {HttpClient} from "@angular/common/http";
+import {ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree,} from "@angular/router";
+import {BehaviorSubject, firstValueFrom, Observable, of, throwError} from "rxjs";
+import {Usuario} from "../usuario/usuario";
+import {environment} from "../../environments/environment";
+import {catchError, finalize, map, shareReplay, tap} from "rxjs/operators";
+import {UsuarioService} from "../usuario/usuario.service";
+import {Permissao} from "../usuario/permissao";
 
 @Injectable()
 export class LoginService {
@@ -20,7 +15,7 @@ export class LoginService {
   private readonly usuarioService = inject(UsuarioService);
 
   url: string;
-  isAuthenticated = new Subject<boolean>();
+  isAuthenticated = new BehaviorSubject<boolean>(this.hasStoredAuth());
   isRunningRequest = false;
   private readonly currentUserSubject = new BehaviorSubject<Usuario | null>(this.loadUserFromStorage());
   private currentUserRequest$: Observable<Usuario> | null = null;
@@ -37,6 +32,55 @@ export class LoginService {
     } catch {
       return null;
     }
+  }
+
+  canActivate(
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot
+  ):
+    | Observable<boolean | UrlTree>
+    | Promise<boolean | UrlTree>
+    | boolean
+    | UrlTree {
+    const hasCachedUser = !!(this.currentUserSubject.value || this.loadUserFromStorage());
+    const hasToken = !!localStorage.getItem("token");
+
+    if (hasCachedUser && hasToken) {
+      this.redirectIfProfileIncomplete(route);
+      return of(true);
+    }
+
+    if (this.authValidation$) {
+      return this.authValidation$;
+    }
+
+    const url = `${environment.api_url}usuario/user-info`;
+    this.isRunningRequest = true;
+
+    const request$ = this.http.get<Usuario>(url).pipe(
+      tap((user) => {
+        if (user) {
+          this.persistUser(user);
+          this.currentUserSubject.next(user);
+        }
+        this.isAuthenticated.next(true);
+        this.hasValidatedSession = true;
+        this.redirectIfProfileIncomplete(route);
+      }),
+      map(() => true),
+      catchError((err) => {
+        this.logout();
+        return throwError(() => new Error('O usuario nao esta autenticado!'));
+      }),
+      finalize(() => {
+        this.isRunningRequest = false;
+        this.authValidation$ = null;
+      }),
+      shareReplay({bufferSize: 1, refCount: true})
+    );
+
+    this.authValidation$ = request$;
+    return request$;
   }
 
   private persistUser(user: Usuario | null) {
@@ -98,51 +142,10 @@ export class LoginService {
     this.url = environment.api_url + "login";
   }
 
-  canActivate(
-    route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot
-  ):
-    | Observable<boolean | UrlTree>
-    | Promise<boolean | UrlTree>
-    | boolean
-    | UrlTree {
-    const hasCachedUser = !!(this.currentUserSubject.value || this.loadUserFromStorage());
-    if (this.hasValidatedSession && hasCachedUser) {
-      this.redirectIfProfileIncomplete(route);
-      return of(true);
-    }
-
-    if (this.authValidation$) {
-      return this.authValidation$;
-    }
-
-    const url = `${environment.api_url}usuario/user-info`;
-    this.isRunningRequest = true;
-
-    const request$ = this.http.get<Usuario>(url).pipe(
-      tap((user) => {
-        if (user) {
-          this.persistUser(user);
-          this.currentUserSubject.next(user);
-        }
-        this.isAuthenticated.next(true);
-        this.hasValidatedSession = true;
-        this.redirectIfProfileIncomplete(route);
-      }),
-      map(() => true),
-      catchError((err) => {
-        this.logout();
-        return throwError(() => new Error('O usuario nao esta autenticado!'));
-      }),
-      finalize(() => {
-        this.isRunningRequest = false;
-        this.authValidation$ = null;
-      }),
-      shareReplay({ bufferSize: 1, refCount: true })
-    );
-
-    this.authValidation$ = request$;
-    return request$;
+  private hasStoredAuth(): boolean {
+    const hasToken = !!localStorage.getItem("token");
+    const hasUser = !!this.loadUserFromStorage();
+    return hasToken && hasUser;
   }
 
   getPermissoesUser(options: { forceRefresh?: boolean } = {}): Observable<Permissao[]> {

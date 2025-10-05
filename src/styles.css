@@ -6,6 +6,9 @@
 /* Import CSS Variables */
 @import './styles/variables.css';
 
+/* Import Font Declarations */
+@import './styles/fonts.css';
+
 /* PrimeNG theme loaded via angular.json */
 
 /* Tailwind CSS */
@@ -107,10 +110,8 @@
   }
 
   /* Fieldset */
-  .p-fieldset {
-    & .p-fieldset-legend {
-      font-size: var(--font-size-sm);
-    }
+  .p-fieldset .p-fieldset-legend {
+    font-size: var(--font-size-sm);
   }
 
   /* Calendar */
@@ -129,52 +130,44 @@
   .filtro-dialog.p-dialog {
     border-radius: var(--radius-lg);
     overflow: hidden;
+  }
 
-    & .p-dialog-header {
-      padding: var(--spacing-md) var(--spacing-lg);
+  .filtro-dialog.p-dialog .p-dialog-header {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
 
-      & .p-dialog-title {
-        font-weight: 600;
-        font-size: var(--font-size-base);
-      }
-    }
+  .filtro-dialog.p-dialog .p-dialog-header .p-dialog-title {
+    font-weight: 600;
+    font-size: var(--font-size-base);
+  }
 
-    & .p-dialog-content {
-      padding: var(--spacing-xl);
+  .filtro-dialog.p-dialog .p-dialog-content {
+    padding: var(--spacing-xl);
+  }
 
-      @media (max-width: 480px) {
-        padding: var(--spacing-lg);
-      }
-    }
-
-    & .p-dialog-footer {
-      padding: var(--spacing-md) var(--spacing-xl);
-
-      @media (max-width: 480px) {
-        flex-wrap: wrap;
-        gap: var(--spacing-sm);
-      }
-
-      & .p-button {
-        min-width: 110px;
-      }
+  @media (max-width: 480px) {
+    .filtro-dialog.p-dialog .p-dialog-content {
+      padding: var(--spacing-lg);
     }
   }
 
-  /* Filter DatePicker */
-  .filtro-datepicker.p-datepicker {
-    border-radius: var(--radius-md);
+  .filtro-dialog.p-dialog .p-dialog-footer {
+    padding: var(--spacing-md) var(--spacing-xl);
+  }
 
-    & .p-inputtext {
-      border: none;
-      box-shadow: none;
-      padding: 0.6rem 0.75rem;
-    }
-
-    & .p-datepicker-trigger {
-      background: transparent;
+  @media (max-width: 480px) {
+    .filtro-dialog.p-dialog .p-dialog-footer {
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
     }
   }
+
+  .filtro-dialog.p-dialog .p-dialog-footer .p-button {
+    min-width: 110px;
+  }
+
+  /* Filter DatePicker - REMOVED: Legacy styles that were hiding borders */
+  /* DatePicker styling is now handled in home.component.css with theme-aware variables */
 }
 
 @layer overrides {
@@ -183,57 +176,53 @@
      NOTE: !important needed to override PrimeNG's high specificity
      ============================================================================ */
   /* Light mode: Primary buttons filled style */
-  :is(:root, :root[data-theme="light"]) {
-    & .p-button-primary.p-button-outlined {
-      background: var(--p-button-primary-background);
-      border-color: var(--p-button-primary-border-color);
-      color: var(--p-button-primary-color);
+  :is(:root, :root[data-theme="light"]) .p-button-primary.p-button-outlined {
+    background: var(--p-button-primary-background);
+    border-color: var(--p-button-primary-border-color);
+    color: var(--p-button-primary-color);
+  }
 
-      &:hover {
-        background: var(--p-button-primary-hover-background);
-        border-color: var(--p-button-primary-hover-border-color);
-        color: var(--p-button-primary-hover-color);
-      }
+  :is(:root, :root[data-theme="light"]) .p-button-primary.p-button-outlined:hover {
+    background: var(--p-button-primary-hover-background);
+    border-color: var(--p-button-primary-hover-border-color);
+    color: var(--p-button-primary-hover-color);
+  }
 
-      &:active {
-        background: var(--p-button-primary-active-background);
-        border-color: var(--p-button-primary-active-border-color);
-        color: var(--p-button-primary-active-color);
-      }
-    }
+  :is(:root, :root[data-theme="light"]) .p-button-primary.p-button-outlined:active {
+    background: var(--p-button-primary-active-background);
+    border-color: var(--p-button-primary-active-border-color);
+    color: var(--p-button-primary-active-color);
   }
 
   /* Dark mode: Primary buttons outlined for contrast */
-  :root[data-theme="dark"] {
-    & .p-button-primary:not(.p-button-text) {
-      background: transparent !important;
-      border: 1px solid var(--p-primary-color) !important;
-      color: var(--p-primary-color) !important;
+  :root[data-theme="dark"] .p-button-primary:not(.p-button-text) {
+    background: transparent !important;
+    border: 1px solid var(--p-primary-color) !important;
+    color: var(--p-primary-color) !important;
+  }
 
-      &:hover {
-        background: var(--p-primary-color) !important;
-        border-color: var(--p-primary-color) !important;
-        color: var(--p-primary-contrast-color) !important;
-      }
+  :root[data-theme="dark"] .p-button-primary:not(.p-button-text):hover {
+    background: var(--p-primary-color) !important;
+    border-color: var(--p-primary-color) !important;
+    color: var(--p-primary-contrast-color) !important;
+  }
 
-      &:is(:active, :focus) {
-        background: var(--p-primary-color) !important;
-        border-color: var(--p-primary-color) !important;
-        color: var(--p-primary-contrast-color) !important;
-        box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--p-primary-color), transparent 80%);
-      }
-    }
+  :root[data-theme="dark"] .p-button-primary:not(.p-button-text):is(:active, :focus) {
+    background: var(--p-primary-color) !important;
+    border-color: var(--p-primary-color) !important;
+    color: var(--p-primary-contrast-color) !important;
+    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--p-primary-color), transparent 80%);
+  }
 
-    & .p-button-secondary.p-button-outlined {
-      background: transparent;
-      border-color: var(--p-surface-400);
-      color: var(--p-surface-400);
+  :root[data-theme="dark"] .p-button-secondary.p-button-outlined {
+    background: transparent;
+    border-color: var(--p-surface-400);
+    color: var(--p-surface-400);
+  }
 
-      &:hover {
-        background: var(--p-surface-600);
-        border-color: var(--p-surface-600);
-        color: var(--p-surface-0);
-      }
-    }
+  :root[data-theme="dark"] .p-button-secondary.p-button-outlined:hover {
+    background: var(--p-surface-600);
+    border-color: var(--p-surface-600);
+    color: var(--p-surface-0);
   }
 }

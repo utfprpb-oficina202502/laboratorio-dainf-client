@@ -15,42 +15,43 @@ import {Table} from 'primeng/table';
   template: `
     <p-toolbar class="mb-3" [attr.aria-label]="toolbarAriaLabel">
       <ng-template pTemplate="start">
-        <div class="flex flex-wrap gap-2 items-center">
-          @if (toolbarStartTemplate) {
-            <ng-container [ngTemplateOutlet]="toolbarStartTemplate"></ng-container>
-          } @else {
-            @if (list.canCreate && !list.isReadOnly) {
-              <p-button
-                (onClick)="list.openForm()"
-                [pTooltip]="'Adicionar '+ entityName"
-                tooltipPosition="bottom"
-                [attr.aria-label]="'Adicionar ' + entityName">
-                <span pButtonIcon class="pi pi-plus"></span>
-                <span pButtonLabel class="hidden md:inline ml-2">Adicionar</span>
-              </p-button>
-            }
-            @if (list.canDelete && !list.isReadOnly) {
-              <p-button
-                severity="danger"
-                [outlined]="true"
-                (onClick)="list.deleteSelectedItems()"
-                [disabled]="!list.selectedItems || !list.selectedItems.length"
-                [pTooltip]="'Deletar '+ entityPluralName +' selecionados'"
-                tooltipPosition="bottom"
-                [attr.aria-label]="'Deletar ' + (list.selectedItems?.length || 0) + ' registro(s)'">
-                <span pButtonIcon class="pi pi-trash"></span>
-                <span pButtonLabel class="hidden md:inline ml-2">Deletar</span>
-              </p-button>
-            }
-          }
-        </div>
+        @if (toolbarStartTemplate) {
+          <ng-container [ngTemplateOutlet]="toolbarStartTemplate"></ng-container>
+        }
       </ng-template>
 
       <ng-template pTemplate="end">
-        <div class="flex flex-wrap gap-2 items-center justify-end">
+        <div class="flex flex-wrap gap-2 items-center justify-end w-full">
           @if (toolbarEndTemplate) {
             <ng-container [ngTemplateOutlet]="toolbarEndTemplate"></ng-container>
           } @else {
+            <!-- Add/Delete buttons -->
+            @if (!toolbarStartTemplate) {
+              @if (list.canCreate && !list.isReadOnly) {
+                <p-button
+                  (onClick)="list.openForm()"
+                  [pTooltip]="'Adicionar '+ entityName"
+                  tooltipPosition="bottom"
+                  [attr.aria-label]="'Adicionar ' + entityName">
+                  <span pButtonIcon class="pi pi-plus"></span>
+                  <span pButtonLabel class="hidden md:inline ml-2">Adicionar</span>
+                </p-button>
+              }
+              @if (list.canDelete && !list.isReadOnly) {
+                <p-button
+                  severity="danger"
+                  [outlined]="true"
+                  (onClick)="list.deleteSelectedItems()"
+                  [disabled]="!list.selectedItems || !list.selectedItems.length"
+                  [pTooltip]="'Deletar '+ entityPluralName +' selecionados'"
+                  tooltipPosition="bottom"
+                  [attr.aria-label]="'Deletar ' + (list.selectedItems?.length || 0) + ' registro(s)'">
+                  <span pButtonIcon class="pi pi-trash"></span>
+                  <span pButtonLabel class="hidden md:inline ml-2">Deletar</span>
+                </p-button>
+              }
+            }
+            <!-- Expand/Collapse buttons -->
             @if (list.tableConfig.expandable) {
               <p-button
                 type="button"
@@ -72,21 +73,7 @@ import {Table} from 'primeng/table';
                 <span pButtonIcon class="pi pi-minus-circle"></span>
               </p-button>
             }
-            @if (list.tableConfig.columnToggle !== false) {
-              <p-multiSelect
-                #columnToggle
-                [options]="list.columnToggleOptions"
-                [(ngModel)]="list.columnToggleModel"
-                optionLabel="label"
-                optionValue="value"
-                display="chip"
-                placeholder="Colunas"
-                (onChange)="list.onColumnToggleChange($event.value)"
-                appendTo="body"
-                [style]="{'max-width': '200px', 'min-width': '150px'}"
-                [attr.aria-label]="'Selecionar colunas visiveis'">
-              </p-multiSelect>
-            }
+            <!-- Export buttons -->
             @if (list.canExport) {
               <p-buttonGroup>
                 <p-button
@@ -110,6 +97,23 @@ import {Table} from 'primeng/table';
                   <span pButtonLabel class="hidden lg:inline ml-2">CSV</span>
                 </p-button>
               </p-buttonGroup>
+            }
+            <!-- Column toggle -->
+            @if (list.tableConfig.columnToggle !== false) {
+              <p-multiSelect
+                #columnToggle
+                [options]="list.columnToggleOptions"
+                [(ngModel)]="list.columnToggleModel"
+                optionLabel="label"
+                optionValue="value"
+                display="chip"
+                placeholder="Colunas"
+                (onChange)="list.onColumnToggleChange($event.value)"
+                appendTo="body"
+                styleClass="w-full sm:w-auto"
+                [style]="{'min-width': '150px'}"
+                [attr.aria-label]="'Selecionar colunas visiveis'">
+              </p-multiSelect>
             }
           }
         </div>

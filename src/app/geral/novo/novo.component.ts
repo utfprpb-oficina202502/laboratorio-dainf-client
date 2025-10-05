@@ -8,9 +8,9 @@ import {ButtonModule} from 'primeng/button';
   imports: [ButtonModule]
 })
 export class NovoComponent {
-  readonly onClick = output<void>();
+  readonly novoClick = output<void>();
 
   click(): void {
-    this.onClick.emit();
+    this.novoClick.emit();
   }
 }

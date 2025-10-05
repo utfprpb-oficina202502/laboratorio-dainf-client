@@ -3,20 +3,14 @@
     <app-navbar></app-navbar>
     <app-sidenav></app-sidenav>
     <main id="content" class="layout-content">
-      <div [style.opacity]="isNavigating ? '0' : '1'"
-           [style.pointer-events]="isNavigating ? 'none' : 'auto'"
-           style="transition: opacity 0.15s ease-in-out;">
-        <router-outlet></router-outlet>
-      </div>
+      <router-outlet></router-outlet>
     </main>
     <!-- Loader outside main content to cover entire viewport including sidebar -->
     <app-loader></app-loader>
   </section>
 } @else {
   <main id="content" class="only-login flex flex-col min-h-screen w-full overflow-y-auto">
-    <div [style.opacity]="isNavigating ? '0' : '1'" [style.pointer-events]="isNavigating ? 'none' : 'auto'" style="transition: opacity 0.15s ease-in-out;">
-      <router-outlet></router-outlet>
-    </div>
+    <router-outlet></router-outlet>
     <app-loader></app-loader>
   </main>
 }

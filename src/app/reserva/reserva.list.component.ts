@@ -3,7 +3,6 @@ import {
   Component,
   forwardRef,
   inject,
-  Injector,
   OnInit,
   ViewChild
 } from '@angular/core';
@@ -58,8 +57,9 @@ import {ActionButtonsComponent} from '../framework/component/action-buttons.comp
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number> implements OnInit{
-  protected reservaService: ReservaService;
-  protected injector: Injector;
+  protected override service = inject(ReservaService);
+  protected override columnsTable = ['id', 'descricao', 'dataReserva', 'dataRetirada', 'usuario', 'actions'];
+  protected override urlForm = 'reserva/form';
 
   @ViewChild('actionsMenu') actionsMenu: Popover;
   contextMenuItems: MenuItem[] = [];
@@ -115,20 +115,16 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
       type: 'custom',
       sortable: false,
       filterable: false,
+      exportable: false,
+      toggleable: false,
       width: '12rem',
       align: 'center'
     }
   ];
 
   constructor() {
-    const reservaService = inject(ReservaService);
-    const injector = inject(Injector);
+    super();
 
-    super(reservaService, injector, ['id', 'descricao', 'dataReserva', 'dataRetirada', 'usuario', 'actions'], 'reserva/form');
-    this.reservaService = reservaService;
-    this.injector = injector;
-
-    this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.configureTable();
   }
@@ -143,6 +139,46 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
 
   protected override getExportFileName(): string {
     return 'reservas';
+  }
+
+  ngOnInit(): void {
+    super.ngOnInit();
+
+    this.loginService.userLoggedIsAlunoOrProfessor().then(value => {
+      this.isAlunoOrProfessor = value;
+      this.isAlunoOrProfessor ? this.findAllByUsername() : this.findAll();
+    });
+  }
+
+  async openOptions(event: Event, reserva: Reserva): Promise<void> {
+    this.selectedReserva = reserva;
+    const isAlunoOrProfessor = await this.loginService.userLoggedIsAlunoOrProfessor();
+
+    this.contextMenuItems = [];
+
+    if (!isAlunoOrProfessor) {
+      this.contextMenuItems.push({
+        label: 'Gerar Empréstimo',
+        icon: 'pi pi-handshake',
+        command: () => this.finalizarReserva(reserva)
+      });
+    }
+
+    this.contextMenuItems.push(
+      {
+        label: 'Editar',
+        icon: 'pi pi-pencil',
+        command: () => this.edit(reserva.id)
+      },
+      {
+        label: 'Remover',
+        icon: 'pi pi-trash',
+        command: () => this.delete(reserva.id)
+      }
+    );
+
+    this.actionsMenu.toggle(event);
+    this.cdr.markForCheck();
   }
 
   private configureTable(): void {
@@ -162,7 +198,7 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
       expandMode: 'single',
       rowExpansionKey: 'id',
       stateful: true,
-      stateKey: 'reserva-list',
+      stateKey: 'reserva-list-v2',
       stateStorage: 'local',
       stateProps: {
         columns: true,
@@ -182,43 +218,6 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
 
     this.columnsTable = this.tableConfig.columns.map(column => column.field);
     this.displayedColumns = [...this.columnsTable];
-  }
-
-  ngOnInit(): void {
-    this.loginService.userLoggedIsAlunoOrProfessor().then(value => {
-      this.isAlunoOrProfessor = value;
-      this.isAlunoOrProfessor ? this.findAllByUsername() : this.findAll();
-    });
-  }
-
-  async openOptions(event: Event, reserva: Reserva): Promise<void> {
-    this.selectedReserva = reserva;
-    const isAlunoOrProfessor = await this.loginService.userLoggedIsAlunoOrProfessor();
-
-    this.contextMenuItems = [];
-
-    if (!isAlunoOrProfessor) {
-      this.contextMenuItems.push({
-        label: 'Gerar Empréstimo',
-        icon: 'fa fa-handshake-o',
-        command: () => this.finalizarReserva(reserva)
-      });
-    }
-
-    this.contextMenuItems.push({
-      label: 'Editar',
-      icon: 'fa fa-edit',
-      command: () => this.edit(reserva.id)
-    });
-
-    this.contextMenuItems.push({
-      label: 'Remover',
-      icon: 'fa fa-trash-o',
-      command: () => this.delete(reserva.id)
-    });
-
-    this.actionsMenu.toggle(event);
-    this.cdr.markForCheck();
   }
 
   finalizarReserva(reserva) {

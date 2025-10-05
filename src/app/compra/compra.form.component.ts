@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  Injector,
-  signal
-} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 
@@ -63,12 +56,12 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, number> {
-  protected compraService: CompraService;
-  protected injector: Injector;
-
-  private readonly fb = this.injector.get(FormBuilder);
-  private readonly fornecedorService = this.injector.get(FornecedorService);
-  private readonly itemService = this.injector.get(ItemService);
+  protected override service = inject(CompraService);
+  protected override urlList = '/compra';
+  protected override type = Compra;
+  private readonly fb = inject(FormBuilder);
+  private readonly fornecedorService = inject(FornecedorService);
+  private readonly itemService = inject(ItemService);
 
   // Signals for state management
   protected readonly fornecedorList = signal<Fornecedor[]>([]);
@@ -96,13 +89,7 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
   protected readonly hasItems = computed(() => this.compraItems().length > 0);
 
   constructor() {
-    const compraService = inject(CompraService);
-    const injector = inject(Injector);
-
-    super(compraService, injector, '/compra', Compra);
-
-    this.compraService = compraService;
-    this.injector = injector;
+    super();
   }
 
   /**
@@ -129,8 +116,10 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
    * Autocomplete for Fornecedores
    */
   findFornecedores(event: any): void {
-    this.fornecedorService.complete(event.query).subscribe(e => {
-      this.fornecedorList.set(e);
+    this.fornecedorService.complete(event.query).subscribe({
+      next: (e) => {
+        this.fornecedorList.set(e);
+      }
     });
   }
 
@@ -147,8 +136,10 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
       return;
     }
 
-    this.itemService.completeItem(query, false).subscribe(e => {
-      this.itemList.set(e);
+    this.itemService.completeItem(query, false).subscribe({
+      next: (e) => {
+        this.itemList.set(e);
+      }
     });
   }
 

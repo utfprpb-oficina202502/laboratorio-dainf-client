@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Relatorio} from './relatorio';
@@ -11,6 +11,7 @@ import {PrimeCrudToolbarComponent} from "../framework/component/prime-crud-toolb
 import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 import {InputIconModule} from "primeng/inputicon";
 import {IconFieldModule} from "primeng/iconfield";
+import {InputTextModule} from "primeng/inputtext";
 
 @Component({
   selector: 'app-list-relatorio',
@@ -29,13 +30,15 @@ import {IconFieldModule} from "primeng/iconfield";
     PrimeCrudToolbarComponent,
     ActionButtonsComponent,
     InputIconModule,
-    IconFieldModule
-],
+    IconFieldModule,
+    InputTextModule
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RelatorioListComponent extends PrimeCrudListComponent<Relatorio, number> {
-  protected relatorioService: RelatorioService;
-  protected injector: Injector;
+  protected override service = inject(RelatorioService);
+  protected override columnsTable = ['id', 'nome', 'actions'];
+  protected override urlForm = 'relatorio/form';
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -61,20 +64,16 @@ export class RelatorioListComponent extends PrimeCrudListComponent<Relatorio, nu
       type: 'custom',
       sortable: false,
       filterable: false,
+      exportable: false,
+      toggleable: false,
       width: '12rem',
       align: 'center'
     }
   ];
 
   constructor() {
-    const relatorioService = inject(RelatorioService);
-    const injector = inject(Injector);
+    super();
 
-    super(relatorioService, injector, ['id', 'nome', 'actions'], 'relatorio/form');
-    this.relatorioService = relatorioService;
-    this.injector = injector;
-
-    this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.configureTable();
   }
@@ -108,7 +107,7 @@ export class RelatorioListComponent extends PrimeCrudListComponent<Relatorio, nu
       expandMode: 'single',
       rowExpansionKey: 'id',
       stateful: true,
-      stateKey: 'relatorio-list',
+      stateKey: 'relatorio-list-v2',
       stateStorage: 'local',
       stateProps: {
         columns: true,

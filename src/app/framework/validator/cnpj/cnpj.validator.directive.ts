@@ -4,7 +4,7 @@ import {StringUtils} from '../../util/string.utils';
 import {CpfCnpjUtil} from '../../util/cpfCnpj.util';
 
 @Directive({
-    selector: '[validateCnpj][ngModel],[validateCnpj][formControl]',
+  selector: '[appValidateCnpj][ngModel],[appValidateCnpj][formControl]',
     providers: [
         { provide: NG_VALIDATORS, useExisting: forwardRef(() => CnpjValidatorDirective), multi: true }
     ],

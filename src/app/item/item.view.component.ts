@@ -43,7 +43,9 @@ export class ItemViewComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.itemService.findAll().subscribe(value => this.itens = value);
+    this.itemService.findAll().subscribe({
+      next: (value) => this.itens = value
+    });
   }
 
   postFindAll(): void {

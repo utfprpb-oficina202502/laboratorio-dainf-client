@@ -3,7 +3,7 @@
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
-          <app-voltar (onClick)="back()"></app-voltar>
+          <app-voltar (backClick)="back()"></app-voltar>
           <h2 class="text-xl font-semibold m-0">Cadastro de Compra</h2>
         </div>
       </div>
@@ -49,10 +49,10 @@
                     styleClass="w-full"
                     [inputStyle]="{ width: '100%' }">
                   </p-autoComplete>
-                  <app-cadastroRapido
+                  <app-cadastro-rapido
                     [href]="'/fornecedor/form'"
                     [id]="formGroup.get('fornecedor')?.value?.id">
-                  </app-cadastroRapido>
+                  </app-cadastro-rapido>
                 </div>
               </app-form-field>
             </div>
@@ -128,10 +128,10 @@
                       </div>
                     </ng-template>
                   </p-autoComplete>
-                  <app-cadastroRapido
+                  <app-cadastro-rapido
                     [href]="'/item/form'"
                     [id]="tempItem()?.id">
-                  </app-cadastroRapido>
+                  </app-cadastro-rapido>
                 </div>
               </app-form-field>
             </div>
@@ -193,10 +193,10 @@
                 styleClass="p-datatable-sm">
                 <ng-template pTemplate="header">
                   <tr>
-                    <th>Item</th>
-                    <th style="width: 120px">Qtde</th>
-                    <th style="width: 150px">Valor</th>
-                    <th style="width: 100px">Opções</th>
+                    <th scope="col">Item</th>
+                    <th scope="col" style="width: 120px">Qtde</th>
+                    <th scope="col" style="width: 150px">Valor</th>
+                    <th scope="col" style="width: 100px">Opções</th>
                   </tr>
                 </ng-template>
 
@@ -241,7 +241,7 @@
 
           <!-- Action Buttons -->
           <div class="flex justify-end gap-2 mt-4">
-            <app-cancelar (onClick)="back()"></app-cancelar>
+            <app-cancelar (cancelClick)="back()"></app-cancelar>
             <app-salvar [typeButton]="'submit'" [disabled]="isLoading()"></app-salvar>
           </div>
         </form>

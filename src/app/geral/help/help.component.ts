@@ -15,10 +15,10 @@ import {DialogModule} from 'primeng/dialog';
 export class HelpComponent {
   readonly dialogHelp = model<boolean>(false);
   readonly messageHelp = input<string>('');
-  readonly onClick = output<void>();
+  readonly helpClick = output<void>();
 
   click() {
     this.dialogHelp.set(true);
-    this.onClick.emit();
+    this.helpClick.emit();
   }
 }

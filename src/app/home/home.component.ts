@@ -1,11 +1,12 @@
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
+  computed,
   inject,
   OnDestroy,
-  OnInit
+  OnInit,
+  signal
 } from "@angular/core";
 import {CommonModule, DatePipe} from '@angular/common';
 import {RouterLink} from '@angular/router';
@@ -16,7 +17,6 @@ import {DashboardEmprestimoCountRange} from "./dashboard/dashboardEmprestimoCoun
 import {HomeService} from "./home.service";
 import {LoginService} from "../login/login.service";
 import {DateUtil} from "../framework/util/dateUtil";
-import {pt} from "../framework/constantes/calendarPt";
 import {LoaderService} from "../framework/loader/loader.service";
 import {ChartService} from "../framework/charts/chart.service";
 
@@ -54,70 +54,69 @@ import {SkeletonChartComponent} from '../framework/component/skeleton-chart.comp
   ]
 })
 export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
-  private readonly homeService = inject(HomeService);
+  // Constants
+  private static readonly DEFAULT_DATE_RANGE_DAYS = 90;
+  private static readonly STORAGE_KEY_DATE_INI = "dash_dt_ini";
+  private static readonly STORAGE_KEY_DATE_FIM = "dash_dt_fim";
+  // Signals - UI State
+  protected readonly dialogVisible = signal(false);
   private readonly loginService = inject(LoginService);
   private readonly loaderService = inject(LoaderService);
   private readonly chartService = inject(ChartService);
-  private readonly cdr = inject(ChangeDetectorRef);
-  private readonly datepipe: DatePipe = inject(DatePipe);
-
-  dashEmprestimoCount: DashboardEmprestimoCountRange;
-  dialodFiltroData = false;
-  dtIniFiltro: string;
-  dtFimFiltro: string;
-  localePt: any;
+  protected readonly dtIniFiltro = signal<string | null>(null);
+  protected readonly dtFimFiltro = signal<string | null>(null);
+  protected readonly loadingStats = signal(false);
+  protected readonly loadingCharts = signal(false);
+  protected readonly showDashboardAluno = signal(false);
+  protected readonly hasDashboardData = signal(false);
+  protected readonly dashEmprestimoCount = signal(new DashboardEmprestimoCountRange());
+  // Computed - Derived State
+  protected readonly disableBtnFiltrar = computed(() =>
+    !this.dtIniFiltro() || !this.dtFimFiltro()
+  );
+  // Services
+  private readonly homeService = inject(HomeService);
+  private readonly datepipe = inject(DatePipe);
+  // Private State
   private viewInitialized = false;
   private pendingDashboardBuild = false;
-  showDashboardAluno = false;
-  hasDashboardData = false;
   private latestRequestToken = 0;
   private destroyed = false;
-  loadingStats = false;
-  loadingCharts = false;
 
-  constructor() {
-    this.dashEmprestimoCount = new DashboardEmprestimoCountRange();
-    this.localePt = pt;
-  }
-
-  ngOnInit() {
-    this.loaderService.show();
-
+  ngOnInit(): void {
+    // Don't show blocking loader - let skeletons handle visual feedback
     this.loginService.userLoggedIsAlunoOrProfessor().then((value) => {
       if (this.destroyed) {
-        this.loaderService.hide();
         return;
       }
-      this.showDashboardAluno = !!value;
-      this.cdr.markForCheck();
+      this.showDashboardAluno.set(!!value);
 
-      if (this.showDashboardAluno) {
-        this.loaderService.hide();
-      } else if (this.viewInitialized) {
-        this.buildDashboards();
-      } else {
-        this.pendingDashboardBuild = true;
+      if (!this.showDashboardAluno()) {
+        if (this.viewInitialized) {
+          this.buildDashboards();
+        } else {
+          this.pendingDashboardBuild = true;
+        }
       }
     }).catch(() => {
-      this.loaderService.hide();
-      this.cdr.markForCheck();
+      // Error handled, signal update is automatic
     });
   }
 
-  ngAfterViewInit() {
+  ngAfterViewInit(): void {
     this.viewInitialized = true;
-    if (this.pendingDashboardBuild && !this.showDashboardAluno) {
+    if (this.pendingDashboardBuild && !this.showDashboardAluno()) {
       this.pendingDashboardBuild = false;
       this.buildDashboards();
     }
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     this.destroyed = true;
     this.chartService.disposeAll();
   }
 
-  buildDashboards() {
+  protected buildDashboards(): void {
     if (this.destroyed || !this.viewInitialized) {
       this.pendingDashboardBuild = !this.viewInitialized;
       return;
@@ -131,48 +130,97 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     const fim = this.getDateFim();
     const requestToken = ++this.latestRequestToken;
 
-    this.loadingStats = true;
-    this.loaderService.show();
-    this.cdr.markForCheck();
+    this.loadingStats.set(true);
 
     this.homeService.findDadosEmprestimoCountInRange(ini, fim)
       .pipe(finalize(() => {
-        this.loadingStats = false;
-        this.loaderService.hide(); // Hide loader immediately after stats load
-        this.cdr.markForCheck();
+        this.loadingStats.set(false);
       }))
       .subscribe({
         next: (count) => {
           if (this.destroyed || requestToken !== this.latestRequestToken) {
             return;
           }
-          this.dashEmprestimoCount = count;
+          this.dashEmprestimoCount.set(count);
 
-          const hasStatData = (
-            (this.dashEmprestimoCount?.total ?? 0) > 0 ||
-            (this.dashEmprestimoCount?.emAndamento ?? 0) > 0 ||
-            (this.dashEmprestimoCount?.emAtraso ?? 0) > 0 ||
-            (this.dashEmprestimoCount?.finalizado ?? 0) > 0
-          );
-
-          this.cdr.markForCheck();
-
-          if (hasStatData) {
+          if (this.hasStatData()) {
             this.loadCharts(ini, fim, requestToken);
           } else {
-            this.hasDashboardData = false;
-            this.cdr.markForCheck();
+            this.hasDashboardData.set(false);
           }
         },
         error: () => {
-          this.hasDashboardData = false;
-          this.cdr.markForCheck();
+          this.hasDashboardData.set(false);
         }
       });
   }
 
-  private loadCharts(ini: string, fim: string, requestToken: number) {
-    this.loadingCharts = true;
+  protected openFilterDialog(): void {
+    this.dialogVisible.set(true);
+  }
+
+  protected filtrar(): void {
+    const ini = this.dtIniFiltro();
+    const fim = this.dtFimFiltro();
+
+    if (!ini || !fim) {
+      return;
+    }
+
+    localStorage.setItem(HomeComponent.STORAGE_KEY_DATE_INI, ini);
+    localStorage.setItem(HomeComponent.STORAGE_KEY_DATE_FIM, fim);
+
+    this.dialogVisible.set(false);
+    this.dtIniFiltro.set(null);
+    this.dtFimFiltro.set(null);
+    this.buildDashboards();
+  }
+
+  protected getDateIni(): string {
+    let dtIni = localStorage.getItem(HomeComponent.STORAGE_KEY_DATE_INI);
+    if (!dtIni) {
+      dtIni = this.datepipe.transform(
+        DateUtil.removeDays(new Date(), HomeComponent.DEFAULT_DATE_RANGE_DAYS),
+        "dd/MM/yyyy"
+      ) ?? '';
+      localStorage.setItem(HomeComponent.STORAGE_KEY_DATE_INI, dtIni);
+    }
+    return dtIni;
+  }
+
+  protected getDateFim(): string {
+    let dtFim = localStorage.getItem(HomeComponent.STORAGE_KEY_DATE_FIM);
+    if (!dtFim) {
+      dtFim = this.datepipe.transform(new Date(), "dd/MM/yyyy") ?? '';
+      localStorage.setItem(HomeComponent.STORAGE_KEY_DATE_FIM, dtFim);
+    }
+    return dtFim;
+  }
+
+  private processByDay(data: any[], dateField: string) {
+    if (!Array.isArray(data)) {
+      return [];
+    }
+    return data
+    .map(d => {
+      const raw = d[dateField];
+      if (raw && typeof raw === 'string') {
+        const parts = raw.split('/');
+        if (parts.length === 3) {
+          const [dd, mm, yyyy] = parts;
+          const parsed = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+          return {...d, _dtParsed: parsed};
+        }
+      }
+      return {...d, _dtParsed: new Date(d[dateField])};
+    })
+    .filter(d => !Number.isNaN(d._dtParsed?.getTime?.()))
+    .sort((a, b) => a._dtParsed.getTime() - b._dtParsed.getTime());
+  }
+
+  private loadCharts(ini: string, fim: string, requestToken: number): void {
+    this.loadingCharts.set(true);
+
     const chartBatch = forkJoin({
       byDay: this.homeService.findDadosEmprestimoByDayInRange(ini, fim),
       emprestados: this.homeService.findItensMaisEmprestados(ini, fim),
@@ -181,8 +229,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     });
 
     chartBatch.pipe(finalize(() => {
-      this.loadingCharts = false;
-      this.cdr.markForCheck();
+      this.loadingCharts.set(false);
     })).subscribe({
       next: ({ byDay, emprestados, adquiridos, saidas }) => {
         if (this.destroyed || requestToken !== this.latestRequestToken) {
@@ -190,32 +237,20 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         }
 
         const byDayProcessed = this.processByDay(byDay, 'dtEmprestimo');
-        // ChartService now handles top 10 limiting for all charts
         const emprestadosTop = Array.isArray(emprestados) ? emprestados : [];
         const adquiridosList = Array.isArray(adquiridos) ? adquiridos : [];
         const saidasList = Array.isArray(saidas) ? saidas : [];
 
-        this.hasDashboardData = (
-          (this.dashEmprestimoCount?.total ?? 0) > 0 ||
-          (this.dashEmprestimoCount?.emAndamento ?? 0) > 0 ||
-          (this.dashEmprestimoCount?.emAtraso ?? 0) > 0 ||
-          (this.dashEmprestimoCount?.finalizado ?? 0) > 0 ||
-          byDayProcessed.length > 0 ||
-          emprestadosTop.length > 0 ||
-          adquiridosList.length > 0 ||
-          saidasList.length > 0
-        );
+        const hasData = this.hasAnyData(byDayProcessed, emprestadosTop, adquiridosList, saidasList);
+        this.hasDashboardData.set(hasData);
 
-        if (!this.hasDashboardData) {
+        if (!hasData) {
           this.chartService.disposeAll();
-          this.cdr.markForCheck();
           return;
         }
 
-        this.cdr.markForCheck();
-
         setTimeout(() => {
-          if (this.destroyed || !this.hasDashboardData) {
+          if (this.destroyed || !this.hasDashboardData()) {
             return;
           }
           // Create charts using the new chart service
@@ -253,73 +288,35 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         }, 0);
       },
       error: () => {
-        this.hasDashboardData = (this.dashEmprestimoCount?.total ?? 0) > 0;
-        this.cdr.markForCheck();
+        const count = this.dashEmprestimoCount();
+        this.hasDashboardData.set((count?.total ?? 0) > 0);
       }
     });
   }
 
-  private processByDay(data: any[], dateField: string) {
-    if (!Array.isArray(data)) {
-      return [];
-    }
-    return data
-      .map(d => {
-        const raw = d[dateField];
-        if (raw && typeof raw === 'string') {
-          const parts = raw.split('/');
-          if (parts.length === 3) {
-            const [dd, mm, yyyy] = parts;
-            const parsed = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
-            return {...d, _dtParsed: parsed};
-          }
-        }
-        return {...d, _dtParsed: new Date(d[dateField])};
-      })
-      .filter(d => !Number.isNaN(d._dtParsed?.getTime?.()))
-      .sort((a, b) => a._dtParsed.getTime() - b._dtParsed.getTime());
-  }
-
-  openFilterDialog(): void {
-    this.dialodFiltroData = true;
-  }
-
-  filtrar() {
-    this.dialodFiltroData = false;
-    localStorage.setItem("dash_dt_ini", this.dtIniFiltro);
-    localStorage.setItem("dash_dt_fim", this.dtFimFiltro);
-    this.dtIniFiltro = null;
-    this.dtFimFiltro = null;
-    this.buildDashboards();
-  }
-
-  getDateIni() {
-    let dtIni = localStorage.getItem("dash_dt_ini");
-    if (!dtIni) {
-      dtIni = this.datepipe.transform(
-        DateUtil.removeDays(new Date(), 90),
-        "dd/MM/yyyy"
-      );
-      localStorage.setItem("dash_dt_ini", dtIni);
-    }
-    return dtIni;
-  }
-
-  getDateFim() {
-    let dtFim = localStorage.getItem("dash_dt_fim");
-    if (!dtFim) {
-      dtFim = this.datepipe.transform(new Date(), "dd/MM/yyyy");
-      localStorage.setItem("dash_dt_fim", dtFim);
-    }
-    return dtFim;
-  }
-
-  disableBtnFiltrar() {
+  /**
+   * Check if stat cards have any data to display
+   */
+  private hasStatData(): boolean {
+    const count = this.dashEmprestimoCount();
     return (
-      this.dtIniFiltro == null ||
-      this.dtIniFiltro === "" ||
-      this.dtFimFiltro == null ||
-      this.dtFimFiltro === ""
+      (count?.total ?? 0) > 0 ||
+      (count?.emAndamento ?? 0) > 0 ||
+      (count?.emAtraso ?? 0) > 0 ||
+      (count?.finalizado ?? 0) > 0
+    );
+  }
+
+  /**
+   * Check if dashboard has any data including stats and charts
+   */
+  private hasAnyData(byDay: unknown[], emprestados: unknown[], adquiridos: unknown[], saidas: unknown[]): boolean {
+    return (
+      this.hasStatData() ||
+      byDay.length > 0 ||
+      emprestados.length > 0 ||
+      adquiridos.length > 0 ||
+      saidas.length > 0
     );
   }
 }

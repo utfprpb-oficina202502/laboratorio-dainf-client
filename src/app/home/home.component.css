@@ -1,60 +1,4 @@
-/* Estilos para os cards do dashboard */
-.dashboard-card {
-  background-color: var(--color-card-background, var(--color-bg-primary));
-  border-radius: 5px;
-  box-shadow: var(--color-card-shadow, 0 2px 1px -1px rgba(0,0,0,.2), 0 1px 1px 0 rgba(0,0,0,.14), 0 1px 3px 0 rgba(0,0,0,.12));
-  border: 1px solid var(--color-card-border, #DEE2E6);
-  color: var(--color-text-primary);
-  margin-bottom: 1rem;
-}
-
-.border-left-blue {
-  border-left: 4px solid #3B82F6;
-}
-
-.border-left-orange {
-  border-left: 4px solid #F97316;
-}
-
-.border-left-red {
-  border-left: 4px solid #EF4444;
-}
-
-.border-left-green {
-  border-left: 4px solid #22C55E;
-}
-
-.card-content {
-  display: flex;
-  align-items: center;
-  padding: 1rem;
-}
-
-.card-icon {
-  font-size: 3rem;
-  width: 30%;
-  text-align: center;
-  margin-right: 1rem;
-}
-
-.card-text {
-  width: 70%;
-  text-align: center;
-}
-
-.card-text h6 {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-}
-
-.card-number {
-  margin: 0;
-  font-size: 2.25rem;
-  font-weight: bold;
-  line-height: 1.2;
-}
+/* Legacy card styles removed - using <app-stat-card> component instead */
 
 /* AmCharts chart containers */
 #chartdiv2,
@@ -82,21 +26,113 @@
   /* Nenhuma regra de altura fixa para .chart-pie aqui para não conflitar com dimensionamento dinâmico */
 }
 
-/* Filter dialog theme-specific styling */
-.filtro-dialog .p-dialog-content {
-  background: var(--color-card-background, var(--color-bg-primary));
-  padding: 1.25rem;
-}
+/* ============================================================================
+   Filter Dialog - Enhanced UX
+   ============================================================================ */
 
-.filtro-dialog .p-dialog-header {
+/* Dialog Structure */
+.filtro-dialog ::ng-deep .p-dialog-header {
   background: var(--color-bg-secondary, #F1F5F9);
   border-bottom: 1px solid var(--color-border, #E2E8F0);
+  padding: 1.25rem 1.5rem;
 }
 
-.filtro-dialog .p-dialog-footer {
+.filtro-dialog ::ng-deep .p-dialog-content {
+  background: var(--color-bg-primary, #ffffff);
+  padding: 2rem 1.5rem;
+}
+
+.filtro-dialog ::ng-deep .p-dialog-footer {
   background: var(--color-bg-secondary, #F8FAFC);
   border-top: 1px solid var(--color-border, #E2E8F0);
-  padding: 0.75rem 1.25rem;
+  padding: 1rem 1.5rem;
+}
+
+/* Form Layout */
+.filtro-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.filtro-form-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.filtro-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+/* Labels with Icons */
+.filtro-form-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--color-text-primary, #212529);
+}
+
+.filtro-form-label i {
+  color: var(--p-primary-color, #3B82F6);
+}
+
+/* DatePicker Styling */
+.filtro-form ::ng-deep .p-datepicker {
+  width: 100%;
+}
+
+.filtro-form ::ng-deep .p-datepicker .p-inputtext {
+  width: 100%;
+  background-color: var(--color-bg-primary, #ffffff);
+  color: var(--color-text-primary, #212529);
+  border-color: var(--color-border, #e2e8f0);
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.filtro-form ::ng-deep .p-datepicker .p-inputtext:enabled:hover {
+  border-color: var(--p-primary-color, #3B82F6);
+}
+
+.filtro-form ::ng-deep .p-datepicker .p-inputtext:enabled:focus {
+  border-color: var(--p-primary-color, #3B82F6);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--p-primary-color, #3B82F6) 25%, transparent);
+}
+
+.filtro-form ::ng-deep .p-datepicker .p-datepicker-dropdown {
+  background-color: var(--color-bg-primary, #ffffff);
+  color: var(--color-text-primary, #212529);
+  border-color: var(--color-border, #e2e8f0);
+  transition: all 0.2s ease;
+}
+
+.filtro-form ::ng-deep .p-datepicker .p-datepicker-dropdown:enabled:hover {
+  background-color: var(--overlay-subtle, rgba(0, 0, 0, 0.05));
+  border-color: var(--p-primary-color, #3B82F6);
+}
+
+/* Header Subtitle Styling */
+.filtro-dialog ::ng-deep .p-dialog-header p {
+  color: var(--color-text-secondary, #6b7280);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 500px) {
+  .filtro-dialog ::ng-deep .p-dialog-content {
+    padding: 1.5rem 1rem;
+  }
+
+  .filtro-form-content {
+    gap: 1.25rem;
+  }
 }
 
 

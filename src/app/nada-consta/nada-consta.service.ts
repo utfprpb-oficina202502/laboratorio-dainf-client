@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import {inject, Injectable} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {Observable} from 'rxjs';
 
 export interface Pendencia {
   tipo: string;
@@ -16,7 +16,8 @@ export interface NadaConsta {
 
 @Injectable({ providedIn: 'root' })
 export class NadaConstaService {
-  constructor(private http: HttpClient) {}
+  private readonly http = inject(HttpClient);
+
 
   consultarNadaConsta(alunoId: number): Observable<NadaConsta> {
     return this.http.get<NadaConsta>(`/api/alunos/${alunoId}/nada-consta`);

@@ -7,9 +7,9 @@ import {ButtonModule} from 'primeng/button';
   imports: [ButtonModule]
 })
 export class CancelarComponent {
-  readonly onClick = output<void>();
+  readonly cancelClick = output<void>();
 
   click(): void {
-    this.onClick.emit();
+    this.cancelClick.emit();
   }
 }

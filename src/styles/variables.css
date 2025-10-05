@@ -31,7 +31,7 @@
        Typography
        ---------------------------------------------------------------- */
     --font-family-base: Roboto, "Helvetica Neue", sans-serif;
-    --font-family-display: 'Poppins', sans-serif;
+    --font-family-display: Poppins, sans-serif;
 
     --font-size-xs: 0.75rem;
     --font-size-sm: 0.875rem;

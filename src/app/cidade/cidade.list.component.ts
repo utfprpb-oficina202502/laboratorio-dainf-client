@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {CidadeService} from './cidade.service';
@@ -44,8 +44,9 @@ import {ActionButtonsComponent} from '../framework/component/action-buttons.comp
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CidadeListComponent extends PrimeCrudListComponent<Cidade, number> {
-  protected cidadeService: CidadeService;
-  protected injector: Injector;
+  protected override service = inject(CidadeService);
+  protected override columnsTable = ['id', 'nome', 'estado', 'actions'];
+  protected override urlForm = 'cidade/form';
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -87,12 +88,7 @@ export class CidadeListComponent extends PrimeCrudListComponent<Cidade, number> 
   ];
 
   constructor() {
-    const cidadeService = inject(CidadeService);
-    const injector = inject(Injector);
-
-    super(cidadeService, injector, ['id', 'nome', 'estado', 'actions'], 'cidade/form');
-    this.cidadeService = cidadeService;
-    this.injector = injector;
+    super();
 
     this.configureTable();
   }

@@ -2,7 +2,7 @@ import {Component, input} from '@angular/core';
 import {RouterLink} from '@angular/router';
 
 @Component({
-    selector: 'app-cadastroRapido',
+  selector: 'app-cadastro-rapido',
     templateUrl: './cadastroRapido.component.html',
     styleUrls: ['./cadastroRapido.component.css'],
   imports: [RouterLink]

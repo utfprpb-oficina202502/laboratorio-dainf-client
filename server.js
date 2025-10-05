@@ -1,6 +1,6 @@
 const express = require('express');
-const path = require('path');
-const fs = require('fs');
+const path = require('node:path');
+const fs = require('node:fs');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
@@ -62,10 +62,51 @@ app.use(helmet({
   },
 }));
 
-app.use(express.static(outputPath,
-  {index: false, maxAge: '1y', immutable: true, etag: true}));
+// cache
+app.use((req, res, next) => {
+  const filePath = req.path;
+
+  // exclusão do pwa do cache
+  const isPWAFile = /\/(ngsw\.json|ngsw-worker\.js|manifest\.webmanifest|safety-worker\.js)$/i.test(
+    filePath);
+
+  const isHashedFile = /\.[a-f0-9]{16,}\.(js|css)$/i.test(filePath);
+
+  const isStaticAsset = /\.(jpg|jpeg|png|gif|svg|webp|woff2?|ttf|eot|ico)$/i.test(
+    filePath);
+
+  if (isPWAFile) {
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Content-Type': filePath.endsWith('.json') ? 'application/json' :
+        filePath.endsWith('.webmanifest') ? 'application/manifest+json' :
+          'application/javascript'
+    });
+  } else if (isHashedFile) {
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+  } else if (isStaticAsset) {
+    res.set('Cache-Control', 'public, max-age=31536000');
+  }
+  next();
+});
+
+app.use(express.static(outputPath, {
+  index: false,
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, path) => {
+    // Additional headers for specific file types can go here
+  }
+}));
+
 app.get(/.*/, limiter, function (req, res) {
-  res.set('Cache-Control', 'no-store');
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
   res.sendFile(path.join(outputPath, 'index.html'));
 });
 

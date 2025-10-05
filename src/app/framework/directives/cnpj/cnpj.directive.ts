@@ -1,8 +1,11 @@
-import {Directive, DoCheck, ElementRef, HostListener, inject} from '@angular/core';
+import {Directive, DoCheck, ElementRef, inject} from '@angular/core';
 import {NgControl} from '@angular/forms';
 
 @Directive({
-    selector: '[formatCnpj]',
+  selector: '[appFormatCnpj]',
+  host: {
+    '(input)': 'onInput($event)'
+  }
 })
 export class CnpjDirective implements DoCheck {
   el = inject(ElementRef);
@@ -12,8 +15,7 @@ export class CnpjDirective implements DoCheck {
     this.format();
   }
 
-  @HostListener('input', ['$event'])
-  onInput(e) {
+  onInput(e: Event) {
     this.format();
   }
 

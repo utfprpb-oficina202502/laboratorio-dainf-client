@@ -1,12 +1,14 @@
-import {Directive, ElementRef, HostListener, inject} from '@angular/core';
+import {Directive, ElementRef, inject} from '@angular/core';
 
 @Directive({
-  selector: '[onlyNumber]',
+  selector: '[appOnlyNumber]',
+  host: {
+    '(keydown)': 'onKeyDown($event)'
+  }
 })
 export class OnlyNumberDirective {
   private readonly el = inject<ElementRef<HTMLInputElement>>(ElementRef);
 
-  @HostListener('keydown', ['$event'])
   onKeyDown(e: KeyboardEvent) {
     const alwaysAllowed = [
       'Delete', 'Backspace', 'Tab', 'Escape', 'Enter',

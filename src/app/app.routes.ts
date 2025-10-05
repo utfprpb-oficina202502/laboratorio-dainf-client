@@ -1,8 +1,7 @@
 import {Routes} from '@angular/router';
 import {LoginService} from './login/login.service';
 
-// Components
-import {HomeComponent} from './home/home.component';
+// Components (only eager-loaded)
 import {LoginComponent} from './login/login.component';
 import {PageNotFoundComponent} from './pageNotFound/pageNotFound.component';
 import {NotAuthorizedComponent} from './notAuthorized/notAuthorized.component';
@@ -40,7 +39,11 @@ export const routes: Routes = [
   {path: 'recupear-senha', component: RecuperarSenhaComponent},
   {path: 'recupear-senha/:code', component: RecuperarSenhaComponent},
   {path: 'confirmar-email/:code', component: ConfirmarEmailComponent},
-  {path: '', canActivate: [LoginService], component: HomeComponent},
+  {
+    path: '',
+    canActivate: [LoginService],
+    loadComponent: () => import('./home/home.component').then(m => m.HomeComponent)
+  },
 
   // Grupo
   {
@@ -185,7 +188,7 @@ export const routes: Routes = [
     loadComponent: () => import('./nada-consta/list/nada-consta-list.component').then(m => m.NadaConstaListComponent)
   },
   {
-    path: 'nada-consta/adicionar',
+    path: 'nada-consta/consultar',
     canActivate: [LoginService],
     loadComponent: () => import('./nada-consta/nada-consta-visualizar.component').then(m => m.NadaConstaVisualizarComponent)
   },

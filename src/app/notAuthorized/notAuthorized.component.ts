@@ -1,7 +1,7 @@
 import {Component} from '@angular/core';
 
 @Component({
-    selector: 'app-notAuthorized',
+  selector: 'app-not-authorized',
     templateUrl: './notAuthorized.component.html',
     styleUrls: ['./notAuthorized.component.css'],
 })
@@ -11,6 +11,6 @@ export class NotAuthorizedComponent {
   }
 
   back() {
-    window.history.back();
+    globalThis.history.back();
   }
 }

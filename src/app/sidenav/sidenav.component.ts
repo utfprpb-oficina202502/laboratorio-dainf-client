@@ -6,12 +6,9 @@ import {
   inject,
   OnInit
 } from "@angular/core";
-import {Router, RouterLink, RouterLinkActive} from "@angular/router";
+import {RouterLink, RouterLinkActive} from "@angular/router";
 import {SidenavService} from "./sidenav.service";
-import {browserChange} from "../app.component";
 import {LoginService} from "../login/login.service";
-import {UsuarioService} from "../usuario/usuario.service";
-import {ThemeService} from "../framework/services/theme.service";
 import {MenuItem as PrimeMenuItem} from 'primeng/api';
 import {ThemeToggleComponent} from '../framework/component/theme-toggle.component';
 
@@ -35,22 +32,22 @@ export const MENU_ITEM: MenuItem[] = [
   {
     path: "/emprestimo",
     title: "Empréstimo",
-    icon: "handshake-o",
+    icon: "arrow-right-arrow-left",
     id: "emprestimo",
     group: "ITEM",
   },
   {
     path: "/item",
     title: "Item",
-    icon: "microchip",
-    id: "item",
+    icon: "box",
+    id: "item-cadastro",
     roles: ["ADMINISTRADOR", "LABORATORISTA"],
     group: "CADASTRO",
   },
   {
     path: "/grupo",
     title: "Grupo",
-    icon: "sitemap",
+    icon: "objects-column",
     id: "grupo",
     roles: ["ADMINISTRADOR", "LABORATORISTA"],
     group: "CADASTRO",
@@ -82,15 +79,15 @@ export const MENU_ITEM: MenuItem[] = [
   {
     path: "/reserva",
     title: "Reserva",
-    icon: "paste",
+    icon: "calendar",
     id: "reserva",
     group: "ITEM",
   },
   {
     path: "/item",
     title: "Itens",
-    icon: "microchip",
-    id: "item",
+    icon: "box",
+    id: "item-aluno",
     roles: ["ALUNO"],
     group: "ITEM",
   },
@@ -112,7 +109,7 @@ export const MENU_ITEM: MenuItem[] = [
   {
     path: "/relatorio",
     title: "Relatórios",
-    icon: "line-chart",
+    icon: "chart-line",
     id: "relatorios",
     roles: ["ADMINISTRADOR", "LABORATORISTA"],
     group: "ITEM",
@@ -120,7 +117,7 @@ export const MENU_ITEM: MenuItem[] = [
   {
     path: "/nada-consta",
     title: "Nada Consta",
-    icon: "file-text-o",
+    icon: "file-check",
     id: "nada-consta",
     group: "ITEM",
     roles: ["ADMINISTRADOR", "LABORATORISTA"],
@@ -141,9 +138,6 @@ export const MENU_ITEM: MenuItem[] = [
 export class SidenavComponent implements OnInit {
   private readonly sidenavService = inject(SidenavService);
   private readonly loginService = inject(LoginService);
-  private readonly usuarioService = inject(UsuarioService);
-  private readonly router = inject(Router);
-  readonly themeService = inject(ThemeService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   public menuItems: PrimeMenuItem[] = this.getDefaultMenuItems();
@@ -159,45 +153,18 @@ export class SidenavComponent implements OnInit {
   ngOnInit(): void {
     this.buildMenu();
     this.updateViewportFlags();
-    this.changeStylesDrawer();
-    this.changeColorMenuItem();
     this.initObservableDrawer();
-    this.initObservableMenuItem();
-  }
-
-  private getDefaultMenuItems(): PrimeMenuItem[] {
-    const defaultItems = MENU_ITEM.filter(item =>
-      item.group === "ITEM" && (!item.roles || item.roles.includes("ALUNO"))
-    );
-
-    return defaultItems.map(item => ({
-      label: item.title,
-      icon: `fa fa-${item.icon}`,
-      routerLink: item.path,
-      id: item.id,
-      styleClass: 'sidebar-menu-item'
-    }));
-  }
-
-  @HostListener("window:resize")
-  onWindowResize(): void {
-    this.updateViewportFlags();
-    this.changeStylesDrawer();
   }
 
   buildMenu() {
     this.loginService.getPermissoesUser().subscribe((permissoes) => {
-      const userRoles = permissoes.map((x: any) => x.nome.replace("ROLE_", ""));
-      this.showCadastros = userRoles.indexOf("ADMINISTRADOR") >= 0 || userRoles.indexOf("LABORATORISTA") >= 0;
+      const userRoles = new Set(permissoes.map((x: any) => x.nome.replaceAll("ROLE_", "")));
+      this.showCadastros = userRoles.has("ADMINISTRADOR") || userRoles.has("LABORATORISTA");
       const items = [];
 
       MENU_ITEM.forEach((menu: any) => {
-        if (menu.roles == null) {
+        if (menu.roles == null || menu.roles.some((value: any) => userRoles.has(value))) {
           items.push(menu);
-        } else {
-          if (menu.roles.filter((value) => -1 !== userRoles.indexOf(value)).length > 0) {
-            items.push(menu);
-          }
         }
       });
 
@@ -207,7 +174,7 @@ export class SidenavComponent implements OnInit {
       items.forEach((value) => {
         const primeMenuItem: PrimeMenuItem = {
           label: value.title,
-          icon: `fa fa-${value.icon}`,
+          icon: `pi pi-${value.icon}`,
           routerLink: value.path,
           id: value.id,
           styleClass: 'sidebar-menu-item'
@@ -226,6 +193,25 @@ export class SidenavComponent implements OnInit {
     });
   }
 
+  @HostListener("window:resize")
+  onWindowResize(): void {
+    this.updateViewportFlags();
+  }
+
+  private getDefaultMenuItems(): PrimeMenuItem[] {
+    const defaultItems = MENU_ITEM.filter(item =>
+      item.group === "ITEM" && (!item.roles || item.roles.includes("ALUNO"))
+    );
+
+    return defaultItems.map(item => ({
+      label: item.title,
+      icon: `pi pi-${item.icon}`,
+      routerLink: item.path,
+      id: item.id,
+      styleClass: 'sidebar-menu-item'
+    }));
+  }
+
   initObservableDrawer() {
     this.sidenavService.observable().subscribe((hide) => {
       this.updateViewportFlags();
@@ -234,16 +220,7 @@ export class SidenavComponent implements OnInit {
       } else {
         this.sidebarVisible = !hide;
       }
-      this.changeStylesDrawer();
       this.cdr.markForCheck();
-    });
-  }
-
-  initObservableMenuItem() {
-    browserChange.asObservable().subscribe((value) => {
-      if (value) {
-        this.changeColorMenuItem();
-      }
     });
   }
 
@@ -260,11 +237,11 @@ export class SidenavComponent implements OnInit {
   }
 
   private updateViewportFlags(): void {
-    if (typeof window === 'undefined') {
+    if (typeof globalThis === 'undefined') {
       return;
     }
 
-    const width = window.innerWidth;
+    const width = globalThis.innerWidth;
     const wasDesktop = this.isDesktopView;
     const isDesktop = width >= this.desktopBreakpoint;
 
@@ -284,11 +261,5 @@ export class SidenavComponent implements OnInit {
       this.sidebarVisible = false;
       this.cdr.markForCheck();
     }
-  }
-
-  changeColorMenuItem() {
-  }
-
-  changeStylesDrawer() {
   }
 }

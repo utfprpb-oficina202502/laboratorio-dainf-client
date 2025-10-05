@@ -20,9 +20,6 @@ import {DatePickerModule} from 'primeng/datepicker';
 // Custom modules
 import {VoltarComponent} from '../geral/voltar/voltar.component';
 
-// Validation
-import {OnlyNumberDirective} from '../framework/directives/onlyNumber/onlyNumber.directive';
-
 @Component({
     selector: 'app-viewer-relatorio',
     templateUrl: './relatorio.viewer.component.html',
@@ -38,8 +35,6 @@ import {OnlyNumberDirective} from '../framework/directives/onlyNumber/onlyNumber
     DatePickerModule,
     // Custom
     VoltarComponent,
-    // Validation
-    OnlyNumberDirective
   ]
 })
 export class RelatorioViewerComponent implements OnInit {

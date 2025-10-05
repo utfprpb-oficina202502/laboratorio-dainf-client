@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  forwardRef,
-  inject,
-  Injector,
-  ViewChild
-} from "@angular/core";
+import {ChangeDetectionStrategy, Component, forwardRef, inject, ViewChild} from "@angular/core";
 import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {Item} from "./item";
@@ -21,7 +14,7 @@ import {environment} from "src/environments/environment";
 
 // PrimeNG Components
 import {CardModule} from 'primeng/card';
-import {TableModule} from 'primeng/table';
+import {Table, TableModule} from 'primeng/table';
 import {MultiSelectModule} from 'primeng/multiselect';
 import {ToolbarModule} from 'primeng/toolbar';
 import {ButtonModule} from 'primeng/button';
@@ -66,11 +59,14 @@ import {NovoComponent} from '../geral/novo/novo.component';
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => ItemListComponent) }]
 })
 export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
-  protected itemService: ItemService;
-  protected injector: Injector;
+  @ViewChild('dt') dt?: Table;
+  protected override service = inject(ItemService);
+  protected override columnsTable = ["id", "imagem", "nome", "localizacao", "grupo", "saldo", "actions"];
+
   private readonly reservaService = inject(ReservaService);
 
   @ViewChild('actionsMenu') actionsMenu: Popover;
+  protected override urlForm = "item/form";
   contextMenuItems: MenuItem[] = [];
   selectedItem: Item;
 
@@ -147,20 +143,9 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   ];
 
   constructor() {
-    const itemService = inject(ItemService);
-    const injector = inject(Injector);
-
-    super(
-      itemService,
-      injector,
-      ["id", "imagem", "nome", "localizacao", "grupo","saldo", "actions"],
-      "item/form"
-    );
-    this.itemService = itemService;
-    this.injector = injector;
+    super();
 
     this.minioUrl = environment.minio_url;
-    this.bottomSheetEnabled = false;
     this.configureTable();
   }
 
@@ -228,38 +213,42 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   async openOptions(event: Event, item: Item): Promise<void> {
     this.selectedItem = item;
     const isAlunoOrProfessor = await this.loginService.userLoggedIsAlunoOrProfessor();
-    const isMobile = window.innerWidth <= 1200;
+    const isMobile = globalThis.innerWidth <= 1200;
 
     this.contextMenuItems = [];
 
     if (!isAlunoOrProfessor) {
       this.contextMenuItems.push({
         label: 'Copiar',
-        icon: 'fa fa-copy',
+        icon: 'pi pi-copy',
         command: () => this.copyItem(item.id)
       });
     }
 
     this.contextMenuItems.push({
       label: 'Reservas',
-      icon: 'fa fa-paste',
+      icon: 'pi pi-clone',
       command: () => this.findReservasItem(item.id)
     });
 
     if (isMobile) {
-      this.contextMenuItems.push({
-        label: isAlunoOrProfessor ? 'Visualizar' : 'Editar',
-        icon: isAlunoOrProfessor ? 'fa fa-eye' : 'fa fa-edit',
-        command: () => this.edit(item.id)
-      });
+      const mobileMenuItems = [
+        {
+          label: isAlunoOrProfessor ? 'Visualizar' : 'Editar',
+          icon: isAlunoOrProfessor ? 'pi pi-eye' : 'pi pi-pencil',
+          command: () => this.edit(item.id)
+        }
+      ];
 
       if (!isAlunoOrProfessor) {
-        this.contextMenuItems.push({
+        mobileMenuItems.push({
           label: 'Remover',
-          icon: 'fa fa-trash-o',
+          icon: 'pi pi-trash',
           command: () => this.delete(item.id)
         });
       }
+
+      this.contextMenuItems.push(...mobileMenuItems);
     }
 
     this.actionsMenu.toggle(event);
@@ -280,8 +269,8 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
         }
       },
       (error) => {
-        console.log(error);
         this.loaderService.hide();
+        Swal.fire("Erro", "Erro ao buscar reservas do item.", "error");
       }
     );
   }

@@ -15,6 +15,7 @@
              [first]="first"
              [lazy]="tableConfig.lazy !== false"
              [lazyLoadOnInit]="tableConfig.lazyLoadOnInit !== false"
+             [loading]="loading()"
              [(selection)]="selectedItems"
              (selectionChange)="onSelectionChange($event)"
              [dataKey]="tableConfig.rowExpansionKey || 'id'"
@@ -59,7 +60,7 @@
       <ng-template pTemplate="header">
         <tr>
           @for (column of getVisibleColumns(); track column.field) {
-            <th
+            <th scope="col"
               [style.text-align]="column.align || 'left'"
               [style.width]="column.width"
               [style.min-width]="column.minWidth"
@@ -79,19 +80,19 @@
               [style.min-width]="column.minWidth">
               @switch (column.field) {
                 @case ('id') {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.id }}</span>
+                  <span>{{ rowData.id }}</span>
                 }
                 @case ('dataSaida') {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.dataSaida }}</span>
+                  <span>{{ rowData.dataSaida }}</span>
                 }
                 @case ('qtde') {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ getQtdeTotal(rowData?.saidaItem) }}</span>
+                  <span>{{ getQtdeTotal(rowData?.saidaItem) }}</span>
                 }
                 @case ('usuarioResponsavel') {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData?.usuarioResponsavel?.nome || 'N/A' }}</span>
+                  <span>{{ rowData?.usuarioResponsavel?.nome || 'N/A' }}</span>
                 }
                 @case ('observacao') {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;" class="text-truncate d-block" [title]="rowData?.observacao">
+                  <span class="text-truncate d-block" [title]="rowData?.observacao">
                     {{ rowData?.observacao || 'Nenhuma observacao' }}
                   </span>
                 }
@@ -106,7 +107,7 @@
                   </app-action-buttons>
                 }
                 @default {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData[column.field] }}</span>
+                  <span>{{ rowData[column.field] }}</span>
                 }
               }
             </td>
@@ -129,7 +130,6 @@
         <tr>
           <td [attr.colspan]="getVisibleColumns().length">
             <div class="text-center py-4">
-              <i class="pi pi-spin pi-spinner text-muted" style="font-size: 2rem;"></i>
               <p class="text-muted mt-2 mb-0">{{tableConfig.loadingMessage}}</p>
             </div>
           </td>

@@ -1,4 +1,4 @@
-import {Component, inject, Injector, ViewChild} from '@angular/core';
+import {Component, inject, ViewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule, NgForm} from '@angular/forms';
 import {CrudFormComponent} from '../framework/component/crud.form.component';
@@ -65,8 +65,9 @@ import {SalvarComponent} from '../geral/salvar/salvar.component';
   ]
 })
 export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, number> {
-  protected emprestimoService: EmprestimoService;
-  protected injector: Injector;
+  protected override service = inject(EmprestimoService);
+  protected override urlList = '/emprestimo';
+  protected override type = undefined;
 
   @ViewChild('form') frm: NgForm;
   @ViewChild('contextMenu') contextMenu: Menu;
@@ -83,13 +84,12 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
   documentoUsuario: string;
 
   constructor() {
-    const emprestimoService = inject(EmprestimoService);
-    const injector = inject(Injector);
+    super();
+  }
 
-    super(emprestimoService, injector, '/emprestimo');
-
-    this.emprestimoService = emprestimoService;
-    this.injector = injector;
+  // Getter for backwards compatibility
+  protected get emprestimoService(): EmprestimoService {
+    return this.service;
   }
 
   postEdit(): void {
@@ -135,17 +135,17 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
         }
       }
     this.emprestimoService.saveDevolucao(this.object)
-        .subscribe(e => {
-          this.loaderService.hide();
-          Swal.fire('Sucesso!', 'Devolução efetuada com sucesso!', 'success');
-          this.back();
-        }, error => {
-          this.loaderService.hide();
-          Swal.fire('Atenção!', 'Ocorreu um erro ao salvar a devolução!', 'error');
+    .subscribe({
+      next: (e) => {
+        this.loaderService.hide();
+        Swal.fire('Sucesso!', 'Devolução efetuada com sucesso!', 'success');
+        this.back();
+      },
+      error: (error) => {
+        this.loaderService.hide();
+        Swal.fire('Atenção!', 'Ocorreu um erro ao salvar a devolução!', 'error');
+      }
         });
-    //} else {
-    //  Swal.fire('Atenção!', 'Ainda há ' + this.itensPendentes.length + ' itens pendentes para devolução!', 'error');
-    //}
   }
 
   drop(event: CdkDragDrop<EmprestimoDevolucaoItem[]>) {
@@ -201,13 +201,13 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
     this.contextMenuItems = [
       {
         label: 'Duplicar Item',
-        icon: 'fa fa-copy',
+        icon: 'pi pi-copy',
         disabled: !options.canDuplicate,
         command: () => this.onClickMenuDuplicateItem(item)
       },
       {
         label: 'Remover Itens Duplicados',
-        icon: 'fa fa-trash',
+        icon: 'pi pi-trash',
         disabled: !options.canRemoveDuplicates,
         command: () => this.onClickMenuRemoveDuplicates(item)
       }

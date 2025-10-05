@@ -3,225 +3,250 @@
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
-          <app-voltar (onClick)="back()"></app-voltar>
-          <h2 class="text-xl font-semibold m-0">Cadastro de Usuário</h2>
+          <app-voltar (backClick)="back()"></app-voltar>
+          <h2 class="text-xl font-semibold m-0">Meus Dados</h2>
         </div>
-        @if (object.id !== null) {
-          <button
+        @if (isEditing()) {
+          <p-button
             type="button"
-            (click)="showDialogChangeSenha()"
+            [outlined]="true"
+            [rounded]="true"
+            severity="secondary"
             pTooltip="Redefinir senha"
             tooltipPosition="left"
-            class="p-button-rounded p-button-text"
-            pButton
-            icon="fa fa-lock"
-          ></button>
+            (onClick)="showDialogChangeSenha()"
+            [attr.aria-label]="'Redefinir senha'">
+            <span pButtonIcon class="pi pi-lock"></span>
+          </p-button>
         }
       </div>
     </ng-template>
 
     <ng-template pTemplate="content">
-      <form #form="ngForm" (submit)="updateUser()">
-        <div class="grid grid-cols-12 gap-4">
-          <div class="col-span-12 md:col-span-5">
-            <div class="form-group">
-              <label for="descricao">Nome</label>
-              <span class="field-required">*</span>
-              <input
-                type="text"
-                id="descricao"
-                name="descricao"
-                class="form-control"
-                required
-                validation
-                disabled="true"
-                [(ngModel)]="object.nome"
-                pInputText
-              />
+      @if (form(); as formGroup) {
+        <form [formGroup]="formGroup" (ngSubmit)="save()" class="flex flex-col gap-4">
+          <div class="grid grid-cols-12 gap-4">
+            <!-- Nome Field (read-only) -->
+            <div class="col-span-12 md:col-span-5">
+              <app-form-field
+                [control]="formGroup.get('nome')"
+                label="Nome"
+                [required]="true"
+                fieldId="nome"
+                hint="Nome não pode ser alterado">
+                <input
+                  pInputText
+                  id="nome"
+                  formControlName="nome"
+                  class="w-full"
+                  readonly/>
+              </app-form-field>
+            </div>
+
+            <!-- Email Field (read-only) -->
+            <div class="col-span-12 md:col-span-4">
+              <app-form-field
+                [control]="formGroup.get('email')"
+                label="Email"
+                [required]="true"
+                fieldId="email"
+                hint="Email não pode ser alterado">
+                <input
+                  pInputText
+                  id="email"
+                  type="email"
+                  formControlName="email"
+                  class="w-full"
+                  readonly/>
+              </app-form-field>
+            </div>
+
+            <!-- Telefone Field -->
+            <div class="col-span-12 md:col-span-3">
+              <app-form-field
+                [control]="formGroup.get('telefone')"
+                label="Telefone"
+                [required]="true"
+                fieldId="telefone"
+                hint="Digite seu telefone com DDD">
+                <input
+                  pInputText
+                  id="telefone"
+                  type="tel"
+                  formControlName="telefone"
+                  class="w-full"
+                  placeholder="(00) 00000-0000"/>
+              </app-form-field>
             </div>
           </div>
 
-          <div class="col-span-12 md:col-span-4">
-            <div class="form-group">
-              <label for="email">Email</label>
-              <span class="field-required">*</span>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                required
-                validation
-                validateEmail
-                disabled="true"
-                class="form-control"
-                [(ngModel)]="object.email"
-                pInputText
-              />
+          <div class="grid grid-cols-12 gap-4">
+            <!-- Grupo de Acesso (read-only) -->
+            <div class="col-span-12 md:col-span-4">
+              <app-form-field
+                [control]="formGroup.get('permissoes')"
+                label="Grupo de Acesso"
+                [required]="true"
+                fieldId="permissoes"
+                hint="Grupo de acesso não pode ser alterado">
+                <p-multiSelect
+                  inputId="permissoes"
+                  formControlName="permissoes"
+                  [options]="grupoAcessoDropdown()"
+                  [selectedItemsLabel]="'{0} itens selecionados'"
+                  [emptyFilterMessage]="'Nenhum resultado encontrado'"
+                  [placeholder]="'Nenhum Selecionado'"
+                  styleClass="w-full"
+                  [panelStyle]="{ minWidth: '100%', maxWidth: '100%' }">
+                </p-multiSelect>
+              </app-form-field>
+            </div>
+
+            <!-- Documento Field (RA/SIAPE) -->
+            <div class="col-span-12 md:col-span-3">
+              <app-form-field
+                [control]="formGroup.get('documento')"
+                [label]="documentLabel()"
+                [required]="true"
+                fieldId="documento"
+                [hint]="'Digite seu ' + documentLabel()">
+                <input
+                  pInputText
+                  id="documento"
+                  formControlName="documento"
+                  class="w-full"
+                  [placeholder]="documentLabel()"/>
+              </app-form-field>
+            </div>
+
+            <!-- Username Field (read-only) -->
+            <div class="col-span-12 md:col-span-5">
+              <app-form-field
+                [control]="formGroup.get('username')"
+                label="Usuário"
+                [required]="true"
+                fieldId="username"
+                hint="Nome de usuário não pode ser alterado">
+                <input
+                  pInputText
+                  id="username"
+                  formControlName="username"
+                  class="w-full"
+                  readonly/>
+              </app-form-field>
             </div>
           </div>
 
-          <div class="col-span-12 md:col-span-3">
-            <div class="form-group">
-              <label for="telefone">Telefone</label>
-              <span class="field-required">*</span>
-              <input
-                type="tel"
-                id="telefone"
-                name="telefone"
-                required
-                validation
-                formatTelefone
-                class="form-control"
-                [(ngModel)]="object.telefone"
-                pInputText
-              />
-            </div>
+          <!-- Action Buttons -->
+          <div class="flex justify-end gap-2 mt-4">
+            <app-cancelar (cancelClick)="back()"></app-cancelar>
+            <app-salvar [typeButton]="'submit'" [disabled]="isLoading()"></app-salvar>
           </div>
-        </div>
-
-        <div class="grid grid-cols-12 gap-4 mt-4">
-          <div class="col-span-12 md:col-span-4">
-            <div class="form-group">
-              <label for="grupo">Grupo de Acesso</label>
-              <span class="field-required">*</span>
-              <p-multiSelect
-                id="grupo"
-                name="grupo"
-                required
-                validation
-                disabled="true"
-                [selectedItemsLabel]="'{0} itens selecionados'"
-                [emptyFilterMessage]="'Nenhum resultado encontrado'"
-                [placeholder]="'Nenhum Selecionado'"
-                [style]="{ width: '100%' }"
-                [options]="grupoAcessoDropdown"
-                [(ngModel)]="object.permissoes"
-                [panelStyle]="{ minWidth: '100%', maxWidth: '100%' }"
-              >
-              </p-multiSelect>
-            </div>
-          </div>
-
-          <div class="col-span-12 md:col-span-3">
-            <div class="form-group">
-              <label for="documento">
-                {{
-                  object?.permissoes?.[0]?.nome.includes("ROLE_ALUNO")
-                    ? "RA"
-                    : "SIAPE"
-                }}
-              </label>
-              <span class="field-required">*</span>
-              <input
-                type="text"
-                id="documento"
-                name="documento"
-                class="form-control"
-                required
-                validation
-                [(ngModel)]="object.documento"
-                pInputText
-              />
-            </div>
-          </div>
-
-          <div class="col-span-12 md:col-span-5">
-            <div class="form-group">
-              <label for="usuario">Usuário</label>
-              <span class="field-required">*</span>
-              <input
-                type="text"
-                id="usuario"
-                name="usuario"
-                required
-                validation
-                disabled="true"
-                class="form-control"
-                [(ngModel)]="object.username"
-                pInputText
-              />
-            </div>
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-2 mt-4">
-          <app-cancelar (onClick)="back()"></app-cancelar>
-          <app-salvar [typeButton]="'submit'"></app-salvar>
-        </div>
-      </form>
+        </form>
+      }
     </ng-template>
   </p-card>
 </div>
 
+<!-- Password Change Dialog -->
 <p-dialog
   header="Redefinir Senha"
+  (visibleChange)="dialogChangeSenha.set($event)"
+  [dismissableMask]="true"
   [modal]="true"
-  [(visible)]="dialogChangeSenha"
-  [style]="{ minWidth: '400px' }"
+  [style]="{width: '90vw', maxWidth: '500px'}"
   [baseZIndex]="10000"
   [focusOnShow]="false"
->
-  <form #formChangeSenha="ngForm" (submit)="redefinirSenha()">
-    <div class="grid grid-cols-12 gap-4">
-      <div class="col-span-12">
-        <div class="form-group">
-          <label for="redSenhaAtual">Senha Atual</label>
-          <input
-            type="password"
-            id="redSenhaAtual"
-            name="redSenhaAtual"
-            required
-            validation
-            [(ngModel)]="redSenhaAtual"
-            class="form-control"
-            pInputText
-          />
-        </div>
-      </div>
+  [visible]="dialogChangeSenha()">
 
-      <div class="col-span-12">
-        <div class="form-group">
-          <label for="redNovaSenha">Nova Senha</label>
-          <input
-            type="password"
-            id="redNovaSenha"
-            name="redNovaSenha"
-            required
-            validation
-            [(ngModel)]="redNovaSenha"
-            class="form-control"
-            pInputText
-          />
+  <ng-template pTemplate="content">
+    @if (changeSenhaForm(); as changeSenhaFormGroup) {
+      <form [formGroup]="changeSenhaFormGroup" (ngSubmit)="redefinirSenha()"
+            class="flex flex-col gap-4">
+        <!-- Senha Atual -->
+        <div class="w-full">
+          <app-form-field
+            [control]="changeSenhaFormGroup.get('senhaAtual')"
+            label="Senha Atual"
+            [required]="true"
+            fieldId="senhaAtual">
+            <p-password
+              inputId="senhaAtual"
+              formControlName="senhaAtual"
+              [feedback]="false"
+              [toggleMask]="true"
+              styleClass="w-full"
+              inputStyleClass="w-full"
+              placeholder="Digite sua senha atual">
+            </p-password>
+          </app-form-field>
+          @if (getChangeSenhaError('senhaAtual')) {
+            <small class="text-red-600">{{ getChangeSenhaError('senhaAtual') }}</small>
+          }
         </div>
-      </div>
 
-      <div class="col-span-12">
-        <div class="form-group">
-          <label for="redConfNovaSenha">Confirme a nova senha</label>
-          <input
-            type="password"
-            id="redConfNovaSenha"
-            name="redConfNovaSenha"
-            required
-            validation
-            [(ngModel)]="redConfNovaSenha"
-            class="form-control"
-            pInputText
-          />
+        <!-- Nova Senha -->
+        <div class="w-full">
+          <app-form-field
+            [control]="changeSenhaFormGroup.get('novaSenha')"
+            label="Nova Senha"
+            [required]="true"
+            fieldId="novaSenha"
+            hint="Mínimo de 6 caracteres">
+            <p-password
+              inputId="novaSenha"
+              formControlName="novaSenha"
+              [toggleMask]="true"
+              styleClass="w-full"
+              inputStyleClass="w-full"
+              placeholder="Digite a nova senha">
+            </p-password>
+          </app-form-field>
+          @if (getChangeSenhaError('novaSenha')) {
+            <small class="text-red-600">{{ getChangeSenhaError('novaSenha') }}</small>
+          }
         </div>
-      </div>
-    </div>
 
-    <div class="flex justify-end gap-2 mt-4">
-      <p-button
-        label="Cancelar"
-        severity="secondary"
-        (onClick)="dialogChangeSenha = false"
-      ></p-button>
-      <p-button
-        label="Salvar"
-        type="submit"
-      ></p-button>
-    </div>
-  </form>
+        <!-- Confirmar Nova Senha -->
+        <div class="w-full">
+          <app-form-field
+            [control]="changeSenhaFormGroup.get('confirmarNovaSenha')"
+            label="Confirmar Nova Senha"
+            [required]="true"
+            fieldId="confirmarNovaSenha">
+            <p-password
+              inputId="confirmarNovaSenha"
+              formControlName="confirmarNovaSenha"
+              [feedback]="false"
+              [toggleMask]="true"
+              styleClass="w-full"
+              inputStyleClass="w-full"
+              placeholder="Confirme a nova senha">
+            </p-password>
+          </app-form-field>
+          @if (getChangeSenhaError('confirmarNovaSenha')) {
+            <small class="text-red-600">{{ getChangeSenhaError('confirmarNovaSenha') }}</small>
+          }
+          @if (getPasswordMismatchError()) {
+            <small class="text-red-600">{{ getPasswordMismatchError() }}</small>
+          }
+        </div>
+
+        <!-- Dialog Action Buttons -->
+        <div class="flex justify-end gap-2 mt-4">
+          <p-button
+            label="Cancelar"
+            severity="secondary"
+            type="button"
+            (onClick)="dialogChangeSenha.set(false)">
+          </p-button>
+          <p-button
+            label="Salvar"
+            type="submit"
+            [disabled]="changeSenhaFormGroup.invalid">
+          </p-button>
+        </div>
+      </form>
+    }
+  </ng-template>
 </p-dialog>

@@ -3,7 +3,7 @@
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
-          <app-voltar (onClick)="back()"></app-voltar>
+          <app-voltar (backClick)="back()"></app-voltar>
           <h2 class="text-xl font-semibold m-0">Cadastro de Empréstimo</h2>
         </div>
         @if (isEmprestimoFinalizado()) {
@@ -185,10 +185,10 @@
                           </div>
                         </ng-template>
                       </p-autoComplete>
-                      <app-cadastroRapido
+                      <app-cadastro-rapido
                         [href]="'/item/form'"
                         [id]="tempItem()?.id">
-                      </app-cadastroRapido>
+                      </app-cadastro-rapido>
                     </div>
                     @if (tempItem()) {
                       <small class="text-gray-600">Saldo: {{ tempItem()?.saldo }}</small>
@@ -250,10 +250,10 @@
                 styleClass="p-datatable-sm">
                 <ng-template pTemplate="header">
                   <tr>
-                    <th>Item</th>
-                    <th style="width: 120px">Devolver</th>
-                    <th style="width: 100px">Qtde</th>
-                    <th style="width: 100px">Opções</th>
+                    <th scope="col">Item</th>
+                    <th scope="col" style="width: 120px">Devolver</th>
+                    <th scope="col" style="width: 100px">Qtde</th>
+                    <th scope="col" style="width: 100px">Opções</th>
                   </tr>
                 </ng-template>
 
@@ -327,7 +327,7 @@
           <!-- Action Buttons -->
           @if (!disableForm()) {
             <div class="flex justify-end gap-2 mt-4">
-              <app-cancelar (onClick)="back()"></app-cancelar>
+              <app-cancelar (cancelClick)="back()"></app-cancelar>
               <app-salvar
                 [typeButton]="'submit'"
                 [disabled]="isLoading() || isEmprestimoFinalizado()">

@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, ElementRef, inject, Injector, ViewChild} from '@angular/core';
+import {ChangeDetectorRef, Component, ElementRef, inject, ViewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {CrudFormComponent} from '../framework/component/crud.form.component';
@@ -28,7 +28,6 @@ import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 
 // Framework components
 // Validation
-import {ValidationDirective} from '../framework/validation/validation.directive';
 
 @Component({
     selector: 'app-form-relatorio',
@@ -54,13 +53,14 @@ import {ValidationDirective} from '../framework/validation/validation.directive'
     CancelarComponent,
     // Framework
     // Validation
-    ValidationDirective,
+
   ]
 })
 export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number> {
-  protected relatorioService: RelatorioService;
-  protected injector: Injector;
-  protected cdr: ChangeDetectorRef;
+  protected override service = inject(RelatorioService);
+  protected override urlList = '/relatorio';
+  protected override type = undefined;
+  protected cdr = inject(ChangeDetectorRef);
 
   @ViewChild('table') table: Table;
   @ViewChild('fileUpload') fileUpload: FileUpload;
@@ -71,14 +71,7 @@ export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number>
   relatorioParams: RelatorioParams;
 
   constructor() {
-    const relatorioService = inject(RelatorioService);
-    const injector = inject(Injector);
-    const cdr = inject(ChangeDetectorRef);
-
-    super(relatorioService, injector, '/relatorio');
-    this.relatorioService = relatorioService;
-    this.injector = injector;
-    this.cdr = cdr;
+    super();
 
     this.tipoParamDropdown = [
       {label: 'String', value: 'S'},

@@ -60,7 +60,7 @@ export class ChartService {
   private static readonly MIN_GRID_DISTANCE_X_BAR_DESKTOP = 40;
 
   // Data thresholds
-  private static readonly SCROLLBAR_THRESHOLD_LINE = 15;
+  private static readonly SCROLLBAR_THRESHOLD_LINE = 7;
   private static readonly SCROLLBAR_THRESHOLD_BAR = 6;
   private static readonly Y_SCROLLBAR_THRESHOLD = 10;
   private static readonly MAX_BAR_ITEMS = 10;
@@ -490,8 +490,8 @@ export class ChartService {
 
   private getDeviceBreakpoints(): DeviceBreakpoints {
     return {
-      isMobile: window.innerWidth < 768,
-      isDesktop: window.innerWidth >= 1200
+      isMobile: globalThis.innerWidth < 768,
+      isDesktop: globalThis.innerWidth >= 1200
     };
   }
 
@@ -630,6 +630,12 @@ export class ChartService {
     this.disposeChart(containerId);
 
     try {
+      // Pre-apply background color to prevent white flash in dark mode
+      const container = document.getElementById(containerId);
+      if (container) {
+        container.style.backgroundColor = this.chartColors.background;
+      }
+
       const root = am5.Root.new(containerId);
 
       root.setThemes([am5themes_Animated.new(root)]);
@@ -669,7 +675,7 @@ export class ChartService {
 
       root.setThemes([tooltipTheme, am5themes_Animated.new(root)]);
 
-      const isMobile = window.innerWidth < 768;
+      const isMobile = globalThis.innerWidth < 768;
       if (isMobile) {
         root.numberFormatter.set('numberFormat', '#.#a');
       }
@@ -739,6 +745,12 @@ export class ChartService {
 
   private updateAllChartsTheme(): void {
     this.charts.forEach((root, containerId) => {
+      // Update container background immediately to prevent flash
+      const container = document.getElementById(containerId);
+      if (container) {
+        container.style.backgroundColor = this.chartColors.background;
+      }
+
       const chart = root.container.children.getIndex(0);
       if (chart instanceof am5.Chart) {
         this.applyThemeToChart(root, chart);

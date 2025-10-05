@@ -1,6 +1,6 @@
 import {ActivatedRoute, Router} from '@angular/router';
 import {CrudService} from '../service/crud.service';
-import {Directive, Injector, OnInit} from '@angular/core';
+import {Directive, inject, OnInit} from '@angular/core';
 import {MessageService} from 'primeng/api';
 import {BaseFormComponent} from './base.form.component';
 import Swal from 'sweetalert2';
@@ -9,44 +9,44 @@ import {LoginService} from '../../login/login.service';
 
 @Directive()
 export abstract class CrudFormComponent<T, ID> extends BaseFormComponent implements OnInit {
+  // Abstract properties to be defined in child classes
+  protected abstract service: CrudService<T, ID>;
+  protected abstract urlList: string;
+  protected abstract type?: new () => T;
 
-  protected router: Router;
-  protected messageService: MessageService;
-  protected route: ActivatedRoute;
-  protected loaderService: LoaderService;
-  protected loginService: LoginService;
+  // Injected services
+  protected readonly router: Router;
+  protected readonly messageService: MessageService;
+  protected readonly route: ActivatedRoute;
+  protected readonly loaderService: LoaderService;
+  protected readonly loginService: LoginService;
+
   // utilizado para validações extras
   public validExtra = true;
   public editando = false;
   public isAlunosOrProfessor = false;
   public object: T;
 
-  constructor(protected service: CrudService<T, ID>,
-              protected injector: Injector,
-              protected urlList: string,
-              private readonly type?: new () => T) {
+  constructor() {
     super();
-    this.router = this.injector.get(Router);
-    this.route = this.injector.get(ActivatedRoute);
-    this.messageService = this.injector.get(MessageService);
-    this.loaderService = this.injector.get(LoaderService);
-    this.loginService = this.injector.get(LoginService);
+    this.router = inject(Router);
+    this.route = inject(ActivatedRoute);
+    this.messageService = inject(MessageService);
+    this.loaderService = inject(LoaderService);
+    this.loginService = inject(LoginService);
   }
 
   ngOnInit(): void {
     this.loginService.userLoggedIsAlunoOrProfessor()
       .then(value => this.isAlunosOrProfessor = value);
     this.newInstance();
-    this.preOnInit();
-    this.route.params.subscribe(params => {
-      if (params.id) {
-        if (Number.isNaN(params.id)) {
-          this.initializeValues();
-        } else {
-          this.edit(params.id);
+    this.route.params.subscribe({
+      next: (params) => {
+        if (params.id) {
+          if (!Number.isNaN(params.id)) {
+            this.edit(params.id);
+          }
         }
-      } else {
-        this.initializeValues();
       }
     });
   }
@@ -55,17 +55,20 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
     this.loaderService.show();
     if (this.isValid() && this.validExtra) {
       this.service.save(this.object)
-        .subscribe(e => {
+      .subscribe({
+        next: (e) => {
           this.object = e;
           this.postSave(value => {
             this.loaderService.hide();
             Swal.fire('Sucesso!', 'Registro salvo com sucesso!', 'success');
             this.back();
           });
-        }, error => {
+        },
+        error: (error) => {
           this.loaderService.hide();
           Swal.fire('Atenção!', 'Ocorreu um erro ao salvar o registro!', 'error');
           console.log(error);
+        }
         });
     } else {
       this.loaderService.hide();
@@ -78,26 +81,19 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
     callback();
   }
 
-  initializeValues(): void {
-  }
-
-  preOnInit(): void {
-  }
-
-  postEdit(): void {
-  }
-
   edit(id: ID) {
     this.loaderService.show();
     this.service.findOne(id)
-      .subscribe(e => {
+    .subscribe({
+      next: (e) => {
         this.object = e;
         this.editando = true;
-        this.postEdit();
         this.loaderService.hide();
-      }, error => {
+      },
+      error: (error) => {
         this.loaderService.hide();
         Swal.fire('Atenção!', 'Ocorreu um erro ao buscar o registro!', 'error');
+      }
       });
   }
 

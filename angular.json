@@ -13,7 +13,11 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "allowedCommonJsDependencies": ["rxjs-compat"],
+            "allowedCommonJsDependencies": [
+              "rxjs-compat",
+              "exceljs",
+              "sweetalert2"
+            ],
             "outputPath": {
               "base": "dist/tcc-client"
             },
@@ -31,7 +35,6 @@
             ],
             "styles": [
               "primeicons/primeicons.css",
-              "font-awesome/css/font-awesome.css",
               "src/app/framework/styles/theme-variables.css",
               "src/styles.css",
               "src/prime-tailwind-fallback.css"
@@ -51,35 +54,36 @@
                 "scripts": true,
                 "styles": {
                   "minify": true,
-                  "inlineCritical": false
+                  "inlineCritical": true
                   },
                 "fonts": {
-                  "inline": false
+                  "inline": true
                 }
               },
               "outputHashing": "all",
               "sourceMap": false,
               "namedChunks": false,
               "extractLicenses": true,
+              "serviceWorker": "ngsw-config.json",
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1mb",
+                  "maximumWarning": "2mb",
                   "maximumError": "5mb"
                 },
                 {
                   "type": "bundle",
-                  "maximumWarning": "1.5mb",
+                  "maximumWarning": "2mb",
                   "maximumError": "5mb"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kb",
+                  "maximumWarning": "6kb",
                   "maximumError": "10kb"
                 },
                 {
                   "type": "any",
-                  "maximumWarning": "500kb",
+                  "maximumWarning": "600kb",
                   "maximumError": "5mb"
                 }
               ]
@@ -95,16 +99,17 @@
                 "scripts": true,
                 "styles": {
                   "minify": true,
-                  "inlineCritical": false
+                  "inlineCritical": true
                   },
                 "fonts": {
-                  "inline": false
+                  "inline": true
                 }
               },
               "outputHashing": "all",
               "sourceMap": false,
               "namedChunks": false,
               "extractLicenses": true,
+              "serviceWorker": "ngsw-config.json",
               "budgets": [
                 {
                   "type": "initial",
@@ -129,10 +134,10 @@
                 "scripts": true,
                 "styles": {
                   "minify": true,
-                  "inlineCritical": false
+                  "inlineCritical": true
                   },
                 "fonts": {
-                  "inline": false
+                  "inline": true
                 }
               },
               "outputHashing": "all",
@@ -140,6 +145,7 @@
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,
+              "serviceWorker": "ngsw-config.json",
               "budgets": [
                 {
                   "type": "initial",
@@ -164,16 +170,17 @@
                 "scripts": true,
                 "styles": {
                   "minify": true,
-                  "inlineCritical": false
+                  "inlineCritical": true
                   },
                 "fonts": {
-                  "inline": false
+                  "inline": true
                 }
               },
               "outputHashing": "all",
               "sourceMap": false,
               "namedChunks": false,
               "extractLicenses": true,
+              "serviceWorker": "ngsw-config.json",
               "budgets": [
                 {
                   "type": "initial",

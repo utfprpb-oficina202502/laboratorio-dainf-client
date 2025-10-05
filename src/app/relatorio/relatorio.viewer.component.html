@@ -3,14 +3,14 @@
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
-          <app-voltar (onClick)="back()"></app-voltar>
+          <app-voltar (backClick)="back()"></app-voltar>
           <h2 class="text-xl font-semibold m-0">{{relatorioCurrent?.nome}}</h2>
         </div>
         @if (relatorioCurrent?.paramsList.length > 0) {
           <button
             type="button"
             pButton
-            icon="fa fa-filter"
+            icon="pi pi-filter"
             pTooltip="Filtro"
             tooltipPosition="left"
             class="p-button-rounded p-button-text"

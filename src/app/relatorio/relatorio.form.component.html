@@ -3,7 +3,7 @@
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
-          <app-voltar (onClick)="back()"></app-voltar>
+          <app-voltar (backClick)="back()"></app-voltar>
           <h2 class="text-xl font-semibold m-0">Cadastro de Relatório</h2>
         </div>
       </div>
@@ -30,7 +30,7 @@
             <div class="form-group">
               <label for="descricao">Nome</label>
               <span class="field-required">*</span>
-              <i class="fa fa-question-circle-o float-right"
+              <i class="pi pi-question-circle float-right"
                 pTooltip="Campo responsável pelo nome que irá aparecer na parte superior da tela de geração do relatório">
               </i>
               <input
@@ -78,7 +78,7 @@
                 <div class="col-span-12 md:col-span-4">
                   <div class="form-group">
                     <label for="nameParam">Nome do Parâmetro</label>
-                    <i class="fa fa-question-circle-o float-right"
+                    <i class="pi pi-question-circle float-right"
                       pTooltip="O nome do parâmetro deverá ser exatamente igual ao informado na criação do relatório Jasper.">
                     </i>
                     <input
@@ -95,7 +95,7 @@
                 <div class="col-span-12 md:col-span-4">
                   <div class="form-group">
                     <label for="aliasParam">Alias do Parâmetro</label>
-                    <i class="fa fa-question-circle-o float-right"
+                    <i class="pi pi-question-circle float-right"
                       pTooltip="O alias é o nome que será utilizado no filtro do relatório, ao executá-lo no sistema.">
                     </i>
                     <input
@@ -126,7 +126,7 @@
                     <label class="invisible">Action</label>
                     <p-button
                       type="submit"
-                      icon="fa fa-check"
+                      icon="pi pi-check"
                       severity="secondary"
                       [outlined]="true"
                       styleClass="w-full">
@@ -141,10 +141,10 @@
                 <p-table #table [value]="object.paramsList" styleClass="p-datatable-sm">
                   <ng-template pTemplate="header">
                     <tr>
-                      <th>Nome Parâmetro</th>
-                      <th>Alias Parâmetro</th>
-                      <th>Tipo Parâmetro</th>
-                      <th class="w-24">Opções</th>
+                      <th scope="col">Nome Parâmetro</th>
+                      <th scope="col">Alias Parâmetro</th>
+                      <th scope="col">Tipo Parâmetro</th>
+                      <th scope="col" class="w-24">Opções</th>
                     </tr>
                   </ng-template>
                   <ng-template pTemplate="body" let-param>
@@ -165,7 +165,7 @@
                       <td>
                         <p-button
                           type="button"
-                          icon="fa fa-trash"
+                          icon="pi pi-trash"
                           severity="danger"
                           [outlined]="true"
                           size="small"
@@ -182,7 +182,7 @@
         </div>
 
         <div class="flex justify-end gap-2 mt-4">
-          <app-cancelar (onClick)="back()"></app-cancelar>
+          <app-cancelar (cancelClick)="back()"></app-cancelar>
           <app-salvar [typeButton]="'submit'"></app-salvar>
         </div>
       </form>

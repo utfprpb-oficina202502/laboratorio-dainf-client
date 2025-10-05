@@ -42,18 +42,8 @@ export class StatCardComponent implements OnChanges {
     this.accentMuted = this.hexToRgba(this.accentColor, 0.24);
   }
 
-  private hexToRgba(hex: string, alpha: number): string {
-    if (!hex) { return `rgba(0,0,0,${alpha})`; }
-    let h = hex.trim();
-    if (h.startsWith('rgba')) return h;
-    if (h.startsWith('rgb')) return h.replace('rgb','rgba').replace(')',`,`+alpha+')');
-    if (h.startsWith('#')) h = h.substring(1);
-    if (h.length === 3) { h = h.split('').map(c=>c+c).join(''); }
-    if (h.length !== 6) return `rgba(0,0,0,${alpha})`;
-    const r = Number.parseInt(h.slice(0, 2), 16);
-    const g = Number.parseInt(h.slice(2, 4), 16);
-    const b = Number.parseInt(h.slice(4, 6), 16);
-    return `rgba(${r},${g},${b},${alpha})`;
+  get iconClasses() {
+    return this.iconLibrary === 'fa' ? `fa fa-${this.icon}` : `pi pi-${this.icon}`;
   }
 
   get styleVariables() {
@@ -68,8 +58,18 @@ export class StatCardComponent implements OnChanges {
     return this.value === null || this.value === undefined || this.value === '' ? '-' : this.value;
   }
 
-  get iconClasses() {
-    return this.iconLibrary === 'pi' ? `pi pi-${this.icon}` : `fa fa-${this.icon}`;
+  private hexToRgba(hex: string, alpha: number): string {
+    if (!hex) { return `rgba(0,0,0,${alpha})`; }
+    let h = hex.trim();
+    if (h.startsWith('rgba')) return h;
+    if (h.startsWith('rgb')) return h.replace('rgb', 'rgba').replaceAll(')', `,` + alpha + ')');
+    if (h.startsWith('#')) h = h.substring(1);
+    if (h.length === 3) { h = h.split('').map(c=>c+c).join(''); }
+    if (h.length !== 6) return `rgba(0,0,0,${alpha})`;
+    const r = Number.parseInt(h.slice(0, 2), 16);
+    const g = Number.parseInt(h.slice(2, 4), 16);
+    const b = Number.parseInt(h.slice(4, 6), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
   }
 
   onClick() {

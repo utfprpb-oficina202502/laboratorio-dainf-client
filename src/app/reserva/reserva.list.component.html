@@ -15,6 +15,7 @@
              [first]="first"
              [lazy]="tableConfig.lazy !== false"
              [lazyLoadOnInit]="tableConfig.lazyLoadOnInit !== false"
+             [loading]="loading()"
              [(selection)]="selectedItems"
              (selectionChange)="onSelectionChange($event)"
              [dataKey]="tableConfig.rowExpansionKey || 'id'"
@@ -59,7 +60,7 @@
       <ng-template pTemplate="header">
         <tr>
           @for (column of getVisibleColumns(); track column.field) {
-            <th
+            <th scope="col"
               [style.text-align]="column.align || 'left'"
               [style.width]="column.width"
               [style.min-width]="column.minWidth"
@@ -79,19 +80,31 @@
               [style.min-width]="column.minWidth">
               @switch (column.field) {
                 @case ('id') {
-                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData.id }}</span>
+                  <button type="button" (click)="openOptions($event, rowData)"
+                          class="p-0 border-0 bg-transparent text-inherit cursor-pointer hover:underline">{{ rowData.id }}
+                  </button>
                 }
                 @case ('descricao') {
-                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData.descricao }}</span>
+                  <button type="button" (click)="openOptions($event, rowData)"
+                          class="p-0 border-0 bg-transparent text-inherit cursor-pointer hover:underline">{{ rowData.descricao }}
+                  </button>
                 }
                 @case ('dataReserva') {
-                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData.dataReserva }}</span>
+                  <button type="button" (click)="openOptions($event, rowData)"
+                          class="p-0 border-0 bg-transparent text-inherit cursor-pointer hover:underline">{{ rowData.dataReserva }}
+                  </button>
                 }
                 @case ('dataRetirada') {
-                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData.dataRetirada }}</span>
+                  <button type="button" (click)="openOptions($event, rowData)"
+                          class="p-0 border-0 bg-transparent text-inherit cursor-pointer hover:underline">{{ rowData.dataRetirada }}
+                  </button>
                 }
                 @case ('usuario') {
-                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData.usuario?.nome || 'N/A' }}</span>
+                  <button type="button" (click)="openOptions($event, rowData)"
+                          class="p-0 border-0 bg-transparent text-inherit cursor-pointer hover:underline">{{
+                      rowData.usuario?.nome || 'N/A'
+                    }}
+                  </button>
                 }
                 @case ('actions') {
                   <app-action-buttons
@@ -104,7 +117,9 @@
                   </app-action-buttons>
                 }
                 @default {
-                  <span (click)="openOptions($event, rowData)" style="cursor: pointer;">{{ rowData[column.field] }}</span>
+                  <button type="button" (click)="openOptions($event, rowData)"
+                          class="p-0 border-0 bg-transparent text-inherit cursor-pointer hover:underline">{{ rowData[column.field] }}
+                  </button>
                 }
               }
             </td>
@@ -127,7 +142,6 @@
         <tr>
           <td [attr.colspan]="getVisibleColumns().length">
             <div class="text-center py-4">
-              <i class="pi pi-spin pi-spinner text-muted" style="font-size: 2rem;"></i>
               <p class="text-muted mt-2 mb-0">{{tableConfig.loadingMessage}}</p>
             </div>
           </td>

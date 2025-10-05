@@ -11,7 +11,8 @@ import {Usuario} from "../usuario/usuario";
 import {FormsModule, NgForm} from "@angular/forms";
 import {Router} from "@angular/router";
 import {MessageService} from "primeng/api";
-import {finalize} from "rxjs/operators";
+import {catchError, finalize, switchMap} from "rxjs/operators";
+import {of} from "rxjs";
 import {ProgressBar} from "primeng/progressbar";
 import {NgOptimizedImage} from "@angular/common";
 
@@ -76,22 +77,19 @@ export class LoginComponent implements OnInit {
   setUserInLocalStorage() {
     this.loginService
       .refreshCurrentUser()
-      .pipe(finalize(() => {
+    .pipe(
+      switchMap(() => this.loginService.getPermissoesUser().pipe(
+        catchError(() => of(null)) // Handle permission errors gracefully
+      )),
+      finalize(() => {
         this.showProgress = false;
         this.cdr.markForCheck();
-      }))
+      })
+    )
       .subscribe({
         next: () => {
-          this.loginService.getPermissoesUser().subscribe({
-            next: () => {
-              this.loginService.setAuthenticated();
-              this.router.navigate(["/"]);
-            },
-            error: () => {
-              this.loginService.setAuthenticated();
-              this.router.navigate(["/"]);
-            }
-          });
+          this.loginService.setAuthenticated();
+          this.router.navigate(["/"]);
         },
         error: () => {
           this.messageService.add({

@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  Injector,
-  signal
-} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Emprestimo} from './emprestimo';
@@ -73,12 +66,12 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Emprestimo, number> {
-  protected emprestimoService: EmprestimoService;
-  protected injector: Injector;
-
-  private readonly fb = this.injector.get(FormBuilder);
-  private readonly itemService = this.injector.get(ItemService);
-  private readonly usuarioService = this.injector.get(UsuarioService);
+  protected override service = inject(EmprestimoService);
+  protected override urlList = '/emprestimo';
+  protected override type = Emprestimo;
+  private readonly fb = inject(FormBuilder);
+  private readonly itemService = inject(ItemService);
+  private readonly usuarioService = inject(UsuarioService);
 
   // State signals
   protected readonly itemList = signal<Item[]>([]);
@@ -115,13 +108,7 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   });
 
   constructor() {
-    const emprestimoService = inject(EmprestimoService);
-    const injector = inject(Injector);
-
-    super(emprestimoService, injector, '/emprestimo', Emprestimo);
-
-    this.emprestimoService = emprestimoService;
-    this.injector = injector;
+    super();
   }
 
   /**
@@ -140,16 +127,14 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   }
 
   /**
-   * Initialize form values
+   * Autocomplete for Items
    */
-  protected override initializeValues(): void {
-    this.setTodayAsDefaultDate('dataEmprestimo');
-    this.setDateMinPrazoDevolucao();
-    this.setCurrentUserAsResponsible('usuarioResponsavel');
-
-    if (window.location.href.includes('reserva')) {
-      this.generateEmprestimoByReserva();
-    }
+  findProdutos(event: any): void {
+    this.itemService.completeItem(event.query, true).subscribe({
+      next: (e) => {
+        this.itemList.set(e);
+      }
+    });
   }
 
   /**
@@ -164,26 +149,70 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   }
 
   /**
-   * Autocomplete for Items
+   * Autocomplete for Usuarios
    */
-  findProdutos(event: any): void {
-    this.itemService.completeItem(event.query, true).subscribe(e => {
-      this.itemList.set(e);
+  findUsuarios(event: any): void {
+    this.usuarioService.completeCustom(event.query).subscribe({
+      next: (e) => {
+        this.usuarioList.set(e);
+        if (e != null && e.length === 1) {
+          const formGroup = this.form();
+          if (formGroup) {
+            formGroup.patchValue({usuarioEmprestimo: e[0]});
+            this.documentoUsuario.set(e[0].documento);
+          }
+        }
+      }
     });
   }
 
   /**
-   * Autocomplete for Usuarios
+   * Override save to use custom service method
    */
-  findUsuarios(event: any): void {
-    this.usuarioService.completeCustom(event.query).subscribe(e => {
-      this.usuarioList.set(e);
-      if (e != null && e.length === 1) {
-        const formGroup = this.form();
-        if (formGroup) {
-          formGroup.patchValue({usuarioEmprestimo: e[0]});
-          this.documentoUsuario.set(e[0].documento);
-        }
+  override save(): void {
+    const formGroup = this.form();
+    const items = this.emprestimoItems();
+    const usuarioEmprestimo = formGroup?.get('usuarioEmprestimo')?.value;
+
+    if (!items || items.length === 0 || typeof usuarioEmprestimo !== 'object') {
+      this.validExtra = false;
+      this.showMinimumItemsMessage('Necessário informar o aluno/professor e adicionar ao menos um item!');
+      return;
+    }
+
+    this.validExtra = true;
+
+    if (!formGroup || !formGroup.valid || !this.validExtra) {
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Atenção',
+        detail: 'Necessário preencher todos os campos corretamente!'
+      });
+      this.markFormAsTouched(formGroup);
+      return;
+    }
+
+    this.loaderService.show();
+    this.isLoading.set(true);
+
+    const formValue = this.prepareFormValue(formGroup.value);
+    const objectToSave = this.mergeWithObject(formValue);
+
+    this.service.saveEmprestimo(objectToSave, this.idReserva()).subscribe({
+      next: (savedObject) => {
+        this.object.set(savedObject);
+        this.postSave(() => {
+          this.loaderService.hide();
+          this.isLoading.set(false);
+          Swal.fire('Sucesso!', 'Registro salvo com sucesso!', 'success');
+          this.back();
+        });
+      },
+      error: (error) => {
+        this.loaderService.hide();
+        this.isLoading.set(false);
+        Swal.fire('Atenção!', 'Ocorreu um erro ao salvar o registro!', 'error');
+        console.error(error);
       }
     });
   }
@@ -278,54 +307,16 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   }
 
   /**
-   * Override save to use custom service method
+   * Initialize form values
    */
-  override save(): void {
-    const formGroup = this.form();
-    const items = this.emprestimoItems();
-    const usuarioEmprestimo = formGroup?.get('usuarioEmprestimo')?.value;
+  protected override initializeValues(): void {
+    this.setTodayAsDefaultDate('dataEmprestimo');
+    this.setDateMinPrazoDevolucao();
+    this.setCurrentUserAsResponsible('usuarioResponsavel');
 
-    if (!items || items.length === 0 || typeof usuarioEmprestimo !== 'object') {
-      this.validExtra = false;
-      this.showMinimumItemsMessage('Necessário informar o aluno/professor e adicionar ao menos um item!');
-      return;
+    if (globalThis.location.href.includes('reserva')) {
+      this.generateEmprestimoByReserva();
     }
-
-    this.validExtra = true;
-
-    if (!formGroup || !formGroup.valid || !this.validExtra) {
-      this.messageService.add({
-        severity: 'info',
-        summary: 'Atenção',
-        detail: 'Necessário preencher todos os campos corretamente!'
-      });
-      this.markFormAsTouched(formGroup);
-      return;
-    }
-
-    this.loaderService.show();
-    this.isLoading.set(true);
-
-    const formValue = this.prepareFormValue(formGroup.value);
-    const objectToSave = this.mergeWithObject(formValue);
-
-    this.emprestimoService.saveEmprestimo(objectToSave, this.idReserva()).subscribe({
-      next: (savedObject) => {
-        this.object.set(savedObject);
-        this.postSave(() => {
-          this.loaderService.hide();
-          this.isLoading.set(false);
-          Swal.fire('Sucesso!', 'Registro salvo com sucesso!', 'success');
-          this.back();
-        });
-      },
-      error: (error) => {
-        this.loaderService.hide();
-        this.isLoading.set(false);
-        Swal.fire('Atenção!', 'Ocorreu um erro ao salvar o registro!', 'error');
-        console.error(error);
-      }
-    });
   }
 
   /**

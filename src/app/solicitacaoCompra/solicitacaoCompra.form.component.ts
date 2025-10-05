@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  Injector,
-  signal
-} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 
@@ -63,11 +56,11 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SolicitacaoCompraFormComponent extends PrimeReactiveCrudFormComponent<SolicitacaoCompra, number> {
-  protected solicitacaoCompraService: SolicitacaoCompraService;
-  protected injector: Injector;
-
-  private readonly fb = this.injector.get(FormBuilder);
-  private readonly itemService = this.injector.get(ItemService);
+  protected override service = inject(SolicitacaoCompraService);
+  protected override urlList = '/solicitacao-compra';
+  protected override type = SolicitacaoCompra;
+  private readonly fb = inject(FormBuilder);
+  private readonly itemService = inject(ItemService);
 
   // Signals for state management
   protected readonly itemList = signal<Item[]>([]);
@@ -85,13 +78,7 @@ export class SolicitacaoCompraFormComponent extends PrimeReactiveCrudFormCompone
   protected readonly hasItems = computed(() => this.solicitacaoItems().length > 0);
 
   constructor() {
-    const solicitacaoCompraService = inject(SolicitacaoCompraService);
-    const injector = inject(Injector);
-
-    super(solicitacaoCompraService, injector, '/solicitacao-compra', SolicitacaoCompra);
-
-    this.solicitacaoCompraService = solicitacaoCompraService;
-    this.injector = injector;
+    super();
   }
 
   /**

@@ -1,6 +1,6 @@
 import {ActivatedRoute, Router} from '@angular/router';
 import {CrudService} from '../service/crud.service';
-import {computed, Directive, Injector, OnInit, signal} from '@angular/core';
+import {computed, Directive, inject, Injector, OnInit, signal} from '@angular/core';
 import {FormGroup} from '@angular/forms';
 import {MessageService} from 'primeng/api';
 import Swal from 'sweetalert2';
@@ -9,12 +9,20 @@ import {LoginService} from '../../login/login.service';
 
 @Directive()
 export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
-  protected router: Router;
-  protected messageService: MessageService;
-  protected route: ActivatedRoute;
-  protected loaderService: LoaderService;
-  protected loginService: LoginService;
+  // Abstract properties to be defined in child classes
+  protected abstract service: CrudService<T, ID>;
+  protected abstract urlList: string;
+  protected abstract type?: new () => T;
 
+  // Injected services
+  protected readonly router: Router;
+  protected readonly messageService: MessageService;
+  protected readonly route: ActivatedRoute;
+  protected readonly loaderService: LoaderService;
+  protected readonly loginService: LoginService;
+  protected readonly injector: Injector;
+
+  // Signals for state management
   protected readonly isEditing = signal(false);
   protected readonly isAlunoOrProfessor = signal(false);
   protected readonly isLoading = signal(false);
@@ -27,17 +35,13 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
   protected readonly form = signal<FormGroup | null>(null);
   protected validExtra = true;
 
-  protected constructor(
-    protected service: CrudService<T, ID>,
-    protected injector: Injector,
-    protected urlList: string,
-    private readonly type?: new () => T
-  ) {
-    this.router = this.injector.get(Router);
-    this.route = this.injector.get(ActivatedRoute);
-    this.messageService = this.injector.get(MessageService);
-    this.loaderService = this.injector.get(LoaderService);
-    this.loginService = this.injector.get(LoginService);
+  protected constructor() {
+    this.injector = inject(Injector);
+    this.router = inject(Router);
+    this.route = inject(ActivatedRoute);
+    this.messageService = inject(MessageService);
+    this.loaderService = inject(LoaderService);
+    this.loginService = inject(LoginService);
   }
 
   protected abstract buildForm(): FormGroup;
@@ -207,9 +211,17 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
     }
   }
 
-  protected initializeValues(): void {}
-  protected preOnInit(): void {}
-  protected postEdit(): void {}
+  protected initializeValues(): void {
+    // lógica antes de inicializar
+  }
+
+  protected preOnInit(): void {
+    // lógica antes de inicializar o componente
+  }
+
+  protected postEdit(): void {
+    // lógica após edit
+  }
   protected postSave(callback: Function): void {
     callback();
   }

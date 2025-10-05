@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject} from '@angular/core';
 
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
@@ -41,8 +41,9 @@ import {CpfCnpjPipe} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe";
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, number> {
-  protected fornecedorService: FornecedorService;
-  protected injector: Injector;
+  protected override service = inject(FornecedorService);
+  protected override columnsTable = ['id', 'razaoSocial', 'nomeFantasia', 'cnpj', 'actions'];
+  protected override urlForm = 'fornecedor/form';
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -85,20 +86,16 @@ export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, 
       type: 'custom',
       sortable: false,
       filterable: false,
+      exportable: false,
+      toggleable: false,
       width: '12rem',
       align: 'center'
     }
   ];
 
   constructor() {
-    const fornecedorService = inject(FornecedorService);
-    const injector = inject(Injector);
+    super();
 
-    super(fornecedorService, injector, ['id', 'razaoSocial', 'nomeFantasia', 'cnpj', 'actions'], 'fornecedor/form');
-    this.fornecedorService = fornecedorService;
-    this.injector = injector;
-
-    this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.configureTable();
   }
@@ -132,7 +129,7 @@ export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, 
       expandMode: 'single',
       rowExpansionKey: 'id',
       stateful: true,
-      stateKey: 'fornecedor-list',
+      stateKey: 'fornecedor-list-v2',
       stateStorage: 'local',
       stateProps: {
         columns: true,

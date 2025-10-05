@@ -1,4 +1,4 @@
-import { Injectable, signal, computed, effect } from '@angular/core';
+import {computed, effect, Injectable, signal} from '@angular/core';
 
 export type ThemeMode = 'light' | 'dark';
 
@@ -46,8 +46,7 @@ export class ThemeService {
       return savedTheme;
     }
 
-    // Fall back to system preference
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    if (globalThis?.matchMedia('(prefers-color-scheme: dark)').matches) {
       return 'dark';
     }
 

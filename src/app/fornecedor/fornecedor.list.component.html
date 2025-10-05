@@ -5,6 +5,7 @@
     </ng-template>
 
     <p-table #dt
+             [loading]="loading()"
              [value]="objects"
              [rows]="rows"
              [totalRecords]="totalElements"
@@ -51,7 +52,7 @@
             (onClick)="clearGlobalFilter()"
             [attr.aria-label]="'Limpar filtro global'">
             <span pButtonIcon class="pi pi-filter-slash"></span>
-            <span pButtonLabel>Limpar</span>
+            <span class="hidden sm:inline" pButtonLabel>Limpar</span>
           </p-button>
         </div>
       </ng-template>
@@ -59,7 +60,7 @@
       <ng-template pTemplate="header">
         <tr>
           @for (column of getVisibleColumns(); track column.field) {
-            <th
+            <th scope="col"
               [style.text-align]="column.align || 'left'"
               [style.width]="column.width"
               [style.min-width]="column.minWidth"
@@ -79,16 +80,19 @@
               [style.min-width]="column.minWidth">
               @switch (column.field) {
                 @case ('id') {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.id }}</span>
+                  <span [attr.aria-label]="'Código: ' + rowData.id">{{ rowData.id }}</span>
                 }
                 @case ('razaoSocial') {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.razaoSocial }}</span>
+                  <span
+                    [attr.aria-label]="'Razão Social: ' + rowData.razaoSocial">{{ rowData.razaoSocial }}</span>
                 }
                 @case ('nomeFantasia') {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.nomeFantasia }}</span>
+                  <span
+                    [attr.aria-label]="'Nome Fantasia: ' + rowData.nomeFantasia">{{ rowData.nomeFantasia }}</span>
                 }
                 @case ('cnpj') {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.cnpj | cpfCnpj }}</span>
+                  <span
+                    [attr.aria-label]="'CNPJ: ' + (rowData.cnpj | cpfCnpj)">{{ rowData.cnpj | cpfCnpj }}</span>
                 }
                 @case ('actions') {
                   <div class="flex items-center gap-1 justify-center">
@@ -113,7 +117,8 @@
                   </div>
                 }
                 @default {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData[column.field] }}</span>
+                  <span
+                    [attr.aria-label]="column.header + ': ' + rowData[column.field]">{{ rowData[column.field] }}</span>
                 }
               }
             </td>
@@ -134,9 +139,8 @@
 
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td [attr.colspan]="getVisibleColumns().length">
+          <td [attr.colspan]="getColumnCount()">
             <div class="text-center py-4">
-              <i class="pi pi-spin pi-spinner text-muted" style="font-size: 2rem;"></i>
               <p class="text-muted mt-2 mb-0">{{tableConfig.loadingMessage}}</p>
             </div>
           </td>

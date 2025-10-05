@@ -3,7 +3,7 @@
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
-          <app-voltar (onClick)="back()"></app-voltar>
+          <app-voltar (backClick)="back()"></app-voltar>
           <h2 class="text-xl font-semibold m-0">Devolução do Empréstimo</h2>
         </div>
         @if (object.dataDevolucao) {
@@ -247,8 +247,9 @@
         </div>
 
         <div class="flex justify-end gap-2 mt-4">
-          <app-cancelar (onClick)="back()"></app-cancelar>
-          <app-salvar (onClick)="saveDevolucao()" [typeButton]="'button'" [disabled]="!!object.dataDevolucao"></app-salvar>
+          <app-cancelar (cancelClick)="back()"></app-cancelar>
+          <app-salvar (saveClick)="saveDevolucao()" [disabled]="!!object.dataDevolucao"
+                      [typeButton]="'button'"></app-salvar>
         </div>
       </form>
     </ng-template>

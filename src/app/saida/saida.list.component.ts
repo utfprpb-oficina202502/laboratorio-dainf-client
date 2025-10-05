@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
@@ -46,8 +46,9 @@ import {ActionButtonsComponent} from '../framework/component/action-buttons.comp
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
-  protected saidaService: SaidaService;
-  protected injector: Injector;
+  protected override service = inject(SaidaService);
+  protected override columnsTable = ['id', 'dataSaida', 'qtde', 'usuarioResponsavel', 'observacao', 'actions'];
+  protected override urlForm = 'saida/form';
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -99,18 +100,15 @@ export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
       type: 'custom',
       sortable: false,
       filterable: false,
+      exportable: false,
+      toggleable: false,
       width: '12rem',
       align: 'center'
     }
   ];
 
   constructor() {
-    const saidaService = inject(SaidaService);
-    const injector = inject(Injector);
-
-    super(saidaService, injector, ['id', 'dataSaida', 'qtde', 'usuarioResponsavel', 'observacao', 'actions'], 'saida/form');
-    this.saidaService = saidaService;
-    this.injector = injector;
+    super();
 
     this.configureTable();
   }
@@ -144,7 +142,7 @@ export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
       expandMode: 'single',
       rowExpansionKey: 'id',
       stateful: true,
-      stateKey: 'saida-list',
+      stateKey: 'saida-list-v2',
       stateStorage: 'local',
       stateProps: {
         columns: true,

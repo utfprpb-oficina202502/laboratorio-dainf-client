@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {Pais} from './pais';
@@ -42,8 +42,9 @@ import {ActionButtonsComponent} from '../framework/component/action-buttons.comp
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PaisListComponent extends PrimeCrudListComponent<Pais, number> {
-  protected paisService: PaisService;
-  protected injector: Injector;
+  protected override service = inject(PaisService);
+  protected override columnsTable = ['id', 'nome', 'sigla', 'actions'];
+  protected override urlForm = 'pais/form';
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -85,12 +86,7 @@ export class PaisListComponent extends PrimeCrudListComponent<Pais, number> {
   ];
 
   constructor() {
-    const paisService = inject(PaisService);
-    const injector = inject(Injector);
-
-    super(paisService, injector, ['id', 'nome', 'sigla', 'actions'], 'pais/form');
-    this.paisService = paisService;
-    this.injector = injector;
+    super();
 
     this.configureTable();
   }

@@ -3,7 +3,7 @@ import {NgControl} from '@angular/forms';
 import {ValidationService} from './validation.service';
 
 @Directive({
-    selector: '[validation]',
+  selector: '[appValidation]',
 })
 export class ValidationDirective {
   private readonly el = inject(ElementRef);
@@ -11,7 +11,7 @@ export class ValidationDirective {
   private readonly validationService = inject(ValidationService);
   private readonly renderer = inject(Renderer2);
 
-  @Input('validationMessage') customMessage: string;
+  @Input() validationMessage: string;
 
   private readonly targetElement: HTMLElement;
   private readonly formGroupElement: HTMLElement | null;
@@ -44,7 +44,7 @@ export class ValidationDirective {
     const helpBlocks = this.formGroupElement.querySelectorAll('.help-block');
     // Convert NodeList to Array for proper iteration in strict mode
     Array.from(helpBlocks).forEach(block => {
-      this.renderer.removeChild(this.formGroupElement, block);
+      block.remove();
     });
 
     if (typeof this.formControl.name === 'string') {
@@ -53,8 +53,8 @@ export class ValidationDirective {
   }
 
   getMessage(error?: string): string {
-    if (this.customMessage) {
-      return this.customMessage;
+    if (this.validationMessage) {
+      return this.validationMessage;
     } else if (error) {
       return this.validationService.getMessageByError(error);
     } else {

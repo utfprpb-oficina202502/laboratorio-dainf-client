@@ -9,9 +9,9 @@ import {ButtonModule} from 'primeng/button';
 export class SalvarComponent {
   readonly typeButton = input<string>('button');
   readonly disabled = input(false);
-  readonly onClick = output<void>();
+  readonly saveClick = output<void>();
 
   click(): void {
-    this.onClick.emit();
+    this.saveClick.emit();
   }
 }

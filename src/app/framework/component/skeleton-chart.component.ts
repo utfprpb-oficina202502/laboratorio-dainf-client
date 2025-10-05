@@ -7,7 +7,7 @@ import {SkeletonModule} from 'primeng/skeleton';
   imports: [CommonModule, SkeletonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+    <div class="skeleton-chart">
       <p-skeleton width="50%" height="1.5rem" class="mb-4"></p-skeleton>
       <div [ngSwitch]="type">
         <!-- Line/Bar Chart -->
@@ -43,7 +43,15 @@ import {SkeletonModule} from 'primeng/skeleton';
       </div>
     </div>
   `,
-  styles: []
+  styles: [`
+    .skeleton-chart {
+      background: var(--p-content-background, #ffffff);
+      border: 1px solid var(--p-content-border-color, #e2e8f0);
+      border-radius: var(--p-content-border-radius, 0.5rem);
+      padding: 1rem;
+      box-shadow: var(--p-card-shadow, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+    }
+  `]
 })
 export class SkeletonChartComponent {
   @Input() type: 'line' | 'bar' | 'pie' = 'line';

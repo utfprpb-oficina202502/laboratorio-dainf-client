@@ -3,7 +3,6 @@ import {
   Component,
   computed,
   inject,
-  Injector,
   OnDestroy,
   signal
 } from '@angular/core';
@@ -57,10 +56,10 @@ import {FormFieldComponent} from '../framework/component/form-field.component';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, number> implements OnDestroy {
-  protected grupoService: GrupoService;
-  protected injector: Injector;
-
-  private readonly fb = this.injector.get(FormBuilder);
+  protected override service = inject(GrupoService);
+  protected override urlList = '/grupo';
+  protected override type = Grupo;
+  private readonly fb = inject(FormBuilder);
   private itensVinculadosSubscription?: Subscription;
 
   // Signals for dialog state and related items
@@ -75,13 +74,7 @@ export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, nu
   });
 
   constructor() {
-    const grupoService = inject(GrupoService);
-    const injector = inject(Injector);
-
-    super(grupoService, injector, '/grupo', Grupo);
-
-    this.grupoService = grupoService;
-    this.injector = injector;
+    super();
   }
 
   /**
@@ -119,7 +112,7 @@ export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, nu
       'Cancelar Busca'
     );
 
-    this.itensVinculadosSubscription = this.grupoService.findItensVinculados(obj.id).subscribe({
+    this.itensVinculadosSubscription = this.service.findItensVinculados(obj.id).subscribe({
       next: (items) => {
         this.loadingItensVinculados.set(false);
         this.loaderService.hide();
