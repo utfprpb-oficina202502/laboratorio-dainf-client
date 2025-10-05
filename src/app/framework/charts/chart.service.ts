@@ -541,7 +541,7 @@ export class ChartService {
       data: any[];
       valueField: string;
       dateField?: string;
-      categoryField?: string
+      categoryField?: string;
     }
   ): void {
     if (breakpoints.isDesktop) {
@@ -589,7 +589,7 @@ export class ChartService {
       } else {
         const sbxAxis = scrollbarX.chart.xAxes.push(
           am5xy.CategoryAxis.new(root, {
-            categoryField: config.categoryField,
+            categoryField: config.categoryField!,
             renderer: xRenderer
           })
         );
