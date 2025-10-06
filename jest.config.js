@@ -16,5 +16,5 @@ module.exports = {
       lines: 70
     }
   },
-  transformIgnorePatterns: [String.raw`node_modules/(?!.*\.mjs$)`]
+  transformIgnorePatterns: [String.raw`node_modules/(?!(@amcharts|d3-.*|.*\.mjs))`]
 };

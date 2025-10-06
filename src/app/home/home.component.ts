@@ -19,6 +19,7 @@ import {HomeService} from "./home.service";
 import {LoginService} from "../login/login.service";
 import {DateUtil} from "../framework/util/dateUtil";
 import {ChartService} from "../framework/charts/chart.service";
+import {LoggerService} from "../framework/services/logger.service";
 
 // PrimeNG
 import {DialogModule} from 'primeng/dialog';
@@ -62,16 +63,22 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   private static readonly STORAGE_KEY_DATE_INI = "dash_dt_ini";
   private static readonly STORAGE_KEY_DATE_FIM = "dash_dt_fim";
   // Signals - UI State
-  protected readonly dialogVisible = signal(false);
+  protected dialogVisible = signal(false);
   private readonly loginService = inject(LoginService);
   private readonly chartService = inject(ChartService);
-  protected readonly dtIniFiltro = signal<string | null>(null);
-  protected readonly dtFimFiltro = signal<string | null>(null);
+  // Signals para controlar visibilidade dos botões de fullscreen
+  protected readonly hasLineChartData = signal(false);
+  protected dtIniFiltro = signal<string | null>(null);
+  protected dtFimFiltro = signal<string | null>(null);
   protected readonly loadingStats = signal(false);
   protected readonly loadingCharts = signal(false);
   protected readonly showDashboardAluno = signal(false);
   protected readonly hasDashboardData = signal(false);
   protected readonly dashEmprestimoCount = signal(new DashboardEmprestimoCountRange());
+  protected readonly hasBarChartData = signal(false);
+  protected readonly hasPie1ChartData = signal(false);
+  protected readonly hasPie2ChartData = signal(false);
+  private readonly logger = inject(LoggerService);
   // Computed - Derived State
   protected readonly disableBtnFiltrar = computed(() =>
     !this.dtIniFiltro() || !this.dtFimFiltro()
@@ -91,7 +98,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       if (this.destroyed) {
         return;
       }
-      this.showDashboardAluno.set(!!value);
+      this.showDashboardAluno.set(value);
 
       if (!this.showDashboardAluno()) {
         if (this.viewInitialized) {
@@ -178,6 +185,22 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.buildDashboards();
   }
 
+  protected toggleFullscreen(wrapperId: string): void {
+    const wrapper = document.getElementById(wrapperId);
+    if (!wrapper) {
+      return;
+    }
+
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      // Coloca o wrapper (header + gráfico) em fullscreen
+      wrapper.requestFullscreen().catch(err => {
+        this.logger.error(`Erro ao entrar em tela cheia: ${err.message}`, err);
+      });
+    }
+  }
+
   protected getDateIni(): string {
     let dtIni = localStorage.getItem(HomeComponent.STORAGE_KEY_DATE_INI);
     if (!dtIni) {
@@ -220,7 +243,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       return {...record, _dtParsed: new Date(record[dateField] as string | number | Date)};
     })
     .filter((d): d is Record<string, unknown> & { _dtParsed: Date } => {
-      return d._dtParsed instanceof Date && !Number.isNaN(d._dtParsed.getTime());
+      return !Number.isNaN(d._dtParsed.getTime());
     })
     .sort((a, b) => a._dtParsed.getTime() - b._dtParsed.getTime());
   }
@@ -250,6 +273,12 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
         const hasData = this.hasAnyData(byDayProcessed, emprestadosTop, adquiridosList, saidasList);
         this.hasDashboardData.set(hasData);
+
+        // Atualiza signals de dados por gráfico
+        this.hasLineChartData.set(byDayProcessed.length > 0);
+        this.hasBarChartData.set(emprestadosTop.length > 0);
+        this.hasPie1ChartData.set(adquiridosList.length > 0);
+        this.hasPie2ChartData.set(saidasList.length > 0);
 
         if (!hasData) {
           this.chartService.disposeAll();

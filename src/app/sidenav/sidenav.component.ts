@@ -153,6 +153,10 @@ export class SidenavComponent implements OnInit {
   ngOnInit(): void {
     this.buildMenu();
     this.updateViewportFlags();
+    // Initialize service state to match viewport (mobile starts minimized)
+    if (!this.isDesktopView) {
+      this.sidenavService.minimizar(true);
+    }
     this.initObservableDrawer();
   }
 
@@ -231,8 +235,8 @@ export class SidenavComponent implements OnInit {
 
   closeSidebar() {
     if (!this.isDesktopView) {
-      this.sidebarVisible = false;
-      this.cdr?.markForCheck();
+      // Use service to maintain state sync
+      this.sidenavService.minimizar(true);
     }
   }
 

@@ -33,6 +33,9 @@ export class NavbarComponent implements OnInit {
 
   items: MenuItem[] = [];
 
+  // Flag para prevenir dupla execução em dispositivos touch
+  private touchHandled = false;
+
   ngOnInit() {
     this.optionDropdown();
   }
@@ -43,6 +46,45 @@ export class NavbarComponent implements OnInit {
 
   toggleSidenav() {
     this.sidenavService.toggle();
+  }
+
+  /**
+   * Manipula evento touch para resposta imediata em mobile.
+   * Usa touchend ao invés de touchstart para melhor compatibilidade com gestos.
+   * Marca o evento como tratado para prevenir execução duplicada no click handler.
+   */
+  onHamburgerTouch(event: TouchEvent): void {
+    // Previne comportamento padrão (scroll, hover states, etc)
+    event.preventDefault();
+    // Previne propagação para evitar que o evento click seja disparado
+    event.stopPropagation();
+
+    // Executa ação imediatamente
+    this.toggleSidenav();
+
+    // Marca como tratado para ignorar click subsequente
+    this.touchHandled = true;
+
+    // Reseta flag após delay curto (300ms é o padrão do navegador para tap→click)
+    setTimeout(() => {
+      this.touchHandled = false;
+    }, 400);
+  }
+
+  /**
+   * Handler de click que ignora eventos se já foram tratados via touch.
+   * Garante compatibilidade com mouse/desktop.
+   */
+  onHamburgerClick(event: MouseEvent): void {
+    // Se o evento touch já tratou a ação, ignora o click
+    if (this.touchHandled) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    // Em desktop (sem touch), executa normalmente
+    this.toggleSidenav();
   }
 
   optionDropdown() {

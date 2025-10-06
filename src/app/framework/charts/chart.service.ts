@@ -62,9 +62,6 @@ export class ChartService {
   private static readonly MIN_GRID_DISTANCE_X_BAR_DESKTOP = 40;
 
   // Data thresholds
-  private static readonly SCROLLBAR_THRESHOLD_LINE = 7;
-  private static readonly SCROLLBAR_THRESHOLD_BAR = 6;
-  private static readonly Y_SCROLLBAR_THRESHOLD = 10;
   private static readonly MAX_BAR_ITEMS = 10;
   private static readonly MAX_PIE_ITEMS = 10;
 
@@ -203,18 +200,15 @@ export class ChartService {
     const processedData = this.processDateData(config.data, config.dateField);
     series.data.setAll(processedData);
 
-    if (config.data.length > ChartService.SCROLLBAR_THRESHOLD_LINE) {
-      this.addXScrollbar(chart, root, breakpoints, {
-        type: 'line',
-        data: processedData,
-        valueField: config.valueField,
-        dateField: config.dateField
-      });
-    }
+    // Sempre adiciona scrollbars para facilitar controle em mobile
+    this.addXScrollbar(chart, root, breakpoints, {
+      type: 'line',
+      data: processedData,
+      valueField: config.valueField,
+      dateField: config.dateField
+    });
 
-    if (config.data.length > ChartService.Y_SCROLLBAR_THRESHOLD) {
-      this.addYScrollbar(chart, root);
-    }
+    this.addYScrollbar(chart, root);
 
     if (config.data.length === 0) {
       this.addNoDataLabel(root, chart, config.noDataMessage || 'Nenhum empréstimo diário registrado no período.');
@@ -325,18 +319,15 @@ export class ChartService {
 
     series.data.setAll(dataWithColors);
 
-    if (sortedData.length > ChartService.SCROLLBAR_THRESHOLD_BAR) {
-      this.addXScrollbar(chart, root, breakpoints, {
-        type: 'bar',
-        data: dataWithColors,
-        categoryField: config.categoryField,
-        valueField: config.valueField
-      });
-    }
+    // Sempre adiciona scrollbars para facilitar controle em mobile
+    this.addXScrollbar(chart, root, breakpoints, {
+      type: 'bar',
+      data: dataWithColors,
+      categoryField: config.categoryField,
+      valueField: config.valueField
+    });
 
-    if (sortedData.length > ChartService.SCROLLBAR_THRESHOLD_BAR) {
-      this.addYScrollbar(chart, root);
-    }
+    this.addYScrollbar(chart, root);
 
     if (config.data.length === 0) {
       this.addNoDataLabel(root, chart, config.noDataMessage || 'Nenhum item emprestado no período.');
@@ -357,10 +348,10 @@ export class ChartService {
     const chart = root.container.children.push(
       am5percent.PieChart.new(root, {
         layout: root.verticalLayout,
-        paddingTop: ChartService.PADDING_LEFT,
-        paddingBottom: ChartService.PADDING_RIGHT,
-        paddingLeft: ChartService.PADDING_TOP,
-        paddingRight: ChartService.PADDING_TOP
+        paddingTop: ChartService.PADDING_TOP,
+        paddingBottom: ChartService.PADDING_BOTTOM,
+        paddingLeft: ChartService.PADDING_LEFT,
+        paddingRight: ChartService.PADDING_RIGHT
       })
     );
 
@@ -779,12 +770,10 @@ export class ChartService {
           });
         } else if (chart instanceof am5percent.PieChart) {
           chart.series.each((series) => {
-            if (series instanceof am5percent.PieSeries) {
-              series.slices.each((slice, index) => {
-                const color = this.chartColors.pie.palette[index % this.chartColors.pie.palette.length];
-                slice.set('fill', am5.color(color));
-              });
-            }
+            series.slices.each((slice, index) => {
+              const color = this.chartColors.pie.palette[index % this.chartColors.pie.palette.length];
+              slice.set('fill', am5.color(color));
+            });
           });
         }
 

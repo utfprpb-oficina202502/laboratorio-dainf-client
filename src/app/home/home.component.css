@@ -185,3 +185,71 @@
   }
 }
 
+/* ============================================================================
+   Fullscreen Chart Styles
+   ============================================================================ */
+
+/* Backdrop quando em tela cheia */
+.chart-fullscreen-wrapper:fullscreen::backdrop {
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+/* Wrapper em fullscreen - ocupa viewport inteiro e usa flexbox */
+.chart-fullscreen-wrapper:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  background-color: var(--color-bg-primary, #ffffff);
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header do gráfico - modo normal e fullscreen */
+.chart-fullscreen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Título do gráfico - trunca com elipsis se necessário */
+.chart-fullscreen-header h6 {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Botão de fullscreen - sempre fica visível no canto */
+.chart-fullscreen-header p-button {
+  flex-shrink: 0;
+}
+
+/* Header em fullscreen - fixo no topo */
+.chart-fullscreen-wrapper:fullscreen .chart-fullscreen-header {
+  background: var(--color-bg-secondary, #F8FAFC);
+  border-bottom: 1px solid var(--color-border, #E2E8F0);
+  padding: 1rem 1.5rem;
+  flex-shrink: 0;
+}
+
+/* Containers de gráfico em fullscreen - ocupam espaço restante */
+.chart-fullscreen-wrapper:fullscreen #chartdiv2,
+.chart-fullscreen-wrapper:fullscreen #chartdiv4,
+.chart-fullscreen-wrapper:fullscreen #chartdivPie1,
+.chart-fullscreen-wrapper:fullscreen #chartdivPie2 {
+  flex: 1 1 auto;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+

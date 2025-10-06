@@ -10,6 +10,8 @@ p-toolbar ::ng-deep .p-toolbar {
   min-height: 56px !important;
   height: 56px !important;
   gap: 0;
+  position: relative;
+  z-index: 1000; /* Above backdrop (999) but below sidenav (1050) */
 }
 
 p-toolbar ::ng-deep .p-toolbar-group-start,
@@ -27,14 +29,32 @@ p-toolbar ::ng-deep .p-toolbar-group-end > * {
   align-items: center;
 }
 
+/* Ensure wrapper divs don't block touch events */
+p-toolbar ::ng-deep .p-toolbar-group-start > div,
+p-toolbar ::ng-deep .p-toolbar-group-end > div {
+  pointer-events: none;
+}
+
+/* Re-enable pointer events for interactive elements inside wrappers */
+p-toolbar ::ng-deep .p-toolbar-group-start > div > button,
+p-toolbar ::ng-deep .p-toolbar-group-start > div > a,
+p-toolbar ::ng-deep .p-toolbar-group-end > div > button,
+p-toolbar ::ng-deep .p-toolbar-group-end > div > a {
+  pointer-events: auto;
+}
+
 /* Ensure buttons don't flash on theme change */
 button {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-/* Remove any selection/highlight styling */
+/* Remove selection but preserve tap highlight for buttons */
 p-toolbar ::ng-deep .p-toolbar * {
   user-select: none;
+}
+
+/* Only disable tap highlight on non-interactive elements */
+p-toolbar ::ng-deep .p-toolbar *:not(button):not(a) {
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -47,23 +67,60 @@ p-toolbar ::ng-deep .p-toolbar * {
 .navbar-hamburger {
   display: flex !important; /* Override PrimeNG */
   touch-action: manipulation; /* Disable double-tap zoom and improve touch responsiveness */
+  cursor: pointer;
+  /* Prevent any transitions that could delay touch feedback */
+  transition: none !important;
 }
 
 /* Mobile-specific optimizations for hamburger button */
 @media (max-width: 1199px) {
   .navbar-hamburger {
-    /* Disable hover states on touch devices to prevent double-tap requirement */
-    -webkit-tap-highlight-color: transparent;
+    /* Subtle tap highlight for immediate visual feedback */
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.08);
+    /* Ensure button receives all pointer events */
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 10;
   }
 
-  /* Remove hover effects on touch devices */
-  .navbar-hamburger:hover {
-    background: transparent !important;
+  /* CRITICAL: Remove ALL hover effects using @media (hover) query
+     This ensures hover states NEVER activate on touch-only devices */
+  @media (hover: hover) {
+    .navbar-hamburger:hover,
+    .navbar-hamburger.p-button:hover {
+      background: var(--p-button-text-primary-hover-background, rgba(0, 0, 0, 0.04));
+    }
   }
 
-  /* Ensure active/pressed state works immediately on first touch */
-  .navbar-hamburger:active {
-    background: var(--p-button-text-primary-active-background, rgba(0, 0, 0, 0.04)) !important;
+  /* On touch-only devices, explicitly disable hover */
+  @media (hover: none) {
+    .navbar-hamburger:hover,
+    .navbar-hamburger.p-button:hover,
+    .navbar-hamburger.p-button:not(:disabled):hover {
+      background: transparent !important;
+      border-color: transparent !important;
+      box-shadow: none !important;
+    }
+  }
+
+  /* Active state for immediate touch feedback - triggers on touchend */
+  .navbar-hamburger:active,
+  .navbar-hamburger.p-button:active {
+    background: var(--p-button-text-primary-active-background, rgba(0, 0, 0, 0.12)) !important;
+    transition: none !important;
+  }
+
+  /* Remove focus outline completely - not needed on touch devices */
+  .navbar-hamburger:focus,
+  .navbar-hamburger:focus-visible,
+  .navbar-hamburger.p-button:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Remove any PrimeNG ripple effects that could interfere */
+  .navbar-hamburger ::ng-deep .p-ink {
+    display: none !important;
   }
 }
 

@@ -86,32 +86,80 @@
     }
     @if (hasDashboardData() && !loadingCharts()) {
       <p-panel class="mb-3">
-        <ng-template pTemplate="header">
-          <h6 class="font-bold text-center m-0">Total de Empréstimos Realizados por Dia</h6>
-        </ng-template>
-        <div id="chartdiv2" class="h-[450px]"></div>
+        <div id="chart-wrapper-line" class="chart-fullscreen-wrapper">
+          <div class="chart-fullscreen-header">
+            <h6 class="font-bold m-0">Total de Empréstimos Realizados por Dia</h6>
+            @if (hasLineChartData()) {
+              <p-button
+                icon="pi pi-window-maximize"
+                variant="text"
+                size="small"
+                pTooltip="Tela cheia"
+                tooltipPosition="left"
+                (onClick)="toggleFullscreen('chart-wrapper-line')">
+              </p-button>
+            }
+          </div>
+          <div id="chartdiv2" class="h-[450px]"></div>
+        </div>
       </p-panel>
       <p-panel class="mb-3">
-        <ng-template pTemplate="header">
-          <h6 class="font-bold text-center m-0">Top 10 | Itens Emprestados</h6>
-        </ng-template>
-        <div id="chartdiv4" class="h-[450px]"></div>
+        <div id="chart-wrapper-bar" class="chart-fullscreen-wrapper">
+          <div class="chart-fullscreen-header">
+            <h6 class="font-bold m-0">Top 10 | Itens Emprestados</h6>
+            @if (hasBarChartData()) {
+              <p-button
+                icon="pi pi-window-maximize"
+                variant="text"
+                size="small"
+                pTooltip="Tela cheia"
+                tooltipPosition="left"
+                (onClick)="toggleFullscreen('chart-wrapper-bar')">
+              </p-button>
+            }
+          </div>
+          <div id="chartdiv4" class="h-[450px]"></div>
+        </div>
       </p-panel>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
           <p-panel>
-            <ng-template pTemplate="header">
-              <h6 class="font-bold text-center m-0">Top 10 | Itens Adquiridos</h6>
-            </ng-template>
-            <div id="chartdivPie1" class="chart-pie"></div>
+            <div id="chart-wrapper-pie1" class="chart-fullscreen-wrapper">
+              <div class="chart-fullscreen-header">
+                <h6 class="font-bold m-0">Top 10 | Itens Adquiridos</h6>
+                @if (hasPie1ChartData()) {
+                  <p-button
+                    icon="pi pi-window-maximize"
+                    variant="text"
+                    size="small"
+                    pTooltip="Tela cheia"
+                    tooltipPosition="left"
+                    (onClick)="toggleFullscreen('chart-wrapper-pie1')">
+                  </p-button>
+                }
+              </div>
+              <div id="chartdivPie1" class="chart-pie"></div>
+            </div>
           </p-panel>
         </div>
         <div>
           <p-panel>
-            <ng-template pTemplate="header">
-              <h6 class="font-bold text-center m-0">Top 10 | Itens com Saídas</h6>
-            </ng-template>
-            <div id="chartdivPie2" class="chart-pie"></div>
+            <div id="chart-wrapper-pie2" class="chart-fullscreen-wrapper">
+              <div class="chart-fullscreen-header">
+                <h6 class="font-bold m-0">Top 10 | Itens com Saídas</h6>
+                @if (hasPie2ChartData()) {
+                  <p-button
+                    icon="pi pi-window-maximize"
+                    variant="text"
+                    size="small"
+                    pTooltip="Tela cheia"
+                    tooltipPosition="left"
+                    (onClick)="toggleFullscreen('chart-wrapper-pie2')">
+                  </p-button>
+                }
+              </div>
+              <div id="chartdivPie2" class="chart-pie"></div>
+            </div>
           </p-panel>
         </div>
       </div>
@@ -157,7 +205,7 @@
           inputId="dtIni"
           name="dtIni"
           placeholder="Selecione a data inicial"
-          styleClass="w-full">
+          class="w-full">
         </p-datepicker>
       </div>
 
@@ -176,7 +224,7 @@
           inputId="dtFim"
           name="dtFim"
           placeholder="Selecione a data final"
-          styleClass="w-full">
+          class="w-full">
         </p-datepicker>
       </div>
     </div>
