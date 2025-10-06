@@ -8,6 +8,7 @@ import {catchError, finalize, switchMap} from "rxjs/operators";
 import {of} from "rxjs";
 import {ProgressBar} from "primeng/progressbar";
 import {NgOptimizedImage} from "@angular/common";
+import {StorageService} from "../framework/services/storage.service";
 
 @Component({
   selector: "app-login",
@@ -25,6 +26,7 @@ export class LoginComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly messageService = inject(MessageService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly storageService = inject(StorageService);
 
   usuario!: Usuario;
   showProgress = false;
@@ -38,8 +40,8 @@ export class LoginComponent implements OnInit {
     this.cdr?.markForCheck();
     this.loginService.login(this.usuario).subscribe({
       next: (e: string) => {
-        localStorage.setItem("token", e);
-        localStorage.setItem("username", this.usuario.username);
+        this.storageService.setItem("token", e);
+        this.storageService.setItem("username", this.usuario.username);
         this.setUserInLocalStorage();
       },
       error: () => {

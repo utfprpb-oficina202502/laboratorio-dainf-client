@@ -15,5 +15,6 @@ module.exports = {
       functions: 70,
       lines: 70
     }
-  }
+  },
+  transformIgnorePatterns: [String.raw`node_modules/(?!.*\.mjs$)`]
 };

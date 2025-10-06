@@ -79,10 +79,13 @@ module.exports = tseslint.config(
     },
   },
   {
-    // Test files
-    files: ["**/*.spec.ts"],
+    // Test files - relaxed rules for testing patterns
+    files: ["**/*.spec.ts", "**/*.test.ts"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/ban-ts-comment": "off", // Allow @ts-expect-error for testing private methods
+      "@typescript-eslint/no-unused-vars": "off", // Allow unused test variables
+      "no-console": "off", // Allow console in tests for debugging
     },
   }
 );

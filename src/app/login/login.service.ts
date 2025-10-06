@@ -7,12 +7,15 @@ import {environment} from "../../environments/environment";
 import {catchError, finalize, map, shareReplay, tap} from "rxjs/operators";
 import {UsuarioService} from "../usuario/usuario.service";
 import {Permissao} from "../usuario/permissao";
+import {StorageService} from "../framework/services/storage.service";
+import {JwtUtil} from "../framework/utils/jwt.util";
 
 @Injectable()
 export class LoginService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly usuarioService = inject(UsuarioService);
+  private readonly storageService = inject(StorageService);
 
   url: string;
   isAuthenticated = new BehaviorSubject<boolean>(this.hasStoredAuth());
@@ -21,16 +24,10 @@ export class LoginService {
   private currentUserRequest$: Observable<Usuario> | null = null;
   private authValidation$: Observable<boolean> | null = null;
 
-  private loadUserFromStorage(): Usuario | null {
-    const stored = localStorage.getItem("userLogged");
-    if (!stored) {
-      return null;
-    }
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return null;
-    }
+  constructor() {
+    this.url = environment.api_url + "login";
+    // Migra dados antigos do localStorage para sessionStorage na inicialização
+    this.migrateFromLocalStorage();
   }
 
   canActivate(
@@ -41,8 +38,14 @@ export class LoginService {
     | Promise<boolean | UrlTree>
     | boolean
     | UrlTree {
+    // Verifica proativamente se o token está expirado
+    if (this.isTokenExpired()) {
+      this.logout();
+      return of(false);
+    }
+
     const hasCachedUser = !!(this.currentUserSubject.value || this.loadUserFromStorage());
-    const hasToken = !!localStorage.getItem("token");
+    const hasToken = this.hasValidToken();
 
     if (hasCachedUser && hasToken) {
       this.redirectIfProfileIncomplete(route);
@@ -81,14 +84,6 @@ export class LoginService {
     return request$;
   }
 
-  private persistUser(user: Usuario | null) {
-    if (user) {
-      localStorage.setItem("userLogged", JSON.stringify(user));
-    } else {
-      localStorage.removeItem("userLogged");
-    }
-  }
-
   getCurrentUser(options: { forceRefresh?: boolean } = {}): Observable<Usuario> {
     const forceRefresh = options.forceRefresh ?? false;
     const cached = this.currentUserSubject.value;
@@ -101,7 +96,7 @@ export class LoginService {
       return this.currentUserRequest$;
     }
 
-    const username = localStorage.getItem("username");
+    const username = this.storageService.getItem("username");
     if (!username) {
       return throwError(() => new Error('Usuário não autenticado.'));
     }
@@ -121,6 +116,38 @@ export class LoginService {
     return request$;
   }
 
+  logout() {
+    this.storageService.removeItem("token");
+    this.storageService.removeItem("username");
+    this.persistUser(null);
+    this.currentUserSubject.next(null);
+    this.currentUserRequest$ = null;
+    this.authValidation$ = null;
+    this.isAuthenticated.next(false);
+    this.router.navigate(["/login"]);
+  }
+
+  private loadUserFromStorage(): Usuario | null {
+    const stored = this.storageService.getItem("userLogged");
+    if (!stored) {
+      return null;
+    }
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Verifica se o token JWT está expirado
+   * @returns true se o token está expirado ou inválido
+   */
+  private isTokenExpired(): boolean {
+    const token = this.storageService.getItem("token");
+    return JwtUtil.isTokenExpired(token);
+  }
+
   refreshCurrentUser(): Observable<Usuario> {
     return this.getCurrentUser({ forceRefresh: true });
   }
@@ -136,14 +163,53 @@ export class LoginService {
     }
   }
 
-  constructor() {
-    this.url = environment.api_url + "login";
+  /**
+   * Valida se o token existe e não está expirado
+   * @returns true se o token é válido
+   */
+  private hasValidToken(): boolean {
+    const token = this.storageService.getItem("token");
+    return !!token && !JwtUtil.isTokenExpired(token);
   }
 
-  private hasStoredAuth(): boolean {
-    const hasToken = !!localStorage.getItem("token");
-    const hasUser = !!this.loadUserFromStorage();
-    return hasToken && hasUser;
+  private persistUser(user: Usuario | null) {
+    if (user) {
+      this.storageService.setItem("userLogged", JSON.stringify(user));
+    } else {
+      this.storageService.removeItem("userLogged");
+    }
+  }
+
+  /**
+   * Migra dados de autenticação do localStorage (antigo) para sessionStorage (novo)
+   * e remove os dados antigos do localStorage para evitar confusão
+   */
+  private migrateFromLocalStorage(): void {
+    const oldToken = localStorage.getItem('token');
+    const oldUsername = localStorage.getItem('username');
+    const oldUserLogged = localStorage.getItem('userLogged');
+
+    // Se houver dados no localStorage, migra para sessionStorage
+    if (oldToken || oldUsername || oldUserLogged) {
+      console.warn('[Auth Migration] Detectados dados antigos no localStorage, migrando para sessionStorage...');
+
+      if (oldToken) {
+        this.storageService.setItem('token', oldToken);
+        localStorage.removeItem('token');
+      }
+
+      if (oldUsername) {
+        this.storageService.setItem('username', oldUsername);
+        localStorage.removeItem('username');
+      }
+
+      if (oldUserLogged) {
+        this.storageService.setItem('userLogged', oldUserLogged);
+        localStorage.removeItem('userLogged');
+      }
+
+      console.warn('[Auth Migration] Migração concluída. Dados movidos para sessionStorage e removidos do localStorage.');
+    }
   }
 
   getPermissoesUser(options: { forceRefresh?: boolean } = {}): Observable<Permissao[]> {
@@ -171,15 +237,10 @@ export class LoginService {
     return !roles.some((role) => role === 'ROLE_ADMINISTRADOR' || role === 'ROLE_LABORATORISTA');
   }
 
-  logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
-    this.persistUser(null);
-    this.currentUserSubject.next(null);
-    this.currentUserRequest$ = null;
-    this.authValidation$ = null;
-    this.isAuthenticated.next(false);
-    this.router.navigate(["/login"]);
+  private hasStoredAuth(): boolean {
+    const hasToken = this.hasValidToken();
+    const hasUser = !!this.loadUserFromStorage();
+    return hasToken && hasUser;
   }
 
   login(usuario: Usuario): Observable<string> {
