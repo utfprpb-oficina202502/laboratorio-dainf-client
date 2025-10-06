@@ -13,7 +13,9 @@
   left: 0;
   top: 56px;
   width: 260px;
-  height: calc(100vh - 56px);
+  /* Use dvh (dynamic viewport height) to account for mobile browser chrome */
+  height: calc(100vh - 56px); /* Fallback for older browsers */
+  height: calc(100dvh - 56px); /* Modern browsers with dynamic viewport */
   z-index: 1000;
   overflow-y: auto;
   overflow-x: hidden;
@@ -34,7 +36,9 @@
   @media (max-width: 1199px) {
     z-index: 1050;
     top: 0;
-    height: 100vh;
+    /* Use dvh (dynamic viewport height) to account for mobile browser chrome */
+    height: 100vh; /* Fallback for older browsers */
+    height: 100dvh; /* Modern browsers with dynamic viewport */
     transform: translateX(-100%);
 
     &.sidebar-visible {
@@ -56,13 +60,13 @@
   font-family: var(--font-family-display);
   padding: 0;
   margin: 0;
+  color: var(--sidebar-text);
 }
 
 /* Navigation container */
 .sidebar-nav {
   flex: 1;
-  padding: 0;
-  padding-top: 0.5rem;
+  padding: 0.5rem 0 0;
   overflow-y: auto;
 
   @media (max-width: 1199px) {
@@ -80,6 +84,7 @@
 
   &::-webkit-scrollbar-thumb {
     border-radius: 4px;
+    background: var(--sidebar-scroll-thumb);
   }
 }
 
@@ -216,8 +221,8 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100dvw; /* Dynamic viewport width */
+  height: 100dvh; /* Dynamic viewport height to match browser chrome */
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 999;
   cursor: pointer;
@@ -234,14 +239,6 @@
     opacity: 1;
   }
 }
-
-/* Apply theme-aware colors to all elements */
-.sidebar-content {
-  color: var(--sidebar-text);
-}
-
-.sidebar-nav::-webkit-scrollbar-thumb {
-  background: var(--sidebar-scroll-thumb);
 
   &:hover {
     background: var(--sidebar-scroll-hover);
