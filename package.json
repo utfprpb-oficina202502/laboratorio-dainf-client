@@ -36,7 +36,6 @@
     "@eslint/js": "^9.37.0",
     "@fullcalendar/core": "^6.1.19",
     "@primeuix/themes": "^1.2.3",
-    "@tailwindcss/postcss": "^4.1.13",
     "compression": "^1.8.1",
     "exceljs": "^4.4.0",
     "express": "^5.1.0",
@@ -68,7 +67,7 @@
     "jest-preset-angular": "^15.0.2",
     "postcss": "^8.5.6",
     "postcss-nesting": "^13.0.2",
-    "tailwindcss": "^3.4.17",
+    "tailwindcss": "^3.4.18",
     "ts-jest": "^29.4.4",
     "typescript": "~5.9.0",
     "typescript-eslint": "8.40.0"
