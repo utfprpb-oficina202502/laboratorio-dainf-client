@@ -33,6 +33,7 @@
       "updateMode": "prefetch",
       "resources": {
         "files": [
+          "/assets/fonts/**",
           "/*.(woff|woff2|ttf|otf|eot)"
         ]
       }
