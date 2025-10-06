@@ -59,7 +59,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   usuarioResponsalvel: Usuario[] = [];
   dtNovaData!: string;
   idEmprestimoToChangePrazoDev!: number;
-  protected override columnsTable = ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status', 'actions'];
+  protected override columnsTable = ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status'];
   protected override urlForm = 'emprestimo/form';
   private readonly usuarioService = inject(UsuarioService);
   private readonly tableColumns: TableColumn[] = [
@@ -78,7 +78,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       type: 'custom',
       sortable: true,
       filterable: true,
-      minWidth: '16rem'
+      width: '20rem'
     },
     {
       field: 'dataEmprestimo',
@@ -105,17 +105,6 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       sortable: true,
       filterable: false,
       width: '10rem',
-      align: 'center'
-    },
-    {
-      field: 'actions',
-      header: 'Opções',
-      type: 'custom',
-      sortable: false,
-      filterable: false,
-      exportable: false,
-      toggleable: false,
-      width: '12rem',
       align: 'center'
     }
   ];
@@ -317,7 +306,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   setUserLogadoInFilter(): Promise<void> {
     return new Promise<void>(resolve => {
       const u = new Usuario();
-      u.username = localStorage.getItem('username') ?? '';
+      u.username = this.storageService.getItem('username') ?? '';
       this.emprestimoFilter.usuarioEmprestimo = u;
       resolve();
     });

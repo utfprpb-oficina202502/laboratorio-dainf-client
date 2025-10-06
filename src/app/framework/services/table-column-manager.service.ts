@@ -85,7 +85,9 @@ export class TableColumnManagerService {
 
     const actionsColumn = columns.find(col => col.field === 'actions');
     if (actionsColumn) {
-      actionsColumn.visible = !isReadOnly && actionsColumn.visible !== false;
+      // Force visibility based on permissions, overriding any restored state
+      // Admin and Laboratorista should always see actions column
+      actionsColumn.visible = !isReadOnly;
     }
   }
 

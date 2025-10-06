@@ -7,7 +7,7 @@ import {UsuarioService} from '../usuario/usuario.service';
 import {Usuario} from '../usuario/usuario';
 import {environment} from '../../environments/environment';
 
-describe('LoginService - Token Validation & Migration', () => {
+describe('LoginService - Token Validation', () => {
   let service: LoginService;
   let httpMock: HttpTestingController;
   let storageService: StorageService;
@@ -62,118 +62,7 @@ describe('LoginService - Token Validation & Migration', () => {
 
   afterEach(() => {
     httpMock.verify();
-    sessionStorage.clear();
     localStorage.clear();
-  });
-
-  describe('localStorage Migration', () => {
-    // Testes de migração precisam de TestBed próprio para evitar interferência do beforeEach
-    beforeEach(() => {
-      // Limpa antes de cada teste de migração
-      sessionStorage.clear();
-      localStorage.clear();
-    });
-
-    it('deve migrar token do localStorage para sessionStorage', () => {
-      // Simula dados antigos no localStorage ANTES de criar o serviço
-      localStorage.setItem('token', validToken);
-      localStorage.setItem('username', 'testuser');
-      localStorage.setItem('userLogged', JSON.stringify(mockUser));
-
-      // Cria novo TestBed e serviço (trigger migração no constructor)
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        imports: [HttpClientTestingModule],
-        providers: [
-          LoginService,
-          StorageService,
-          {provide: UsuarioService, useValue: {findByUsername: jest.fn()}},
-          {provide: Router, useValue: {navigate: jest.fn()}}
-        ]
-      });
-
-      TestBed.inject(LoginService);
-
-      // Verifica que dados foram migrados para sessionStorage
-      expect(sessionStorage.getItem('token')).toBe(validToken);
-      expect(sessionStorage.getItem('username')).toBe('testuser');
-      expect(sessionStorage.getItem('userLogged')).toBe(JSON.stringify(mockUser));
-
-      // Verifica que dados foram removidos do localStorage
-      expect(localStorage.getItem('token')).toBeNull();
-      expect(localStorage.getItem('username')).toBeNull();
-      expect(localStorage.getItem('userLogged')).toBeNull();
-    });
-
-    it('deve migrar apenas token se apenas token existir no localStorage', () => {
-      localStorage.setItem('token', validToken);
-
-      // Cria novo TestBed
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        imports: [HttpClientTestingModule],
-        providers: [
-          LoginService,
-          StorageService,
-          {provide: UsuarioService, useValue: {findByUsername: jest.fn()}},
-          {provide: Router, useValue: {navigate: jest.fn()}}
-        ]
-      });
-
-      TestBed.inject(LoginService);
-
-      expect(sessionStorage.getItem('token')).toBe(validToken);
-      expect(localStorage.getItem('token')).toBeNull();
-    });
-
-    it('não deve fazer nada se não houver dados no localStorage', () => {
-      const consoleSpy = jest.spyOn(console, 'warn');
-
-      // Cria novo TestBed sem dados no localStorage
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        imports: [HttpClientTestingModule],
-        providers: [
-          LoginService,
-          StorageService,
-          {provide: UsuarioService, useValue: {findByUsername: jest.fn()}},
-          {provide: Router, useValue: {navigate: jest.fn()}}
-        ]
-      });
-
-      TestBed.inject(LoginService);
-
-      expect(consoleSpy).not.toHaveBeenCalled();
-      consoleSpy.mockRestore();
-    });
-
-    it('deve logar mensagem de migração quando dados são encontrados', () => {
-      const consoleSpy = jest.spyOn(console, 'warn');
-      localStorage.setItem('token', validToken);
-
-      // Cria novo TestBed
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        imports: [HttpClientTestingModule],
-        providers: [
-          LoginService,
-          StorageService,
-          {provide: UsuarioService, useValue: {findByUsername: jest.fn()}},
-          {provide: Router, useValue: {navigate: jest.fn()}}
-        ]
-      });
-
-      TestBed.inject(LoginService);
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '[Auth Migration] Detectados dados antigos no localStorage, migrando para sessionStorage...'
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '[Auth Migration] Migração concluída. Dados movidos para sessionStorage e removidos do localStorage.'
-      );
-
-      consoleSpy.mockRestore();
-    });
   });
 
   describe('Token Expiration Validation', () => {

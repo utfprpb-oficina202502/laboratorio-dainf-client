@@ -8,6 +8,7 @@ import {ButtonModule} from 'primeng/button';
 import {TooltipModule} from 'primeng/tooltip';
 import {TieredMenuModule} from 'primeng/tieredmenu';
 import {LoggerService} from '../framework/services/logger.service';
+import {StorageService} from '../framework/services/storage.service';
 
 @Component({
     selector: "app-navbar",
@@ -28,6 +29,7 @@ export class NavbarComponent implements OnInit {
   private readonly sidenavService = inject(SidenavService);
   private readonly router = inject(Router);
   private readonly logger = inject(LoggerService);
+  private readonly storageService = inject(StorageService);
 
   items: MenuItem[] = [];
 
@@ -59,11 +61,11 @@ export class NavbarComponent implements OnInit {
   }
 
   getUserLogado() {
-    return localStorage.getItem("username");
+    return this.storageService.getItem("username");
   }
 
   openEditForm() {
-    const userLogged = localStorage.getItem("userLogged");
+    const userLogged = this.storageService.getItem("userLogged");
     if (userLogged) {
       try {
         const user = JSON.parse(userLogged);

@@ -1,9 +1,3 @@
-/* Table column sizing */
-td,
-th {
-  width: 25%;
-}
-
 /* PrimeNG Calendar touch UI - wider on mobile */
 ::ng-deep .p-datepicker.p-datepicker-touch-ui {
   min-width: 30%;

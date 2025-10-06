@@ -1,5 +1,6 @@
 import {inject, Injectable} from '@angular/core';
 import {LoginService} from '../../login/login.service';
+import {StorageService} from '../services/storage.service';
 
 export interface UserPermissions {
   canCreate: boolean;
@@ -16,13 +17,15 @@ export interface UserPermissions {
 })
 export class PermissionService {
   private readonly loginService = inject(LoginService);
+  private readonly storageService = inject(StorageService);
 
   /**
    * Get comprehensive user permissions based on their role
    */
   async getUserPermissions(): Promise<UserPermissions> {
     const isAlunoOrProfessor = await this.loginService.userLoggedIsAlunoOrProfessor();
-    const loggedUser = JSON.parse(localStorage.getItem('userLogged') || '{}');
+    const userLoggedStr = this.storageService.getItem('userLogged');
+    const loggedUser = userLoggedStr ? JSON.parse(userLoggedStr) : {};
 
     const permissions: UserPermissions = {
       canCreate: false,

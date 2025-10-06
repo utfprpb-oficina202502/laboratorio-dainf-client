@@ -2,38 +2,38 @@ import {StorageService} from './storage.service';
 
 describe('StorageService', () => {
   let service: StorageService;
-  let sessionStorageSpy: jest.SpyInstance;
+  let localStorageSpy: jest.SpyInstance;
 
   beforeEach(() => {
     // Cria instância direta do serviço (não precisa de TestBed)
     service = new StorageService();
 
-    // Limpa sessionStorage antes de cada teste
-    sessionStorage.clear();
+    // Limpa localStorage antes de cada teste
+    localStorage.clear();
   });
 
   afterEach(() => {
-    // Limpa sessionStorage após cada teste
-    sessionStorage.clear();
+    // Limpa localStorage após cada teste
+    localStorage.clear();
   });
 
   describe('setItem', () => {
-    it('deve armazenar item no sessionStorage', () => {
+    it('deve armazenar item no localStorage', () => {
       service.setItem('testKey', 'testValue');
 
-      expect(sessionStorage.getItem('testKey')).toBe('testValue');
+      expect(localStorage.getItem('testKey')).toBe('testValue');
     });
 
     it('deve sobrescrever valor existente', () => {
       service.setItem('testKey', 'firstValue');
       service.setItem('testKey', 'secondValue');
 
-      expect(sessionStorage.getItem('testKey')).toBe('secondValue');
+      expect(localStorage.getItem('testKey')).toBe('secondValue');
     });
 
     it('deve tratar erro ao armazenar item', () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      sessionStorageSpy = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      localStorageSpy = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
         throw new Error('Storage quota exceeded');
       });
 
@@ -42,13 +42,13 @@ describe('StorageService', () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith('Erro ao armazenar item:', expect.any(Error));
 
       consoleErrorSpy.mockRestore();
-      sessionStorageSpy.mockRestore();
+      localStorageSpy.mockRestore();
     });
   });
 
   describe('getItem', () => {
-    it('deve recuperar item do sessionStorage', () => {
-      sessionStorage.setItem('testKey', 'testValue');
+    it('deve recuperar item do localStorage', () => {
+      localStorage.setItem('testKey', 'testValue');
 
       const value = service.getItem('testKey');
 
@@ -63,7 +63,7 @@ describe('StorageService', () => {
 
     it('deve tratar erro ao recuperar item', () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      sessionStorageSpy = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      localStorageSpy = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
         throw new Error('Storage access denied');
       });
 
@@ -73,17 +73,17 @@ describe('StorageService', () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith('Erro ao recuperar item:', expect.any(Error));
 
       consoleErrorSpy.mockRestore();
-      sessionStorageSpy.mockRestore();
+      localStorageSpy.mockRestore();
     });
   });
 
   describe('removeItem', () => {
-    it('deve remover item do sessionStorage', () => {
-      sessionStorage.setItem('testKey', 'testValue');
+    it('deve remover item do localStorage', () => {
+      localStorage.setItem('testKey', 'testValue');
 
       service.removeItem('testKey');
 
-      expect(sessionStorage.getItem('testKey')).toBeNull();
+      expect(localStorage.getItem('testKey')).toBeNull();
     });
 
     it('não deve gerar erro ao remover chave inexistente', () => {
@@ -94,7 +94,7 @@ describe('StorageService', () => {
 
     it('deve tratar erro ao remover item', () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      sessionStorageSpy = jest.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      localStorageSpy = jest.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
         throw new Error('Storage access denied');
       });
 
@@ -103,27 +103,27 @@ describe('StorageService', () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith('Erro ao remover item:', expect.any(Error));
 
       consoleErrorSpy.mockRestore();
-      sessionStorageSpy.mockRestore();
+      localStorageSpy.mockRestore();
     });
   });
 
   describe('clear', () => {
-    it('deve limpar todo o sessionStorage', () => {
-      sessionStorage.setItem('key1', 'value1');
-      sessionStorage.setItem('key2', 'value2');
-      sessionStorage.setItem('key3', 'value3');
+    it('deve limpar todo o localStorage', () => {
+      localStorage.setItem('key1', 'value1');
+      localStorage.setItem('key2', 'value2');
+      localStorage.setItem('key3', 'value3');
 
       service.clear();
 
-      expect(sessionStorage.length).toBe(0);
-      expect(sessionStorage.getItem('key1')).toBeNull();
-      expect(sessionStorage.getItem('key2')).toBeNull();
-      expect(sessionStorage.getItem('key3')).toBeNull();
+      expect(localStorage.length).toBe(0);
+      expect(localStorage.getItem('key1')).toBeNull();
+      expect(localStorage.getItem('key2')).toBeNull();
+      expect(localStorage.getItem('key3')).toBeNull();
     });
 
     it('deve tratar erro ao limpar storage', () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      sessionStorageSpy = jest.spyOn(Storage.prototype, 'clear').mockImplementation(() => {
+      localStorageSpy = jest.spyOn(Storage.prototype, 'clear').mockImplementation(() => {
         throw new Error('Storage access denied');
       });
 
@@ -132,13 +132,13 @@ describe('StorageService', () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith('Erro ao limpar storage:', expect.any(Error));
 
       consoleErrorSpy.mockRestore();
-      sessionStorageSpy.mockRestore();
+      localStorageSpy.mockRestore();
     });
   });
 
   describe('hasItem', () => {
     it('deve retornar true para chave existente', () => {
-      sessionStorage.setItem('testKey', 'testValue');
+      localStorage.setItem('testKey', 'testValue');
 
       const hasKey = service.hasItem('testKey');
 
@@ -152,7 +152,7 @@ describe('StorageService', () => {
     });
 
     it('deve retornar true mesmo para valor vazio', () => {
-      sessionStorage.setItem('emptyKey', '');
+      localStorage.setItem('emptyKey', '');
 
       const hasKey = service.hasItem('emptyKey');
 
@@ -160,7 +160,7 @@ describe('StorageService', () => {
     });
 
     it('deve retornar false quando getItem retorna null em erro', () => {
-      sessionStorageSpy = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      localStorageSpy = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
         throw new Error('Storage access denied');
       });
       jest.spyOn(console, 'error').mockImplementation();
@@ -169,7 +169,7 @@ describe('StorageService', () => {
 
       expect(hasKey).toBe(false);
 
-      sessionStorageSpy.mockRestore();
+      localStorageSpy.mockRestore();
     });
   });
 

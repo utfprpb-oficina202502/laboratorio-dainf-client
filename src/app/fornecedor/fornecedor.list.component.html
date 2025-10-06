@@ -84,26 +84,16 @@
                     [attr.aria-label]="'CNPJ: ' + (rowData.cnpj | cpfCnpj)">{{ rowData.cnpj | cpfCnpj }}</span>
                 }
                 @case ('actions') {
-                  <div class="flex items-center gap-1 justify-center">
-                    <p-button
-                      icon="pi pi-pencil"
-                      [outlined]="true"
-                      severity="secondary"
-                      size="small"
-                      pTooltip="Editar"
-                      tooltipPosition="top"
-                      (onClick)="edit(rowData.id)">
-                    </p-button>
-                    <p-button
-                      icon="pi pi-trash"
-                      [outlined]="true"
-                      severity="danger"
-                      size="small"
-                      pTooltip="Remover"
-                      tooltipPosition="top"
-                      (onClick)="delete(rowData.id)">
-                    </p-button>
-                  </div>
+                  <app-action-buttons
+                    [showEdit]="canEdit"
+                    [showDelete]="canDelete"
+                    [editTooltip]="'Editar fornecedor'"
+                    [deleteTooltip]="'Remover fornecedor'"
+                    [editAriaLabel]="'Editar fornecedor ' + rowData.nomeFantasia"
+                    [deleteAriaLabel]="'Remover fornecedor ' + rowData.nomeFantasia"
+                    (edit)="edit(rowData.id)"
+                    (delete)="delete(rowData.id)">
+                  </app-action-buttons>
                 }
                 @default {
                   <span

@@ -97,10 +97,12 @@
                 }
                 @case ('actions') {
                   <app-action-buttons
-                    [showEdit]="true"
-                    [showDelete]="true"
-                    [editTooltip]="'Editar'"
-                    [deleteTooltip]="'Remover'"
+                    [showEdit]="canEdit"
+                    [showDelete]="canDelete"
+                    [editTooltip]="'Editar reserva'"
+                    [deleteTooltip]="'Remover reserva'"
+                    [editAriaLabel]="'Editar reserva ' + rowData.id"
+                    [deleteAriaLabel]="'Remover reserva ' + rowData.id"
                     (edit)="edit(rowData.id)"
                     (delete)="delete(rowData.id)">
                   </app-action-buttons>

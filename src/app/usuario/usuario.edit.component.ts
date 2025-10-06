@@ -34,6 +34,7 @@ import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
 import {FormFieldComponent} from '../framework/component/form-field.component';
 import {LoggerService} from '../framework/services/logger.service';
+import {StorageService} from '../framework/services/storage.service';
 
 @Component({
   selector: 'app-edit-usuario',
@@ -79,6 +80,7 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
   });
   private readonly fb = inject(FormBuilder);
   protected readonly logger = inject(LoggerService);
+  private readonly storageService = inject(StorageService);
   private permissoesSubscription?: Subscription;
   private changeSenhaSubscription?: Subscription;
 
@@ -113,8 +115,8 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
       this.service.updateUser(objectToSave).subscribe({
         next: (savedObject) => {
           this.object.set(savedObject);
-          // Update localStorage with new user data
-          localStorage.setItem('userLogged', JSON.stringify(savedObject));
+          // Update sessionStorage with new user data
+          this.storageService.setItem('userLogged', JSON.stringify(savedObject));
           this.loaderService.hide();
           this.isLoading.set(false);
           Swal.fire('Sucesso!', 'Dados atualizados com sucesso!', 'success');
@@ -236,7 +238,8 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
    */
   override back(): void {
     // Check if user is editing their own profile
-    const currentUser = JSON.parse(localStorage.getItem('userLogged') || 'null');
+    const userLoggedStr = this.storageService.getItem('userLogged');
+    const currentUser = userLoggedStr ? JSON.parse(userLoggedStr) : null;
     const editingUser = this.object();
 
     // If editing own profile, go to home; otherwise go to list

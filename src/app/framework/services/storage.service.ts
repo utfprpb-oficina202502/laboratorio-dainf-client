@@ -1,9 +1,9 @@
 import {Injectable} from '@angular/core';
 
 /**
- * Serviço de abstração de armazenamento que usa sessionStorage por padrão.
- * sessionStorage é limpo quando o navegador é fechado, melhorando a segurança
- * em computadores compartilhados e forçando re-autenticação em novas sessões.
+ * Serviço de abstração de armazenamento que usa localStorage.
+ * Permite persistência de sessão mesmo após fechamento do navegador,
+ * melhorando a experiência do usuário em ambiente de laboratório.
  */
 @Injectable({
   providedIn: 'root'
@@ -12,13 +12,12 @@ export class StorageService {
   private readonly storage: Storage;
 
   constructor() {
-    // Usa sessionStorage por padrão para segurança
-    // sessionStorage é limpo ao fechar o navegador
-    this.storage = sessionStorage;
+    // Usa localStorage para persistência de sessão
+    this.storage = localStorage;
   }
 
   /**
-   * Armazena um item no sessionStorage
+   * Armazena um item no localStorage
    */
   setItem(key: string, value: string): void {
     try {
@@ -29,7 +28,7 @@ export class StorageService {
   }
 
   /**
-   * Recupera um item do sessionStorage
+   * Recupera um item do localStorage
    */
   getItem(key: string): string | null {
     try {
@@ -41,7 +40,7 @@ export class StorageService {
   }
 
   /**
-   * Remove um item do sessionStorage
+   * Remove um item do localStorage
    */
   removeItem(key: string): void {
     try {
@@ -52,7 +51,7 @@ export class StorageService {
   }
 
   /**
-   * Limpa o sessionStorage
+   * Limpa o localStorage
    */
   clear(): void {
     try {

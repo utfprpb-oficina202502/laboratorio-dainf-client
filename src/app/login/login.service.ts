@@ -26,8 +26,6 @@ export class LoginService {
 
   constructor() {
     this.url = environment.api_url + "login";
-    // Migra dados antigos do localStorage para sessionStorage na inicialização
-    this.migrateFromLocalStorage();
   }
 
   canActivate(
@@ -177,38 +175,6 @@ export class LoginService {
       this.storageService.setItem("userLogged", JSON.stringify(user));
     } else {
       this.storageService.removeItem("userLogged");
-    }
-  }
-
-  /**
-   * Migra dados de autenticação do localStorage (antigo) para sessionStorage (novo)
-   * e remove os dados antigos do localStorage para evitar confusão
-   */
-  private migrateFromLocalStorage(): void {
-    const oldToken = localStorage.getItem('token');
-    const oldUsername = localStorage.getItem('username');
-    const oldUserLogged = localStorage.getItem('userLogged');
-
-    // Se houver dados no localStorage, migra para sessionStorage
-    if (oldToken || oldUsername || oldUserLogged) {
-      console.warn('[Auth Migration] Detectados dados antigos no localStorage, migrando para sessionStorage...');
-
-      if (oldToken) {
-        this.storageService.setItem('token', oldToken);
-        localStorage.removeItem('token');
-      }
-
-      if (oldUsername) {
-        this.storageService.setItem('username', oldUsername);
-        localStorage.removeItem('username');
-      }
-
-      if (oldUserLogged) {
-        this.storageService.setItem('userLogged', oldUserLogged);
-        localStorage.removeItem('userLogged');
-      }
-
-      console.warn('[Auth Migration] Migração concluída. Dados movidos para sessionStorage e removidos do localStorage.');
     }
   }
 

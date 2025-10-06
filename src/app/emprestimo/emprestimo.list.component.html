@@ -124,23 +124,14 @@
                   [style.text-align]="column.align || 'left'"
                   [style.width]="column.width"
                   [style.min-width]="column.minWidth"
-                  [attr.headers]="'col-' + column.field">
+                  [attr.headers]="'col-' + column.field"
+                  (click)="openOptions($event, row.id)"
+                  class="cursor-pointer">
                   @switch (column.field) {
                     @case ('usuarioEmprestimo') {
-                      @if (!displayedColumns.includes('actions')) {
-                        <button
-                          type="button"
-                          class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
-                          (click)="openOptions($event, row.id)"
-                          [attr.aria-label]="column.header + ': ' + row.usuarioEmprestimo?.nome">
-                          {{ row.usuarioEmprestimo?.nome }}
-                        </button>
-                      } @else {
-                        <span
-                          [attr.aria-label]="column.header + ': ' + row.usuarioEmprestimo?.nome">
-                          {{ row.usuarioEmprestimo?.nome }}
-                        </span>
-                      }
+                      <span [attr.aria-label]="column.header + ': ' + row.usuarioEmprestimo?.nome">
+                        {{ row.usuarioEmprestimo?.nome }}
+                      </span>
                     }
                     @case ('status') {
                       <div class="flex justify-center">
@@ -148,10 +139,6 @@
                           <p-tag
                             value="Em andamento"
                             severity="info"
-                            (click)="openOptions($event, row.id)"
-                            (keydown.enter)="openOptions($event, row.id)"
-                            (keydown.space)="openOptions($event, row.id)"
-                            [style.cursor]="'pointer'"
                             [attr.aria-label]="'Status: Em andamento'">
                           </p-tag>
                         }
@@ -159,10 +146,6 @@
                           <p-tag
                             value="Em atraso"
                             severity="danger"
-                            (click)="openOptions($event, row.id)"
-                            (keydown.enter)="openOptions($event, row.id)"
-                            (keydown.space)="openOptions($event, row.id)"
-                            [style.cursor]="'pointer'"
                             [attr.aria-label]="'Status: Em atraso'">
                           </p-tag>
                         }
@@ -170,29 +153,15 @@
                           <p-tag
                             value="Finalizado"
                             severity="success"
-                            (click)="openOptions($event, row.id)"
-                            (keydown.enter)="openOptions($event, row.id)"
-                            (keydown.space)="openOptions($event, row.id)"
-                            [style.cursor]="'pointer'"
                             [attr.aria-label]="'Status: Finalizado'">
                           </p-tag>
                         }
                       </div>
                     }
                     @default {
-                      @if (!displayedColumns.includes('actions')) {
-                        <button
-                          type="button"
-                          class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
-                          (click)="openOptions($event, row.id)"
-                          [attr.aria-label]="column.header + ': ' + row[column.field]">
-                          {{ row[column.field] }}
-                        </button>
-                      } @else {
-                        <span [attr.aria-label]="column.header + ': ' + row[column.field]">
-                          {{ row[column.field] }}
-                        </span>
-                      }
+                      <span [attr.aria-label]="column.header + ': ' + row[column.field]">
+                        {{ row[column.field] }}
+                      </span>
                     }
                   }
                 </td>

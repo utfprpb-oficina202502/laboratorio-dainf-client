@@ -31,6 +31,7 @@ import {TableStateManagerService} from '../services/table-state-manager.service'
 import {KeyboardShortcut, TableKeyboardService} from '../services/table-keyboard.service';
 import {TableColumnManagerService} from '../services/table-column-manager.service';
 import {TableRowExpansionManagerService} from '../services/table-row-expansion-manager.service';
+import {StorageService} from '../services/storage.service';
 
 /**
  * Spring Data Page response interface
@@ -105,6 +106,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   protected readonly tableKeyboardService: TableKeyboardService;
   protected readonly tableColumnManager: TableColumnManagerService;
   protected readonly tableRowExpansionManager: TableRowExpansionManagerService;
+  protected readonly storageService: StorageService;
   // Enhanced configuration system
   protected readonly _tableConfigInput = input<TableConfiguration>({
     columns: [],
@@ -168,6 +170,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.tableKeyboardService = inject(TableKeyboardService);
     this.tableColumnManager = inject(TableColumnManagerService);
     this.tableRowExpansionManager = inject(TableRowExpansionManagerService);
+    this.storageService = inject(StorageService);
 
     // Get ChangeDetectorRef for OnPush components (optional)
     try {
@@ -501,7 +504,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
   findAllByUsername() {
     this.loading.set(true);
-    const u = localStorage.getItem('username');
+    const u = this.storageService.getItem('username');
     if (!u) {
       this.loading.set(false);
       return;
