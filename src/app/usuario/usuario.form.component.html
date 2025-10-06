@@ -191,8 +191,8 @@
   [visible]="dialogChangeSenha()"
   (visibleChange)="dialogChangeSenha.set($event)"
   [modal]="true"
-  [style]="{width: '90vw', maxWidth: '500px'}"
-  [baseZIndex]="10000"
+  [baseZIndex]="Z_INDEX.DIALOG"
+  class="dialog-md"
   [focusOnShow]="false"
   [dismissableMask]="true">
 

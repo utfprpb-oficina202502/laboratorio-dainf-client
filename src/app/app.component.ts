@@ -19,6 +19,7 @@ import {LoaderService} from './framework/loader/loader.service';
 import {ThemeService} from './framework/services/theme.service';
 import {BFCacheService} from './framework/services/bfcache.service';
 import {PwaService} from './framework/services/pwa.service';
+import {Z_INDEX} from './framework/constants';
 import {NavbarComponent} from './navbar/navbar.component';
 import {SidenavComponent} from './sidenav/sidenav.component';
 import {LoaderComponent} from './framework/loader/loader.component';
@@ -47,23 +48,25 @@ export class AppComponent implements OnDestroy {
   private readonly loginService = inject(LoginService);
   private readonly router = inject(Router);
   private readonly loaderService = inject(LoaderService);
-  private readonly themeService = inject(ThemeService); // Initialize theme service early
-  private readonly bfCacheService = inject(BFCacheService); // Initialize BFCache service
-  private readonly pwaService = inject(PwaService); // Initialize PWA service for updates
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
+  private readonly themeService = inject(ThemeService);
+  private readonly bfCacheService = inject(BFCacheService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   title = 'tcc-client';
   isAuthenticated = false;
   isNavigating = false;
   subscription!: Subscription;
-
+  private readonly pwaService = inject(PwaService);
   // BFCache cleanup subscriptions
-  private readonly bfCacheCleanupHandlers: Array<() => void> = [];
+  private readonly bfCacheCleanupHandlers: (() => void)[] = [];
 
   constructor() {
-    // Ensure services are initialized (they're needed for side effects)
-    void this.themeService; // Theme service applies theme in its constructor
-    void this.pwaService; // PWA service manages service worker updates automatically
+    // NOSONAR: void operator usado intencionalmente para inicialização precoce de serviços com side-effects
+    void this.themeService;
+    // NOSONAR: Mesmo acima
+    void this.pwaService;
 
     this.loginService.isAuthenticated.asObservable()
     .subscribe({
@@ -78,7 +81,7 @@ export class AppComponent implements OnDestroy {
   }
 
   verifyAccess(role: string): boolean {
-    return this.loginService.hasAnyRole(role);
+    return this.loginService.hasAnyRole([role]);
   }
 
   buildSubscriptionEvent() {

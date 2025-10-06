@@ -1,6 +1,7 @@
-import {Component, inject, ViewChild} from '@angular/core';
+import {Component, inject, viewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule, NgForm} from '@angular/forms';
+import {Z_INDEX} from '../framework/constants';
 import {CrudFormComponent} from '../framework/component/crud.form.component';
 import {Emprestimo} from './emprestimo';
 import {EmprestimoService} from './emprestimo.service';
@@ -69,8 +70,8 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
   protected override urlList = '/emprestimo';
   protected override type = undefined;
 
-  @ViewChild('form') frm!: NgForm;
-  @ViewChild('contextMenu') contextMenu!: Menu;
+  readonly frm = viewChild.required<NgForm>('form');
+  readonly contextMenu = viewChild<Menu>('contextMenu');
 
   itensPendentes: EmprestimoDevolucaoItem[] = [];
   itensDevolvidos: EmprestimoDevolucaoItem[] = [];
@@ -82,6 +83,9 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
   contextMenuPosition = {x: 0, y: 0};
   contextMenuItems: MenuItem[] = [];
   documentoUsuario!: string;
+
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
 
   constructor() {
     super();
@@ -116,24 +120,8 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
   }
 
   saveDevolucao() {
-      this.loaderService.show();
-      for (const empDevItem of this.object.emprestimoDevolucaoItem) {
-        for (const pendente of this.itensPendentes) {
-          if (empDevItem.id === pendente.id) {
-            empDevItem.statusDevolucao = StatusDevolucao.P;
-          }
-        }
-        for (const devolvido of this.itensDevolvidos) {
-          if (empDevItem.id === devolvido.id) {
-            empDevItem.statusDevolucao = StatusDevolucao.D;
-          }
-        }
-        for (const saida of this.itensSaida) {
-          if (empDevItem.id === saida.id) {
-            empDevItem.statusDevolucao = StatusDevolucao.S;
-          }
-        }
-      }
+    this.loaderService.show();
+    this.atualizarStatusItens();
     this.emprestimoService.saveDevolucao(this.object)
     .subscribe({
       next: () => {
@@ -145,49 +133,20 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
         this.loaderService.hide();
         Swal.fire('Atenção!', 'Ocorreu um erro ao salvar a devolução!', 'error');
       }
-        });
-  }
-
-  drop(event: CdkDragDrop<EmprestimoDevolucaoItem[]>) {
-    if (event.previousContainer === event.container) {
-      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-    } else {
-      transferArrayItem(event.previousContainer.data,
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex);
-    }
+    });
   }
 
   duplicarItem() {
-    if (!this.disableBtnSaveDuplicar()) {
+    if (!this.disableBtnSaveDuplicar() && this.qtdeItemDuplicado !== null && this.qtdeItemDuplicado !== undefined) {
       const itemDuplicado = structuredClone(this.itemIsEditing);
-      itemDuplicado.qtde = this.qtdeItemDuplicado!;
+      itemDuplicado.qtde = this.qtdeItemDuplicado;
       itemDuplicado.id = 0;
       this.itensPendentes.push(itemDuplicado);
       this.object.emprestimoDevolucaoItem.push(itemDuplicado);
-      this.itemIsEditing.qtde = this.itemIsEditing.qtde - this.qtdeItemDuplicado!;
+      this.itemIsEditing.qtde = this.itemIsEditing.qtde - this.qtdeItemDuplicado;
       this.qtdeItemDuplicado = undefined;
       this.dialogDuplicaItem = false;
     }
-  }
-
-  verificaOptionsEnabled(item: EmprestimoDevolucaoItem): {canDuplicate: boolean, canRemoveDuplicates: boolean} {
-    let count = 0;
-    for (const empDevItem of this.object.emprestimoDevolucaoItem) {
-      if (empDevItem.item.id === item.item.id) {
-        count++;
-      }
-    }
-    return {
-      canDuplicate: count === 1,
-      canRemoveDuplicates: count > 1
-    };
-  }
-
-  openDialogDuplicarItem(item: EmprestimoDevolucaoItem) {
-    this.dialogDuplicaItem = true;
-    this.itemIsEditing = item;
   }
 
   onContextMenu(event: MouseEvent, item: EmprestimoDevolucaoItem) {
@@ -213,7 +172,75 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
       }
     ];
 
-    this.contextMenu?.show(event);
+    this.contextMenu()?.show(event);
+  }
+
+  drop(event: CdkDragDrop<EmprestimoDevolucaoItem[]>) {
+    if (event.previousContainer === event.container) {
+      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+    } else {
+      transferArrayItem(event.previousContainer.data,
+        event.container.data,
+        event.previousIndex,
+        event.currentIndex);
+    }
+  }
+
+  removeItensDuplicadosByItem(item: EmprestimoDevolucaoItem) {
+    let qtdeTotal = 0;
+    let empDetItemToRemove: EmprestimoDevolucaoItem | undefined;
+    for (const empDevItem of this.object.emprestimoDevolucaoItem) {
+      if (empDevItem.item.id === item.item.id) {
+        qtdeTotal += Number(empDevItem.qtde);
+      }
+      if (empDevItem.id === null) {
+        empDetItemToRemove = empDevItem;
+      }
+    }
+    if (empDetItemToRemove) {
+      this.object.emprestimoDevolucaoItem.splice(this.object.emprestimoDevolucaoItem
+      .indexOf(empDetItemToRemove), 1);
+      this.itensPendentes.splice(this.itensPendentes.indexOf(empDetItemToRemove), 1);
+
+      // Early exit: para após atualizar o primeiro item encontrado
+      for (const empDevItem of this.object.emprestimoDevolucaoItem) {
+        if (empDevItem.item.id === item.item.id) {
+          empDevItem.qtde = qtdeTotal;
+          break; // Sai após atualizar quantidade
+        }
+      }
+    }
+  }
+
+  verificaOptionsEnabled(item: EmprestimoDevolucaoItem): {
+    canDuplicate: boolean,
+    canRemoveDuplicates: boolean
+  } {
+    let count = 0;
+    for (const empDevItem of this.object.emprestimoDevolucaoItem) {
+      if (empDevItem.item.id === item.item.id) {
+        count++;
+        // Early exit: se já tem 2+, não precisa continuar contando
+        if (count > 1) {
+          break;
+        }
+      }
+    }
+    return {
+      canDuplicate: count === 1,
+      canRemoveDuplicates: count > 1
+    };
+  }
+
+  openDialogDuplicarItem(item: EmprestimoDevolucaoItem) {
+    this.dialogDuplicaItem = true;
+    this.itemIsEditing = item;
+  }
+
+  disableBtnSaveDuplicar() {
+    return this.qtdeItemDuplicado === null || this.qtdeItemDuplicado === undefined
+      || this.qtdeItemDuplicado.toString() === ''
+      || this.qtdeItemDuplicado >= this.itemIsEditing.qtde;
   }
 
   onClickMenuDuplicateItem(item: EmprestimoDevolucaoItem) {
@@ -224,33 +251,28 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
     this.removeItensDuplicadosByItem(item);
   }
 
-  removeItensDuplicadosByItem(item: EmprestimoDevolucaoItem) {
-    let qtdeTotal = 0;
-    let empDetItemToRemove: EmprestimoDevolucaoItem | undefined;
+  /**
+   * Atualiza o status de devolução dos itens com base nas listas de kanban
+   */
+  private atualizarStatusItens(): void {
     for (const empDevItem of this.object.emprestimoDevolucaoItem) {
-      if (empDevItem.item.id === item.item.id) {
-        qtdeTotal += Number(empDevItem.qtde);
-      }
-      if (empDevItem.id == null) {
-        empDetItemToRemove = empDevItem;
-      }
-    }
-    if (empDetItemToRemove) {
-      this.object.emprestimoDevolucaoItem.splice(this.object.emprestimoDevolucaoItem
-      .indexOf(empDetItemToRemove), 1);
-      this.itensPendentes.splice(this.itensPendentes.indexOf(empDetItemToRemove), 1);
-
-      for (const empDevItem of this.object.emprestimoDevolucaoItem) {
-        if (empDevItem.item.id === item.item.id) {
-          empDevItem.qtde = qtdeTotal;
-        }
-      }
+      this.atualizarStatusSePresente(empDevItem, this.itensPendentes, StatusDevolucao.P);
+      this.atualizarStatusSePresente(empDevItem, this.itensDevolvidos, StatusDevolucao.D);
+      this.atualizarStatusSePresente(empDevItem, this.itensSaida, StatusDevolucao.S);
     }
   }
 
-  disableBtnSaveDuplicar() {
-    return this.qtdeItemDuplicado == null || this.qtdeItemDuplicado.toString() === ''
-      || this.qtdeItemDuplicado >= this.itemIsEditing.qtde;
+  /**
+   * Atualiza o status do item se ele estiver presente na lista fornecida
+   */
+  private atualizarStatusSePresente(
+    empDevItem: EmprestimoDevolucaoItem,
+    lista: EmprestimoDevolucaoItem[],
+    status: StatusDevolucao
+  ): void {
+    if (lista.some(item => item.id === empDevItem.id)) {
+      empDevItem.statusDevolucao = status;
+    }
   }
 }
 

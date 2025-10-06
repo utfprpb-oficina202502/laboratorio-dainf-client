@@ -11,7 +11,7 @@ import {CpfCnpjUtil} from '../../util/cpfCnpj.util';
 })
 export class CnpjValidatorDirective implements Validator {
 
-  validator: Function;
+  validator: (c: FormControl) => { validateCnpj: { valid: boolean } } | null;
 
   constructor() {
     this.validator = validaCpfCnpj();

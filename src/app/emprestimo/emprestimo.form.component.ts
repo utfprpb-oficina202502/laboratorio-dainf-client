@@ -19,7 +19,11 @@ import {environment} from 'src/environments/environment';
 import {CardModule} from 'primeng/card';
 import {InputTextModule} from 'primeng/inputtext';
 import {TextareaModule} from 'primeng/textarea';
-import {AutoCompleteModule} from 'primeng/autocomplete';
+import {
+  AutoCompleteCompleteEvent,
+  AutoCompleteModule,
+  AutoCompleteSelectEvent
+} from 'primeng/autocomplete';
 import {DatePickerModule} from 'primeng/datepicker';
 import {ButtonModule} from 'primeng/button';
 import {TableModule} from 'primeng/table';
@@ -34,6 +38,7 @@ import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
 import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.component';
+import {LoggerService} from '../framework/services/logger.service';
 
 @Component({
   selector: 'app-form-emprestimo',
@@ -72,6 +77,7 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   private readonly fb = inject(FormBuilder);
   private readonly itemService = inject(ItemService);
   private readonly usuarioService = inject(UsuarioService);
+  protected readonly logger = inject(LoggerService);
 
   // State signals
   protected readonly itemList = signal<Item[]>([]);
@@ -129,7 +135,7 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   /**
    * Autocomplete for Items
    */
-  findProdutos(event: any): void {
+  findProdutos(event: AutoCompleteCompleteEvent): void {
     this.itemService.completeItem(event.query, true).subscribe({
       next: (e) => {
         this.itemList.set(e);
@@ -151,11 +157,11 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   /**
    * Autocomplete for Usuarios
    */
-  findUsuarios(event: any): void {
+  findUsuarios(event: AutoCompleteCompleteEvent): void {
     this.usuarioService.completeCustom(event.query).subscribe({
       next: (e) => {
         this.usuarioList.set(e);
-        if (e != null && e.length === 1) {
+        if (e !== null && e.length === 1) {
           const formGroup = this.form();
           if (formGroup) {
             formGroup.patchValue({usuarioEmprestimo: e[0]});
@@ -214,7 +220,7 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
         this.loaderService.hide();
         this.isLoading.set(false);
         Swal.fire('Atenção!', 'Ocorreu um erro ao salvar o registro!', 'error');
-        console.error(error);
+        this.logger.error('Erro ao buscar itens', error);
       }
     });
   }
@@ -222,8 +228,8 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   /**
    * Handle usuario emprestimo change
    */
-  onUsuarioEmprestimoChange(event: any): void {
-    const usuario = event?.value || event;
+  onUsuarioEmprestimoChange(event: AutoCompleteSelectEvent): void {
+    const usuario = event?.value;
     if (usuario?.documento) {
       this.documentoUsuario.set(usuario.documento);
     }

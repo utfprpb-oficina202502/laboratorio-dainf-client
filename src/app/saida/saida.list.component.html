@@ -37,29 +37,13 @@
                [attr.aria-label]="'Lista de saídas com ' + totalElements + ' registro(s)'">
 
       <ng-template pTemplate="caption">
-        <div class="flex items-center justify-end gap-2 flex-wrap">
-          <p-iconField iconPosition="left" style="flex: 0 1 auto; min-width: 200px; max-width: 300px;">
-            <p-inputIcon class="pi pi-search" aria-hidden="true"></p-inputIcon>
-            <input
-              #globalFilterInput
-              pInputText
-              type="text"
-              (input)="onGlobalFilter($any($event.target).value)"
-              [value]="filterValue"
-              [attr.aria-label]="'Campo de busca para filtrar saídas'"
-              [placeholder]="'Buscar saídas...'"
-              autocomplete="off" />
-          </p-iconField>
-          <p-button
-            type="button"
-            severity="secondary"
-            [outlined]="true"
-            (onClick)="clearGlobalFilter()"
-            [attr.aria-label]="'Limpar filtro global'">
-            <span pButtonIcon class="pi pi-filter-slash"></span>
-            <span pButtonLabel>Limpar</span>
-          </p-button>
-        </div>
+        <app-table-filter-caption
+          (clear)="clearGlobalFilter()"
+          (filter)="onGlobalFilter($event)"
+          [ariaLabel]="'Campo de busca para filtrar saídas'"
+          [filterValue]="filterValue"
+          [placeholder]="'Buscar saídas...'">
+        </app-table-filter-caption>
       </ng-template>
 
       <ng-template pTemplate="header">
@@ -124,7 +108,7 @@
         <tr>
           <td [attr.colspan]="getVisibleColumns().length">
             <div class="text-center py-4">
-              <i class="pi pi-info-circle text-muted" style="font-size: 2rem;"></i>
+              <i class="pi pi-info-circle text-muted" class="text-3xl"></i>
               <p class="text-muted mt-2 mb-0">{{tableConfig.emptyMessage}}</p>
             </div>
           </td>

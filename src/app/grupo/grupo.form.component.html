@@ -76,8 +76,8 @@
   [visible]="dialogItensVinculados()"
   (visibleChange)="dialogItensVinculados.set($event)"
   [modal]="true"
-  [style]="{width: '90vw', maxWidth: '800px'}"
-  [baseZIndex]="10000"
+  [baseZIndex]="Z_INDEX.DIALOG"
+  class="dialog-lg"
   [focusOnShow]="false"
   [dismissableMask]="true">
 
@@ -95,7 +95,7 @@
 
         <ng-template pTemplate="header">
           <tr>
-            <th scope="col" style="width: 100px">Código</th>
+            <th scope="col" class="w-100px">Código</th>
             <th scope="col">Descrição</th>
           </tr>
         </ng-template>

@@ -1,10 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
-  Input,
+  input,
   OnChanges,
-  Output,
+  output,
   SimpleChanges
 } from '@angular/core';
 
@@ -16,16 +15,16 @@ import {
   standalone: true
 })
 export class StatCardComponent implements OnChanges {
-  @Input() title!: string;
-  @Input() value: number | string | null | undefined;
-  @Input() icon!: string; // ex: 'handshake', 'clock-o'
-  @Input() accentColor = '#3B82F6';
-  @Input() clickable = false;
-  @Input() iconLibrary: 'pi' | 'fa' = 'fa'; // padrão agora Font Awesome
-  @Output() cardClick = new EventEmitter<void>();
+  readonly title = input.required<string>();
+  readonly value = input<number | string | null | undefined>();
+  readonly icon = input.required<string>(); // ex: 'handshake', 'clock-o'
+  readonly accentColor = input<string>('#3B82F6');
+  readonly clickable = input<boolean>(false);
+  readonly iconLibrary = input<'pi' | 'fa'>('fa'); // padrão agora Font Awesome
+  readonly cardClick = output<void>();
 
-  private accentTint = this.hexToRgba(this.accentColor, 0.18);
-  private accentMuted = this.hexToRgba(this.accentColor, 0.24);
+  private accentTint = this.hexToRgba(this.accentColor(), 0.18);
+  private accentMuted = this.hexToRgba(this.accentColor(), 0.24);
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['accentColor']) {
@@ -33,25 +32,27 @@ export class StatCardComponent implements OnChanges {
     }
   }
 
-  private updateAccentVariants() {
-    this.accentTint = this.hexToRgba(this.accentColor, 0.18);
-    this.accentMuted = this.hexToRgba(this.accentColor, 0.24);
-  }
-
   get iconClasses() {
-    return this.iconLibrary === 'fa' ? `fa fa-${this.icon}` : `pi pi-${this.icon}`;
+    return this.iconLibrary() === 'fa' ? `fa fa-${this.icon()}` : `pi pi-${this.icon()}`;
   }
 
   get styleVariables() {
     return {
-      '--stat-card-accent-color': this.accentColor,
+      '--stat-card-accent-color': this.accentColor(),
       '--stat-card-accent-tint': this.accentTint,
       '--stat-card-accent-muted': this.accentMuted
     };
   }
 
   get safeValue() {
-    return this.value === null || this.value === undefined || this.value === '' ? '-' : this.value;
+    const val = this.value();
+    return val === null || val === undefined || val === '' ? '-' : val;
+  }
+
+  onClick() {
+    if (this.clickable()) {
+      this.cardClick.emit();
+    }
   }
 
   private hexToRgba(hex: string, alpha: number): string {
@@ -68,16 +69,15 @@ export class StatCardComponent implements OnChanges {
     return `rgba(${r},${g},${b},${alpha})`;
   }
 
-  onClick() {
-    if (this.clickable) {
+  onKeyDown(event: KeyboardEvent) {
+    if (this.clickable() && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
       this.cardClick.emit();
     }
   }
 
-  onKeyDown(event: KeyboardEvent) {
-    if (this.clickable && (event.key === 'Enter' || event.key === ' ')) {
-      event.preventDefault();
-      this.cardClick.emit();
-    }
+  private updateAccentVariants() {
+    this.accentTint = this.hexToRgba(this.accentColor(), 0.18);
+    this.accentMuted = this.hexToRgba(this.accentColor(), 0.24);
   }
 }

@@ -14,7 +14,7 @@ import {SolicitacaoCompraItem} from './solicitacaoCompraItem';
 // PrimeNG
 import {CardModule} from 'primeng/card';
 import {InputTextModule} from 'primeng/inputtext';
-import {AutoCompleteModule} from 'primeng/autocomplete';
+import {AutoCompleteCompleteEvent, AutoCompleteModule} from 'primeng/autocomplete';
 import {DatePickerModule} from 'primeng/datepicker';
 import {ButtonModule} from 'primeng/button';
 import {TableModule} from 'primeng/table';
@@ -105,7 +105,7 @@ export class SolicitacaoCompraFormComponent extends PrimeReactiveCrudFormCompone
   /**
    * Autocomplete for Items
    */
-  findProdutos(event: any): void {
+  findProdutos(event: AutoCompleteCompleteEvent): void {
     this.itemService.completeItem(event.query, false).subscribe(e => {
       this.itemList.set(e);
     });

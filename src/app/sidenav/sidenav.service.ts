@@ -4,7 +4,7 @@ import {Observable, Subject} from 'rxjs';
 @Injectable()
 export class SidenavService {
 
-  private readonly subject: Subject<boolean> = new Subject();
+  private readonly subject = new Subject<boolean>();
   private isMinimized = false;
 
   minimizar(minimizar: boolean): void {

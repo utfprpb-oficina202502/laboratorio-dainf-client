@@ -7,6 +7,7 @@ import {ToolbarModule as PrimeToolbarModule} from 'primeng/toolbar';
 import {ButtonModule} from 'primeng/button';
 import {TooltipModule} from 'primeng/tooltip';
 import {TieredMenuModule} from 'primeng/tieredmenu';
+import {LoggerService} from '../framework/services/logger.service';
 
 @Component({
     selector: "app-navbar",
@@ -26,6 +27,7 @@ export class NavbarComponent implements OnInit {
   private readonly loginService = inject(LoginService);
   private readonly sidenavService = inject(SidenavService);
   private readonly router = inject(Router);
+  private readonly logger = inject(LoggerService);
 
   items: MenuItem[] = [];
 
@@ -68,15 +70,15 @@ export class NavbarComponent implements OnInit {
         if (user?.id) {
           this.router.navigate([`/usuario/edit/${user.id}`]);
         } else {
-          console.error('ID do usuário não encontrado');
+          this.logger.error('ID do usuário não encontrado');
           this.logout();
         }
       } catch (error) {
-        console.error('Erro ao processar dados do usuário', error);
+        this.logger.error('Erro ao processar dados do usuário', error);
         this.logout();
       }
     } else {
-      console.error('Dados do usuário não encontrados');
+      this.logger.error('Dados do usuário não encontrados');
       this.logout();
     }
   }

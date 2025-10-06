@@ -6,10 +6,6 @@ import {Component} from '@angular/core';
     styleUrls: ['./notAuthorized.component.css'],
 })
 export class NotAuthorizedComponent {
-
-  constructor() {
-  }
-
   back() {
     globalThis.history.back();
   }

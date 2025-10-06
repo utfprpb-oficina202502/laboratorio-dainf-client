@@ -1,6 +1,7 @@
 import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import {Z_INDEX} from '../framework/constants';
 import {Usuario} from './usuario';
 import {UsuarioService} from './usuario.service';
 import {
@@ -24,6 +25,7 @@ import {FormFieldComponent} from '../framework/component/form-field.component';
 import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
+import {LoggerService} from '../framework/services/logger.service';
 
 interface PermissaoSelectItem {
   label: string;
@@ -56,10 +58,14 @@ interface PermissaoSelectItem {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario, number> {
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
+
   protected override service = inject(UsuarioService);
   protected override urlList = '/usuario';
   protected override type = Usuario;
   private readonly fb = inject(FormBuilder);
+  protected readonly logger = inject(LoggerService);
 
   // Signals for dropdown options and dialog state
   protected readonly grupoAcessoDropdown = signal<PermissaoSelectItem[]>([]);
@@ -142,7 +148,7 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
           }
         },
         error: (error) => {
-          console.error('Error loading permissions:', error);
+          this.logger.error('Error loading permissions', error);
           Swal.fire('Erro', 'Erro ao carregar grupos de acesso.', 'error');
         }
       });
@@ -211,7 +217,7 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
           },
           error: (error) => {
             this.loaderService.hide();
-            console.error('Error changing password:', error);
+            this.logger.error('Error changing password', error);
             Swal.fire('Atenção', 'A senha atual está incorreta!', 'error');
           }
         });

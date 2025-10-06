@@ -167,12 +167,13 @@
 
             <!-- Add Button -->
             <div class="col-span-12 md:col-span-2">
-              <label class="block mb-2 font-medium invisible">Action</label>
+              <div class="block mb-2 font-medium invisible" aria-hidden="true">Action</div>
               <p-button
                 label="Adicionar"
                 icon="pi pi-check"
                 (onClick)="insertItem()"
                 severity="success"
+                [attr.aria-label]="'Adicionar item à reserva'"
                 styleClass="w-full">
               </p-button>
             </div>
@@ -186,7 +187,7 @@
                   <tr>
                     <th scope="col">Item</th>
                     <th scope="col" class="text-center" style="width: 150px">Qtde</th>
-                    <th scope="col" class="text-center" style="width: 100px">Opções</th>
+                    <th scope="col" class="text-center" class="w-100px">Opções</th>
                   </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-reservaItem>
@@ -258,8 +259,8 @@
   header="Imagens do Item"
   [(visible)]="dialogImagens"
   [modal]="true"
-  [baseZIndex]="10000"
-  [style]="{ minWidth: '400px', maxWidth: '80%' }">
+  [baseZIndex]="Z_INDEX.DIALOG"
+  class="dialog-xl">
   <p-carousel
     [value]="images()"
     [numVisible]="3"
@@ -272,7 +273,7 @@
           ngSrc="minioUrl() + image.nameImage"
           alt="Item"
           class="max-w-full rounded shadow-md"
-          style="width: 300px" fill/>
+          class="w-300px" fill/>
       </div>
     </ng-template>
   </p-carousel>

@@ -1,22 +1,22 @@
 import {
   ChangeDetectorRef,
-  ContentChild,
+  contentChild,
   Directive,
   ElementRef,
   HostListener,
   inject,
   Injector,
-  Input,
+  input,
   OnDestroy,
   OnInit,
   signal,
   TemplateRef,
-  ViewChild
+  viewChild
 } from '@angular/core';
 import {Router} from '@angular/router';
 import {CrudService} from '../service/crud.service';
-import {ConfirmationService, MessageService} from 'primeng/api';
-import {Table} from 'primeng/table';
+import {ConfirmationService, MessageService, SortEvent} from 'primeng/api';
+import {Table, TablePageEvent, TableRowCollapseEvent, TableRowExpandEvent} from 'primeng/table';
 import {MultiSelect} from 'primeng/multiselect';
 import Swal from 'sweetalert2';
 import {Exception} from '../../exception/exception';
@@ -25,6 +25,23 @@ import {LoginService} from '../../login/login.service';
 import {PermissionService} from '../service/permission.service';
 import {ColumnState, TableColumn, TableConfiguration} from '../model/table-config.interface';
 import {debounceTime, distinctUntilChanged, Subject, takeUntil} from 'rxjs';
+import {LoggerService} from '../services/logger.service';
+import {TableExportService} from '../services/table-export.service';
+import {TableStateManagerService} from '../services/table-state-manager.service';
+import {KeyboardShortcut, TableKeyboardService} from '../services/table-keyboard.service';
+import {TableColumnManagerService} from '../services/table-column-manager.service';
+import {TableRowExpansionManagerService} from '../services/table-row-expansion-manager.service';
+
+/**
+ * Spring Data Page response interface
+ */
+interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
 
 @Directive()
 export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy {
@@ -41,10 +58,55 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   protected readonly loaderService: LoaderService;
   protected readonly loginService: LoginService;
   protected readonly permissionService: PermissionService;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  readonly headerTemplate = contentChild<TemplateRef<any>>('headerTemplate');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  readonly toolbarStartTemplate = contentChild<TemplateRef<any>>('toolbarStartTemplate');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  readonly toolbarEndTemplate = contentChild<TemplateRef<any>>('toolbarEndTemplate');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  readonly emptyMessageTemplate = contentChild<TemplateRef<any>>('emptyMessageTemplate');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  readonly loadingTemplate = contentChild<TemplateRef<any>>('loadingTemplate');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  readonly captionTemplate = contentChild<TemplateRef<any>>('captionTemplate');
   protected readonly cdr: ChangeDetectorRef | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  readonly rowExpansionTemplate = contentChild<TemplateRef<any>>('rowExpansionTemplate');
+  readonly dataTable = viewChild<Table>('dt');
+  readonly globalFilterInput = viewChild<ElementRef<HTMLInputElement>>('globalFilterInput');
+  readonly columnToggleComponent = viewChild<MultiSelect>('columnToggleRef');
 
+  // Template overrides for flexibility
+  public userRole = '';
+  // Enhanced filtering and sorting
+  public filterValue = '';
+  public sortField = '';
+  public sortOrder = 1;
+  public expandedRows: Record<string, boolean> = {};
+  // Legacy properties (for backward compatibility)
+  public displayedColumns: string[];
+  public totalElements = 0;
+  public pageSize = 10;
+  public pageIndex = 0;
+  public first = 0;
+  public rows = 10;
+  public hostListenerColumnEnable = true;
+  // Permission and user management
+  public isAlunoOrProfessor = false;
+  public canCreate = false;
+  public canEdit = false;
+  public canDelete = false;
+  public canExport = false;
+  public isReadOnly = false;
+  protected readonly logger: LoggerService;
+  protected readonly tableExportService: TableExportService;
+  protected readonly tableStateManager: TableStateManagerService;
+  protected readonly tableKeyboardService: TableKeyboardService;
+  protected readonly tableColumnManager: TableColumnManagerService;
+  protected readonly tableRowExpansionManager: TableRowExpansionManagerService;
   // Enhanced configuration system
-  @Input() tableConfig: TableConfiguration = {
+  protected readonly _tableConfigInput = input<TableConfiguration>({
     columns: [],
     selectable: true,
     resizable: true,
@@ -70,73 +132,68 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     lazyLoadOnInit: true,
     preloadData: true,
     keyboardShortcuts: true
-  };
-
-  // Template overrides for flexibility
-  @ContentChild('headerTemplate') headerTemplate?: TemplateRef<any>;
-  @ContentChild('toolbarStartTemplate') toolbarStartTemplate?: TemplateRef<any>;
-  @ContentChild('toolbarEndTemplate') toolbarEndTemplate?: TemplateRef<any>;
-  @ContentChild('emptyMessageTemplate') emptyMessageTemplate?: TemplateRef<any>;
-  @ContentChild('loadingTemplate') loadingTemplate?: TemplateRef<any>;
-  @ContentChild('captionTemplate') captionTemplate?: TemplateRef<any>;
-  @ContentChild('rowExpansionTemplate') rowExpansionTemplate?: TemplateRef<any>;
-
-  @ViewChild('dt') public dataTable?: Table;
-  @ViewChild('globalFilterInput') globalFilterInput?: ElementRef<HTMLInputElement>;
-  @ViewChild('columnToggleRef') columnToggleComponent?: MultiSelect;
-
-  // Legacy properties (for backward compatibility)
-  public displayedColumns: string[];
-  public totalElements = 0;
-  public pageSize = 10;
-  public pageIndex = 0;
-  public first = 0;
-  public rows = 10;
-  public hostListenerColumnEnable = true;
-
-  // Permission and user management
-  public isAlunoOrProfessor = false;
-  public userRole: string = '';
-  public canCreate = false;
-  public canEdit = false;
-  public canDelete = false;
-  public canExport = false;
-  public isReadOnly = false;
-
-  // Enhanced filtering and sorting
-  public filterValue: string = '';
-  public sortField: string = '';
-  public sortOrder: number = 1;
+  });
+  protected columnFilters: Record<string, unknown> = {};
+  // Internal mutable configuration for child components to override
+  private _tableConfigOverride: TableConfiguration | null = null;
   public selectedItems: T[] = [];
   public objects: T[] = [];
-  public expandedRows: { [key: string]: boolean } = {};
+  private keyboardShortcutHandlers: KeyboardShortcut[] = [];
   public columnToggleModel: string[] = [];
   public columnToggleOptions: { label: string; value: string }[] = [];
   public readonly self = this as PrimeCrudListComponent<T, ID>;
 
   // Advanced features
   protected readonly injector: Injector;
-
-  protected columnFilters: { [key: string]: any } = {};
+  private pendingSelectedKeys: unknown[] = [];
   protected columnState: ColumnState[] = [];
   protected destroy$ = new Subject<void>();
   private readonly filterSubject = new Subject<string>();
-  private readonly columnTemplates = new Map<string, TemplateRef<any>>();
-  private keyboardShortcutHandlers: Array<{ predicate: (event: KeyboardEvent) => boolean; action: () => void; preventDefault?: boolean }> = [];
-  private pendingSelectedKeys: any[] = [];
   private readonly defaultStateKey: string;
   private stateKey: string;
   private stateStorageRef?: Storage;
 
-  // Performance optimizations
-  trackByFn = (index: number, item: T): any => {
-    const trackByField = this.tableConfig.trackByField || 'id';
-    return (item as any)[trackByField] || index;
-  };
+  constructor() {
+    // Inject all required services using inject() function
+    this.injector = inject(Injector);
+    this.router = inject(Router);
+    this.messageService = inject(MessageService);
+    this.confirmationService = inject(ConfirmationService);
+    this.loaderService = inject(LoaderService);
+    this.loginService = inject(LoginService);
+    this.permissionService = inject(PermissionService);
+    this.logger = inject(LoggerService);
+    this.tableExportService = inject(TableExportService);
+    this.tableStateManager = inject(TableStateManagerService);
+    this.tableKeyboardService = inject(TableKeyboardService);
+    this.tableColumnManager = inject(TableColumnManagerService);
+    this.tableRowExpansionManager = inject(TableRowExpansionManagerService);
 
-  // Entity name for accessibility and labels
-  protected abstract getEntityName(): string;
-  protected abstract getEntityPluralName(): string;
+    // Get ChangeDetectorRef for OnPush components (optional)
+    try {
+      this.cdr = inject(ChangeDetectorRef);
+    } catch {
+      this.cdr = null;
+    }
+
+    // Initialize displayedColumns as an empty array, will be set in buildColumnsTable()
+    this.displayedColumns = [];
+    this.rows = this.pageSize;
+    this.defaultStateKey = this.buildDefaultStateKey();
+    this.stateKey = this.defaultStateKey;
+
+    // Set up debounced filtering
+    this.setupDebouncedFiltering();
+  }
+
+  // Public getter/setter for backward compatibility with child components
+  get tableConfig(): TableConfiguration {
+    return this._tableConfigOverride || this._tableConfigInput();
+  }
+
+  set tableConfig(config: TableConfiguration) {
+    this._tableConfigOverride = config;
+  }
 
   ngOnInit(): void {
     this.applyTableDefaults();
@@ -153,31 +210,36 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     }
   }
 
-  constructor() {
-    // Inject all required services using inject() function
-    this.injector = inject(Injector);
-    this.router = inject(Router);
-    this.messageService = inject(MessageService);
-    this.confirmationService = inject(ConfirmationService);
-    this.loaderService = inject(LoaderService);
-    this.loginService = inject(LoginService);
-    this.permissionService = inject(PermissionService);
+  // Performance optimizations
+  trackByFn = (index: number, item: T): string | number => {
+    const trackByField = this.tableConfig.trackByField || 'id';
+    return (item as Record<string, string | number>)[trackByField] || index;
+  };
 
-    // Get ChangeDetectorRef for OnPush components (optional)
-    try {
-      this.cdr = inject(ChangeDetectorRef);
-    } catch (e) {
-      this.cdr = null;
+  // PrimeNG DataView pagination event handler
+  onPageChange(event: TablePageEvent) {
+    this.loading.set(true);
+    this.buildColumnsTable();
+
+    this.first = event.first ?? 0;
+    this.rows = event.rows ?? 10;
+    this.pageIndex = Math.floor((event.first ?? 0) / (event.rows ?? 10));
+    this.pageSize = event.rows ?? 10;
+
+    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue)
+    .subscribe({
+      next: (e) => this.handleDataLoadSuccess(e),
+      error: (error) => this.handleDataLoadError(error)
+    });
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  handleKeyboardInteractions(event: KeyboardEvent): void {
+    if (this.tableConfig.keyboardShortcuts === false) {
+      return;
     }
 
-    // Initialize displayedColumns as an empty array, will be set in buildColumnsTable()
-    this.displayedColumns = [];
-    this.rows = this.pageSize;
-    this.defaultStateKey = this.buildDefaultStateKey();
-    this.stateKey = this.defaultStateKey;
-
-    // Set up debounced filtering
-    this.setupDebouncedFiltering();
+    this.tableKeyboardService.handleKeyboardEvent(event, this.keyboardShortcutHandlers);
   }
 
   ngOnDestroy(): void {
@@ -224,298 +286,77 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.rows = this.pageSize;
   }
 
-  private initializeColumnHandling(): void {
-    if (!this.tableConfig.columns) {
-      this.tableConfig.columns = [];
-    }
-
-    if (this.tableConfig.columns.length === 0 && this.columnsTable?.length) {
-      this.tableConfig.columns = this.columnsTable.map(field => ({
-        field,
-        header: field,
-        sortable: true,
-        filterable: true,
-        toggleable: field !== 'actions'
-      }));
-    }
-
-    this.columnToggleOptions = this.tableConfig.columns
-      .filter(col => col.toggleable !== false && col.field !== 'actions')
-      .map(col => ({ label: col.header, value: col.field }));
-
-    if (this.columnToggleModel.length === 0) {
-      this.columnToggleModel = this.tableConfig.columns
-        .filter(col => col.toggleable !== false && col.visible !== false && col.field !== 'actions')
-        .map(col => col.field);
-    }
-
-    this.updateDisplayedColumns();
-    this.updateGlobalFilterFields();
-  }
-
-  // PrimeNG DataView pagination event handler
-  onPageChange(event: any) {
-    this.loading.set(true);
-    this.buildColumnsTable();
-
-    this.first = event.first;
-    this.rows = event.rows;
-    this.pageIndex = Math.floor(event.first / event.rows);
-    this.pageSize = event.rows;
-
-    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue)
-    .subscribe({
-      next: (e) => this.handleDataLoadSuccess(e),
-      error: (error) => this.handleDataLoadError(error)
-    });
-  }
-
-  private initializeKeyboardShortcuts(): void {
-    if (this.tableConfig.keyboardShortcuts === false) {
-      this.keyboardShortcutHandlers = [];
-      return;
-    }
-
-    this.keyboardShortcutHandlers = [
-      {
-        predicate: (event: KeyboardEvent) => event.ctrlKey && event.altKey && event.key.toLowerCase() === 'f',
-        action: () => this.focusGlobalFilter(),
-        preventDefault: true
-      },
-      {
-        predicate: (event: KeyboardEvent) => event.ctrlKey && event.altKey && event.key.toLowerCase() === 'n',
-        action: () => { if (this.canCreate && !this.isReadOnly) { this.openForm(); } },
-        preventDefault: true
-      },
-      {
-        predicate: (event: KeyboardEvent) => event.ctrlKey && event.altKey && event.key.toLowerCase() === 'e',
-        action: () => { if (this.canExport) { this.exportExcel(); } },
-        preventDefault: true
-      },
-      {
-        predicate: (event: KeyboardEvent) => event.ctrlKey && event.altKey && event.key.toLowerCase() === 'c',
-        action: () => this.openColumnTogglePanel(),
-        preventDefault: true
-      },
-      {
-        predicate: (event: KeyboardEvent) => event.ctrlKey && event.altKey && event.key.toLowerCase() === 'l',
-        action: () => this.clearGlobalFilter(),
-        preventDefault: true
-      },
-      {
-        predicate: (event: KeyboardEvent) => !event.ctrlKey && !event.altKey && event.key === 'Delete',
-        action: () => { if (this.canDelete && this.selectedItems?.length) { this.deleteSelectedItems(); } },
-        preventDefault: true
-      }
-    ];
-  }
-
-  @HostListener('document:keydown', ['$event'])
-  handleKeyboardInteractions(event: KeyboardEvent): void {
-    if (this.tableConfig.keyboardShortcuts === false) {
-      return;
-    }
-
-    const target = event.target as HTMLElement | null;
-    const tagName = (target?.tagName || '').toLowerCase();
-    if (['input', 'textarea'].includes(tagName) && !(event.ctrlKey || event.altKey)) {
-      return;
-    }
-
-    for (const shortcut of this.keyboardShortcutHandlers) {
-      if (shortcut.predicate(event)) {
-        if (shortcut.preventDefault) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
-        shortcut.action();
-        break;
-      }
-    }
-  }
-
-  protected saveTableState(): void {
-    if (!this.stateStorageRef || !this.tableConfig.stateful) {
-      return;
-    }
-
-    const defaults = { columns: true, filters: true, sort: true, pagination: true, selection: true, expandedRows: true };
-    const props = { ...defaults, ...(this.tableConfig.stateProps) } as { [key: string]: boolean };
-
-    const state: any = {};
-
-    if (props.filters) {
-      state.filterValue = this.filterValue;
-    }
-
-    if (props.sort) {
-      state.sortField = this.sortField;
-      state.sortOrder = this.sortOrder;
-    }
-
-    if (props.pagination) {
-      state.pageSize = this.pageSize;
-      state.pageIndex = this.pageIndex;
-    }
-
-    if (props.columns) {
-      state.columns = this.tableConfig.columns?.map(col => ({ field: col.field, visible: col.visible !== false })) || [];
-      state.columnToggleModel = this.columnToggleModel;
-    }
-
-    if (props.expandedRows) {
-      state.expandedRowKeys = Object.keys(this.expandedRows || {}).filter(key => this.expandedRows[key]);
-    }
-
-    if (props.selection) {
-      state.selectedKeys = this.getSelectionKeys();
-    }
-
-    if (Object.keys(state).length === 0) {
-      return;
-    }
-
-    try {
-      this.stateStorageRef.setItem(this.stateKey, JSON.stringify(state));
-    } catch (error) {
-      console.warn('Table state could not be saved', error);
-    }
-  }
-
-  private restoreTableState(): void {
-    if (!this.stateStorageRef || !this.tableConfig.stateful) {
-      return;
-    }
-
-    const defaults = { columns: true, filters: true, sort: true, pagination: true, selection: true, expandedRows: true };
-    const props = { ...defaults, ...(this.tableConfig.stateProps) } as { [key: string]: boolean };
-
-    try {
-      const raw = this.stateStorageRef.getItem(this.stateKey);
-      if (!raw) {
-        return;
-      }
-
-      const state = JSON.parse(raw);
-
-      if (props.columns && Array.isArray(state.columns) && this.tableConfig.columns) {
-        for (const saved of state.columns) {
-          const column = this.tableConfig.columns.find(col => col.field === saved.field);
-          if (column) {
-            column.visible = saved.visible !== false;
-          }
-        }
-        if (Array.isArray(state.columnToggleModel)) {
-          this.columnToggleModel = state.columnToggleModel;
-        }
-      }
-
-      if (props.filters && typeof state.filterValue === 'string') {
-        this.filterValue = state.filterValue;
-      }
-
-      if (props.sort && typeof state.sortField === 'string') {
-        this.sortField = state.sortField;
-      }
-
-      if (props.sort && typeof state.sortOrder === 'number') {
-        this.sortOrder = state.sortOrder;
-      }
-
-      if (props.pagination && typeof state.pageSize === 'number') {
-        this.pageSize = state.pageSize;
-        this.rows = this.pageSize;
-      }
-
-      if (props.pagination && typeof state.pageIndex === 'number') {
-        this.pageIndex = state.pageIndex;
-        this.first = this.pageIndex * this.pageSize;
-      }
-
-      if (props.expandedRows && Array.isArray(state.expandedRowKeys)) {
-        this.expandedRows = state.expandedRowKeys.reduce((acc: { [key: string]: boolean }, key: string) => {
-          acc[key] = true;
-          return acc;
-        }, {} as { [key: string]: boolean });
-      }
-
-      if (props.selection && Array.isArray(state.selectedKeys)) {
-        this.pendingSelectedKeys = state.selectedKeys;
-      }
-
-      this.updateDisplayedColumns();
-    } catch (error) {
-      console.warn('Table state could not be restored', error);
-    }
-  }
-
-  private getSelectionKeys(): any[] {
-    if (!this.selectedItems?.length) {
-      return [];
-    }
-    const keyField = this.tableConfig.trackByField || 'id';
-    return this.selectedItems
-      .map(item => (item as any)?.[keyField])
-      .filter(key => key !== undefined && key !== null);
-  }
-
-  private restoreSelectionFromKeys(): void {
-    if (!this.pendingSelectedKeys.length || !this.objects?.length) {
-      return;
-    }
-    const keyField = this.tableConfig.trackByField || 'id';
-    const keySet = new Set(this.pendingSelectedKeys);
-    this.selectedItems = this.objects.filter(item => keySet.has((item as any)?.[keyField]));
-    this.pendingSelectedKeys = [];
-  }
-
-  protected updateDisplayedColumns(): void {
-    if (!this.tableConfig.columns) {
-      this.columnsTable = [];
-      this.displayedColumns = [];
-      return;
-    }
-
-    const visibleColumns = this.tableConfig.columns.filter(col => col.visible !== false);
-    this.columnsTable = visibleColumns.map(col => col.field);
-    this.buildColumnsTable();
-  }
-
-  private updateGlobalFilterFields(): void {
-    if (this.tableConfig.globalFilterFields?.length) {
-      return;
-    }
-    if (!this.tableConfig.columns) {
-      return;
-    }
-    this.tableConfig.globalFilterFields = this.tableConfig.columns
-      .filter(col => col.field !== 'actions' && col.filterable !== false)
-      .map(col => col.field);
-  }
-
   onColumnToggleChange(selectedFields: string[]): void {
-    if (!this.tableConfig.columns) {
-      return;
-    }
-
-    if (!selectedFields || selectedFields.length === 0) {
-      const fallback = this.tableConfig.columns.find(col => col.toggleable !== false && col.field !== 'actions');
-      if (fallback) {
-        selectedFields = [fallback.field];
-      }
-    }
-
-    const selectedSet = new Set(selectedFields);
-    for (const column of this.tableConfig.columns) {
-      if (column.toggleable === false || column.field === 'actions') {
-        continue;
-      }
-      column.visible = selectedSet.has(column.field);
-    }
-
-    this.columnToggleModel = selectedFields;
+    this.columnToggleModel = this.tableColumnManager.handleColumnToggleChange(
+      this.tableConfig.columns,
+      selectedFields
+    );
     this.updateDisplayedColumns();
     this.saveTableState();
+  }
+
+  isRowExpanded(row: T): boolean {
+    const key = this.getRowKey(row);
+    return this.tableRowExpansionManager.isRowExpanded(this.expandedRows, key);
+  }
+
+  toggleRowExpansion(row: T): void {
+    const key = this.getRowKey(row);
+    this.expandedRows = this.tableRowExpansionManager.toggleRowExpansion(
+      this.expandedRows,
+      key,
+      this.tableConfig.expandMode || 'multiple'
+    );
+    this.saveTableState();
+  }
+
+  onRowExpand(event: TableRowExpandEvent): void {
+    const row = event?.data as T;
+    if (!row) {
+      return;
+    }
+
+    const key = this.getRowKey(row);
+    this.expandedRows = this.tableRowExpansionManager.expandRow(
+      this.expandedRows,
+      key,
+      this.tableConfig.expandMode || 'multiple'
+    );
+    this.saveTableState();
+  }
+
+  onRowCollapse(event: TableRowCollapseEvent): void {
+    const row = event?.data as T;
+    if (!row) {
+      return;
+    }
+
+    const key = this.getRowKey(row);
+    this.expandedRows = this.tableRowExpansionManager.collapseRow(this.expandedRows, key);
+    this.saveTableState();
+  }
+
+  expandAllRows(): void {
+    this.expandedRows = this.tableRowExpansionManager.expandAllRows(
+      this.objects,
+      (row) => this.getRowKey(row)
+    );
+    this.saveTableState();
+  }
+
+  collapseAllRows(): void {
+    if (!this.tableRowExpansionManager.hasExpandedRows(this.expandedRows)) {
+      return;
+    }
+    this.expandedRows = this.tableRowExpansionManager.collapseAllRows();
+    this.saveTableState();
+  }
+
+  // Export functionality - can be overridden in child components for custom export logic
+  exportExcel() {
+    const exportableColumns = this.getExportableColumns();
+    const fileName = this.getExportFileName();
+    this.tableExportService.exportToExcel(this.objects, exportableColumns, fileName);
   }
 
   onSelectionChange(selection: T[]): void {
@@ -523,107 +364,121 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.saveTableState();
   }
 
-  protected getRowKey(row: T): string {
-    const keyField = this.tableConfig.rowExpansionKey || this.tableConfig.trackByField || 'id';
-    return String((row as any)?.[keyField]);
-  }
-
-  isRowExpanded(row: T): boolean {
-    const key = this.getRowKey(row);
-    return !!this.expandedRows?.[key];
-  }
-
-  toggleRowExpansion(row: T): void {
-    const key = this.getRowKey(row);
-    if (!key) {
-      return;
-    }
-
-    if (this.tableConfig.expandMode === 'single') {
-      this.expandedRows = this.isRowExpanded(row) ? {} : { [key]: true };
-    } else {
-      const updated = { ...(this.expandedRows) };
-      if (updated[key]) {
-        delete updated[key];
-      } else {
-        updated[key] = true;
+  delete(id: ID) {
+    Swal.fire({
+      title: `Tem certeza que deseja remover o registro?`,
+      text: 'A ação não poderá ser desfeita.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim',
+      cancelButtonText: 'Não'
+    }).then((result) => {
+      if (result.value) {
+        this.loaderService.show();
+        this.service.delete(id)
+        .subscribe({
+          next: () => {
+            Swal.fire('Sucesso!', 'Registro excluído com sucesso!', 'success');
+            this.findAll();
+            this.loaderService.hide();
+          },
+          error: (error) => {
+            this.loaderService.hide();
+            this.showError(error);
+          }
+        });
       }
-      this.expandedRows = updated;
-    }
-
-    this.saveTableState();
+    });
   }
 
-  onRowExpand(event: any): void {
-    const row = event?.data as T;
-    if (!row) {
+  postFindAll(): void {
+    // Hook para processamento customizado após carregar dados
+  }
+
+  @HostListener('window:resize', ['$event'])
+  buildColumnsTable() {
+    this.displayedColumns = this.tableColumnManager.buildDisplayedColumns(
+      this.columnsTable,
+      this.hostListenerColumnEnable,
+      globalThis.innerWidth
+    );
+  }
+
+  // PrimeNG Sort event handler
+  onSort(event: SortEvent) {
+    this.sortField = event.field as string;
+    this.sortOrder = event.order ?? 1;
+
+    // Reset to the first page when sorting
+    this.pageIndex = 0;
+    this.first = 0;
+
+    this.loadData();
+  }
+
+  showError(error: unknown): void {
+    Exception.addMessage(error);
+  }
+
+  // Bulk delete functionality
+  deleteSelectedItems() {
+    if (!this.selectedItems || this.selectedItems.length === 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Aviso',
+        detail: 'Nenhum item selecionado para exclusão'
+      });
       return;
     }
 
-    if (this.tableConfig.expandMode === 'single') {
-      const key = this.getRowKey(row);
-      this.expandedRows = key ? { [key]: true } : {};
-    }
-    this.saveTableState();
-  }
+    const itemCount = this.selectedItems.length;
+    Swal.fire({
+      title: `Tem certeza que deseja remover ${itemCount} registro(s)?`,
+      text: 'A ação não poderá ser desfeita.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim',
+      cancelButtonText: 'Não'
+    }).then((result) => {
+      if (result.value) {
+        this.loaderService.show();
 
-  onRowCollapse(event: any): void {
-    const row = event?.data as T;
-    if (!row) {
-      return;
-    }
+        // Extract IDs from selected items
+        const ids = this.selectedItems.map((item: T) => (item as T & { id: ID }).id);
 
-    const key = this.getRowKey(row);
-    if (key && this.expandedRows?.[key]) {
-      const updated = { ...(this.expandedRows) };
-      delete updated[key];
-      this.expandedRows = updated;
-    }
-    this.saveTableState();
-  }
-
-  expandAllRows(): void {
-    if (!this.objects?.length) {
-      return;
-    }
-    const expanded: { [key: string]: boolean } = {};
-    for (const row of this.objects) {
-      const key = this.getRowKey(row);
-      if (key) {
-        expanded[key] = true;
+        // Delete items sequentially (could be enhanced for bulk API call)
+        this.deleteItemsSequentially(ids, 0, itemCount);
       }
-    }
-    this.expandedRows = expanded;
-    this.saveTableState();
+    });
   }
 
-  collapseAllRows(): void {
-    if (!this.expandedRows || Object.keys(this.expandedRows).length === 0) {
-      return;
-    }
-    this.expandedRows = {};
-    this.saveTableState();
+  // CSV Export using PrimeNG built-in functionality
+  exportCSV(table?: Table | null) {
+    const tableRef = table || this.dataTable();
+    const exportableColumns = this.getExportableColumns();
+    this.tableExportService.exportToCSV(tableRef, this.objects, exportableColumns);
   }
 
-  private focusGlobalFilter(): void {
-    const element = this.globalFilterInput?.nativeElement;
-    if (element) {
-      element.focus({ preventScroll: true });
-      if (typeof element.select === 'function') {
-        element.select();
-      }
-    }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  registerColumnTemplate(field: string, template: TemplateRef<any>): void {
+    this.tableColumnManager.registerColumnTemplate(field, template);
   }
 
-  private openColumnTogglePanel(): void {
-    if (this.tableConfig.columnToggle === false || !this.columnToggleComponent) {
-      return;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getColumnTemplate(field: string): TemplateRef<any> | undefined {
+    return this.tableColumnManager.getColumnTemplate(field);
+  }
+
+  getDeleteButtonLabel(count = 0): string {
+    if (count > 0) {
+      return `Deletar ${count} ${count === 1 ? this.getEntityName() : this.getEntityPluralName()}`;
     }
-    if (this.columnToggleComponent.overlayVisible) {
-      this.columnToggleComponent.hide();
-    } else {
-      this.columnToggleComponent.show();
-    }
+    return `Deletar ${this.getEntityPluralName()} Selecionados`;
+  }
+
+  // Column utilities
+  getVisibleColumns(): TableColumn[] {
+    return this.tableColumnManager.getVisibleColumns(this.tableConfig.columns);
   }
 
   clearGlobalFilter(): void {
@@ -679,210 +534,46 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.loadData();
   }
 
-  // Export functionality - can be overridden in child components for custom export logic
-  exportExcel() {
-    if (!this.objects || this.objects.length === 0) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Aviso',
-        detail: 'Não há dados para exportar'
-      });
-      return;
-    }
-
-    import('exceljs').then(async (ExcelJS) => {
-      const data = this.prepareExportData();
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Dados');
-
-      // Add headers from first data object
-      if (data.length > 0) {
-        const headers = Object.keys(data[0]);
-        worksheet.addRow(headers);
-
-        // Add data rows
-        data.forEach((row: any) => {
-          worksheet.addRow(Object.values(row));
-        });
-
-        // Auto-fit columns
-        worksheet.columns.forEach((column: any) => {
-          let maxLength = 0;
-          column.eachCell({includeEmpty: true}, (cell: any) => {
-            const columnLength = cell.value ? cell.value.toString().length : 10;
-            if (columnLength > maxLength) {
-              maxLength = columnLength;
-            }
-          });
-          column.width = Math.min(maxLength + 2, 50);
-        });
-      }
-
-      // Generate buffer and download
-      const buffer = await workbook.xlsx.writeBuffer();
-      this.saveAsExcelFile(buffer, this.getExportFileName());
-    }).catch(error => {
-      console.error('Error exporting to Excel:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Erro',
-        detail: 'Erro ao exportar dados para Excel'
-      });
-    });
+  getSortableColumns(): TableColumn[] {
+    return this.tableColumnManager.getSortableColumns(this.tableConfig.columns);
   }
 
-  saveAsExcelFile(buffer: ArrayBuffer, fileName: string): void {
-    try {
-      // Use modern File System Access API with fallback
-      const blob = new Blob([buffer], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      });
-      const url = globalThis.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${fileName}_export_${Date.now()}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      globalThis.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error saving Excel file:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Erro',
-        detail: 'Erro ao salvar arquivo Excel'
-      });
-    }
-  }
-
-  delete(id: any) {
-    Swal.fire({
-      title: `Tem certeza que deseja remover o registro?`,
-      text: 'A ação não poderá ser desfeita.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sim',
-      cancelButtonText: 'Não'
-    }).then((result) => {
-      if (result.value) {
-        this.loaderService.show();
-        this.service.delete(id)
-        .subscribe({
-          next: () => {
-            Swal.fire('Sucesso!', 'Registro excluído com sucesso!', 'success');
-            this.findAll();
-            this.loaderService.hide();
-          },
-          error: (error) => {
-            this.loaderService.hide();
-            this.showError(error);
-          }
-        });
-      }
-    });
+  getFilterableColumns(): TableColumn[] {
+    return this.tableColumnManager.getFilterableColumns(this.tableConfig.columns);
   }
 
   edit(id: number) {
     this.router.navigate([this.urlForm, id]);
   }
 
-  postFindAll(): void {
-    //editar caso seja necessário trabalhar com os itens do findAll
+  getExportableColumns(): TableColumn[] {
+    return this.tableColumnManager.getExportableColumns(this.tableConfig.columns);
   }
 
-  @HostListener('window:resize', ['$event'])
-  buildColumnsTable() {
-    if (!this.hostListenerColumnEnable) {
-      this.displayedColumns = [...this.columnsTable];
-      return;
-    }
-
-    let responsiveColumns = [...this.columnsTable];
-
-    if (globalThis.innerWidth <= 1200) {
-      responsiveColumns = responsiveColumns.filter(column => column !== 'actions');
-    } else if (!responsiveColumns.includes('actions') && this.columnsTable.includes('actions')) {
-      responsiveColumns = [...responsiveColumns, 'actions'];
-    }
-
-    this.displayedColumns = responsiveColumns;
+  // Get column count for colspan calculations
+  getColumnCount(): number {
+    return this.tableColumnManager.getColumnCount(
+      this.getVisibleColumns().length,
+      this.tableConfig.expandable || false,
+      this.tableConfig.selectable || false,
+      this.isReadOnly
+    );
   }
 
-  // PrimeNG Sort event handler
-  onSort(event: any) {
-    this.sortField = event.field;
-    this.sortOrder = event.order;
-
-    // Reset to the first page when sorting
-    this.pageIndex = 0;
-    this.first = 0;
-
-    this.loadData();
+  // Check if actions column should be shown
+  shouldShowActionsColumn(): boolean {
+    return this.tableColumnManager.shouldShowActionsColumn(this.displayedColumns, this.isReadOnly);
   }
 
   openForm() {
     this.router.navigate([this.urlForm]);
   }
 
-  showError(error: any): void {
-    Exception.addMessage(error);
+  // Utility method for consistent column width
+  getColumnWidth(column: TableColumn): string | undefined {
+    return this.tableColumnManager.getColumnWidth(column);
   }
 
-  // Override this method in child components for custom export data preparation
-  protected prepareExportData(): any[] {
-    const exportableColumns = this.getExportableColumns();
-
-    return this.objects.map(item => {
-      const exportItem: any = {};
-
-      exportableColumns.forEach(column => {
-        const header = column.header || column.field;
-        const value = this.getFieldValue(item, column.field);
-
-        // Handle different column types for export
-        if (column.type === 'custom' && value && typeof value === 'object') {
-          // For custom columns with objects, try to get a display value
-          if (value.hasOwnProperty('descricao')) {
-            exportItem[header] = value.descricao;
-          } else if (value.hasOwnProperty('nome')) {
-            exportItem[header] = value.nome;
-          } else if (value.hasOwnProperty('id')) {
-            exportItem[header] = value.id;
-          } else {
-            exportItem[header] = '';
-          }
-        } else {
-          exportItem[header] = value ?? '';
-        }
-      });
-
-      return exportItem;
-    });
-  }
-
-  /**
-   * Resolves a field value from an object, supporting nested properties
-   * @param obj - The object to get the value from
-   * @param field - The field path (e.g., 'nome' or 'grupo.descricao')
-   * @returns The resolved value or undefined
-   */
-  protected getFieldValue(obj: any, field: string): any {
-    if (!obj || !field) return undefined;
-
-    // Handle nested properties (e.g., 'grupo.descricao')
-    const parts = field.split('.');
-    let value = obj;
-
-    for (const part of parts) {
-      if (value?.hasOwnProperty(part)) {
-        value = value[part];
-      } else {
-        return undefined;
-      }
-    }
-
-    return value;
-  }
 
   // Override this method in child components for a custom filename
   protected getExportFileName(): string {
@@ -894,24 +585,9 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.onGlobalFilterDebounced(value);
   }
 
-  private initializeStateStorage(): void {
-    if (!this.tableConfig.stateful) {
-      this.stateStorageRef = undefined;
-      return;
-    }
-
-    if (typeof globalThis === 'undefined') {
-      this.stateStorageRef = undefined;
-      return;
-    }
-
-    try {
-      this.stateKey = this.tableConfig.stateKey || this.defaultStateKey;
-      this.stateStorageRef = this.tableConfig.stateStorage === 'session' ? globalThis.sessionStorage : globalThis.localStorage;
-    } catch (error) {
-      console.warn('Table state storage unavailable', error);
-      this.stateStorageRef = undefined;
-    }
+  // Enhanced filtering with debouncing
+  onGlobalFilterDebounced(value: string): void {
+    this.filterSubject.next((value ?? '').trim());
   }
 
   private buildDefaultStateKey(): string {
@@ -927,239 +603,6 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     if (this.cdr) {
       this.cdr?.markForCheck();
     }
-  }
-
-  /**
-   * Common handler for successful data loading
-   * Extracts duplicated logic from findAll(), onPageChange(), and loadData()
-   */
-  private handleDataLoadSuccess(response: any): void {
-    this.objects = response.content;
-    this.totalElements = response.totalElements;
-    this.pageSize = response.size;
-    this.pageIndex = response.number;
-
-    this.rows = this.pageSize;
-    this.first = this.pageIndex * this.pageSize;
-
-    this.restoreSelectionFromKeys();
-    this.loading.set(false);
-    this.postFindAll();
-    this.saveTableState();
-
-    this.triggerChangeDetection();
-  }
-
-  /**
-   * Common handler for data loading errors
-   * Extracts duplicated error handling logic
-   */
-  private handleDataLoadError(error: any): void {
-    this.loading.set(false);
-    this.showError(error);
-    this.triggerChangeDetection();
-  }
-
-  // Centralized data loading method
-  private loadData() {
-    this.loading.set(true);
-    this.buildColumnsTable();
-
-    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue)
-    .subscribe({
-      next: (e) => {
-          // Apply client-side sorting if needed
-          if (this.sortField && e.content) {
-            e.content.sort((a: any, b: any) => {
-              const aVal = a[this.sortField];
-              const bVal = b[this.sortField];
-
-              if (aVal < bVal) return -1 * this.sortOrder;
-              if (aVal > bVal) return 1 * this.sortOrder;
-              return 0;
-            });
-          }
-
-          this.handleDataLoadSuccess(e);
-        },
-      error: (error) => this.handleDataLoadError(error)
-    });
-  }
-
-  // Bulk delete functionality
-  deleteSelectedItems() {
-    if (!this.selectedItems || this.selectedItems.length === 0) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Aviso',
-        detail: 'Nenhum item selecionado para exclusão'
-      });
-      return;
-    }
-
-    const itemCount = this.selectedItems.length;
-    Swal.fire({
-      title: `Tem certeza que deseja remover ${itemCount} registro(s)?`,
-      text: 'A ação não poderá ser desfeita.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sim',
-      cancelButtonText: 'Não'
-    }).then((result) => {
-      if (result.value) {
-        this.loaderService.show();
-
-        // Extract IDs from selected items
-        const ids = this.selectedItems.map((item: any) => item.id);
-
-        // Delete items sequentially (could be enhanced for bulk API call)
-        this.deleteItemsSequentially(ids, 0, itemCount);
-      }
-    });
-  }
-
-  private deleteItemsSequentially(ids: any[], currentIndex: number, total: number) {
-    if (currentIndex >= ids.length) {
-      // All deletions completed
-      this.selectedItems = [];
-      this.saveTableState();
-      this.loaderService.hide();
-      Swal.fire('Sucesso!', `${total} registro(s) excluído(s) com sucesso!`, 'success');
-      this.findAll();
-      return;
-    }
-
-    this.service.delete(ids[currentIndex])
-    .subscribe({
-      next: () => {
-          // Continue with next item
-          this.deleteItemsSequentially(ids, currentIndex + 1, total);
-        },
-      error: (error) => {
-          this.loaderService.hide();
-          this.showError(error);
-          Swal.fire('Erro!', `Erro ao excluir alguns registros. ${currentIndex} de ${total} foram excluídos.`, 'error');
-        }
-    });
-  }
-
-  // CSV Export using PrimeNG built-in functionality
-  exportCSV(table?: Table | null) {
-    const target = table || this.dataTable;
-
-    if (!target) {
-      console.warn('PrimeCrudListComponent: exportCSV called without table reference.');
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Aviso',
-        detail: 'Tabela não encontrada para exportação CSV'
-      });
-      return;
-    }
-
-    if (!this.objects || this.objects.length === 0) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Aviso',
-        detail: 'Não há dados para exportar'
-      });
-      return;
-    }
-
-    try {
-      // Ensure table has columns property for PrimeNG exportCSV to work
-      const exportableColumns = this.getExportableColumns();
-      if (!exportableColumns || exportableColumns.length === 0) {
-        this.messageService.add({
-          severity: 'warn',
-          summary: 'Aviso',
-          detail: 'Nenhuma coluna disponível para exportação'
-        });
-        return;
-      }
-
-      // Set the columns property that PrimeNG exportCSV expects
-      (target as any).columns = exportableColumns.map(column => ({
-        field: column.field,
-        header: column.header
-      }));
-
-      // Call the native PrimeNG exportCSV method
-      target.exportCSV();
-
-      // Show success message
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Sucesso',
-        detail: `${this.getEntityPluralName()} exportados para CSV com sucesso`
-      });
-
-    } catch (error) {
-      console.error('Error exporting CSV:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Erro',
-        detail: 'Erro ao exportar dados para CSV'
-      });
-    }
-  }
-
-  // Centralized permission setup using the permission service
-  private async setupUserPermissions(): Promise<void> {
-    try {
-      const permissions = await this.permissionService.getUserPermissions();
-
-      // Apply permissions to component properties
-      this.canCreate = permissions.canCreate;
-      this.canEdit = permissions.canEdit;
-      this.canDelete = permissions.canDelete;
-      this.canExport = permissions.canExport;
-      this.isReadOnly = permissions.isReadOnly;
-      this.userRole = permissions.userRole;
-      this.isAlunoOrProfessor = permissions.isAlunoOrProfessor;
-
-      // Update columns based on permissions
-      this.updateColumnsForPermissions();
-    } catch (error) {
-      console.error('Error setting up user permissions:', error);
-      // Default to read-only if permission setup fails
-      this.canCreate = false;
-      this.canEdit = false;
-      this.canDelete = false;
-      this.canExport = false;
-      this.isReadOnly = true;
-      this.userRole = 'GUEST';
-      this.isAlunoOrProfessor = true;
-    }
-  }
-
-  // Update columns based on user permissions
-  private updateColumnsForPermissions(): void {
-    if (!this.tableConfig.columns) {
-      return;
-    }
-
-    const actionsColumn = this.tableConfig.columns.find(col => col.field === 'actions');
-    if (actionsColumn) {
-      actionsColumn.visible = !this.isReadOnly && actionsColumn.visible !== false;
-    }
-
-    this.updateDisplayedColumns();
-    this.saveTableState();
-  }
-
-  // Enhanced filtering with debouncing
-  onGlobalFilterDebounced(value: string): void {
-    this.filterSubject.next((value ?? '').trim());
-  }
-
-  // Template registration for dynamic columns
-  registerColumnTemplate(field: string, template: TemplateRef<any>): void {
-    this.columnTemplates.set(field, template);
-  }
-
-  getColumnTemplate(field: string): TemplateRef<any> | undefined {
-    return this.columnTemplates.get(field);
   }
 
   // Get table style classes
@@ -1195,13 +638,6 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     return `Adicionar ${this.getEntityName()}`;
   }
 
-  getDeleteButtonLabel(count: number = 0): string {
-    if (count > 0) {
-      return `Deletar ${count} ${count === 1 ? this.getEntityName() : this.getEntityPluralName()}`;
-    }
-    return `Deletar ${this.getEntityPluralName()} Selecionados`;
-  }
-
   getExportButtonLabel(type: 'excel' | 'csv'): string {
     return `Exportar ${this.getEntityPluralName()} para ${type.toUpperCase()}`;
   }
@@ -1218,60 +654,327 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     return this.tableConfig.globalFilterPlaceholder || `Buscar ${this.getEntityPluralName().toLowerCase()}...`;
   }
 
-  // Column utilities
-  getVisibleColumns(): TableColumn[] {
-    return this.tableConfig.columns.filter(col => col.visible !== false);
+  // Entity name for accessibility and labels
+  protected abstract getEntityName(): string;
+
+  // Template registration for dynamic columns
+
+  protected abstract getEntityPluralName(): string;
+
+  protected saveTableState(): void {
+    this.tableStateManager.saveState(
+      this.stateStorageRef,
+      this.stateKey,
+      {
+        filterValue: this.filterValue,
+        sortField: this.sortField,
+        sortOrder: this.sortOrder,
+        pageSize: this.pageSize,
+        pageIndex: this.pageIndex,
+        columns: this.tableConfig.columns,
+        columnToggleModel: this.columnToggleModel,
+        expandedRows: this.expandedRows,
+        selectedItems: this.selectedItems
+      },
+      this.tableConfig.stateProps,
+      this.tableConfig.trackByField || 'id'
+    );
   }
 
-  getSortableColumns(): TableColumn[] {
-    return this.tableConfig.columns.filter(col => col.sortable !== false);
-  }
-
-  getFilterableColumns(): TableColumn[] {
-    return this.tableConfig.columns.filter(col => col.filterable === true);
-  }
-
-  getExportableColumns(): TableColumn[] {
-    return this.tableConfig.columns.filter(col => col.exportable !== false);
-  }
-
-  // Get column count for colspan calculations
-  getColumnCount(): number {
-    let count = this.getVisibleColumns().length;
-
-    if (this.tableConfig.expandable) {
-      count++;
+  protected updateDisplayedColumns(): void {
+    if (!this.tableConfig.columns) {
+      this.columnsTable = [];
+      this.displayedColumns = [];
+      return;
     }
 
-    if (this.tableConfig.selectable && !this.isReadOnly) {
-      count++;
-    }
-
-    return count;
+    this.columnsTable = this.tableColumnManager.getDisplayedColumnsFromConfig(this.tableConfig.columns);
+    this.buildColumnsTable();
   }
 
-  // Check if actions column should be shown
-  shouldShowActionsColumn(): boolean {
-    return this.displayedColumns.includes('actions') && !this.isReadOnly;
+  protected getRowKey(row: T): string {
+    const keyField = this.tableConfig.rowExpansionKey || this.tableConfig.trackByField || 'id';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return String((row as any)?.[keyField]);
   }
 
-  // Utility method for consistent column width
-  getColumnWidth(column: TableColumn): string | undefined {
-    if (column.width) {
-      return column.width;
+  private initializeColumnHandling(): void {
+    if (!this.tableConfig.columns) {
+      this.tableConfig.columns = [];
     }
 
-    // Auto-size based on column type
-    switch (column.type) {
-      case 'boolean':
-        return '80px';
-      case 'number':
-        return '120px';
-      case 'date':
-        return '140px';
-      default:
-        return column.minWidth || undefined;
+    if (this.tableConfig.columns.length === 0 && this.columnsTable?.length) {
+      this.tableConfig.columns = this.columnsTable.map(field => ({
+        field,
+        header: field,
+        sortable: true,
+        filterable: true,
+        toggleable: field !== 'actions'
+      }));
     }
+
+    if (this.columnToggleModel.length === 0) {
+      const toggleData = this.tableColumnManager.initializeColumnToggle(this.tableConfig.columns);
+      this.columnToggleOptions = toggleData.columnToggleOptions;
+      this.columnToggleModel = toggleData.columnToggleModel;
+    }
+
+    this.updateDisplayedColumns();
+    this.updateGlobalFilterFields();
+  }
+
+  private initializeKeyboardShortcuts(): void {
+    if (this.tableConfig.keyboardShortcuts === false) {
+      this.keyboardShortcutHandlers = [];
+      return;
+    }
+
+    this.keyboardShortcutHandlers = this.tableKeyboardService.buildDefaultShortcuts({
+      focusGlobalFilter: () => this.focusGlobalFilter(),
+      openForm: () => {
+        if (this.canCreate && !this.isReadOnly) {
+          this.openForm();
+        }
+      },
+      exportExcel: () => {
+        if (this.canExport) {
+          this.exportExcel();
+        }
+      },
+      openColumnToggle: () => this.openColumnTogglePanel(),
+      clearGlobalFilter: () => this.clearGlobalFilter(),
+      deleteSelected: () => {
+        if (this.canDelete && this.selectedItems?.length) {
+          this.deleteSelectedItems();
+        }
+      }
+    });
+  }
+
+  private restoreTableState(): void {
+    const restored = this.tableStateManager.restoreState(
+      this.stateStorageRef,
+      this.stateKey,
+      this.tableConfig.columns,
+      this.tableConfig.stateProps
+    );
+
+    if (!restored) {
+      return;
+    }
+
+    // Apply restored state to component properties
+    if (restored.filterValue !== undefined) {
+      this.filterValue = restored.filterValue;
+    }
+
+    if (restored.sortField !== undefined) {
+      this.sortField = restored.sortField;
+    }
+
+    if (restored.sortOrder !== undefined) {
+      this.sortOrder = restored.sortOrder;
+    }
+
+    if (restored.pageSize !== undefined) {
+      this.pageSize = restored.pageSize;
+      this.rows = this.pageSize;
+    }
+
+    if (restored.pageIndex !== undefined) {
+      this.pageIndex = restored.pageIndex;
+      this.first = this.pageIndex * this.pageSize;
+    }
+
+    if (restored.expandedRowKeys !== undefined) {
+      this.expandedRows = restored.expandedRowKeys;
+    }
+
+    if (restored.selectedKeys !== undefined) {
+      this.pendingSelectedKeys = restored.selectedKeys;
+    }
+
+    if (restored.columnToggleModel !== undefined) {
+      this.columnToggleModel = restored.columnToggleModel;
+    }
+
+    this.updateDisplayedColumns();
+  }
+
+  private restoreSelectionFromKeys(): void {
+    if (!this.pendingSelectedKeys.length || !this.objects?.length) {
+      return;
+    }
+    const trackByField = this.tableConfig.trackByField || 'id';
+    this.selectedItems = this.tableStateManager.restoreSelectionFromKeys(
+      this.objects,
+      this.pendingSelectedKeys,
+      trackByField
+    ) as T[];
+    this.pendingSelectedKeys = [];
+  }
+
+  private updateGlobalFilterFields(): void {
+    if (this.tableConfig.globalFilterFields?.length) {
+      return;
+    }
+    this.tableConfig.globalFilterFields = this.tableColumnManager.initializeGlobalFilterFields(
+      this.tableConfig.columns
+    );
+  }
+
+  private focusGlobalFilter(): void {
+    const element = this.globalFilterInput()?.nativeElement;
+    if (element) {
+      element.focus({preventScroll: true});
+      if (typeof element.select === 'function') {
+        element.select();
+      }
+    }
+  }
+
+  private openColumnTogglePanel(): void {
+    const component = this.columnToggleComponent();
+    if (this.tableConfig.columnToggle === false || !component) {
+      return;
+    }
+    if (component.overlayVisible) {
+      component.hide();
+    } else {
+      component.show();
+    }
+  }
+
+  private initializeStateStorage(): void {
+    this.stateKey = this.tableConfig.stateKey || this.defaultStateKey;
+    this.stateStorageRef = this.tableStateManager.initializeStorage(
+      this.tableConfig.stateful || false,
+      this.tableConfig.stateStorage || 'local'
+    );
+  }
+
+  /**
+   * Common handler for successful data loading
+   * Extracts duplicated logic from findAll(), onPageChange(), and loadData()
+   */
+  private handleDataLoadSuccess(response: PageResponse<T>): void {
+    this.objects = response.content;
+    this.totalElements = response.totalElements;
+    this.pageSize = response.size;
+    this.pageIndex = response.number;
+
+    this.rows = this.pageSize;
+    this.first = this.pageIndex * this.pageSize;
+
+    this.restoreSelectionFromKeys();
+    this.loading.set(false);
+    this.postFindAll();
+    this.saveTableState();
+
+    this.triggerChangeDetection();
+  }
+
+  /**
+   * Common handler for data loading errors
+   * Extracts duplicated error handling logic
+   */
+  private handleDataLoadError(error: unknown): void {
+    this.loading.set(false);
+    this.showError(error);
+    this.triggerChangeDetection();
+  }
+
+  // Centralized data loading method
+  private loadData() {
+    this.loading.set(true);
+    this.buildColumnsTable();
+
+    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue)
+    .subscribe({
+      next: (e) => {
+          // Apply client-side sorting if needed
+          if (this.sortField && e.content) {
+            e.content.sort((a: T, b: T) => {
+              const aVal = (a as Record<string, unknown>)[this.sortField];
+              const bVal = (b as Record<string, unknown>)[this.sortField];
+
+              // Handle null/undefined
+              if (aVal === null && bVal === null) return 0;
+              if (aVal === null || aVal === undefined) return 1 * this.sortOrder;
+              if (bVal === null || bVal === undefined) return -1 * this.sortOrder;
+
+              // Compare values (works for strings, numbers, dates)
+              if (aVal < bVal) return -1 * this.sortOrder;
+              if (aVal > bVal) return 1 * this.sortOrder;
+              return 0;
+            });
+          }
+
+          this.handleDataLoadSuccess(e);
+        },
+      error: (error) => this.handleDataLoadError(error)
+    });
+  }
+
+  private deleteItemsSequentially(ids: ID[], currentIndex: number, total: number) {
+    if (currentIndex >= ids.length) {
+      // All deletions completed
+      this.selectedItems = [];
+      this.saveTableState();
+      this.loaderService.hide();
+      Swal.fire('Sucesso!', `${total} registro(s) excluído(s) com sucesso!`, 'success');
+      this.findAll();
+      return;
+    }
+
+    this.service.delete(ids[currentIndex])
+    .subscribe({
+      next: () => {
+          // Continue with next item
+          this.deleteItemsSequentially(ids, currentIndex + 1, total);
+        },
+      error: (error) => {
+          this.loaderService.hide();
+          this.showError(error);
+          Swal.fire('Erro!', `Erro ao excluir alguns registros. ${currentIndex} de ${total} foram excluídos.`, 'error');
+        }
+    });
+  }
+
+  // Centralized permission setup using the permission service
+  private async setupUserPermissions(): Promise<void> {
+    try {
+      const permissions = await this.permissionService.getUserPermissions();
+
+      // Apply permissions to component properties
+      this.canCreate = permissions.canCreate;
+      this.canEdit = permissions.canEdit;
+      this.canDelete = permissions.canDelete;
+      this.canExport = permissions.canExport;
+      this.isReadOnly = permissions.isReadOnly;
+      this.userRole = permissions.userRole;
+      this.isAlunoOrProfessor = permissions.isAlunoOrProfessor;
+
+      // Update columns based on permissions
+      this.updateColumnsForPermissions();
+    } catch (error) {
+      this.logger.error('Error setting up user permissions', error);
+      // Default to read-only if permission setup fails
+      this.canCreate = false;
+      this.canEdit = false;
+      this.canDelete = false;
+      this.canExport = false;
+      this.isReadOnly = true;
+      this.userRole = 'GUEST';
+      this.isAlunoOrProfessor = true;
+    }
+  }
+
+  // Update columns based on user permissions
+  private updateColumnsForPermissions(): void {
+    this.tableColumnManager.updateColumnsForPermissions(this.tableConfig.columns, this.isReadOnly);
+    this.updateDisplayedColumns();
+    this.saveTableState();
   }
 }
 

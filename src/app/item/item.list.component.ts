@@ -1,6 +1,6 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject, ViewChild} from "@angular/core";
-import {CommonModule, NgOptimizedImage} from '@angular/common';
-import {FormsModule} from '@angular/forms';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, viewChild} from "@angular/core";
+import {NgOptimizedImage} from '@angular/common';
+import {Z_INDEX} from '../framework/constants';
 import {Item} from "./item";
 import {ItemService} from "./item.service";
 import {PrimeCrudListComponent} from "../framework/component/prime-crud.list.component";
@@ -11,61 +11,35 @@ import {ReservaService} from "../reserva/reserva.service";
 import Swal from "sweetalert2";
 import {Reserva} from "../reserva/reserva";
 import {environment} from "src/environments/environment";
-
-// PrimeNG Components
-import {CardModule} from 'primeng/card';
-import {Table, TableModule} from 'primeng/table';
-import {MultiSelectModule} from 'primeng/multiselect';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ButtonModule} from 'primeng/button';
-import {InputTextModule} from 'primeng/inputtext';
-import {IconFieldModule} from 'primeng/iconfield';
-import {InputIconModule} from 'primeng/inputicon';
-import {TooltipModule} from 'primeng/tooltip';
-import {TagModule} from 'primeng/tag';
 import {DialogModule} from 'primeng/dialog';
-
 import {MenuModule} from 'primeng/menu';
-import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 import {NovoComponent} from '../geral/novo/novo.component';
+import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 
 @Component({
     selector: "app-list-item",
     templateUrl: "./item.list.component.html",
     styleUrls: ["./item.list.component.css"],
   imports: [
-    CommonModule,
-    FormsModule,
-    CardModule,
-    TableModule,
-    MultiSelectModule,
-    ToolbarModule,
-    ButtonModule,
-    InputTextModule,
-    IconFieldModule,
-    InputIconModule,
-    TooltipModule,
-    TagModule,
+    PrimeTableSharedModule,
     DialogModule,
     PopoverModule,
     MenuModule,
-    PrimeCrudToolbarComponent,
-    ActionButtonsComponent,
     NovoComponent,
-    NgOptimizedImage
+    NgOptimizedImage,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => ItemListComponent) }]
 })
 export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
-  @ViewChild('dt') dt?: Table;
+  readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
+
   protected override service = inject(ItemService);
   protected override columnsTable = ["id", "imagem", "nome", "localizacao", "grupo", "saldo", "actions"];
 
   private readonly reservaService = inject(ReservaService);
-
-  @ViewChild('actionsMenu') actionsMenu!: Popover;
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
   protected override urlForm = "item/form";
   contextMenuItems: MenuItem[] = [];
   selectedItem!: Item;
@@ -251,7 +225,7 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
       this.contextMenuItems.push(...mobileMenuItems);
     }
 
-    this.actionsMenu.toggle(event);
+    this.actionsMenu().toggle(event);
     this.cdr?.markForCheck();
   }
 

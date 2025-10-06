@@ -6,11 +6,12 @@ import {
   inject,
   OnDestroy,
   signal,
-  ViewChild
+  viewChild
 } from '@angular/core';
 import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
+import {Z_INDEX} from '../framework/constants';
 import {
   PrimeReactiveCrudFormComponent
 } from '../framework/component/prime-reactive-crud.form.component';
@@ -22,9 +23,10 @@ import {FileUpload, FileUploadModule} from 'primeng/fileupload';
 import {environment} from '../../environments/environment';
 import Swal from 'sweetalert2';
 import {ItemImage} from './itemImage';
+import {LoggerService} from '../framework/services/logger.service';
 
 // PrimeNG
-import {AutoCompleteModule} from "primeng/autocomplete";
+import {AutoCompleteCompleteEvent, AutoCompleteModule} from "primeng/autocomplete";
 import {ButtonModule} from "primeng/button";
 import {CardModule} from "primeng/card";
 import {CarouselModule} from "primeng/carousel";
@@ -81,15 +83,18 @@ interface TipoItemOption {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, number> implements OnDestroy {
+  readonly fileUpload = viewChild<FileUpload>('fileUpload');
+
   protected override service = inject(ItemService);
   protected override urlList = '/item';
   protected override type = Item;
   private readonly fb = inject(FormBuilder);
   private readonly grupoService = inject(GrupoService);
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
   private grupoSubscription?: Subscription;
   private imagesSubscription?: Subscription;
-
-  @ViewChild('fileUpload') fileUpload?: FileUpload;
+  protected readonly logger = inject(LoggerService);
 
   // Signals for component state
   protected readonly grupoList = signal<Grupo[]>([]);
@@ -117,15 +122,14 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     const formGroup = this.form();
     return formGroup?.get('tipoItem')?.value === 'P';
   });
-
   protected readonly isSaldoDisabled = computed(() => {
     const formGroup = this.form();
     const patrimonio = formGroup?.get('patrimonio')?.value;
     const tipoItem = formGroup?.get('tipoItem')?.value;
-    return (patrimonio != null && patrimonio !== '') || tipoItem === 'P';
+    return (patrimonio !== null && patrimonio !== undefined && patrimonio !== '') || tipoItem === 'P';
   });
 
-  private callback?: Function;
+  private callback?: () => void;
 
   constructor() {
     super();
@@ -243,16 +247,19 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   }
 
   /**
-   * Post save hook for file upload
+   * Find grupos for autocomplete
    */
-  protected override postSave(callback: Function): void {
-    if (this.fileUpload) {
-      this.fileUpload.url = this.getUrlUploadImages();
-      this.fileUpload.upload();
-      this.callback = callback;
-    } else {
-      callback();
-    }
+  findGrupos($event: AutoCompleteCompleteEvent): void {
+    this.cancelGrupoRequest();
+
+    this.grupoSubscription = this.grupoService.complete($event.query).subscribe({
+      next: (grupos) => {
+        this.grupoList.set(grupos);
+      },
+      error: (error) => {
+        this.logger.error('Error fetching grupos', error);
+      }
+    });
   }
 
   /**
@@ -273,19 +280,17 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   }
 
   /**
-   * Find grupos for autocomplete
+   * Post save hook for file upload
    */
-  findGrupos($event: any): void {
-    this.cancelGrupoRequest();
-
-    this.grupoSubscription = this.grupoService.complete($event.query).subscribe({
-      next: (grupos) => {
-        this.grupoList.set(grupos);
-      },
-      error: (error) => {
-        console.error('Error fetching grupos:', error);
-      }
-    });
+  protected override postSave(callback: () => void): void {
+    const upload = this.fileUpload();
+    if (upload) {
+      upload.url = this.getUrlUploadImages();
+      upload.upload();
+      this.callback = callback;
+    } else {
+      callback();
+    }
   }
 
   /**
@@ -333,7 +338,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
         this.loadingImages.set(false);
         this.loaderService.hide();
         Swal.fire('Erro', 'Erro ao buscar imagens.', 'error');
-        console.error(error);
+        this.logger.error('Erro ao buscar imagens', error);
       }
     });
   }
@@ -389,7 +394,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
       error: (error) => {
         this.loaderService.hide();
         Swal.fire('Atenção!', 'Ocorreu um erro ao remover a imagem', 'error');
-        console.error(error);
+        this.logger.error('Erro ao remover a imagem', error);
       }
     });
   }
@@ -452,7 +457,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     const patrimonio = formGroup.get('patrimonio')?.value;
     const tipoItem = formGroup.get('tipoItem')?.value;
 
-    if ((patrimonio != null && patrimonio !== '') || tipoItem === 'P') {
+    if ((patrimonio !== null && patrimonio !== undefined && patrimonio !== '') || tipoItem === 'P') {
       formGroup.patchValue({
         saldo: 1,
         qtdeMinima: 1

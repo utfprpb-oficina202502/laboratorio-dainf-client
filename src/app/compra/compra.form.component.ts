@@ -16,7 +16,7 @@ import {CompraItem} from './compraItem';
 // PrimeNG
 import {CardModule} from 'primeng/card';
 import {InputTextModule} from 'primeng/inputtext';
-import {AutoCompleteModule} from 'primeng/autocomplete';
+import {AutoCompleteCompleteEvent, AutoCompleteModule} from 'primeng/autocomplete';
 import {DatePickerModule} from 'primeng/datepicker';
 import {ButtonModule} from 'primeng/button';
 import {TableModule} from 'primeng/table';
@@ -115,7 +115,7 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
   /**
    * Autocomplete for Fornecedores
    */
-  findFornecedores(event: any): void {
+  findFornecedores(event: AutoCompleteCompleteEvent): void {
     this.fornecedorService.complete(event.query).subscribe({
       next: (e) => {
         this.fornecedorList.set(e);
@@ -127,7 +127,7 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
    * Autocomplete for Items
    * Requires minimum 2 characters to search (performance optimization for 700+ items)
    */
-  findProdutos(event: any): void {
+  findProdutos(event: AutoCompleteCompleteEvent): void {
     const query = event.query || '';
 
     // Require minimum 2 characters to search

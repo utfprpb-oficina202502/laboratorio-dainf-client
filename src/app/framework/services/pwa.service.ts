@@ -2,6 +2,7 @@ import {ApplicationRef, computed, inject, Injectable, signal} from '@angular/cor
 import {SwUpdate, VersionReadyEvent} from '@angular/service-worker';
 import {concat, filter, first, interval} from 'rxjs';
 import Swal from 'sweetalert2';
+import {LoggerService} from './logger.service';
 
 /**
  * PWA Service - Progressive Web App Update Management
@@ -30,6 +31,7 @@ import Swal from 'sweetalert2';
 export class PwaService {
   private readonly swUpdate = inject(SwUpdate);
   private readonly appRef = inject(ApplicationRef);
+  private readonly logger = inject(LoggerService);
 
   // Signal-based reactive state
   private readonly updateAvailableSignal = signal<boolean>(false);
@@ -57,25 +59,25 @@ export class PwaService {
     }
 
     if (this.updateCheckInProgressSignal()) {
-      console.log('⏳ Update check already in progress');
+      this.logger.debug('⏳ Update check already in progress');
       return false;
     }
 
     try {
       this.updateCheckInProgressSignal.set(true);
-      console.log('🔍 Checking for updates...');
+      this.logger.debug('🔍 Checking for updates...');
 
       const updateAvailable = await this.swUpdate.checkForUpdate();
 
       if (updateAvailable) {
-        console.log('✅ Update check: Update available');
+        this.logger.info('✅ Update check: Update available');
       } else {
-        console.log('✅ Update check: Already on latest version');
+        this.logger.info('✅ Update check: Already on latest version');
       }
 
       return updateAvailable;
     } catch (error) {
-      console.error('❌ Update check failed:', error);
+      this.logger.error('❌ Update check failed', error);
       return false;
     } finally {
       this.updateCheckInProgressSignal.set(false);
@@ -87,12 +89,12 @@ export class PwaService {
    */
   public async activateUpdate(): Promise<void> {
     if (!this.swUpdate.isEnabled) {
-      console.warn('⚠️ Cannot activate update - service worker not enabled');
+      this.logger.warn('⚠️ Cannot activate update - service worker not enabled');
       return;
     }
 
     try {
-      console.log('🔄 Activating update...');
+      this.logger.info('🔄 Activating update...');
 
       // Show loading indicator
       Swal.fire({
@@ -109,12 +111,12 @@ export class PwaService {
       // Activate the update
       await this.swUpdate.activateUpdate();
 
-      console.log('✅ Update activated - reloading application');
+      this.logger.info('✅ Update activated - reloading application');
 
       // Reload the page to use new version
       globalThis.location.reload();
     } catch (error) {
-      console.error('❌ Update activation failed:', error);
+      this.logger.error('❌ Update activation failed', error);
 
       Swal.fire({
         title: 'Erro na Atualização',
@@ -154,12 +156,12 @@ export class PwaService {
    */
   private initializeServiceWorker(): void {
     if (!this.swUpdate.isEnabled) {
-      console.warn('⚠️ Service Worker not enabled - PWA features disabled');
-      console.log('   Run production build to enable: npm run build');
+      this.logger.warn('⚠️ Service Worker not enabled - PWA features disabled');
+      this.logger.info('   Run production build to enable: npm run build');
       return;
     }
 
-    console.log('✅ PWA Service Worker enabled');
+    this.logger.info('✅ PWA Service Worker enabled');
 
     // Check for updates immediately after app stabilizes
     this.checkForUpdatesOnStable();
@@ -204,7 +206,7 @@ export class PwaService {
       filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY')
     )
     .subscribe(event => {
-      console.log('🆕 New version available:', event.latestVersion.hash);
+      this.logger.info('🆕 New version available:', event.latestVersion.hash);
       this.latestVersionHash.set(event.latestVersion.hash);
       this.updateAvailableSignal.set(true);
       this.promptUserForUpdate();
@@ -232,13 +234,13 @@ export class PwaService {
     }
 
     globalThis.addEventListener('online', () => {
-      console.log('🌐 Application online');
+      this.logger.info('🌐 Application online');
       this.onlineSignal.set(true);
       this.checkForUpdate(); // Check for updates when coming back online
     });
 
     globalThis.addEventListener('offline', () => {
-      console.log('📴 Application offline');
+      this.logger.info('📴 Application offline');
       this.onlineSignal.set(false);
     });
   }
@@ -248,7 +250,7 @@ export class PwaService {
    */
   private logUnrecoverableState(): void {
     this.swUpdate.unrecoverable.subscribe(event => {
-      console.error('❌ Service worker in unrecoverable state:', event.reason);
+      this.logger.error('❌ Service worker in unrecoverable state', event.reason);
       Swal.fire({
         title: 'Erro Crítico',
         text: 'A aplicação está em estado inconsistente. Por favor, recarregue a página.',
@@ -289,7 +291,7 @@ export class PwaService {
       if (result.isConfirmed) {
         this.activateUpdate();
       } else {
-        console.log('ℹ️ User deferred update');
+        this.logger.info('ℹ️ User deferred update');
         // Update will be available on next page reload
       }
     });

@@ -4,10 +4,9 @@ import {
   forwardRef,
   inject,
   OnInit,
-  ViewChild
+  viewChild
 } from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
+import {Z_INDEX} from '../framework/constants';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Emprestimo} from './emprestimo';
@@ -19,61 +18,39 @@ import {EmprestimoFilter} from './emprestimo.filter';
 import {Usuario} from '../usuario/usuario';
 import {UsuarioService} from '../usuario/usuario.service';
 import Swal from 'sweetalert2';
-
-// PrimeNG Components
-import {CardModule} from 'primeng/card';
-import {TableModule} from 'primeng/table';
-import {MultiSelectModule} from 'primeng/multiselect';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ButtonModule} from 'primeng/button';
-import {InputTextModule} from 'primeng/inputtext';
-import {IconFieldModule} from 'primeng/iconfield';
-import {InputIconModule} from 'primeng/inputicon';
-import {TooltipModule} from 'primeng/tooltip';
-import {TagModule} from 'primeng/tag';
 import {DialogModule} from 'primeng/dialog';
 import {AutoCompleteModule} from 'primeng/autocomplete';
 import {DatePicker, DatePickerModule} from 'primeng/datepicker';
 import {SelectModule} from 'primeng/select';
-
 import {MenuModule} from 'primeng/menu';
-import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
 import {NovoComponent} from '../geral/novo/novo.component';
+import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 
 @Component({
     selector: 'app-list-emprestimo',
     templateUrl: './emprestimo.list.component.html',
     styleUrls: ['./emprestimo.list.component.css'],
   imports: [
-    CommonModule,
-    FormsModule,
-    CardModule,
-    TableModule,
-    MultiSelectModule,
-    ToolbarModule,
-    ButtonModule,
-    InputTextModule,
-    IconFieldModule,
-    InputIconModule,
-    TooltipModule,
-    TagModule,
+    PrimeTableSharedModule,
     DialogModule,
     AutoCompleteModule,
     DatePickerModule,
     SelectModule,
     PopoverModule,
     MenuModule,
-    PrimeCrudToolbarComponent,
-    NovoComponent
+    NovoComponent,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => EmprestimoListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, number> implements OnInit{
-  @ViewChild('actionsMenu') actionsMenu!: Popover;
-  @ViewChild('novaData') novaData!: DatePicker;
+  readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
+  readonly novaData = viewChild.required<DatePicker>('novaData');
   contextMenuItems: MenuItem[] = [];
   protected override service = inject(EmprestimoService);
+
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
   selectedEmprestimoId!: number;
   dialogFiltroEmprestimo = false;
   emprestimoFilter = new EmprestimoFilter();
@@ -195,11 +172,11 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       });
     }
 
-    this.actionsMenu.toggle(event);
+    this.actionsMenu().toggle(event);
     this.cdr?.markForCheck();
   }
 
-  findUsuarios($event: any) {
+  findUsuarios($event: { query: string }) {
     this.usuarioService.completeCustom($event.query)
     .subscribe({
       next: (e) => {
@@ -212,18 +189,21 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     return 'emprestimos';
   }
 
-  // tslint:disable-next-line:use-lifecycle-interface
   ngOnInit(): void {
     super.ngOnInit();
 
     this.loginService.userLoggedIsAlunoOrProfessor().then(value => {
       this.isAlunoOrProfessor = value;
       this.cdr?.markForCheck();
-      this.isAlunoOrProfessor ? this.findAllByUsername() : this.findAll();
+      if (this.isAlunoOrProfessor) {
+        this.findAllByUsername();
+      } else {
+        this.findAll();
+      }
     });
   }
 
-  findUsuarioResponsavel($event: any) {
+  findUsuarioResponsavel($event: { query: string }) {
     this.usuarioService.completeCustomUsersLab($event.query)
     .subscribe({
       next: (e) => {
@@ -266,13 +246,13 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   }
 
   openCalendarNewDate() {
-    this.novaData.overlayVisible = true;
+    this.novaData().overlayVisible = true;
   }
 
   getStatusEmprestimo(emprestimo: Emprestimo) {
-    if (DateUtil.dtIsBeforeToday(emprestimo.prazoDevolucao) && emprestimo.dataDevolucao == null) {
+    if (DateUtil.dtIsBeforeToday(emprestimo.prazoDevolucao) && emprestimo.dataDevolucao === null) {
       return 'A';
-    } else if (emprestimo.dataDevolucao == null) {
+    } else if (emprestimo.dataDevolucao === null) {
       return 'P';
     } else {
       return 'F';
@@ -315,7 +295,11 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   clearFilter() {
     this.emprestimoFilter = new EmprestimoFilter();
     this.buildDropdown();
-    this.isAlunoOrProfessor ? this.findAllByUsername() : this.findAll();
+    if (this.isAlunoOrProfessor) {
+      this.findAllByUsername();
+    } else {
+      this.findAll();
+    }
   }
 
   filter() {

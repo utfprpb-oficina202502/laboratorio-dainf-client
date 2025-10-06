@@ -82,7 +82,7 @@
                 dateFormat="dd/mm/yy"
                 inputStyleClass="form-control"
                 disabled
-                [style]="{width: '100%'}"
+                            class="w-full"
                 [(ngModel)]="object.dataEmprestimo">
               </p-datePicker>
             </div>
@@ -100,7 +100,7 @@
                 dateFormat="dd/mm/yy"
                 inputStyleClass="form-control"
                 disabled
-                [style]="{width: '100%'}"
+                            class="w-full"
                 [(ngModel)]="object.prazoDevolucao">
               </p-datePicker>
             </div>
@@ -118,7 +118,7 @@
                 dateFormat="dd/mm/yy"
                 inputStyleClass="form-control"
                 disabled
-                [style]="{width: '100%'}"
+                            class="w-full"
                 [(ngModel)]="object.dataDevolucao">
               </p-datePicker>
             </div>
@@ -259,9 +259,9 @@
 
 <p-dialog header="Duplicar Item"
   [(visible)]="dialogDuplicaItem"
-  [style]="{minWidth: '400px'}"
+          [baseZIndex]="Z_INDEX.DIALOG"
   [modal]="true"
-  [baseZIndex]="10000"
+          class="dialog-sm"
   [focusOnShow]="false">
 
   <form (submit)="duplicarItem()">

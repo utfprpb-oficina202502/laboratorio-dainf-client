@@ -6,6 +6,7 @@ import {BaseFormComponent} from './base.form.component';
 import Swal from 'sweetalert2';
 import {LoaderService} from '../loader/loader.service';
 import {LoginService} from '../../login/login.service';
+import {LoggerService} from '../services/logger.service';
 
 @Directive()
 export abstract class CrudFormComponent<T, ID> extends BaseFormComponent implements OnInit {
@@ -20,6 +21,7 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
   protected readonly route: ActivatedRoute;
   protected readonly loaderService: LoaderService;
   protected readonly loginService: LoginService;
+  protected readonly logger: LoggerService;
 
   // utilizado para validações extras
   public validExtra = true;
@@ -34,6 +36,7 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
     this.messageService = inject(MessageService);
     this.loaderService = inject(LoaderService);
     this.loginService = inject(LoginService);
+    this.logger = inject(LoggerService);
   }
 
   ngOnInit(): void {
@@ -58,7 +61,7 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
       .subscribe({
         next: (e) => {
           this.object = e;
-          this.postSave((_value: any) => {
+          this.postSave(() => {
             this.loaderService.hide();
             Swal.fire('Sucesso!', 'Registro salvo com sucesso!', 'success');
             this.back();
@@ -67,7 +70,7 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
         error: (error) => {
           this.loaderService.hide();
           Swal.fire('Atenção!', 'Ocorreu um erro ao salvar o registro!', 'error');
-          console.log(error);
+          this.logger.error('Error saving record', error);
         }
         });
     } else {
@@ -77,7 +80,7 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
     }
   }
 
-  postSave(callback: Function): void {
+  postSave(callback: () => void): void {
     callback();
   }
 

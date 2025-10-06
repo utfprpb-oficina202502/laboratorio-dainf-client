@@ -5,11 +5,11 @@ import {Subject} from 'rxjs/internal/Subject';
 @Injectable()
 export class ValidationService {
 
-  private rules: any;
+  clearValidationsSubject = new Subject<string>();
 
   addValidationSubject = new Subject<Validation>();
   removeValidationSubject = new Subject<string>();
-  clearValidationsSubject = new Subject();
+  private rules: Record<string, string>;
 
   constructor() {
     this.rules = {
@@ -28,7 +28,7 @@ export class ValidationService {
     return '';
   }
 
-  setRuleMessages(rules: {}) {
+  setRuleMessages(rules: Record<string, string>) {
     this.rules = rules;
   }
 

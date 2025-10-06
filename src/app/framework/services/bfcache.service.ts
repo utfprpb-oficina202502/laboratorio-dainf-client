@@ -1,5 +1,6 @@
-import {Injectable, signal} from '@angular/core';
+import {inject, Injectable, signal} from '@angular/core';
 import {Subject} from 'rxjs';
+import {LoggerService} from './logger.service';
 
 /**
  * BFCache (Back/Forward Cache) Service
@@ -16,6 +17,8 @@ import {Subject} from 'rxjs';
   providedIn: 'root'
 })
 export class BFCacheService {
+  private readonly logger = inject(LoggerService);
+
   /**
    * Signal indicating if the page was restored from BFCache
    */
@@ -96,16 +99,16 @@ export class BFCacheService {
 
     // Check for BFCache blockers
     if ('unload' in globalThis) {
-      const hasUnloadListener = (globalThis as any).__hasUnloadListener;
-      if (hasUnloadListener) {
+      const global = globalThis as typeof globalThis & { __hasUnloadListener?: boolean };
+      if (global.__hasUnloadListener) {
         issues.push('unload event listener detected (blocks BFCache)');
       }
     }
 
     // Check for beforeunload
     if ('beforeunload' in globalThis) {
-      const hasBeforeUnloadListener = (globalThis as any).__hasBeforeUnloadListener;
-      if (hasBeforeUnloadListener) {
+      const global = globalThis as typeof globalThis & { __hasBeforeUnloadListener?: boolean };
+      if (global.__hasBeforeUnloadListener) {
         issues.push('beforeunload event listener detected (may block BFCache)');
       }
     }
@@ -124,18 +127,16 @@ export class BFCacheService {
    * Useful for debugging BFCache issues
    */
   logStatus(): void {
-    console.group('🔍 BFCache Status');
-    console.log('Supported:', this.isSupported());
-    console.log('Currently restored from cache:', this.isRestoredFromCache());
+    this.logger.debug('🔍 BFCache Status');
+    this.logger.debug('Supported:', this.isSupported());
+    this.logger.debug('Currently restored from cache:', this.isRestoredFromCache());
 
     const issues = this.getCompatibilityIssues();
     if (issues.length > 0) {
-      console.warn('Compatibility issues:', issues);
+      this.logger.warn('Compatibility issues:', issues);
     } else {
-      console.log('✅ No known compatibility issues');
+      this.logger.debug('✅ No known compatibility issues');
     }
-
-    console.groupEnd();
   }
 
   /**
@@ -181,9 +182,9 @@ Run bfCacheService.logStatus() to see current status.
 
     // Log BFCache support status
     if (this.isSupported()) {
-      console.log('✅ BFCache supported and initialized');
+      this.logger.info('✅ BFCache supported and initialized');
     } else {
-      console.warn('⚠️ BFCache not supported in this browser');
+      this.logger.warn('⚠️ BFCache not supported in this browser');
     }
   }
 
@@ -194,7 +195,7 @@ Run bfCacheService.logStatus() to see current status.
   private handlePageHide(event: PageTransitionEvent): void {
     if (event.persisted) {
       // Page is being stored in BFCache
-      console.log('📦 Page stored in BFCache');
+      this.logger.debug('📦 Page stored in BFCache');
       this.pageHide$.next(event);
     }
   }
@@ -206,7 +207,7 @@ Run bfCacheService.logStatus() to see current status.
   private handlePageShow(event: PageTransitionEvent): void {
     if (event.persisted) {
       // Page was restored from BFCache
-      console.log('🔄 Page restored from BFCache');
+      this.logger.info('🔄 Page restored from BFCache');
       this.isRestoredFromCache.set(true);
       this.restored$.next(event);
       this.pageShow$.next(event);

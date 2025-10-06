@@ -1,42 +1,16 @@
 import {ChangeDetectionStrategy, Component, forwardRef, inject} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
 import {Estado} from './estado';
 import {EstadoService} from './estado.service';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
-
-// PrimeNG Components
-import {CardModule} from 'primeng/card';
-import {TableModule} from 'primeng/table';
-import {MultiSelectModule} from 'primeng/multiselect';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ButtonModule} from 'primeng/button';
-import {InputTextModule} from 'primeng/inputtext';
-import {IconFieldModule} from 'primeng/iconfield';
-import {InputIconModule} from 'primeng/inputicon';
-import {TooltipModule} from 'primeng/tooltip';
-import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
+import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 
 @Component({
   selector: 'app-list-estado',
   templateUrl: './estado.list.component.html',
   styleUrls: ['./estado.list.component.css'],
   imports: [
-    CommonModule,
-    FormsModule,
-    CardModule,
-    TableModule,
-    MultiSelectModule,
-    ToolbarModule,
-    ButtonModule,
-    InputTextModule,
-    IconFieldModule,
-    InputIconModule,
-    TooltipModule,
-    PrimeCrudToolbarComponent,
-    ActionButtonsComponent,
+    PrimeTableSharedModule,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => EstadoListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush

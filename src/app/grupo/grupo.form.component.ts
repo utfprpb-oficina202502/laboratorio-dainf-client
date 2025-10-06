@@ -9,6 +9,7 @@ import {
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
+import {Z_INDEX} from '../framework/constants';
 import {Grupo} from './grupo';
 import {GrupoService} from './grupo.service';
 import {
@@ -31,6 +32,7 @@ import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
 import {FormFieldComponent} from '../framework/component/form-field.component';
+import {LoggerService} from '../framework/services/logger.service';
 
 @Component({
   selector: 'app-form-grupo',
@@ -56,10 +58,14 @@ import {FormFieldComponent} from '../framework/component/form-field.component';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, number> implements OnDestroy {
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
+
   protected override service = inject(GrupoService);
   protected override urlList = '/grupo';
   protected override type = Grupo;
   private readonly fb = inject(FormBuilder);
+  protected readonly logger = inject(LoggerService);
   private itensVinculadosSubscription?: Subscription;
 
   // Signals for dialog state and related items
@@ -127,7 +133,7 @@ export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, nu
         this.loadingItensVinculados.set(false);
         this.loaderService.hide();
         Swal.fire('Erro', 'Erro ao buscar itens vinculados.', 'error');
-        console.error(error);
+        this.logger.error('Erro ao buscar itens vinculados', error);
       }
     });
   }

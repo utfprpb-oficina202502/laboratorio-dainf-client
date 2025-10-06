@@ -1,28 +1,36 @@
-import {Directive, ElementRef, inject, Input, Renderer2} from '@angular/core';
-import {NgControl} from '@angular/forms';
+import {Directive, ElementRef, inject, input, OnDestroy, Renderer2} from '@angular/core';
+import {NgControl, ValidationErrors} from '@angular/forms';
 import {ValidationService} from './validation.service';
+import {Subject} from 'rxjs';
+import {takeUntil} from 'rxjs/operators';
 
 @Directive({
   selector: '[appValidation]',
 })
-export class ValidationDirective {
+export class ValidationDirective implements OnDestroy {
   private readonly el = inject(ElementRef);
   private readonly formControl = inject(NgControl);
   private readonly validationService = inject(ValidationService);
   private readonly renderer = inject(Renderer2);
 
-  @Input() validationMessage!: string;
+  readonly validationMessage = input<string>('');
 
   private readonly targetElement: HTMLElement;
   private readonly formGroupElement: HTMLElement | null;
+  private readonly destroy$ = new Subject<void>();
 
   constructor() {
     this.targetElement = this.el.nativeElement;
     this.formGroupElement = this.findFormGroup(this.targetElement);
 
-    this.formControl.valueChanges?.subscribe(() => {
+    this.formControl.valueChanges?.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.checkValidation();
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private findFormGroup(element: HTMLElement): HTMLElement | null {
@@ -53,8 +61,9 @@ export class ValidationDirective {
   }
 
   getMessage(error?: string): string {
-    if (this.validationMessage) {
-      return this.validationMessage;
+    const customMessage = this.validationMessage();
+    if (customMessage) {
+      return customMessage;
     } else if (error) {
       return this.validationService.getMessageByError(error);
     } else {
@@ -62,9 +71,12 @@ export class ValidationDirective {
     }
   }
 
-  getError(errors: any): string | null {
+  getError(errors: ValidationErrors | null): string | null {
+    if (!errors) {
+      return null;
+    }
     for (const key in errors) {
-      if (errors.hasOwnProperty(key)) {
+      if (Object.hasOwn(errors, key)) {
         return key;
       }
     }

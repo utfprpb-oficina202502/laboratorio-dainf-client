@@ -6,10 +6,6 @@ import {Component} from '@angular/core';
     styleUrls: ['./pageNotFound.component.css'],
 })
 export class PageNotFoundComponent {
-
-  constructor() {
-  }
-
   back() {
     globalThis.history.back();
   }

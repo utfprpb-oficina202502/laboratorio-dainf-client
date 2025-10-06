@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, ElementRef, inject, ViewChild} from '@angular/core';
+import {ChangeDetectorRef, Component, ElementRef, inject, viewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {CrudFormComponent} from '../framework/component/crud.form.component';
@@ -62,11 +62,11 @@ export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number>
   protected override type = undefined;
   protected cdr = inject(ChangeDetectorRef);
 
-  @ViewChild('table') table!: Table;
-  @ViewChild('fileUpload') fileUpload!: FileUpload;
-  @ViewChild('nomeParam') nomeParam!: ElementRef;
-  uploadedFiles: any[] = [];
-  callback!: Function;
+  readonly table = viewChild.required<Table>('table');
+  readonly fileUpload = viewChild.required<FileUpload>('fileUpload');
+  readonly nomeParam = viewChild.required<ElementRef>('nomeParam');
+  uploadedFiles: File[] = [];
+  callback!: () => void;
   tipoParamDropdown: SelectItem[];
   relatorioParams: RelatorioParams;
 
@@ -96,7 +96,7 @@ export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number>
       && StringUtils.isNotBlank(this.relatorioParams.nameParam)
       && StringUtils.isNotBlank(this.relatorioParams.aliasParam)) {
 
-      this.object.paramsList ??= new Array();
+      this.object.paramsList ??= [];
       this.object.paramsList.push(this.relatorioParams);
       this.postInsertParam();
     } else {
@@ -108,12 +108,12 @@ export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number>
     this.relatorioParams = new RelatorioParams();
     this.relatorioParams.tipoParam = this.tipoParamDropdown[0].value;
     this.cdr?.markForCheck();
-    this.nomeParam.nativeElement.focus();
+    this.nomeParam().nativeElement.focus();
   }
 
-  postSave(callback: Function) {
-    this.fileUpload.url = this.getUrlUploadImages();
-    this.fileUpload.upload();
+  postSave(callback: () => void) {
+    this.fileUpload().url = this.getUrlUploadImages();
+    this.fileUpload().upload();
     this.callback = callback;
   }
 
@@ -127,7 +127,7 @@ export class RelatorioFormComponent extends CrudFormComponent<Relatorio, number>
 
   preSave() {
     this.validExtra = false;
-    if (this.editando || this.fileUpload.files.length > 0) {
+    if (this.editando || this.fileUpload().files.length > 0) {
       this.validExtra = true;
     }
     this.save();

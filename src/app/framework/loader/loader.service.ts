@@ -23,7 +23,7 @@ export class LoaderService {
    * @param cancelAction Function to call when user clicks cancel
    * @param cancelLabel Label for cancel button
    */
-  showWithCancel(cancelAction: () => void, cancelLabel: string = 'Cancelar'): void {
+  showWithCancel(cancelAction: () => void, cancelLabel = 'Cancelar'): void {
     this.loading.set(true);
     this.cancelAction.set(cancelAction);
     this.cancelLabel.set(cancelLabel);

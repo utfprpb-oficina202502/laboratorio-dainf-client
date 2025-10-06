@@ -49,8 +49,102 @@
 
 @layer utilities {
   /* Custom utilities not in Tailwind */
+  /* Table column width utilities - rem-based for consistency */
+  .w-3rem {
+    width: 3rem;
+  }
+
+  /* Checkbox/expand columns */
+  .w-6rem {
+    width: 6rem;
+  }
+
+  /* Very small columns */
+  .w-8rem {
+    width: 8rem;
+  }
+
+  /* ID/code columns */
+  .w-10rem {
+    width: 10rem;
+  }
+
+  /* Small action/status columns */
+  .w-12rem {
+    width: 12rem;
+  }
+
+  /* Medium columns */
+  .w-14rem {
+    width: 14rem;
+  }
+
+  /* Medium-large columns */
+  .w-16rem {
+    width: 16rem;
+  }
+
+  /* Large columns */
+  .w-18rem {
+    width: 18rem;
+  }
+
+  /* Extra large columns */
+  .w-20rem {
+    width: 20rem;
+  }
+
+  /* Wide text columns */
+  /* Table column width utilities - px-based for legacy support */
+  .w-80px {
+    width: 80px;
+  }
+
+  /* Small fixed columns */
   .w-100px {
     width: 100px;
+  }
+
+  /* Medium fixed columns */
+  .w-120px {
+    width: 120px;
+  }
+
+  /* Medium-large fixed columns */
+  .w-150px {
+    width: 150px;
+  }
+
+  /* Large fixed columns */
+  .w-200px {
+    width: 200px;
+  }
+
+  /* Extra large fixed columns */
+  .w-300px {
+    width: 300px;
+  }
+
+  /* Wide fixed columns */
+  /* Min-width utilities for flexible columns */
+  .min-w-12rem {
+    min-width: 12rem;
+  }
+
+  .min-w-14rem {
+    min-width: 14rem;
+  }
+
+  .min-w-16rem {
+    min-width: 16rem;
+  }
+
+  .min-w-18rem {
+    min-width: 18rem;
+  }
+
+  .min-w-20rem {
+    min-width: 20rem;
   }
 
   .abbreviate {
@@ -168,6 +262,68 @@
 
   /* Filter DatePicker - REMOVED: Legacy styles that were hiding borders */
   /* DatePicker styling is now handled in home.component.css with theme-aware variables */
+  /* ============================================================================
+     Dialog Sizing Utilities
+     Standardized responsive dialog widths across the application
+     ============================================================================ */
+  /* Small dialog - Filters, confirmations (400px) */
+  .dialog-sm.p-dialog .p-dialog-content {
+    min-width: 400px;
+  }
+
+  @media (max-width: 480px) {
+    .dialog-sm.p-dialog .p-dialog-content {
+      min-width: 90vw;
+    }
+  }
+
+  /* Medium dialog - Forms, data entry (500-650px) */
+  .dialog-md.p-dialog .p-dialog-content {
+    width: 90vw;
+    max-width: 500px;
+  }
+
+  /* Large dialog - Complex forms, lists (650-800px) */
+  .dialog-lg.p-dialog .p-dialog-content {
+    width: 90vw;
+    max-width: 800px;
+  }
+
+  /* Extra large dialog - Image preview, detailed views */
+  .dialog-xl.p-dialog .p-dialog-content {
+    min-width: 400px;
+    max-width: 80%;
+  }
+
+  @media (max-width: 768px) {
+    .dialog-xl.p-dialog .p-dialog-content {
+      max-width: 95%;
+    }
+  }
+
+  /* Constrained small - Fixed width small dialogs */
+  .dialog-sm-fixed.p-dialog .p-dialog-content {
+    min-width: 400px;
+    max-width: 400px;
+  }
+
+  @media (max-width: 480px) {
+    .dialog-sm-fixed.p-dialog .p-dialog-content {
+      min-width: 90vw;
+      max-width: 90vw;
+    }
+  }
+
+  /* Custom medium-large - 650px specific */
+  .dialog-md-lg.p-dialog .p-dialog-content {
+    min-width: 650px;
+  }
+
+  @media (max-width: 768px) {
+    .dialog-md-lg.p-dialog .p-dialog-content {
+      min-width: 90vw;
+    }
+  }
 }
 
 @layer overrides {

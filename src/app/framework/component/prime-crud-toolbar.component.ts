@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, inject, Input, TemplateRef} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, input, TemplateRef} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {ToolbarModule} from 'primeng/toolbar';
@@ -8,158 +8,64 @@ import {TooltipModule} from 'primeng/tooltip';
 import {MultiSelectModule} from 'primeng/multiselect';
 import {PrimeCrudListComponent} from './prime-crud.list.component';
 import {Table} from 'primeng/table';
+import {LoggerService} from '../services/logger.service';
 
 @Component({
   selector: 'app-prime-crud-toolbar',
   imports: [CommonModule, FormsModule, ToolbarModule, ButtonModule, ButtonGroupModule, TooltipModule, MultiSelectModule],
-  template: `
-    <p-toolbar class="mb-3" [attr.aria-label]="toolbarAriaLabel">
-      <ng-template pTemplate="start">
-        @if (toolbarStartTemplate) {
-          <ng-container [ngTemplateOutlet]="toolbarStartTemplate"></ng-container>
-        }
-      </ng-template>
-
-      <ng-template pTemplate="end">
-        <div class="flex flex-wrap gap-2 items-center justify-end w-full">
-          @if (toolbarEndTemplate) {
-            <ng-container [ngTemplateOutlet]="toolbarEndTemplate"></ng-container>
-          } @else {
-            <!-- Add/Delete buttons -->
-            @if (!toolbarStartTemplate) {
-              @if (list.canCreate && !list.isReadOnly) {
-                <p-button
-                  (onClick)="list.openForm()"
-                  [pTooltip]="'Adicionar '+ entityName"
-                  tooltipPosition="bottom"
-                  [attr.aria-label]="'Adicionar ' + entityName">
-                  <span pButtonIcon class="pi pi-plus"></span>
-                  <span pButtonLabel class="hidden md:inline ml-2">Adicionar</span>
-                </p-button>
-              }
-              @if (list.canDelete && !list.isReadOnly) {
-                <p-button
-                  severity="danger"
-                  [outlined]="true"
-                  (onClick)="list.deleteSelectedItems()"
-                  [disabled]="!list.selectedItems || !list.selectedItems.length"
-                  [pTooltip]="'Deletar '+ entityPluralName +' selecionados'"
-                  tooltipPosition="bottom"
-                  [attr.aria-label]="'Deletar ' + (list.selectedItems.length || 0) + ' registro(s)'">
-                  <span pButtonIcon class="pi pi-trash"></span>
-                  <span pButtonLabel class="hidden md:inline ml-2">Deletar</span>
-                </p-button>
-              }
-            }
-            <!-- Expand/Collapse buttons -->
-            @if (list.tableConfig.expandable) {
-              <p-button
-                type="button"
-                [outlined]="true"
-                (onClick)="list.expandAllRows()"
-                pTooltip="Expandir todas as linhas"
-                tooltipPosition="bottom"
-                [attr.aria-label]="'Expandir todas as linhas'">
-                <span pButtonIcon class="pi pi-plus-circle"></span>
-              </p-button>
-              <p-button
-                type="button"
-                severity="secondary"
-                [outlined]="true"
-                (onClick)="list.collapseAllRows()"
-                pTooltip="Recolher todas as linhas"
-                tooltipPosition="bottom"
-                [attr.aria-label]="'Recolher todas as linhas'">
-                <span pButtonIcon class="pi pi-minus-circle"></span>
-              </p-button>
-            }
-            <!-- Export buttons -->
-            @if (list.canExport) {
-              <p-buttonGroup>
-                <p-button
-                  severity="secondary"
-                  [outlined]="true"
-                  (onClick)="list.exportExcel()"
-                  pTooltip="Exportar para Excel"
-                  tooltipPosition="bottom"
-                  [attr.aria-label]="'Exportar dados para Excel'">
-                  <span pButtonIcon class="pi pi-file-excel"></span>
-                  <span pButtonLabel class="hidden lg:inline ml-2">Excel</span>
-                </p-button>
-                <p-button
-                  severity="secondary"
-                  [outlined]="true"
-                  (onClick)="onExportCSV()"
-                  pTooltip="Exportar para CSV"
-                  tooltipPosition="bottom"
-                  [attr.aria-label]="'Exportar dados para CSV'">
-                  <span pButtonIcon class="pi pi-upload"></span>
-                  <span pButtonLabel class="hidden lg:inline ml-2">CSV</span>
-                </p-button>
-              </p-buttonGroup>
-            }
-            <!-- Column toggle -->
-            @if (list.tableConfig.columnToggle !== false) {
-              <p-multiSelect
-                #columnToggle
-                [options]="list.columnToggleOptions"
-                [(ngModel)]="list.columnToggleModel"
-                optionLabel="label"
-                optionValue="value"
-                display="chip"
-                placeholder="Colunas"
-                (onChange)="list.onColumnToggleChange($event.value)"
-                appendTo="body"
-                styleClass="w-full sm:w-auto"
-                [style]="{'min-width': '150px'}"
-                [attr.aria-label]="'Selecionar colunas visiveis'">
-              </p-multiSelect>
-            }
-          }
-        </div>
-      </ng-template>
-    </p-toolbar>
-    `,
+  templateUrl: './prime-crud-toolbar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PrimeCrudToolbarComponent {
-  @Input() table?: Table | null;
-  private _list?: PrimeCrudListComponent<any, any>;
+  // Modern signal-based inputs
+  readonly table = input<Table | null>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  readonly list = input<PrimeCrudListComponent<any, any> | null>();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private readonly _listFromProvider: PrimeCrudListComponent<any, any> | undefined;
+  private readonly logger = inject(LoggerService);
 
   constructor() {
-    const list = inject<PrimeCrudListComponent<any, any>>(PrimeCrudListComponent, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const listProvider = inject<PrimeCrudListComponent<any, any>>(PrimeCrudListComponent, {
       optional: true,
       host: true
     });
 
-    this._list = list || undefined;
+    this._listFromProvider = listProvider || undefined;
   }
 
-  @Input()
-  set list(value: PrimeCrudListComponent<any, any> | null | undefined) {
-    if (value) {
-      this._list = value;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  get listInstance(): PrimeCrudListComponent<any, any> {
+    // Prioritize input() over provider
+    const listInput = this.list();
+    if (listInput) {
+      return listInput;
     }
-  }
 
-  get list(): PrimeCrudListComponent<any, any> {
-    if (!this._list) {
-      throw new Error('PrimeCrudToolbarComponent must be used inside a PrimeCrudListComponent or receive one via [list].');
+    if (this._listFromProvider) {
+      return this._listFromProvider;
     }
-    return this._list;
+
+    throw new Error('PrimeCrudToolbarComponent must be used inside a PrimeCrudListComponent or receive one via [list].');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   get toolbarStartTemplate(): TemplateRef<any> | undefined {
-    return this.list.toolbarStartTemplate;
+    return this.listInstance.toolbarStartTemplate();
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   get toolbarEndTemplate(): TemplateRef<any> | undefined {
-    return this.list.toolbarEndTemplate;
+    return this.listInstance.toolbarEndTemplate();
   }
 
   get entityName(): string {
     try {
-      return (this.list as any).getEntityName?.() ?? 'registro';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const list = this.listInstance as any;
+      return list.getEntityName?.() ?? 'registro';
     } catch {
       return 'registro';
     }
@@ -167,7 +73,9 @@ export class PrimeCrudToolbarComponent {
 
   get entityPluralName(): string {
     try {
-      return (this.list as any).getEntityPluralName?.() ?? 'registros';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const list = this.listInstance as any;
+      return list.getEntityPluralName?.() ?? 'registros';
     } catch {
       return 'registros';
     }
@@ -179,14 +87,14 @@ export class PrimeCrudToolbarComponent {
 
   onExportCSV(): void {
     // Try to get table reference from multiple sources
-    const tableRef = this.table || this.list.dataTable;
+    const tableRef = this.table() || this.listInstance.dataTable();
 
     if (!tableRef) {
-      console.warn('PrimeCrudToolbarComponent: No table reference available for CSV export');
+      this.logger.warn('PrimeCrudToolbarComponent: No table reference available for CSV export');
       return;
     }
 
-    this.list.exportCSV(tableRef);
+    this.listInstance.exportCSV(tableRef);
   }
 }
 

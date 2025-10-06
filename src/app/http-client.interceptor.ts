@@ -11,9 +11,9 @@ export class HttpClientInterceptor implements HttpInterceptor {
   private readonly loginService = inject(LoginService);
 
   intercept(
-    req: HttpRequest<any>,
+    req: HttpRequest<unknown>,
     next: HttpHandler
-  ): Observable<HttpEvent<any>> {
+  ): Observable<HttpEvent<unknown>> {
     const token = localStorage.getItem("token");
 
     if (token && !req.headers.has("Authorization")) {
@@ -25,19 +25,19 @@ export class HttpClientInterceptor implements HttpInterceptor {
         headers: authReq.headers.set("Authorization", "Bearer " + token),
       });
       return next.handle(authReqWithBearer).pipe(
-        tap(
-          () => {},
-          (err) => {
-            if (err.status === 403) {
+        tap({
+          error: (err: unknown) => {
+            const error = err as { status?: number };
+            if (error.status === 403) {
               this.messageService.add({
                 severity: "info",
                 detail: "Você não tem permissão para acessar este recurso",
               });
-            } else if (err.status === 401) {
+            } else if (error.status === 401) {
               this.loginService.logout();
             }
           }
-        )
+        })
       );
     }
     return next.handle(req);

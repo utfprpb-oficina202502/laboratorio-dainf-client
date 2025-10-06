@@ -7,8 +7,8 @@ export class CpfCnpjUtil {
       return false;
     }
     valor = valor.toString();
-    valor = valor.replace(/[^0-9]/g, '');
-    const digitos = valor.substr(0, 9);
+    valor = valor.replaceAll(/\D/g, '');
+    const digitos = valor.substring(0, 9);
     let novo_cpf = CpfCnpjUtil.calculaDigitosPorPosicao(digitos);
     novo_cpf = CpfCnpjUtil.calculaDigitosPorPosicao(novo_cpf, 11);
     return novo_cpf === valor;
@@ -19,10 +19,10 @@ export class CpfCnpjUtil {
       return false;
     }
     valor = valor.toString();
-    valor = valor.replace(/[^0-9]/g, '');
+    valor = valor.replaceAll(/\D/g, '');
 
     const cnpj_original = valor;
-    const primeiros_numeros_cnpj = valor.substr(0, 12);
+    const primeiros_numeros_cnpj = valor.substring(0, 12);
     const primeiro_calculo = CpfCnpjUtil.calculaDigitosPorPosicao(primeiros_numeros_cnpj, 5);
     const segundo_calculo = CpfCnpjUtil.calculaDigitosPorPosicao(primeiro_calculo, 6);
     return segundo_calculo === cnpj_original;
@@ -35,7 +35,7 @@ export class CpfCnpjUtil {
 
     const valida = CpfCnpjUtil.verificaSeEhCpfOuCnpj(valor);
     valor = valor.toString();
-    valor = valor.replace(/[^0-9]/g, '');
+    valor = valor.replaceAll(/\D/g, '');
 
     if (valida === 'CPF') {
       return CpfCnpjUtil.cpfIsValid(valor);
@@ -48,7 +48,7 @@ export class CpfCnpjUtil {
 
   private static verificaSeEhCpfOuCnpj(valor: string | number): string {
     valor = valor.toString();
-    valor = valor.replace(/[^0-9]/g, '');
+    valor = valor.replaceAll(/\D/g, '');
     if (valor.length === 11) {
       return 'CPF';
     } else if (valor.length === 14) {
@@ -59,9 +59,9 @@ export class CpfCnpjUtil {
   }
 
   private static calculaDigitosPorPosicao(digitos: string | number, posicoes = 10, soma_digitos = 0): string {
-    digitos = digitos.toString();
-    for (let i = 0; i < digitos.length; i++) {
-      soma_digitos = soma_digitos + (Number(digitos[i]) * posicoes);
+    const digitosStr = digitos.toString();
+    for (const char of digitosStr) {
+      soma_digitos = soma_digitos + (Number(char) * posicoes);
       posicoes--;
       if (posicoes < 2) {
         posicoes = 9;
@@ -76,7 +76,7 @@ export class CpfCnpjUtil {
       soma_digitos = 11 - soma_digitos;
     }
 
-    return digitos + soma_digitos;
+    return digitos.toString() + soma_digitos.toString();
   }
 
 }

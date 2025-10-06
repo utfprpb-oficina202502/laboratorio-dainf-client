@@ -1,46 +1,20 @@
 import {ChangeDetectionStrategy, Component, forwardRef, inject} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Saida} from './saida';
 import {SaidaService} from './saida.service';
 import {SaidaItem} from './saidaItem';
 import Swal from 'sweetalert2';
-
-// PrimeNG Components
-import {CardModule} from 'primeng/card';
-import {TableModule} from 'primeng/table';
-import {MultiSelectModule} from 'primeng/multiselect';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ButtonModule} from 'primeng/button';
-import {InputTextModule} from 'primeng/inputtext';
-import {IconFieldModule} from 'primeng/iconfield';
-import {InputIconModule} from 'primeng/inputicon';
-import {TooltipModule} from 'primeng/tooltip';
+import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
-import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 
 @Component({
     selector: 'app-list-saida',
     templateUrl: './saida.list.component.html',
     styleUrls: ['./saida.list.component.css'],
   imports: [
-    CommonModule,
-    FormsModule,
-    CardModule,
-    TableModule,
-    MultiSelectModule,
-    ToolbarModule,
-    ButtonModule,
-    InputTextModule,
-    IconFieldModule,
-    InputIconModule,
-    TooltipModule,
+    PrimeTableSharedModule,
     ConfirmDialogModule,
-    PrimeCrudToolbarComponent,
-    ActionButtonsComponent
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => SaidaListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush

@@ -12,6 +12,7 @@ import {CommonModule, DatePipe} from '@angular/common';
 import {RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 import {finalize, forkJoin} from 'rxjs';
+import {Z_INDEX} from '../framework/constants';
 
 import {DashboardEmprestimoCountRange} from "./dashboard/dashboardEmprestimoCountRange";
 import {HomeService} from "./home.service";
@@ -53,6 +54,9 @@ import {SkeletonChartComponent} from '../framework/component/skeleton-chart.comp
   ]
 })
 export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
+
   // Constants
   private static readonly DEFAULT_DATE_RANGE_DAYS = 90;
   private static readonly STORAGE_KEY_DATE_INI = "dash_dt_ini";
@@ -195,24 +199,29 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     return dtFim;
   }
 
-  private processByDay(data: any[], dateField: string) {
+  private processByDay(data: unknown[], dateField: string): (Record<string, unknown> & {
+    _dtParsed: Date
+  })[] {
     if (!Array.isArray(data)) {
       return [];
     }
     return data
     .map(d => {
-      const raw = d[dateField];
+      const record = d as Record<string, unknown>;
+      const raw = record[dateField];
       if (raw && typeof raw === 'string') {
         const parts = raw.split('/');
         if (parts.length === 3) {
           const [dd, mm, yyyy] = parts;
           const parsed = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
-          return {...d, _dtParsed: parsed};
+          return {...record, _dtParsed: parsed};
         }
       }
-      return {...d, _dtParsed: new Date(d[dateField])};
+      return {...record, _dtParsed: new Date(record[dateField] as string | number | Date)};
     })
-    .filter(d => !Number.isNaN(d._dtParsed?.getTime?.()))
+    .filter((d): d is Record<string, unknown> & { _dtParsed: Date } => {
+      return d._dtParsed instanceof Date && !Number.isNaN(d._dtParsed.getTime());
+    })
     .sort((a, b) => a._dtParsed.getTime() - b._dtParsed.getTime());
   }
 

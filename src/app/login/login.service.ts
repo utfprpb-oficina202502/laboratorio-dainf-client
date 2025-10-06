@@ -152,12 +152,12 @@ export class LoginService {
     );
   }
 
-  hasAnyRole(componentRoles: any) {
+  hasAnyRole(componentRoles: string[]): boolean {
     const loggedUser = this.currentUserSubject.value || this.loadUserFromStorage();
-    if (loggedUser != null) {
+    if (loggedUser !== null && loggedUser !== undefined) {
       const userRoles = loggedUser.authorities || loggedUser.permissoes || [];
       if (Array.isArray(userRoles)) {
-        return userRoles.some((p: any) => componentRoles.includes(p.nome));
+        return userRoles.some((p: Permissao) => componentRoles.includes(p.nome));
       }
     }
     this.logout();
@@ -167,7 +167,7 @@ export class LoginService {
   async userLoggedIsAlunoOrProfessor(): Promise<boolean> {
     const user = await firstValueFrom(this.getCurrentUser());
     const userRoles = user?.authorities || user?.permissoes || [];
-    const roles = Array.isArray(userRoles) ? userRoles.map((p: any) => p.nome) : [];
+    const roles = Array.isArray(userRoles) ? userRoles.map((p: Permissao) => p.nome) : [];
     return !roles.some((role) => role === 'ROLE_ADMINISTRADOR' || role === 'ROLE_LABORATORISTA');
   }
 
@@ -178,7 +178,6 @@ export class LoginService {
     this.currentUserSubject.next(null);
     this.currentUserRequest$ = null;
     this.authValidation$ = null;
-    // this._hasValidatedSession = false;
     this.isAuthenticated.next(false);
     this.router.navigate(["/login"]);
   }

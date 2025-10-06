@@ -132,11 +132,12 @@
 
             <!-- Add Button -->
             <div class="col-span-12 md:col-span-1">
-              <label class="block mb-2 font-medium invisible">Action</label>
+              <div class="block mb-2 font-medium invisible" aria-hidden="true">Action</div>
               <p-button
                 icon="pi pi-check"
                 (onClick)="insertItem()"
                 severity="success"
+                [attr.aria-label]="'Adicionar item à solicitação'"
                 styleClass="w-full"
                 pTooltip="Adicionar Item">
               </p-button>
@@ -150,7 +151,7 @@
                 <ng-template pTemplate="header">
                   <tr>
                     <th scope="col">Item</th>
-                    <th scope="col" class="text-center" style="width: 150px">Qtde</th>
+                    <th scope="col" class="text-center" class="w-150px">Qtde</th>
                     <th scope="col" class="text-center" style="width: 100px">Opções</th>
                   </tr>
                 </ng-template>

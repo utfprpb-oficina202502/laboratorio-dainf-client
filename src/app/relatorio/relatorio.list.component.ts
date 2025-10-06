@@ -3,15 +3,7 @@ import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.com
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Relatorio} from './relatorio';
 import {RelatorioService} from './relatorio.service';
-import {NgTemplateOutlet} from "@angular/common";
-import {Button} from "primeng/button";
-import {TableModule} from "primeng/table";
-import {Card} from "primeng/card";
-import {PrimeCrudToolbarComponent} from "../framework/component/prime-crud-toolbar.component";
-import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
-import {InputIconModule} from "primeng/inputicon";
-import {IconFieldModule} from "primeng/iconfield";
-import {InputTextModule} from "primeng/inputtext";
+import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 
 @Component({
   selector: 'app-list-relatorio',
@@ -22,15 +14,7 @@ import {InputTextModule} from "primeng/inputtext";
     useExisting: forwardRef(() => RelatorioListComponent)
   }],
   imports: [
-    NgTemplateOutlet,
-    Button,
-    TableModule,
-    Card,
-    PrimeCrudToolbarComponent,
-    ActionButtonsComponent,
-    InputIconModule,
-    IconFieldModule,
-    InputTextModule
+    PrimeTableSharedModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

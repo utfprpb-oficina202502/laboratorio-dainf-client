@@ -11,7 +11,7 @@ import {EmailUtil} from '../../util/email.util';
 })
 export class EmailValidatorDirective implements Validator {
 
-  validator: Function;
+  validator: (c: FormControl) => { validateEmail: { valid: boolean } } | null;
 
   constructor() {
     this.validator = validateEmail();

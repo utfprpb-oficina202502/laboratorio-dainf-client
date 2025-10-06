@@ -3,8 +3,12 @@
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
-          <button (click)="voltar()" class="p-button-text" icon="pi pi-arrow-left" label="Voltar"
-                  pButton type="button"></button>
+          <p-button
+            (onClick)="voltar()"
+            [text]="true"
+            icon="pi pi-arrow-left"
+            label="Voltar">
+          </p-button>
           <h2 class="text-xl font-semibold m-0">Consulta Nada Consta</h2>
         </div>
       </div>
@@ -24,9 +28,13 @@
             type="number"/>
         </div>
         <div>
-          <button [disabled]="carregando || form.invalid" class="p-button-primary"
-                  icon="pi pi-search" label="Consultar"
-                  pButton type="submit"></button>
+          <p-button
+            [disabled]="carregando || form.invalid"
+            icon="pi pi-search"
+            label="Consultar"
+            severity="primary"
+            type="submit">
+          </p-button>
         </div>
       </form>
 

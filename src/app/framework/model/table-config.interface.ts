@@ -35,13 +35,13 @@ export interface TableColumn {
   exportable?: boolean;
 
   /** Custom template reference for cell content */
-  template?: TemplateRef<any>;
+  template?: TemplateRef<unknown>;
 
   /** Filter type for column filtering */
   filterType?: 'text' | 'number' | 'date' | 'dropdown' | 'boolean';
 
   /** Options for dropdown filters */
-  filterOptions?: { label: string; value: any }[];
+  filterOptions?: { label: string; value: unknown }[];
 
   /** Format string for dates, numbers, etc. */
   format?: string;
@@ -50,7 +50,7 @@ export interface TableColumn {
   pipe?: string;
 
   /** Arguments for the pipe */
-  pipeArgs?: any[];
+  pipeArgs?: unknown[];
 
   /** CSS classes to apply to column cells */
   styleClass?: string;
@@ -202,7 +202,7 @@ export interface ColumnState {
  */
 export interface FilterParams {
   globalFilter?: string;
-  columnFilters?: { [key: string]: any };
+  columnFilters?: Record<string, unknown>;
   sortField?: string;
   sortOrder?: number;
 }
@@ -220,7 +220,7 @@ export interface BulkAction {
     header?: string;
   };
   permission?: string;
-  handler: (selectedItems: any[]) => void;
+  handler: (selectedItems: unknown[]) => void;
 }
 
 /**

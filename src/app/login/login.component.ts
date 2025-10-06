@@ -1,14 +1,7 @@
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  inject,
-  OnInit,
-  ViewChild
-} from "@angular/core";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit} from "@angular/core";
 import {LoginService} from "./login.service";
 import {Usuario} from "../usuario/usuario";
-import {FormsModule, NgForm} from "@angular/forms";
+import {FormsModule} from "@angular/forms";
 import {Router} from "@angular/router";
 import {MessageService} from "primeng/api";
 import {catchError, finalize, switchMap} from "rxjs/operators";
@@ -35,7 +28,6 @@ export class LoginComponent implements OnInit {
 
   usuario!: Usuario;
   showProgress = false;
-  @ViewChild("form", {static: true}) form!: NgForm;
 
   ngOnInit() {
     this.usuario = new Usuario();

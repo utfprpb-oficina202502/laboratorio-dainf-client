@@ -1,16 +1,13 @@
 import {FormControl, NgForm} from '@angular/forms';
-import {Directive, ViewChild} from '@angular/core';
+import {Directive, viewChild} from '@angular/core';
 
 @Directive()
 export abstract class BaseFormComponent {
 
-  @ViewChild(NgForm)
-  public form!: NgForm;
+  readonly form = viewChild.required<NgForm>(NgForm);
 
   validarFormulario(form?: NgForm): void {
-    if (!form) {
-      form = this.form;
-    }
+    form ??= this.form();
 
     // Mark all controls as dirty and update validity
     for (const eachControl in form.controls) {
@@ -25,7 +22,7 @@ export abstract class BaseFormComponent {
       const firstInvalidElement = tabsElement.querySelector('.ng-invalid');
       if (!firstInvalidElement) return;
 
-      let tabPanel = firstInvalidElement.closest('p-tab');
+      const tabPanel = firstInvalidElement.closest('p-tab');
       if (!tabPanel) return;
 
       const allTabPanels = Array.from(tabsElement.querySelectorAll('p-tab'));
@@ -41,6 +38,6 @@ export abstract class BaseFormComponent {
   }
 
   isValid(): boolean {
-    return this.form.valid ?? false;
+    return this.form().valid ?? false;
   }
 }

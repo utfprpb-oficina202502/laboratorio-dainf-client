@@ -22,7 +22,8 @@
 
     <ng-template pTemplate="content">
       <div style="height: calc(100vh - 200px);">
-        <iframe [src]="reportHTML" width="100%" height="100%" class="border-0" style="border-radius: 5px"></iframe>
+        <iframe [src]="reportHTML" class="border-0" class="rounded" height="100%" title="report"
+                width="100%"></iframe>
       </div>
     </ng-template>
   </p-card>
@@ -31,9 +32,9 @@
 @if (relatorioCurrent.paramsList.length > 0) {
   <p-dialog header="Filtro"
     [(visible)]="dialogFiltroRelatorio"
-    [style]="{minWidth: '400px'}"
+            class="dialog-sm"
     [modal]="true"
-    [baseZIndex]="10000"
+            [baseZIndex]="Z_INDEX.DIALOG"
     [focusOnShow]="false">
     <form #formFiltro="ngForm">
       @for (param of relatorioCurrent.paramsList; track param) {
@@ -49,7 +50,7 @@
                   dataType="string"
                   (onSelect)="onChangeValueParam($event, 'D', param.nameParam)"
                   dateFormat="dd/mm/yy"
-                  [style]="{width: '100%'}"
+                  class="w-full"
                   inputStyleClass="w-full">
                 </p-datePicker>
               }

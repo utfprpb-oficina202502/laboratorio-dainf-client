@@ -3,12 +3,14 @@ import * as am5 from '@amcharts/amcharts5';
 import * as am5xy from '@amcharts/amcharts5/xy';
 import * as am5percent from '@amcharts/amcharts5/percent';
 import am5themes_Animated from '@amcharts/amcharts5/themes/Animated';
+import am5locales_pt_BR from '@amcharts/amcharts5/locales/pt_BR';
 import {ThemeService} from '../services/theme.service';
 import {chartColorSchemes, ChartColorsConfig} from './chart-colors.config';
+import {LoggerService} from '../services/logger.service';
 
 export interface ChartConfig {
   containerId: string;
-  data: any[];
+  data: unknown[];
   noDataMessage?: string;
 }
 
@@ -99,6 +101,7 @@ export class ChartService {
   private static readonly PIE_SLICE_STROKE_OPACITY = 0.5;
 
   private readonly themeService = inject(ThemeService);
+  private readonly logger = inject(LoggerService);
   private readonly charts = new Map<string, am5.Root>();
   private chartColors: ChartColorsConfig = chartColorSchemes.light;
 
@@ -243,7 +246,11 @@ export class ChartService {
     );
 
     const sortedData = [...config.data]
-    .sort((a, b) => (b?.[config.valueField] || 0) - (a?.[config.valueField] || 0))
+    .sort((a, b) => {
+      const aValue = (a as Record<string, unknown>)?.[config.valueField];
+      const bValue = (b as Record<string, unknown>)?.[config.valueField];
+      return (typeof bValue === 'number' ? bValue : 0) - (typeof aValue === 'number' ? aValue : 0);
+    })
     .slice(0, ChartService.MAX_BAR_ITEMS);
 
     const xAxis = chart.xAxes.push(
@@ -302,7 +309,7 @@ export class ChartService {
     );
 
     const dataWithColors = sortedData.map((item, index) => ({
-      ...item,
+      ...(item as Record<string, unknown>),
       columnSettings: {
         fill: am5.color(this.chartColors.bar.palette[index % this.chartColors.bar.palette.length])
       }
@@ -378,7 +385,7 @@ export class ChartService {
     const limitedData = this.limitPieChartData(config.data, config.valueField, ChartService.MAX_PIE_ITEMS);
 
     const dataWithColors = limitedData.map((item, index) => ({
-      ...item,
+      ...(item as Record<string, unknown>),
       sliceSettings: {
         fill: am5.color(this.chartColors.pie.palette[index % this.chartColors.pie.palette.length])
       }
@@ -460,7 +467,7 @@ export class ChartService {
     return chart;
   }
 
-  updateChartData(containerId: string, data: any[]): void {
+  updateChartData(containerId: string, data: unknown[]): void {
     const root = this.charts.get(containerId);
     if (!root) return;
 
@@ -497,8 +504,8 @@ export class ChartService {
 
   private addChartCursor(
     chart: am5xy.XYChart,
-    xAxis: am5xy.Axis<any>,
-    yAxis: am5xy.Axis<any>,
+    xAxis: am5xy.Axis<am5xy.AxisRenderer>,
+    yAxis: am5xy.Axis<am5xy.AxisRenderer>,
     behavior: 'none' | 'zoomX' | 'zoomY' | 'zoomXY' | 'selectX' | 'selectY' | 'selectXY'
   ): void {
     const cursor = chart.set('cursor', am5xy.XYCursor.new(chart.root, {
@@ -538,7 +545,7 @@ export class ChartService {
     breakpoints: DeviceBreakpoints,
     config: {
       type: 'line' | 'bar';
-      data: any[];
+      data: unknown[];
       valueField: string;
       dateField?: string;
       categoryField?: string;
@@ -587,9 +594,13 @@ export class ChartService {
 
         sbseries.data.setAll(config.data);
       } else {
+        // For bar charts, categoryField is required
+        if (!config.categoryField) {
+          return;
+        }
         const sbxAxis = scrollbarX.chart.xAxes.push(
           am5xy.CategoryAxis.new(root, {
-            categoryField: config.categoryField!,
+            categoryField: config.categoryField,
             renderer: xRenderer
           })
         );
@@ -640,6 +651,9 @@ export class ChartService {
 
       root.setThemes([am5themes_Animated.new(root)]);
 
+      // Set pt-BR locale for date and number formatting
+      root.locale = am5locales_pt_BR;
+
       root.numberFormatter.set('numberFormat', '#,###');
       root.utc = true;
       root.autoResize = true;
@@ -684,26 +698,27 @@ export class ChartService {
 
       return root;
     } catch (error) {
-      console.error(`Falha ao criar root do gráfico para ${containerId}:`, error);
+      this.logger.error(`Falha ao criar root do gráfico para ${containerId}`, error);
       return null;
     }
   }
 
-  private processDateData(data: any[], dateField: string): any[] {
+  private processDateData(data: unknown[], dateField: string): unknown[] {
     return data.map(item => {
-      const dateValue = item[dateField];
+      const itemRecord = item as Record<string, unknown>;
+      const dateValue = itemRecord[dateField];
       if (typeof dateValue === 'string' && dateValue.includes('/')) {
         const [dd, mm, yyyy] = dateValue.split('/');
         return {
-          ...item,
+          ...itemRecord,
           [dateField]: new Date(Number(yyyy), Number(mm) - 1, Number(dd)).getTime()
         };
       }
       return {
-        ...item,
-        [dateField]: new Date(dateValue).getTime()
+        ...itemRecord,
+        [dateField]: new Date(dateValue as string | number | Date).getTime()
       };
-    }).filter(item => !Number.isNaN(item[dateField]));
+    }).filter(item => !Number.isNaN((item as Record<string, unknown>)[dateField] as number));
   }
 
   private addNoDataLabel(root: am5.Root, chart: am5.Chart, message: string): void {
@@ -783,13 +798,17 @@ export class ChartService {
     });
   }
 
-  private limitPieChartData(data: any[], valueField: string, maxEntries: number = 10): any[] {
+  private limitPieChartData(data: unknown[], valueField: string, maxEntries = 10): unknown[] {
     if (!Array.isArray(data) || data.length <= maxEntries) {
       return data;
     }
 
     return [...data]
-    .sort((a, b) => (b?.[valueField] || 0) - (a?.[valueField] || 0))
+    .sort((a, b) => {
+      const aValue = (a as Record<string, unknown>)?.[valueField];
+      const bValue = (b as Record<string, unknown>)?.[valueField];
+      return (typeof bValue === 'number' ? bValue : 0) - (typeof aValue === 'number' ? aValue : 0);
+    })
     .slice(0, maxEntries);
   }
 }

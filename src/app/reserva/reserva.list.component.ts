@@ -4,54 +4,25 @@ import {
   forwardRef,
   inject,
   OnInit,
-  ViewChild
+  viewChild
 } from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Reserva} from './reserva';
 import {ReservaService} from './reserva.service';
 import {MenuItem} from 'primeng/api';
 import {Popover, PopoverModule} from 'primeng/popover';
-
-// PrimeNG Components
-import {CardModule} from 'primeng/card';
-import {TableModule} from 'primeng/table';
-import {MultiSelectModule} from 'primeng/multiselect';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ButtonModule} from 'primeng/button';
-import {InputTextModule} from 'primeng/inputtext';
-import {IconFieldModule} from 'primeng/iconfield';
-import {InputIconModule} from 'primeng/inputicon';
-import {TooltipModule} from 'primeng/tooltip';
-import {TagModule} from 'primeng/tag';
-
 import {MenuModule} from 'primeng/menu';
-import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
+import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 
 @Component({
     selector: 'app-list-reserva',
     templateUrl: './reserva.list.component.html',
     styleUrls: ['./reserva.list.component.css'],
   imports: [
-    CommonModule,
-    FormsModule,
-    CardModule,
-    TableModule,
-    MultiSelectModule,
-    ToolbarModule,
-    ButtonModule,
-    InputTextModule,
-    IconFieldModule,
-    InputIconModule,
-    TooltipModule,
-    TagModule,
+    PrimeTableSharedModule,
     PopoverModule,
     MenuModule,
-    PrimeCrudToolbarComponent,
-    ActionButtonsComponent,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => ReservaListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -61,7 +32,7 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
   protected override columnsTable = ['id', 'descricao', 'dataReserva', 'dataRetirada', 'usuario', 'actions'];
   protected override urlForm = 'reserva/form';
 
-  @ViewChild('actionsMenu') actionsMenu!: Popover;
+  readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
   contextMenuItems: MenuItem[] = [];
   selectedReserva!: Reserva;
 
@@ -146,7 +117,11 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
 
     this.loginService.userLoggedIsAlunoOrProfessor().then(value => {
       this.isAlunoOrProfessor = value;
-      this.isAlunoOrProfessor ? this.findAllByUsername() : this.findAll();
+      if (this.isAlunoOrProfessor) {
+        this.findAllByUsername();
+      } else {
+        this.findAll();
+      }
     });
   }
 
@@ -177,7 +152,7 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
       }
     );
 
-    this.actionsMenu.toggle(event);
+    this.actionsMenu().toggle(event);
     this.cdr?.markForCheck();
   }
 

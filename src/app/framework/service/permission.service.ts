@@ -125,7 +125,7 @@ export class PermissionService {
    * Get user role display name in Portuguese
    */
   getUserRoleDisplayName(userRole: string): string {
-    const roleNames: { [key: string]: string } = {
+    const roleNames: Record<string, string> = {
       'ADMINISTRADOR': 'Administrador',
       'LABORATORISTA': 'Laboratorista',
       'PROFESSOR': 'Professor',

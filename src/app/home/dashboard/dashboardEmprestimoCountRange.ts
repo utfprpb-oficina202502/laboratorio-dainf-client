@@ -1,6 +1,6 @@
 export class DashboardEmprestimoCountRange {
-  total: number = 0;
-  emAndamento: number = 0;
-  emAtraso: number = 0;
-  finalizado: number = 0;
+  total = 0;
+  emAndamento = 0;
+  emAtraso = 0;
+  finalizado = 0;
 }

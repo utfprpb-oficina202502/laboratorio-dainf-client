@@ -169,17 +169,17 @@
             </div>
 
             <!-- Add Button -->
-            <div class="col-span-12 md:col-span-1">
-              <app-form-field label="Inserir" fieldId="btnInserir">
-                <p-button
-                  type="button"
-                  severity="success"
-                  (onClick)="insertItem()"
-                  styleClass="w-full"
-                  [attr.aria-label]="'Adicionar item'">
-                  <span pButtonIcon class="pi pi-plus"></span>
-                </p-button>
-              </app-form-field>
+            <div class="col-span-12 md:col-span-1 flex flex-col gap-1">
+              <div class="text-sm font-medium text-gray-700 invisible" aria-hidden="true">Inserir
+              </div>
+              <p-button
+                type="button"
+                severity="success"
+                (onClick)="insertItem()"
+                styleClass="w-full"
+                [attr.aria-label]="'Adicionar item'">
+                <span pButtonIcon class="pi pi-plus"></span>
+              </p-button>
             </div>
           </div>
 
@@ -194,9 +194,9 @@
                 <ng-template pTemplate="header">
                   <tr>
                     <th scope="col">Item</th>
-                    <th scope="col" style="width: 120px">Qtde</th>
-                    <th scope="col" style="width: 150px">Valor</th>
-                    <th scope="col" style="width: 100px">Opções</th>
+                    <th scope="col" class="w-120px">Qtde</th>
+                    <th scope="col" class="w-150px">Valor</th>
+                    <th scope="col" class="w-100px">Opções</th>
                   </tr>
                 </ng-template>
 

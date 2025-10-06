@@ -123,12 +123,13 @@
 
                 <div class="col-span-12 md:col-span-1">
                   <div class="form-group">
-                    <label class="invisible">Action</label>
+                    <div aria-hidden="true" class="invisible">Action</div>
                     <p-button
                       type="submit"
                       icon="pi pi-check"
                       severity="secondary"
                       [outlined]="true"
+                      [attr.aria-label]="'Adicionar parâmetro'"
                       styleClass="w-full">
                     </p-button>
                   </div>

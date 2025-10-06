@@ -17,8 +17,8 @@ export interface MenuItem {
   title: string;
   icon: string;
   id: string;
-  roles?: any;
-  group?: any;
+  roles?: string[];
+  group?: string;
 }
 
 export const MENU_ITEM: MenuItem[] = [
@@ -158,12 +158,12 @@ export class SidenavComponent implements OnInit {
 
   buildMenu() {
     this.loginService.getPermissoesUser().subscribe((permissoes) => {
-      const userRoles = new Set(permissoes.map((x: any) => x.nome.replaceAll("ROLE_", "")));
+      const userRoles = new Set(permissoes.map((x) => x.nome.replaceAll("ROLE_", "")));
       this.showCadastros = userRoles.has("ADMINISTRADOR") || userRoles.has("LABORATORISTA");
-      const items: any[] = [];
+      const items: MenuItem[] = [];
 
-      MENU_ITEM.forEach((menu: any) => {
-        if (menu.roles == null || menu.roles.some((value: any) => userRoles.has(value))) {
+      MENU_ITEM.forEach((menu) => {
+        if (!menu.roles || menu.roles.some((value) => userRoles.has(value))) {
           items.push(menu);
         }
       });

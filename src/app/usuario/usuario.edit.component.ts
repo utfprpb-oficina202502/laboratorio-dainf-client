@@ -9,6 +9,7 @@ import {
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
+import {Z_INDEX} from '../framework/constants';
 import {Usuario} from './usuario';
 import {UsuarioService} from './usuario.service';
 import {
@@ -32,6 +33,7 @@ import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
 import {FormFieldComponent} from '../framework/component/form-field.component';
+import {LoggerService} from '../framework/services/logger.service';
 
 @Component({
   selector: 'app-edit-usuario',
@@ -57,6 +59,9 @@ import {FormFieldComponent} from '../framework/component/form-field.component';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario, number> implements OnDestroy {
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
+
   protected override service = inject(UsuarioService);
   protected override urlList = '/usuario';
   protected override type = Usuario;
@@ -73,6 +78,7 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
     return isAluno ? 'RA' : 'SIAPE';
   });
   private readonly fb = inject(FormBuilder);
+  protected readonly logger = inject(LoggerService);
   private permissoesSubscription?: Subscription;
   private changeSenhaSubscription?: Subscription;
 
@@ -118,7 +124,7 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
           this.loaderService.hide();
           this.isLoading.set(false);
           Swal.fire('Atenção!', 'Ocorreu um erro ao salvar o registro!', 'error');
-          console.error(error);
+          this.logger.error('Erro ao trocar senha', error);
         }
       });
     } else {
@@ -348,7 +354,7 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
       },
       error: (error) => {
         this.loadingPermissoes.set(false);
-        console.error('Error loading permissoes', error);
+        this.logger.error('Error loading permissoes', error);
       }
     });
   }
@@ -357,7 +363,7 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
    * Format role name for display
    */
   private formatRole(nome: string): string {
-    let formatted = nome.replaceAll('ROLE_', '');
+    const formatted = nome.replaceAll('ROLE_', '');
     return formatted.charAt(0).toUpperCase() + formatted.slice(1).toLowerCase();
   }
 

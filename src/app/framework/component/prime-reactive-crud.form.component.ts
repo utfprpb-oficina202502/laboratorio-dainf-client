@@ -1,14 +1,17 @@
 import {ActivatedRoute, Router} from '@angular/router';
 import {CrudService} from '../service/crud.service';
-import {computed, Directive, inject, Injector, OnInit, signal} from '@angular/core';
+import {computed, Directive, inject, Injector, OnDestroy, OnInit, signal} from '@angular/core';
 import {FormGroup} from '@angular/forms';
 import {MessageService} from 'primeng/api';
 import Swal from 'sweetalert2';
 import {LoaderService} from '../loader/loader.service';
 import {LoginService} from '../../login/login.service';
+import {Subject} from 'rxjs';
+import {takeUntil} from 'rxjs/operators';
+import {LoggerService} from '../services/logger.service';
 
 @Directive()
-export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
+export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, OnDestroy {
   // Abstract properties to be defined in child classes
   protected abstract service: CrudService<T, ID>;
   protected abstract urlList: string;
@@ -20,6 +23,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
   protected readonly route: ActivatedRoute;
   protected readonly loaderService: LoaderService;
   protected readonly loginService: LoginService;
+  protected readonly logger: LoggerService;
   protected readonly injector: Injector;
 
   // Signals for state management
@@ -35,6 +39,9 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
   protected readonly form = signal<FormGroup | null>(null);
   protected validExtra = true;
 
+  // Memory leak prevention
+  protected readonly destroy$ = new Subject<void>();
+
   protected constructor() {
     this.injector = inject(Injector);
     this.router = inject(Router);
@@ -42,6 +49,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
     this.messageService = inject(MessageService);
     this.loaderService = inject(LoaderService);
     this.loginService = inject(LoginService);
+    this.logger = inject(LoggerService);
   }
 
   protected abstract buildForm(): FormGroup;
@@ -55,7 +63,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
     this.form.set(this.buildForm());
     this.preOnInit();
 
-    this.route.params.subscribe((params) => {
+    this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       if (params.id) {
         if (Number.isNaN(params.id)) {
           this.initializeValues();
@@ -66,6 +74,11 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
         this.initializeValues();
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   save(): void {
@@ -83,7 +96,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
       const formValue = this.prepareFormValue(formGroup.value);
       const objectToSave = this.mergeWithObject(formValue);
 
-      this.service.save(objectToSave).subscribe({
+      this.service.save(objectToSave).pipe(takeUntil(this.destroy$)).subscribe({
         next: (savedObject) => {
           this.object.set(savedObject);
           this.postSave(() => {
@@ -97,7 +110,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
           this.loaderService.hide();
           this.isLoading.set(false);
           Swal.fire('Atenção!', 'Ocorreu um erro ao salvar o registro!', 'error');
-          console.error(error);
+          this.logger.error('Error saving record', error);
         },
       });
     } else {
@@ -116,7 +129,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
     this.loaderService.show();
     this.isLoading.set(true);
 
-    this.service.findOne(id).subscribe({
+    this.service.findOne(id).pipe(takeUntil(this.destroy$)).subscribe({
       next: (object) => {
         this.object.set(object);
         this.isEditing.set(true);
@@ -129,7 +142,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
         this.loaderService.hide();
         this.isLoading.set(false);
         Swal.fire('Atenção!', 'Ocorreu um erro ao buscar o registro!', 'error');
-        console.error(error);
+        this.logger.error('Error fetching record', error);
       },
     });
   }
@@ -190,15 +203,15 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
   protected patchFormWithObject(object: T): void {
     const formGroup = this.form();
     if (formGroup) {
-      formGroup.patchValue(object as any);
+      formGroup.patchValue(object as Partial<T>);
     }
   }
 
-  protected prepareFormValue(formValue: any): any {
+  protected prepareFormValue(formValue: Partial<T>): Partial<T> {
     return formValue;
   }
 
-  protected mergeWithObject(formValue: any): T {
+  protected mergeWithObject(formValue: Partial<T>): T {
     const currentObject = this.object();
     return { ...currentObject, ...formValue } as T;
   }
@@ -222,7 +235,8 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
   protected postEdit(): void {
     // lógica após edit
   }
-  protected postSave(callback: Function): void {
+
+  protected postSave(callback: () => void): void {
     callback();
   }
 
@@ -230,8 +244,8 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
    * Set current user as responsible user in the form
    * Common pattern used across multiple forms
    */
-  protected setCurrentUserAsResponsible(fieldName: string = 'usuario'): void {
-    this.loginService.getCurrentUser().subscribe((user) => {
+  protected setCurrentUserAsResponsible(fieldName = 'usuario'): void {
+    this.loginService.getCurrentUser().pipe(takeUntil(this.destroy$)).subscribe((user) => {
       const formGroup = this.form();
       if (formGroup) {
         formGroup.patchValue({ [fieldName]: user });
@@ -279,13 +293,14 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit {
    */
   protected removeItemById<K>(
     items: K[],
-    itemId: any,
-    idField: string = 'id'
+    itemId: unknown,
+    idField = 'id'
   ): K[] {
-    return items.filter((item: any) => {
+    return items.filter((item: K) => {
+      const itemRecord = item as Record<string, unknown>;
       const nestedId = idField.includes('.')
-        ? idField.split('.').reduce((obj, key) => obj?.[key], item)
-        : item[idField];
+        ? idField.split('.').reduce((obj: Record<string, unknown>, key: string) => (obj?.[key] as Record<string, unknown>) || {}, itemRecord)
+        : itemRecord[idField];
       return nestedId !== itemId;
     });
   }

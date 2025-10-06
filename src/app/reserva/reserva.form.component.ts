@@ -1,6 +1,7 @@
 import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import {Z_INDEX} from '../framework/constants';
 
 import {Reserva} from './reserva';
 import {ReservaService} from './reserva.service';
@@ -17,7 +18,7 @@ import Swal from 'sweetalert2';
 // PrimeNG
 import {CardModule} from 'primeng/card';
 import {InputTextModule} from 'primeng/inputtext';
-import {AutoCompleteModule} from 'primeng/autocomplete';
+import {AutoCompleteCompleteEvent, AutoCompleteModule} from 'primeng/autocomplete';
 import {DatePickerModule} from 'primeng/datepicker';
 import {ButtonModule} from 'primeng/button';
 import {TableModule} from 'primeng/table';
@@ -63,6 +64,9 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva, number> {
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
+
   protected override service = inject(ReservaService);
   protected override urlList = '/reserva';
   protected override type = Reserva;
@@ -130,7 +134,7 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
   /**
    * Autocomplete for Items
    */
-  findProdutos(event: any): void {
+  findProdutos(event: AutoCompleteCompleteEvent): void {
     this.itemService.completeItem(event.query, true).subscribe(e => {
       this.itemList.set(e);
     });

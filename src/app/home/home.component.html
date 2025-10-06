@@ -120,11 +120,11 @@
 }
 
 <p-dialog
-  class="filtro-dialog"
+  [baseZIndex]="Z_INDEX.DIALOG"
   [(visible)]="dialogVisible"
   [draggable]="false"
   [modal]="true"
-  [baseZIndex]="10000"
+  class="filtro-dialog dialog-sm"
   [focusOnShow]="false"
   [resizable]="false"
   [style]="{width: '90vw', maxWidth: '500px'}">

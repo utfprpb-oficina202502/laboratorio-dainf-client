@@ -1,45 +1,17 @@
 import {ChangeDetectionStrategy, Component, forwardRef, inject} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
 import {Usuario} from './usuario';
 import {UsuarioService} from './usuario.service';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Permissao} from './permissao';
-
-// PrimeNG Components
-import {CardModule} from 'primeng/card';
-import {TableModule} from 'primeng/table';
-import {MultiSelectModule} from 'primeng/multiselect';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ButtonModule} from 'primeng/button';
-import {InputTextModule} from 'primeng/inputtext';
-import {IconFieldModule} from 'primeng/iconfield';
-import {InputIconModule} from 'primeng/inputicon';
-import {TooltipModule} from 'primeng/tooltip';
-import {TagModule} from 'primeng/tag';
-import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
+import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 
 @Component({
     selector: 'app-list-usuario',
     templateUrl: './usuario.list.component.html',
     styleUrls: ['./usuario.list.component.css'],
   imports: [
-    CommonModule,
-    FormsModule,
-    CardModule,
-    TableModule,
-    MultiSelectModule,
-    ToolbarModule,
-    ButtonModule,
-    InputTextModule,
-    IconFieldModule,
-    InputIconModule,
-    TooltipModule,
-    TagModule,
-    PrimeCrudToolbarComponent,
-    ActionButtonsComponent,
+    PrimeTableSharedModule,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => UsuarioListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -166,7 +138,7 @@ export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number
       } else {
         toReturn += 'Administrador';
       }
-      if (i != permissao.length - 1) {
+      if (i !== permissao.length - 1) {
         toReturn += ', ';
       }
     }

@@ -1,3 +1,4 @@
+import {Z_INDEX} from '../framework/constants';
 import {Component, inject, OnInit} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
@@ -38,16 +39,18 @@ import {VoltarComponent} from '../geral/voltar/voltar.component';
   ]
 })
 export class RelatorioViewerComponent implements OnInit {
+  reportHTML: unknown;
+
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly loaderService = inject(LoaderService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly relatorioService = inject(RelatorioService);
-
-  reportHTML: any;
+  localePt: unknown;
   relatorioCurrent!: Relatorio;
   dialogFiltroRelatorio = false;
-  localePt: any;
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
   relatorioParamValue!: RelatorioParamsValue[];
 
   ngOnInit(): void {
@@ -82,19 +85,19 @@ export class RelatorioViewerComponent implements OnInit {
 
   generateReport(id: number, params: RelatorioParamsValue[]) {
     this.loaderService.show();
-    const mapToSend: Map<string, any> = new Map<string, any>();
+    const mapToSend = new Map<string, unknown>();
     mapToSend.set("idRel", id);
     mapToSend.set("params", params);
 
-    const convMap: Record<string, any> = {};
-    mapToSend.forEach((val: string, key: string) => {
+    const convMap: Record<string, unknown> = {};
+    mapToSend.forEach((val: unknown, key: string) => {
       convMap[key] = val;
     });
 
     this.relatorioService.generateReport(convMap)
       .subscribe(e => {
-        let file = new Blob([e], {type: 'application/pdf'});
-        let fileURL = URL.createObjectURL(file);
+        const file = new Blob([e], {type: 'application/pdf'});
+        const fileURL = URL.createObjectURL(file);
         this.reportHTML = this.getSafeUrl(fileURL);
         this.loaderService.hide();
       });
@@ -107,14 +110,14 @@ export class RelatorioViewerComponent implements OnInit {
   filtroIsValid() {
     let isValid = true;
     this.relatorioParamValue.forEach(value => {
-      if (StringUtils.isBlank(value.valueParam)) {
+      if (StringUtils.isBlank(value.valueParam as string)) {
         isValid = false;
       }
     });
     return isValid;
   }
 
-  updateParamsValue(tipoFiltro: string, nameFiltro: string, valueFiltro: any) {
+  updateParamsValue(tipoFiltro: string, nameFiltro: string, valueFiltro: unknown) {
     this.relatorioParamValue.forEach(param => {
       if (param.nameParam === nameFiltro) {
         if (tipoFiltro === 'D') {
@@ -132,18 +135,20 @@ export class RelatorioViewerComponent implements OnInit {
     });
   }
 
-  onChangeValueParam($event: any, tipoFiltro: string, nameFiltro: string) {
+  onChangeValueParam($event: unknown, tipoFiltro: string, nameFiltro: string) {
     if (tipoFiltro === 'D') {
-      this.updateParamsValue(tipoFiltro, nameFiltro, new Date($event).toLocaleDateString());
+      this.updateParamsValue(tipoFiltro, nameFiltro, new Date($event as string | number | Date).toLocaleDateString());
     } else {
-      this.updateParamsValue(tipoFiltro, nameFiltro, $event.target.value);
+      this.updateParamsValue(tipoFiltro, nameFiltro, ($event as {
+        target: { value: unknown }
+      }).target.value);
     }
   }
 
   initValueDefaultFiltro() {
-    this.relatorioParamValue = new Array();
+    this.relatorioParamValue = [];
     this.relatorioCurrent.paramsList.forEach(param => {
-      let valueParamFiltro = new RelatorioParamsValue();
+      const valueParamFiltro = new RelatorioParamsValue();
       valueParamFiltro.nameParam = param.nameParam;
       this.relatorioParamValue.push(valueParamFiltro);
     });

@@ -1,10 +1,10 @@
 <div (click)="onClick()" (keydown)="onKeyDown($event)"
-     [attr.aria-pressed]="clickable ? 'false' : null" [attr.role]="clickable ? 'button' : null"
-     [attr.tabindex]="clickable ? '0' : null" [class.clickable]="clickable"
+     [attr.aria-pressed]="clickable() ? 'false' : null" [attr.role]="clickable() ? 'button' : null"
+     [attr.tabindex]="clickable() ? '0' : null" [class.clickable]="clickable()"
      [style]="styleVariables" class="stat-card">
   <i [class]="iconClasses" aria-hidden="true" class="background-icon"></i>
   <div class="stat-card-content">
-    <h6 class="stat-card-title">{{ title }}</h6>
+    <h6 class="stat-card-title">{{ title() }}</h6>
     <p class="stat-card-number">{{ safeValue }}</p>
   </div>
 </div>

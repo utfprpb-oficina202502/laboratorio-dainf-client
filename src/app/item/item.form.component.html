@@ -7,14 +7,14 @@
           <h2 class="text-xl font-semibold m-0">Cadastro de Item</h2>
         </div>
         @if (canShowImagens()) {
-          <button
+          <p-button
             type="button"
-            pButton
             icon="pi pi-images"
-            class="p-button-text"
+            [text]="true"
             pTooltip="Imagens"
-            (click)="showDialogImagens()"
-          ></button>
+            [attr.aria-label]="'Ver imagens do item'"
+            (onClick)="showDialogImagens()">
+          </p-button>
         }
       </div>
     </ng-template>
@@ -274,8 +274,8 @@
   header="Imagens do Item"
   [modal]="true"
   [(visible)]="dialogImagens"
-  [style]="{ minWidth: '400px', maxWidth: '80%' }"
-  [baseZIndex]="10000"
+  [baseZIndex]="Z_INDEX.DIALOG"
+  class="dialog-xl"
   [focusOnShow]="false">
   <p-carousel
     [value]="images()"
@@ -289,7 +289,7 @@
         <img
           ngSrc="minioUrl() + image.nameImage"
           class="max-w-full"
-          style="width: 300px"
+          class="w-300px"
           [alt]="'Item'" fill/>
         @if (!isAlunoOrProfessor()) {
           <button

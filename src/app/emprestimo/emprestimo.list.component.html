@@ -1,4 +1,4 @@
-<div class="container-fluid my-3" (keyup.control.n)="openForm()">
+<div (keyup.control.n)="openForm()" class="container-fluid my-3">
   <p-card>
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-3">
@@ -55,38 +55,22 @@
         [attr.aria-label]="'Lista de empréstimos com ' + totalElements + ' registro(s)'">
 
         <ng-template pTemplate="caption">
-          <div class="flex items-center justify-end gap-2 flex-wrap">
-            <p-iconField iconPosition="left" style="flex: 0 1 auto; min-width: 200px; max-width: 300px;">
-              <p-inputIcon class="pi pi-search" aria-hidden="true"></p-inputIcon>
-              <input
-                #globalFilterInput
-                pInputText
-                type="text"
-                (input)="onGlobalFilter($any($event.target).value)"
-                [value]="filterValue"
-                [placeholder]="getGlobalFilterPlaceholder()"
-                [attr.aria-label]="'Campo de busca para filtrar empréstimos'"
-                autocomplete="off" />
-              </p-iconField>
-              <p-button
-                type="button"
-                severity="secondary"
-                [outlined]="true"
-                (onClick)="clearGlobalFilter()"
-                [attr.aria-label]="'Limpar filtro global'">
-                <span pButtonIcon class="pi pi-filter-slash"></span>
-                <span class="hidden sm:inline" pButtonLabel>Limpar</span>
-              </p-button>
-            </div>
-          </ng-template>
+          <app-table-filter-caption
+            (clear)="clearGlobalFilter()"
+            (filter)="onGlobalFilter($event)"
+            [ariaLabel]="'Campo de busca para filtrar empréstimos'"
+            [filterValue]="filterValue"
+            [placeholder]="getGlobalFilterPlaceholder()">
+          </app-table-filter-caption>
+        </ng-template>
 
           <ng-template pTemplate="header">
             <tr>
               @if (tableConfig.expandable) {
-                <th scope="col" style="width: 3rem" [attr.aria-label]="'Alternar detalhes'"></th>
+                <th scope="col" class="w-3rem" [attr.aria-label]="'Alternar detalhes'"></th>
               }
               @if (!isReadOnly && tableConfig.selectable !== false) {
-                <th scope="col" style="width: 3rem" [attr.aria-label]="'Seleção de empréstimos'">
+                <th scope="col" class="w-3rem" [attr.aria-label]="'Seleção de empréstimos'">
                   <p-tableHeaderCheckbox
                     [attr.aria-label]="'Selecionar todos os empréstimos'"></p-tableHeaderCheckbox>
                 </th>
@@ -115,7 +99,7 @@
           <ng-template pTemplate="body" let-row>
             <tr>
               @if (tableConfig.expandable) {
-                <td style="width: 3rem">
+                <td class="w-3rem">
                   <button
                     type="button"
                     pButton
@@ -128,7 +112,7 @@
                 </td>
               }
               @if (!isReadOnly && tableConfig.selectable !== false) {
-                <td style="width: 3rem">
+                <td class="w-3rem">
                   <p-tableCheckbox
                     [value]="row"
                     [attr.aria-label]="'Selecionar emprestimo ' + row.id">
@@ -143,16 +127,20 @@
                   [attr.headers]="'col-' + column.field">
                   @switch (column.field) {
                     @case ('usuarioEmprestimo') {
-                      <span
-                        [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
-                        [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
-                        [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                        (click)="openOptions($event, row.id)"
-                        (keydown.enter)="openOptions($event, row.id)"
-                        (keydown.space)="openOptions($event, row.id)"
-                        [attr.aria-label]="column.header + ': ' + row.usuarioEmprestimo?.nome">
-                        {{ row.usuarioEmprestimo?.nome }}
-                      </span>
+                      @if (!displayedColumns.includes('actions')) {
+                        <button
+                          type="button"
+                          class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                          (click)="openOptions($event, row.id)"
+                          [attr.aria-label]="column.header + ': ' + row.usuarioEmprestimo?.nome">
+                          {{ row.usuarioEmprestimo?.nome }}
+                        </button>
+                      } @else {
+                        <span
+                          [attr.aria-label]="column.header + ': ' + row.usuarioEmprestimo?.nome">
+                          {{ row.usuarioEmprestimo?.nome }}
+                        </span>
+                      }
                     }
                     @case ('status') {
                       <div class="flex justify-center">
@@ -161,6 +149,8 @@
                             value="Em andamento"
                             severity="info"
                             (click)="openOptions($event, row.id)"
+                            (keydown.enter)="openOptions($event, row.id)"
+                            (keydown.space)="openOptions($event, row.id)"
                             [style.cursor]="'pointer'"
                             [attr.aria-label]="'Status: Em andamento'">
                           </p-tag>
@@ -170,6 +160,8 @@
                             value="Em atraso"
                             severity="danger"
                             (click)="openOptions($event, row.id)"
+                            (keydown.enter)="openOptions($event, row.id)"
+                            (keydown.space)="openOptions($event, row.id)"
                             [style.cursor]="'pointer'"
                             [attr.aria-label]="'Status: Em atraso'">
                           </p-tag>
@@ -179,6 +171,8 @@
                             value="Finalizado"
                             severity="success"
                             (click)="openOptions($event, row.id)"
+                            (keydown.enter)="openOptions($event, row.id)"
+                            (keydown.space)="openOptions($event, row.id)"
                             [style.cursor]="'pointer'"
                             [attr.aria-label]="'Status: Finalizado'">
                           </p-tag>
@@ -186,16 +180,19 @@
                       </div>
                     }
                     @default {
-                      <span
-                        [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
-                        [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
-                        [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                        (click)="openOptions($event, row.id)"
-                        (keydown.enter)="openOptions($event, row.id)"
-                        (keydown.space)="openOptions($event, row.id)"
-                        [attr.aria-label]="column.header + ': ' + row[column.field]">
-                        {{ row[column.field] }}
-                      </span>
+                      @if (!displayedColumns.includes('actions')) {
+                        <button
+                          type="button"
+                          class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                          (click)="openOptions($event, row.id)"
+                          [attr.aria-label]="column.header + ': ' + row[column.field]">
+                          {{ row[column.field] }}
+                        </button>
+                      } @else {
+                        <span [attr.aria-label]="column.header + ': ' + row[column.field]">
+                          {{ row[column.field] }}
+                        </span>
+                      }
                     }
                   }
                 </td>
@@ -204,8 +201,9 @@
         </ng-template>
 
         <ng-template pTemplate="rowexpansion" let-row>
-          @if (rowExpansionTemplate) {
-            <ng-container [ngTemplateOutlet]="rowExpansionTemplate" [ngTemplateOutletContext]="{$implicit: row}"></ng-container>
+          @if (rowExpansionTemplate()) {
+            <ng-container [ngTemplateOutlet]="rowExpansionTemplate()"
+                          [ngTemplateOutletContext]="{$implicit: row}"></ng-container>
           } @else {
             <div class="p-3">
               <div class="flex gap-4">
@@ -245,7 +243,7 @@
         <tr>
           <td [attr.colspan]="getColumnCount()">
             <div class="text-center py-4">
-              <i class="pi pi-info-circle text-muted" style="font-size: 2rem;"></i>
+              <i class="pi pi-info-circle text-muted" class="text-3xl"></i>
               <p class="text-muted mt-2 mb-0">{{ tableConfig.emptyMessage }}</p>
             </div>
           </td>
@@ -260,9 +258,9 @@
 <p-dialog
   header="Filtro"
   [(visible)]="dialogFiltroEmprestimo"
-  [style]="{ minWidth: '400px', maxWidth: '400px' }"
+  [baseZIndex]="Z_INDEX.DIALOG"
   [modal]="true"
-  [baseZIndex]="10000">
+  class="dialog-sm-fixed">
 
   <form>
     @if (!isAlunoOrProfessor) {
@@ -281,7 +279,7 @@
               [dropdown]="true"
               [(ngModel)]="emprestimoFilter.usuarioEmprestimo"
               [suggestions]="usuarioEmprestimoList"
-              (onClear)="emprestimoFilter.usuarioEmprestimo = undefined"
+              (clear)="emprestimoFilter.usuarioEmprestimo = undefined"
               (completeMethod)="findUsuarios($event)">
             </p-autoComplete>
           </div>
@@ -305,7 +303,7 @@
               [dropdown]="true"
               [(ngModel)]="emprestimoFilter.usuarioResponsalvel"
               [suggestions]="usuarioResponsalvel"
-              (onClear)="emprestimoFilter.usuarioResponsalvel = undefined"
+              (clear)="emprestimoFilter.usuarioResponsalvel = undefined"
               (completeMethod)="findUsuarioResponsavel($event)">
             </p-autoComplete>
           </div>

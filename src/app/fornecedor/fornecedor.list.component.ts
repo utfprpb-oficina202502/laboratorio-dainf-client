@@ -1,22 +1,9 @@
 import {ChangeDetectionStrategy, Component, forwardRef, inject} from '@angular/core';
-
-import {FormsModule} from '@angular/forms';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Fornecedor} from './fornecedor';
 import {FornecedorService} from './fornecedor.service';
-
-// PrimeNG Components
-import {CardModule} from 'primeng/card';
-import {TableModule} from 'primeng/table';
-import {MultiSelectModule} from 'primeng/multiselect';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ButtonModule} from 'primeng/button';
-import {InputTextModule} from 'primeng/inputtext';
-import {IconFieldModule} from 'primeng/iconfield';
-import {InputIconModule} from 'primeng/inputicon';
-import {TooltipModule} from 'primeng/tooltip';
-import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
+import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 import {CpfCnpjPipe} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe";
 
 @Component({
@@ -24,18 +11,8 @@ import {CpfCnpjPipe} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe";
     templateUrl: './fornecedor.list.component.html',
     styleUrls: ['./fornecedor.list.component.css'],
   imports: [
-    FormsModule,
-    CardModule,
-    TableModule,
-    MultiSelectModule,
-    ToolbarModule,
-    ButtonModule,
-    InputTextModule,
-    IconFieldModule,
-    InputIconModule,
-    TooltipModule,
-    PrimeCrudToolbarComponent,
-    CpfCnpjPipe
+    PrimeTableSharedModule,
+    CpfCnpjPipe,
 ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => FornecedorListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush

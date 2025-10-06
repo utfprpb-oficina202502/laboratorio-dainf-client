@@ -39,38 +39,22 @@
         [attr.aria-label]="'Lista de usuários com ' + totalElements + ' registro(s)'">
 
         <ng-template pTemplate="caption">
-          <div class="flex items-center justify-end gap-2 flex-wrap">
-            <p-iconField iconPosition="left" style="flex: 0 1 auto; min-width: 200px; max-width: 300px;">
-              <p-inputIcon class="pi pi-search" aria-hidden="true"></p-inputIcon>
-              <input
-                #globalFilterInput
-                pInputText
-                type="text"
-                (input)="onGlobalFilter($any($event.target).value)"
-                [value]="filterValue"
-                [placeholder]="getGlobalFilterPlaceholder()"
-                [attr.aria-label]="'Campo de busca para filtrar usuários'"
-                autocomplete="off"/>
-            </p-iconField>
-            <p-button
-              type="button"
-              severity="secondary"
-              [outlined]="true"
-              (onClick)="clearGlobalFilter()"
-              [attr.aria-label]="'Limpar filtro global'">
-              <span pButtonIcon class="pi pi-filter-slash"></span>
-              <span class="hidden sm:inline" pButtonLabel>Limpar</span>
-            </p-button>
-          </div>
+          <app-table-filter-caption
+            (clear)="clearGlobalFilter()"
+            (filter)="onGlobalFilter($event)"
+            [ariaLabel]="'Campo de busca para filtrar usuários'"
+            [filterValue]="filterValue"
+            [placeholder]="getGlobalFilterPlaceholder()">
+          </app-table-filter-caption>
         </ng-template>
 
         <ng-template pTemplate="header">
           <tr>
             @if (tableConfig.expandable) {
-              <th scope="col" style="width: 3rem" [attr.aria-label]="'Alternar detalhes'"></th>
+              <th scope="col" class="w-3rem" [attr.aria-label]="'Alternar detalhes'"></th>
             }
             @if (!isReadOnly && tableConfig.selectable !== false) {
-              <th scope="col" style="width: 3rem" [attr.aria-label]="'Selecao de usuarios'">
+              <th scope="col" class="w-3rem" [attr.aria-label]="'Selecao de usuarios'">
                 <p-tableHeaderCheckbox
                   [attr.aria-label]="'Selecionar todos os usuarios'"></p-tableHeaderCheckbox>
               </th>
@@ -100,7 +84,7 @@
         <ng-template pTemplate="body" let-row>
           <tr>
             @if (tableConfig.expandable) {
-              <td style="width: 3rem">
+              <td class="w-3rem">
                 <button
                   type="button"
                   pButton
@@ -113,7 +97,7 @@
               </td>
             }
             @if (!isReadOnly && tableConfig.selectable !== false) {
-              <td style="width: 3rem">
+              <td class="w-3rem">
                 <p-tableCheckbox
                   [value]="row"
                   [attr.aria-label]="'Selecionar usuario ' + row.nome">
@@ -156,8 +140,8 @@
         </ng-template>
 
         <ng-template pTemplate="rowexpansion" let-row>
-          @if (rowExpansionTemplate) {
-            <ng-container [ngTemplateOutlet]="rowExpansionTemplate"
+          @if (rowExpansionTemplate()) {
+            <ng-container [ngTemplateOutlet]="rowExpansionTemplate()"
                           [ngTemplateOutletContext]="{$implicit: row}"></ng-container>
           } @else {
             <div class="p-3">
@@ -185,7 +169,7 @@
           <tr>
             <td [attr.colspan]="getColumnCount()">
               <div class="text-center py-4">
-                <i class="pi pi-info-circle text-muted" style="font-size: 2rem;"></i>
+                <i class="pi pi-info-circle text-muted" class="text-3xl"></i>
                 <p class="text-muted mt-2 mb-0">{{ tableConfig.emptyMessage }}</p>
               </div>
             </td>
