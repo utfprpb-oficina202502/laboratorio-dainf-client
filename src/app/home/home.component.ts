@@ -244,8 +244,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     })
     .filter((d): d is Record<string, unknown> & { _dtParsed: Date } => {
       return !Number.isNaN(d._dtParsed.getTime());
-    })
-    .sort((a, b) => a._dtParsed.getTime() - b._dtParsed.getTime());
+    });
   }
 
   private loadCharts(ini: string, fim: string, requestToken: number): void {
