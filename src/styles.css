@@ -350,24 +350,20 @@
     color: var(--p-button-primary-active-color);
   }
 
-  /* Dark mode: Primary buttons outlined for contrast */
-  :root[data-theme="dark"] .p-button-primary:not(.p-button-text) {
+  /* Dark mode: Additional button state styles not supported by theme preset */
+  /* Disabled state - WCAG AA compliant contrast */
+  :root[data-theme="dark"] .p-button-primary:disabled {
     background: transparent !important;
-    border: 1px solid var(--p-primary-color) !important;
-    color: var(--p-primary-color) !important;
+    border-color: rgba(252, 188, 0, 0.6) !important;
+    color: rgba(252, 188, 0, 0.6) !important;
+    opacity: 1 !important;
   }
 
-  :root[data-theme="dark"] .p-button-primary:not(.p-button-text):hover {
-    background: var(--p-primary-color) !important;
-    border-color: var(--p-primary-color) !important;
-    color: var(--p-primary-contrast-color) !important;
-  }
-
-  :root[data-theme="dark"] .p-button-primary:not(.p-button-text):is(:active, :focus) {
-    background: var(--p-primary-color) !important;
-    border-color: var(--p-primary-color) !important;
-    color: var(--p-primary-contrast-color) !important;
-    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--p-primary-color), transparent 80%);
+  /* Focus state for keyboard navigation */
+  :root[data-theme="dark"] .p-button-primary:focus {
+    background: transparent !important;
+    border-color: var(--p-button-primary-border-color) !important;
+    color: var(--p-button-primary-color) !important;
   }
 
   :root[data-theme="dark"] .p-button-secondary.p-button-outlined {
