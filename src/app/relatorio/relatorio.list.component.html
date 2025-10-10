@@ -23,7 +23,7 @@
         [first]="first"
         [lazy]="tableConfig.lazy !== false"
         [lazyLoadOnInit]="tableConfig.lazyLoadOnInit !== false"
-        [(selection)]="selectedItems"
+        [selection]="selectedItems()"
         (selectionChange)="onSelectionChange($event)"
         [dataKey]="tableConfig.rowExpansionKey || 'id'"
         [resizableColumns]="tableConfig.resizableColumns !== false"

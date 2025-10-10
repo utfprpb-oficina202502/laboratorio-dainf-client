@@ -21,7 +21,7 @@
         (onSort)="onSort($event)"
         [first]="first"
         [lazy]="true"
-        [(selection)]="selectedItems"
+        [selection]="selectedItems()"
         (selectionChange)="onSelectionChange($event)"
         [dataKey]="tableConfig.rowExpansionKey || 'id'"
         [resizableColumns]="tableConfig.resizableColumns !== false"

@@ -149,7 +149,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   protected columnFilters: Record<string, unknown> = {};
   // Internal mutable configuration for child components to override
   private _tableConfigOverride: TableConfiguration | null = null;
-  public selectedItems: T[] = [];
+  public selectedItems = signal<T[]>([]);
   public objects: T[] = [];
   private keyboardShortcutHandlers: KeyboardShortcut[] = [];
   public columnToggleModel: string[] = [];
@@ -378,7 +378,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   }
 
   onSelectionChange(selection: T[]): void {
-    this.selectedItems = selection || [];
+    this.selectedItems.set(selection || []);
     this.saveTableState();
   }
 
@@ -457,7 +457,8 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
   // Bulk delete functionality
   deleteSelectedItems() {
-    if (!this.selectedItems || this.selectedItems.length === 0) {
+    const items = this.selectedItems();
+    if (!items || items.length === 0) {
       this.messageService.add({
         severity: 'warn',
         summary: 'Aviso',
@@ -466,7 +467,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       return;
     }
 
-    const itemCount = this.selectedItems.length;
+    const itemCount = items.length;
     Swal.fire({
       title: `Tem certeza que deseja remover ${itemCount} registro(s)?`,
       text: 'A ação não poderá ser desfeita.',
@@ -479,7 +480,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
         this.loaderService.show();
 
         // Extract IDs from selected items
-        const ids = this.selectedItems.map((item: T) => (item as T & { id: ID }).id);
+        const ids = items.map((item: T) => (item as T & { id: ID }).id);
 
         // Delete items sequentially (could be enhanced for bulk API call)
         this.deleteItemsSequentially(ids, 0, itemCount);
@@ -709,7 +710,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
         columns: this.tableConfig.columns,
         columnToggleModel: this.columnToggleModel,
         expandedRows: this.expandedRows,
-        selectedItems: this.selectedItems
+        selectedItems: this.selectedItems()
       },
       this.tableConfig.stateProps,
       this.tableConfig.trackByField || 'id'
@@ -779,7 +780,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       openColumnToggle: () => this.openColumnTogglePanel(),
       clearGlobalFilter: () => this.clearGlobalFilter(),
       deleteSelected: () => {
-        if (this.canDelete && this.selectedItems?.length) {
+        if (this.canDelete && this.selectedItems()?.length) {
           this.deleteSelectedItems();
         }
       }
@@ -841,11 +842,11 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       return;
     }
     const trackByField = this.tableConfig.trackByField || 'id';
-    this.selectedItems = this.tableStateManager.restoreSelectionFromKeys(
+    this.selectedItems.set(this.tableStateManager.restoreSelectionFromKeys(
       this.objects,
       this.pendingSelectedKeys,
       trackByField
-    ) as T[];
+    ) as T[]);
     this.pendingSelectedKeys = [];
   }
 
@@ -954,7 +955,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   private deleteItemsSequentially(ids: ID[], currentIndex: number, total: number) {
     if (currentIndex >= ids.length) {
       // All deletions completed
-      this.selectedItems = [];
+      this.selectedItems.set([]);
       this.saveTableState();
       this.loaderService.hide();
       Swal.fire('Sucesso!', `${total} registro(s) excluído(s) com sucesso!`, 'success');
