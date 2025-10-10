@@ -56,7 +56,7 @@ export class PermissionService {
     // Normaliza roles para array de strings (pode vir como string[] ou Permissao[])
     const roleNames = new Set(
       roles
-      .map(r => typeof r === 'string' ? r : (r.nome || r.name || ''))
+      .map(r => typeof r === 'string' ? r : (r.nome || ''))
       .map(name => name.trim())
       .filter(name => name.length > 0)
     );
