@@ -4,7 +4,7 @@ import {NgControl} from '@angular/forms';
 @Directive({
   selector: '[appFormatCnpj]',
   host: {
-    '(input)': 'onInput($event)'
+    '(input)': 'onInput()'
   }
 })
 export class CnpjDirective implements DoCheck {

@@ -3,6 +3,7 @@ import {NgOptimizedImage} from '@angular/common';
 import {Z_INDEX} from '../framework/constants';
 import {Item} from "./item";
 import {ItemService} from "./item.service";
+import {Grupo} from '../grupo/grupo';
 import {PrimeCrudListComponent} from "../framework/component/prime-crud.list.component";
 import {TableColumn} from '../framework/model/table-config.interface';
 import {MenuItem} from 'primeng/api';
@@ -92,7 +93,8 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
       type: 'custom',
       sortable: true,
       filterable: true,
-      minWidth: '12rem'
+      minWidth: '12rem',
+      align: 'center'
     },
     {
       field: 'saldo',
@@ -129,6 +131,31 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
 
   protected override getEntityPluralName(): string {
     return 'Itens';
+  }
+
+  /**
+   * Retorna a severidade (cor) do badge para categorias de itens
+   * Usa o ID do grupo para distribuir cores de forma consistente
+   */
+  getGrupoBadgeSeverity(grupo: Grupo | undefined): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
+    if (!grupo) {
+      return 'secondary';
+    }
+
+    // Array de cores disponíveis no PrimeNG
+    const severities: ('success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast')[] = [
+      'info',      // Azul
+      'success',   // Verde
+      'warn',      // Laranja
+      'danger',    // Vermelho
+      'secondary', // Cinza
+      'contrast'   // Preto/Branco (tema dependente)
+    ];
+
+    // Usa o ID do grupo para selecionar uma cor de forma consistente
+    // Mesmo grupo sempre terá a mesma cor
+    const colorIndex = grupo.id % severities.length;
+    return severities[colorIndex];
   }
 
   // Override export filename for items

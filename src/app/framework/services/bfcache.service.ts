@@ -115,7 +115,7 @@ export class BFCacheService {
 
     // Check for open connections (IndexedDB transactions, fetch, etc.)
     // This is informational only - we can't detect all cases
-    if (navigator.onLine === false) {
+    if (typeof navigator !== 'undefined' && 'onLine' in navigator && !navigator.onLine) {
       issues.push('Page is offline');
     }
 

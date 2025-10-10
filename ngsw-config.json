@@ -50,10 +50,7 @@
         "strategy": "freshness",
         "maxSize": 100,
         "maxAge": "1h",
-        "timeout": "10s",
-        "networkTimeoutSettings": {
-          "timeout": 5000
-        }
+        "timeout": "10s"
       }
     },
     {

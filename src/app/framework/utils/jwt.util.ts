@@ -18,7 +18,7 @@ export class JwtUtil {
    * A validação de assinatura deve ser feita no backend.
    */
   static decodeToken(token: string): JwtPayload | null {
-    if (!token || typeof token !== 'string') {
+    if (!token) {
       return null;
     }
 
@@ -26,7 +26,7 @@ export class JwtUtil {
       // JWT tem formato: header.payload.signature
       const parts = token.split('.');
       if (parts.length !== 3) {
-        console.error('Token JWT inválido: formato incorreto');
+        // Token inválido: formato incorreto - retorna null silenciosamente
         return null;
       }
 
@@ -37,8 +37,9 @@ export class JwtUtil {
       const decodedPayload = this.base64UrlDecode(payload);
 
       return JSON.parse(decodedPayload) as JwtPayload;
-    } catch (error) {
-      console.error('Erro ao decodificar token JWT:', error);
+    } catch {
+      // Erro ao decodificar token - retorna null silenciosamente
+      // Validação de token deve ser feita no backend
       return null;
     }
   }
@@ -105,7 +106,7 @@ export class JwtUtil {
    * Verifica se uma string parece ser um JWT válido (formato básico)
    */
   static isValidJwtFormat(token: string | null): boolean {
-    if (!token || typeof token !== 'string') {
+    if (!token) {
       return false;
     }
 

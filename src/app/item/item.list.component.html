@@ -66,7 +66,6 @@
               }
               @for (column of getVisibleColumns(); track column.field) {
                 <th scope="col"
-                  scope="col"
                   [attr.id]="'col-' + column.field"
                   [attr.data-field]="column.field"
                     [pSortableColumn]="column.sortable === false || column.field === 'actions' ? undefined : column.field"
@@ -146,8 +145,8 @@
                             fill
                             priority="false"
                             loading="lazy"
-                            class="object-cover rounded"
-                            class="cursor-pointer"/>
+                            class="object-cover rounded cursor-pointer"
+                          />
                         </button>
                       </div>
                     }
@@ -168,19 +167,19 @@
                         }
                       }
                       @case ('grupo') {
-                        @if (!displayedColumns.includes('actions')) {
-                          <button
-                            type="button"
-                            class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
-                            (click)="openOptions($event, row)"
-                            [attr.aria-label]="column.header + ': ' + row.grupo?.descricao">
-                            {{ row.grupo?.descricao }}
-                          </button>
-                        } @else {
-                          <span [attr.aria-label]="column.header + ': ' + row.grupo?.descricao">
-                            {{ row.grupo?.descricao }}
-                          </span>
-                        }
+                        <div class="flex justify-center">
+                          <p-tag
+                            [value]="row.grupo?.descricao"
+                            [severity]="getGrupoBadgeSeverity(row.grupo)"
+                            [attr.aria-label]="'Grupo: ' + row.grupo?.descricao"
+                            [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : undefined"
+                            [attr.role]="!displayedColumns.includes('actions') ? 'button' : undefined"
+                            class="cursor-pointer"
+                            (click)="!displayedColumns.includes('actions') && openOptions($event, row)"
+                            (keydown.enter)="!displayedColumns.includes('actions') && openOptions($event, row)"
+                            (keydown.space)="!displayedColumns.includes('actions') && openOptions($event, row)">
+                          </p-tag>
+                        </div>
                       }
                       @default {
                         @if (!displayedColumns.includes('actions')) {
@@ -211,7 +210,7 @@
               <div class="p-3">
                 <div class="flex gap-4">
                   <div class="flex-shrink-0">
-                    <div class="relative" class="w-120px h-[90px]">
+                    <div class="relative w-120px h-[90px]">
                       <img
                         [ngSrc]="row.imageItem?.length > 0 ? minioUrl + row.imageItem[0].nameImage : 'no-image.svg'"
                         [alt]="'Item ' + row.nome"
@@ -249,7 +248,7 @@
               <tr>
                 <td [attr.colspan]="getColumnCount()">
                   <div class="text-center py-4">
-                    <i class="pi pi-info-circle text-muted" class="text-3xl"></i>
+                    <i class="pi pi-info-circle text-muted text-3xl"></i>
                     <p class="text-muted mt-2 mb-0">{{ tableConfig.emptyMessage }}</p>
                   </div>
                 </td>

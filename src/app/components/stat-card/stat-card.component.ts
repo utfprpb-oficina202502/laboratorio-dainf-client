@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-  OnChanges,
-  output,
-  SimpleChanges
-} from '@angular/core';
+import {ChangeDetectionStrategy, Component, effect, input, output, signal} from '@angular/core';
 
 @Component({
   selector: 'app-stat-card',
@@ -14,7 +7,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true
 })
-export class StatCardComponent implements OnChanges {
+export class StatCardComponent {
   readonly title = input.required<string>();
   readonly value = input<number | string | null | undefined>();
   readonly icon = input.required<string>(); // ex: 'handshake', 'clock-o'
@@ -23,13 +16,17 @@ export class StatCardComponent implements OnChanges {
   readonly iconLibrary = input<'pi' | 'fa'>('fa'); // padrão agora Font Awesome
   readonly cardClick = output<void>();
 
-  private accentTint = this.hexToRgba(this.accentColor(), 0.18);
-  private accentMuted = this.hexToRgba(this.accentColor(), 0.24);
+  // Sinais derivados para as variantes de cor
+  private readonly accentTint = signal(this.hexToRgba(this.accentColor(), 0.18));
+  private readonly accentMuted = signal(this.hexToRgba(this.accentColor(), 0.24));
 
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['accentColor']) {
-      this.updateAccentVariants();
-    }
+  constructor() {
+    // Effect reage automaticamente quando accentColor() muda
+    effect(() => {
+      const color = this.accentColor();
+      this.accentTint.set(this.hexToRgba(color, 0.18));
+      this.accentMuted.set(this.hexToRgba(color, 0.24));
+    });
   }
 
   get iconClasses() {
@@ -39,8 +36,8 @@ export class StatCardComponent implements OnChanges {
   get styleVariables() {
     return {
       '--stat-card-accent-color': this.accentColor(),
-      '--stat-card-accent-tint': this.accentTint,
-      '--stat-card-accent-muted': this.accentMuted
+      '--stat-card-accent-tint': this.accentTint(),
+      '--stat-card-accent-muted': this.accentMuted()
     };
   }
 
@@ -74,10 +71,5 @@ export class StatCardComponent implements OnChanges {
       event.preventDefault();
       this.cardClick.emit();
     }
-  }
-
-  private updateAccentVariants() {
-    this.accentTint = this.hexToRgba(this.accentColor(), 0.18);
-    this.accentMuted = this.hexToRgba(this.accentColor(), 0.24);
   }
 }

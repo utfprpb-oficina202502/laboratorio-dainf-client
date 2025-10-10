@@ -52,8 +52,14 @@ export class PermissionService {
   /**
    * Calcula permissões baseadas nas roles do usuário
    */
-  private computePermissionsFromRoles(roles: Permissao[]): UserPermissions {
-    const roleNames = new Set(roles.map(r => r.nome));
+  private computePermissionsFromRoles(roles: Permissao[] | string[]): UserPermissions {
+    // Normaliza roles para array de strings (pode vir como string[] ou Permissao[])
+    const roleNames = new Set(
+      roles
+      .map(r => typeof r === 'string' ? r : (r.nome || r.name || ''))
+      .map(name => name.trim())
+      .filter(name => name.length > 0)
+    );
 
     // Admin has full access to everything
     if (roleNames.has('ROLE_ADMINISTRADOR')) {
