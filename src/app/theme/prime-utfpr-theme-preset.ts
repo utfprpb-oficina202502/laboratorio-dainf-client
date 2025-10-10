@@ -3,7 +3,8 @@ import Aura from '@primeuix/themes/aura';
 
 const UTFPR_BLUE_PRIMARY = '#00488E';
 const UTFPR_BLUE_SECONDARY = '#1B75BC';
-const UTFPR_YELLOW_ACCENT = '#F3C400';
+const UTFPR_YELLOW_ACCENT = '#FCBC00';
+const BLACK_TEXT = '#000000';
 
 const PrimeUTFPRPreset = definePreset(Aura, {
   semantic: {
@@ -34,32 +35,37 @@ const PrimeUTFPRPreset = definePreset(Aura, {
         light: {
           root: {
             primary: {
-              color: '{contrast.primary-color}',
-              hoverColor: '{contrast.primary-color}'
+              background: UTFPR_YELLOW_ACCENT,
+              hoverBackground: UTFPR_YELLOW_ACCENT,
+              activeBackground: UTFPR_YELLOW_ACCENT,
+              borderColor: UTFPR_YELLOW_ACCENT,
+              hoverBorderColor: UTFPR_YELLOW_ACCENT,
+              color: BLACK_TEXT,
+              hoverColor: BLACK_TEXT,
+              activeColor: BLACK_TEXT
             },
             info: {
               color: '{contrast.info-color}',
               hoverColor: '{contrast.info-color}'
-            },
-            warn: {
-              color: '{contrast.warning-color}',
-              hoverColor: '{contrast.warning-color}'
             }
           }
         },
         dark: {
           root: {
             primary: {
-              color: '{contrast.primary-color}',
-              hoverColor: '{contrast.primary-color}'
+              background: 'transparent',
+              hoverBackground: 'rgba(252, 188, 0, 0.04)',
+              activeBackground: 'rgba(252, 188, 0, 0.16)',
+              borderColor: UTFPR_YELLOW_ACCENT,
+              hoverBorderColor: UTFPR_YELLOW_ACCENT,
+              activeBorderColor: UTFPR_YELLOW_ACCENT,
+              color: UTFPR_YELLOW_ACCENT,
+              hoverColor: UTFPR_YELLOW_ACCENT,
+              activeColor: UTFPR_YELLOW_ACCENT
             },
             info: {
               color: '{contrast.info-color}',
               hoverColor: '{contrast.info-color}'
-            },
-            warn: {
-              color: '{contrast.warning-color}',
-              hoverColor: '{contrast.warning-color}'
             }
           }
         }
