@@ -115,19 +115,18 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
   ngOnInit(): void {
     super.ngOnInit();
 
-    this.loginService.userLoggedIsAlunoOrProfessor().then(value => {
-      this.isAlunoOrProfessor = value;
-      if (this.isAlunoOrProfessor) {
-        this.findAllByUsername();
-      } else {
-        this.findAll();
-      }
-    });
+    // isAlunoOrProfessor is now a computed signal from base class
+    // Check permission and load appropriate data
+    if (this.isAlunoOrProfessor()) {
+      this.findAllByUsername();
+    } else {
+      this.findAll();
+    }
   }
 
-  async openOptions(event: Event, reserva: Reserva): Promise<void> {
+  openOptions(event: Event, reserva: Reserva): void {
     this.selectedReserva = reserva;
-    const isAlunoOrProfessor = await this.loginService.userLoggedIsAlunoOrProfessor();
+    const isAlunoOrProfessor = this.isAlunoOrProfessor();
 
     this.contextMenuItems = [];
 

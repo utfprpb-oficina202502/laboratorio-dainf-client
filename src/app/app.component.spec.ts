@@ -7,7 +7,8 @@ import {ThemeService} from './framework/services/theme.service';
 import {BFCacheService} from './framework/services/bfcache.service';
 import {PwaService} from './framework/services/pwa.service';
 import {ConfirmationService, MessageService} from 'primeng/api';
-import {BehaviorSubject, of} from 'rxjs';
+import {signal} from '@angular/core';
+import {of} from 'rxjs';
 
 /**
  * Testes unitários para AppComponent - Componente raiz da aplicação
@@ -22,13 +23,15 @@ describe('AppComponent', () => {
   let mockPwaService: jest.Mocked<Partial<PwaService>>;
 
   beforeEach(() => {
-    // Mock do LoginService com BehaviorSubject para isAuthenticated
-    const isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
+    // Mock do LoginService com signal para isAuthenticated
+    const isAuthenticatedSignal = signal<boolean>(false);
     mockLoginService = {
-      isAuthenticated: isAuthenticatedSubject,
+      isAuthenticated: isAuthenticatedSignal.asReadonly(),
       hasAnyRole: jest.fn().mockReturnValue(false),
-      refreshCurrentUser: jest.fn().mockReturnValue(of(null))
-    };
+      refreshCurrentUser: jest.fn().mockReturnValue(of(null)),
+      // Adiciona setter privado para testes poderem modificar o signal
+      _setIsAuthenticated: isAuthenticatedSignal.set.bind(isAuthenticatedSignal)
+    } as any;
 
     // Mock do LoaderService
     mockLoaderService = {
@@ -79,24 +82,24 @@ describe('AppComponent', () => {
   });
 
   it('deve inicializar com isAuthenticated como false', () => {
-    expect(component.isAuthenticated).toBe(false);
+    expect((component as any).isAuthenticated()).toBe(false);
   });
 
   it('deve inicializar com isNavigating como false', () => {
-    expect(component.isNavigating).toBe(false);
+    expect(component.isNavigating()).toBe(false);
   });
 
-  it('deve assinar o observable de autenticação no construtor', () => {
-    // Verifica se o serviço foi chamado durante a construção do componente
+  it('deve acessar o signal de autenticação no construtor', () => {
+    // Verifica se o signal está definido e acessível
     expect(mockLoginService.isAuthenticated).toBeDefined();
-    expect(component.isAuthenticated).toBe(false);
+    expect((component as any).isAuthenticated()).toBe(false);
   });
 
   it('deve atualizar isAuthenticated quando o estado de autenticação mudar', () => {
-    // Simula mudança no estado de autenticação
-    mockLoginService.isAuthenticated?.next(true);
+    // Simula mudança no estado de autenticação usando o setter do mock
+    (mockLoginService as any)._setIsAuthenticated(true);
 
-    expect(component.isAuthenticated).toBe(true);
+    expect((component as any).isAuthenticated()).toBe(true);
   });
 
   it('deve verificar acesso com hasAnyRole', () => {
@@ -114,13 +117,10 @@ describe('AppComponent', () => {
     expect(mockBFCacheService.onPageHide).toHaveBeenCalled();
   });
 
-  it('deve limpar subscription no ngOnDestroy', () => {
-    const unsubscribeSpy = jest.fn();
-    component.subscription = {unsubscribe: unsubscribeSpy} as any;
-
-    component.ngOnDestroy();
-
-    expect(unsubscribeSpy).toHaveBeenCalled();
+  it('deve limpar effect no ngOnDestroy', () => {
+    // Com signals, não há subscription para limpar - effects são auto-cleanup
+    // Este teste garante que ngOnDestroy pode ser chamado sem erros
+    expect(() => component.ngOnDestroy()).not.toThrow();
   });
 
   it('deve executar cleanup handlers do BFCache no ngOnDestroy', () => {

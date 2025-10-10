@@ -61,7 +61,7 @@
               @if (tableConfig.expandable) {
                 <th scope="col" class="w-3rem" [attr.aria-label]="'Alternar detalhes'"></th>
               }
-              @if (!isReadOnly && tableConfig.selectable !== false) {
+              @if (!isReadOnly() && tableConfig.selectable !== false) {
                 <th scope="col" class="w-3rem" [attr.aria-label]="'Selecao de cidades'">
                   <p-tableHeaderCheckbox [attr.aria-label]="'Selecionar todas as cidades'"></p-tableHeaderCheckbox>
                 </th>
@@ -102,7 +102,7 @@
                   </button>
                 </td>
               }
-              @if (!isReadOnly && tableConfig.selectable !== false) {
+              @if (!isReadOnly() && tableConfig.selectable !== false) {
                 <td class="w-3rem">
                   <p-tableCheckbox
                     [value]="row"
@@ -119,8 +119,8 @@
                   @switch (column.field) {
                     @case ('actions') {
                       <app-action-buttons
-                        [showEdit]="canEdit"
-                        [showDelete]="canDelete"
+                        [showEdit]="canEdit()"
+                        [showDelete]="canDelete()"
                         [editTooltip]="'Editar cidade'"
                         [deleteTooltip]="'Remover cidade'"
                         [editAriaLabel]="'Editar cidade ' + row.nome"

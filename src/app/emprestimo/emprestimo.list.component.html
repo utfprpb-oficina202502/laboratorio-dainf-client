@@ -19,7 +19,7 @@
             [attr.aria-label]="'Abrir filtros'">
             <span pButtonIcon class="pi pi-search"></span>
           </p-button>
-          @if (!isAlunoOrProfessor) {
+          @if (!isAlunoOrProfessor()) {
             <app-novo (novoClick)="openForm()"></app-novo>
           }
         </ng-template>
@@ -69,7 +69,7 @@
               @if (tableConfig.expandable) {
                 <th scope="col" class="w-3rem" [attr.aria-label]="'Alternar detalhes'"></th>
               }
-              @if (!isReadOnly && tableConfig.selectable !== false) {
+              @if (!isReadOnly() && tableConfig.selectable !== false) {
                 <th scope="col" class="w-3rem" [attr.aria-label]="'Seleção de empréstimos'">
                   <p-tableHeaderCheckbox
                     [attr.aria-label]="'Selecionar todos os empréstimos'"></p-tableHeaderCheckbox>
@@ -111,7 +111,7 @@
                   </button>
                 </td>
               }
-              @if (!isReadOnly && tableConfig.selectable !== false) {
+              @if (!isReadOnly() && tableConfig.selectable !== false) {
                 <td class="w-3rem">
                   <p-tableCheckbox
                     [value]="row"
@@ -232,7 +232,7 @@
   class="dialog-sm-fixed">
 
   <form>
-    @if (!isAlunoOrProfessor) {
+    @if (!isAlunoOrProfessor()) {
       <div class="row mb-3">
         <div class="col-md-12">
           <div class="form-group">
@@ -256,7 +256,7 @@
       </div>
     }
 
-    @if (!isAlunoOrProfessor) {
+    @if (!isAlunoOrProfessor()) {
       <div class="row mb-3">
         <div class="col-md-12">
           <div class="form-group">

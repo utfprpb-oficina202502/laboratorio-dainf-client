@@ -197,15 +197,16 @@ describe('LoginService - Token Validation', () => {
       expect(router.navigate).toHaveBeenCalledWith(['/login']);
     });
 
-    it('deve atualizar observable isAuthenticated para false', (done) => {
-      service.isAuthenticated.next(true);
+    it('deve atualizar signal isAuthenticated para false', () => {
+      // Simula estado autenticado (necessário chamar setAuthenticated para isso)
+      service.setAuthenticated();
+      expect(service.isAuthenticated()).toBe(true);
 
+      // Faz logout
       service.logout();
 
-      service.isAuthenticated.subscribe((isAuth) => {
-        expect(isAuth).toBe(false);
-        done();
-      });
+      // Verifica que signal foi atualizado para false
+      expect(service.isAuthenticated()).toBe(false);
     });
   });
 

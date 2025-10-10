@@ -53,7 +53,7 @@ describe('SidenavComponent', () => {
     mockSidenavService = {
       toggle: jest.fn(),
       minimizar: jest.fn(),
-      observable: jest.fn().mockReturnValue(of(false))
+      isMinimized: signal(false)
     };
 
     mockLoginService = {
@@ -367,28 +367,31 @@ describe('SidenavComponent', () => {
   });
 
   describe('SidenavService Integration', () => {
-    it('deve assinar observable do SidenavService', () => {
+    it('deve usar signal do SidenavService', () => {
       component.ngOnInit();
 
-      expect(mockSidenavService.observable).toHaveBeenCalled();
+      expect(mockSidenavService.isMinimized).toBeDefined();
     });
 
     it('deve integrar com SidenavService corretamente', () => {
       // Verifica que o serviço está injetado e acessível
       expect(component['sidenavService']).toBeDefined();
-      expect(mockSidenavService.observable).toBeDefined();
+      expect(mockSidenavService.isMinimized).toBeDefined();
     });
 
-    it('deve reagir a mudanças do SidenavService observable', (done) => {
-      const serviceSubject = new BehaviorSubject<boolean>(false);
-      mockSidenavService.observable = jest.fn().mockReturnValue(serviceSubject.asObservable());
+    it('deve reagir a mudanças do SidenavService signal', (done) => {
+      // Usa o signal já configurado no mock (não pode mais override após fixture criada)
       isDesktopSignal.set(false);
 
       component.ngOnInit();
       fixture.detectChanges();
 
-      // Simula service emitindo hide=true
-      serviceSubject.next(true);
+      // Obtém o signal do mock existente
+      const serviceSignal = mockSidenavService.isMinimized as WritableSignal<boolean>;
+
+      // Simula service emitindo minimizado=true
+      serviceSignal.set(true);
+      fixture.detectChanges();
 
       setTimeout(() => {
         expect(component.sidebarVisible).toBe(false);

@@ -1,23 +1,18 @@
-import {Injectable} from '@angular/core';
-import {Observable, Subject} from 'rxjs';
+import {Injectable, signal} from '@angular/core';
 
 @Injectable()
 export class SidenavService {
 
-  private readonly subject = new Subject<boolean>();
-  private isMinimized = false;
+  private readonly _isMinimized = signal<boolean>(false);
+
+  // Public readonly signal para consumo pelos componentes
+  readonly isMinimized = this._isMinimized.asReadonly();
 
   minimizar(minimizar: boolean): void {
-    this.isMinimized = minimizar;
-    this.subject.next(minimizar);
+    this._isMinimized.set(minimizar);
   }
 
   toggle(): void {
-    this.isMinimized = !this.isMinimized;
-    this.subject.next(this.isMinimized);
-  }
-
-  observable(): Observable<boolean> {
-    return this.subject.asObservable();
+    this._isMinimized.update(current => !current);
   }
 }

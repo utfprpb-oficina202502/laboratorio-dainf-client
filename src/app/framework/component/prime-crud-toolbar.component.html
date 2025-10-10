@@ -12,7 +12,7 @@
       } @else {
         <!-- Add/Delete buttons -->
         @if (!toolbarStartTemplate) {
-          @if (listInstance.canCreate && !listInstance.isReadOnly) {
+        @if (listInstance.canCreate() && !listInstance.isReadOnly()) {
             <p-button
               (onClick)="listInstance.openForm()"
               [pTooltip]="'Adicionar '+ entityName"
@@ -22,7 +22,7 @@
               <span pButtonLabel class="hidden md:inline ml-2">Adicionar</span>
             </p-button>
           }
-          @if (listInstance.canDelete && !listInstance.isReadOnly) {
+        @if (listInstance.canDelete() && !listInstance.isReadOnly()) {
             <p-button
               severity="danger"
               [outlined]="true"
@@ -59,7 +59,7 @@
           </p-button>
         }
         <!-- Export buttons -->
-        @if (listInstance.canExport) {
+        @if (listInstance.canExport()) {
           <p-buttonGroup>
             <p-button
               severity="secondary"

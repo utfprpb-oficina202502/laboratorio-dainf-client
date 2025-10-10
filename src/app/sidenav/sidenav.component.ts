@@ -3,6 +3,7 @@ import {
   ChangeDetectorRef,
   Component,
   computed,
+  effect,
   inject,
   OnDestroy,
   OnInit
@@ -158,6 +159,11 @@ export class SidenavComponent implements OnInit, OnDestroy {
   protected readonly isDesktopView = computed(() => this.breakpointService.isDesktop());
   private readonly destroy$ = new Subject<void>();
 
+  constructor() {
+    // Initialize effect in constructor to maintain injection context
+    this.initSidenavEffect();
+  }
+
   ngOnInit(): void {
     this.buildMenu();
     // Initialize sidebar visibility based on breakpoint
@@ -166,7 +172,6 @@ export class SidenavComponent implements OnInit, OnDestroy {
     if (!this.breakpointService.isDesktop()) {
       this.sidenavService.minimizar(true);
     }
-    this.initObservableDrawer();
     this.setupBreakpointObserver();
   }
 
@@ -226,14 +231,15 @@ export class SidenavComponent implements OnInit, OnDestroy {
     }));
   }
 
-  initObservableDrawer() {
-    this.sidenavService.observable()
-    .pipe(takeUntil(this.destroy$))
-    .subscribe((hide) => {
+  // Usa effect() para reagir automaticamente às mudanças do signal
+  private initSidenavEffect(): void {
+    effect(() => {
+      const isMinimized = this.sidenavService.isMinimized();
+
       if (this.breakpointService.isDesktop()) {
         this.sidebarVisible = true;
       } else {
-        this.sidebarVisible = !hide;
+        this.sidebarVisible = !isMinimized;
       }
       this.cdr?.markForCheck();
     });

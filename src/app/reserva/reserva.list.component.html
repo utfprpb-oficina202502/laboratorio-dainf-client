@@ -97,8 +97,8 @@
                 }
                 @case ('actions') {
                   <app-action-buttons
-                    [showEdit]="canEdit"
-                    [showDelete]="canDelete"
+                    [showEdit]="canEdit()"
+                    [showDelete]="canDelete()"
                     [editTooltip]="'Editar reserva'"
                     [deleteTooltip]="'Remover reserva'"
                     [editAriaLabel]="'Editar reserva ' + rowData.id"

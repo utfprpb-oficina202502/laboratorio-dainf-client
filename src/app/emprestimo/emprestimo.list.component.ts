@@ -125,9 +125,9 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     return this.service;
   }
 
-  async openOptions(event: Event, id: number): Promise<void> {
+  openOptions(event: Event, id: number): void {
     this.selectedEmprestimoId = id;
-    const isAlunoOrProfessor = await this.loginService.userLoggedIsAlunoOrProfessor();
+    const isAlunoOrProfessor = this.isAlunoOrProfessor();
 
     this.contextMenuItems = [];
 
@@ -183,15 +183,13 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   ngOnInit(): void {
     super.ngOnInit();
 
-    this.loginService.userLoggedIsAlunoOrProfessor().then(value => {
-      this.isAlunoOrProfessor = value;
-      this.cdr?.markForCheck();
-      if (this.isAlunoOrProfessor) {
-        this.findAllByUsername();
-      } else {
-        this.findAll();
-      }
-    });
+    // isAlunoOrProfessor is now a computed signal from base class
+    // Check permission and load appropriate data
+    if (this.isAlunoOrProfessor()) {
+      this.findAllByUsername();
+    } else {
+      this.findAll();
+    }
   }
 
   findUsuarioResponsavel($event: { query: string }) {
@@ -286,7 +284,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   clearFilter() {
     this.emprestimoFilter = new EmprestimoFilter();
     this.buildDropdown();
-    if (this.isAlunoOrProfessor) {
+    if (this.isAlunoOrProfessor()) {
       this.findAllByUsername();
     } else {
       this.findAll();
@@ -296,7 +294,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   filter() {
     this.dialogFiltroEmprestimo = false;
     this.loaderService.show();
-    if (this.isAlunoOrProfessor) {
+    if (this.isAlunoOrProfessor()) {
       this.setUserLogadoInFilter().then(() => {
         this.findByFilter();
       });

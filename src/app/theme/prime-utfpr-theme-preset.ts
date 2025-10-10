@@ -32,6 +32,8 @@ const PrimeUTFPRPreset = definePreset(Aura, {
   components: {
     button: {
       colorScheme: {
+        // Nota: No modo claro, todos os botões primários usam preenchimento amarelo
+        // incluindo variantes outlined, para máxima visibilidade da marca UTFPR
         light: {
           root: {
             primary: {
@@ -50,18 +52,24 @@ const PrimeUTFPRPreset = definePreset(Aura, {
             }
           }
         },
+        // No modo escuro, botões primários usam estilo outlined (transparente)
+        // no estado normal, preenchendo com amarelo ao passar o mouse
         dark: {
           root: {
             primary: {
               background: 'transparent',
-              hoverBackground: 'rgba(252, 188, 0, 0.04)',
-              activeBackground: 'rgba(252, 188, 0, 0.16)',
+              hoverBackground: UTFPR_YELLOW_ACCENT,
+              activeBackground: UTFPR_YELLOW_ACCENT,
               borderColor: UTFPR_YELLOW_ACCENT,
               hoverBorderColor: UTFPR_YELLOW_ACCENT,
               activeBorderColor: UTFPR_YELLOW_ACCENT,
               color: UTFPR_YELLOW_ACCENT,
-              hoverColor: UTFPR_YELLOW_ACCENT,
-              activeColor: UTFPR_YELLOW_ACCENT
+              hoverColor: BLACK_TEXT,
+              activeColor: BLACK_TEXT,
+              focusRing: {
+                color: UTFPR_YELLOW_ACCENT,
+                shadow: `0 0 0 0.2rem rgba(252, 188, 0, 0.5)`
+              }
             },
             info: {
               color: '{contrast.info-color}',

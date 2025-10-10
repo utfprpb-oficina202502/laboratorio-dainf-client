@@ -3,6 +3,7 @@ import {
   computed,
   contentChild,
   Directive,
+  effect,
   ElementRef,
   inject,
   Injector,
@@ -80,7 +81,6 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   readonly columnToggleComponent = viewChild<MultiSelect>('columnToggleRef');
 
   // Template overrides for flexibility
-  public userRole = '';
   // Enhanced filtering and sorting
   public filterValue = '';
   public sortField = '';
@@ -94,13 +94,16 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   public first = 0;
   public rows = 10;
   public hostListenerColumnEnable = true;
-  // Permission and user management
-  public isAlunoOrProfessor = false;
-  public canCreate = false;
-  public canEdit = false;
-  public canDelete = false;
-  public canExport = false;
-  public isReadOnly = false;
+
+  // Permission signals - computed wrappers for lazy evaluation after PermissionService initialization
+  // Automatically update when user authentication state changes
+  readonly canCreate = computed(() => this.permissionService.canCreate());
+  readonly canEdit = computed(() => this.permissionService.canEdit());
+  readonly canDelete = computed(() => this.permissionService.canDelete());
+  readonly canExport = computed(() => this.permissionService.canExport());
+  readonly isReadOnly = computed(() => this.permissionService.isReadOnly());
+  readonly userRole = computed(() => this.permissionService.userRole());
+  readonly isAlunoOrProfessor = computed(() => this.permissionService.isAlunoOrProfessor());
   protected readonly logger: LoggerService;
   protected readonly tableExportService: TableExportService;
   protected readonly tableStateManager: TableStateManagerService;
@@ -117,6 +120,21 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   protected readonly isDesktopView = computed(() => this.breakpointService.isDesktop());
   protected readonly isMobileView = computed(() => this.breakpointService.isMobile());
   protected readonly isTabletView = computed(() => this.breakpointService.isTablet());
+
+  /**
+   * Computed signals for table state - reactive UI updates
+   */
+  readonly hasData = computed(() => this.objects.length > 0);
+  readonly hasSelectedItems = computed(() => this.selectedItems().length > 0);
+  readonly selectedCount = computed(() => this.selectedItems().length);
+  readonly isEmpty = computed(() => !this.loading() && this.objects.length === 0);
+  readonly deleteButtonLabel = computed(() => {
+    const count = this.selectedCount();
+    if (count > 0) {
+      return `Deletar ${count} ${count === 1 ? this.getEntityName() : this.getEntityPluralName()}`;
+    }
+    return `Deletar ${this.getEntityPluralName()} Selecionados`;
+  });
 
   // Enhanced configuration system
   protected readonly _tableConfigInput = input<TableConfiguration>({
@@ -199,6 +217,16 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
     // Set up debounced filtering
     this.setupDebouncedFiltering();
+
+    // Effect to update columns when permissions change
+    effect(() => {
+      // Track permission changes
+      this.isReadOnly();
+      // Update columns based on new permissions
+      if (this.tableConfig.columns) {
+        this.updateColumnsForPermissions();
+      }
+    });
   }
 
   // Public getter/setter for backward compatibility with child components
@@ -216,7 +244,6 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.initializeStateStorage();
     this.restoreTableState();
     this.initializeKeyboardShortcuts();
-    this.setupUserPermissions();
     this.setupBreakpointObserver();
     this.setupKeyboardEventListener();
 
@@ -592,13 +619,13 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       this.getVisibleColumns().length,
       this.tableConfig.expandable || false,
       this.tableConfig.selectable || false,
-      this.isReadOnly
+      this.isReadOnly()
     );
   }
 
   // Check if actions column should be shown
   shouldShowActionsColumn(): boolean {
-    return this.tableColumnManager.shouldShowActionsColumn(this.displayedColumns, this.isReadOnly);
+    return this.tableColumnManager.shouldShowActionsColumn(this.displayedColumns, this.isReadOnly());
   }
 
   openForm() {
@@ -768,19 +795,19 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.keyboardShortcutHandlers = this.tableKeyboardService.buildDefaultShortcuts({
       focusGlobalFilter: () => this.focusGlobalFilter(),
       openForm: () => {
-        if (this.canCreate && !this.isReadOnly) {
+        if (this.canCreate() && !this.isReadOnly()) {
           this.openForm();
         }
       },
       exportExcel: () => {
-        if (this.canExport) {
+        if (this.canExport()) {
           this.exportExcel();
         }
       },
       openColumnToggle: () => this.openColumnTogglePanel(),
       clearGlobalFilter: () => this.clearGlobalFilter(),
       deleteSelected: () => {
-        if (this.canDelete && this.selectedItems()?.length) {
+        if (this.canDelete() && this.selectedItems()?.length) {
           this.deleteSelectedItems();
         }
       }
@@ -977,38 +1004,10 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     });
   }
 
-  // Centralized permission setup using the permission service
-  private async setupUserPermissions(): Promise<void> {
-    try {
-      const permissions = await this.permissionService.getUserPermissions();
-
-      // Apply permissions to component properties
-      this.canCreate = permissions.canCreate;
-      this.canEdit = permissions.canEdit;
-      this.canDelete = permissions.canDelete;
-      this.canExport = permissions.canExport;
-      this.isReadOnly = permissions.isReadOnly;
-      this.userRole = permissions.userRole;
-      this.isAlunoOrProfessor = permissions.isAlunoOrProfessor;
-
-      // Update columns based on permissions
-      this.updateColumnsForPermissions();
-    } catch (error) {
-      this.logger.error('Error setting up user permissions', error);
-      // Default to read-only if permission setup fails
-      this.canCreate = false;
-      this.canEdit = false;
-      this.canDelete = false;
-      this.canExport = false;
-      this.isReadOnly = true;
-      this.userRole = 'GUEST';
-      this.isAlunoOrProfessor = true;
-    }
-  }
 
   // Update columns based on user permissions
   private updateColumnsForPermissions(): void {
-    this.tableColumnManager.updateColumnsForPermissions(this.tableConfig.columns, this.isReadOnly);
+    this.tableColumnManager.updateColumnsForPermissions(this.tableConfig.columns, this.isReadOnly());
     this.updateDisplayedColumns();
     this.saveTableState();
   }

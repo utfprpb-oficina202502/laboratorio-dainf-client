@@ -46,7 +46,6 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   contextMenuItems: MenuItem[] = [];
   selectedItem!: Item;
 
-  isAlunoOrProfessor = false;
   reservasItem: Reserva[] = [];
   dialogReservaitem = false;
   displayedColumnsReserva = ["dataRetirada", "qtde"];
@@ -178,17 +177,13 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   }
 
   postFindAll(): void {
-    this.loginService
-      .userLoggedIsAlunoOrProfessor()
-      .then((value) => {
-        this.isAlunoOrProfessor = value;
-        this.cdr?.markForCheck();
-      });
+    // No longer needed - isAlunoOrProfessor is now a computed signal from base class
+    // that automatically updates when user changes
   }
 
-  async openOptions(event: Event, item: Item): Promise<void> {
+  openOptions(event: Event, item: Item): void {
     this.selectedItem = item;
-    const isAlunoOrProfessor = await this.loginService.userLoggedIsAlunoOrProfessor();
+    const isAlunoOrProfessor = this.isAlunoOrProfessor();
     const isMobile = !this.breakpointService.isDesktop();
 
     this.contextMenuItems = [];

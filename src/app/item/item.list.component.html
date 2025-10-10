@@ -9,7 +9,7 @@
     <ng-template pTemplate="content">
       <app-prime-crud-toolbar [table]="dt" [list]="self">
         <ng-template #toolbarStartTemplate>
-          @if (!isAlunoOrProfessor) {
+          @if (!isAlunoOrProfessor()) {
             <app-novo (novoClick)="openForm()"></app-novo>
           }
         </ng-template>
@@ -59,7 +59,7 @@
               @if (tableConfig.expandable) {
                 <th scope="col" class="w-3rem" [attr.aria-label]="'Alternar detalhes'"></th>
               }
-              @if (!isReadOnly && tableConfig.selectable !== false) {
+              @if (!isReadOnly() && tableConfig.selectable !== false) {
                 <th scope="col" class="w-3rem" [attr.aria-label]="'Selecao de itens'">
                   <p-tableHeaderCheckbox [attr.aria-label]="'Selecionar todos os itens'"></p-tableHeaderCheckbox>
                 </th>
@@ -100,7 +100,7 @@
                   </button>
                 </td>
               }
-              @if (!isReadOnly && tableConfig.selectable !== false) {
+              @if (!isReadOnly() && tableConfig.selectable !== false) {
                 <td class="w-3rem">
                   <p-tableCheckbox
                     [value]="row"
@@ -117,9 +117,9 @@
                   @switch (column.field) {
                     @case ('actions') {
                       <app-action-buttons
-                        [showEdit]="row.id !== 1 && !isAlunoOrProfessor && canEdit"
-                        [showDelete]="row.id !== 1 && !isAlunoOrProfessor && canDelete"
-                        [showView]="row.id !== 1 && isAlunoOrProfessor"
+                        [showEdit]="row.id !== 1 && !isAlunoOrProfessor() && canEdit()"
+                        [showDelete]="row.id !== 1 && !isAlunoOrProfessor() && canDelete()"
+                        [showView]="row.id !== 1 && isAlunoOrProfessor()"
                         [editTooltip]="'Editar item'"
                         [deleteTooltip]="'Remover item'"
                         [viewTooltip]="'Visualizar item'"

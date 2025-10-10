@@ -1,7 +1,7 @@
-import {inject, Injectable} from "@angular/core";
+import {computed, inject, Injectable, signal} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree,} from "@angular/router";
-import {BehaviorSubject, firstValueFrom, Observable, of, throwError} from "rxjs";
+import {Observable, of, throwError} from "rxjs";
 import {Usuario} from "../usuario/usuario";
 import {environment} from "../../environments/environment";
 import {catchError, finalize, map, shareReplay, tap} from "rxjs/operators";
@@ -18,9 +18,29 @@ export class LoginService {
   private readonly storageService = inject(StorageService);
 
   url: string;
-  isAuthenticated = new BehaviorSubject<boolean>(this.hasStoredAuth());
+
+  // Signals para estado reativo - substituem BehaviorSubjects
+  private readonly _isAuthenticated = signal<boolean>(this.hasStoredAuth());
+  // Public readonly signals para consumo externo
+  readonly isAuthenticated = this._isAuthenticated.asReadonly();
+  private readonly _currentUser = signal<Usuario | null>(this.loadUserFromStorage());
+  readonly currentUser = this._currentUser.asReadonly();
+
+  // Computed signals para valores derivados
+  readonly userRole = computed(() => {
+    const user = this._currentUser();
+    const roles = user?.authorities || user?.permissoes || [];
+    return roles.length > 0 ? roles[0].nome : 'GUEST';
+  });
+
+  readonly isAlunoOrProfessor = computed(() => {
+    const user = this._currentUser();
+    const userRoles = user?.authorities || user?.permissoes || [];
+    const roles = Array.isArray(userRoles) ? userRoles.map((p: Permissao) => p.nome) : [];
+    return !roles.some((role) => role === 'ROLE_ADMINISTRADOR' || role === 'ROLE_LABORATORISTA');
+  });
+
   isRunningRequest = false;
-  private readonly currentUserSubject = new BehaviorSubject<Usuario | null>(this.loadUserFromStorage());
   private currentUserRequest$: Observable<Usuario> | null = null;
   private authValidation$: Observable<boolean> | null = null;
 
@@ -42,7 +62,7 @@ export class LoginService {
       return of(false);
     }
 
-    const hasCachedUser = !!(this.currentUserSubject.value || this.loadUserFromStorage());
+    const hasCachedUser = !!(this._currentUser() || this.loadUserFromStorage());
     const hasToken = this.hasValidToken();
 
     if (hasCachedUser && hasToken) {
@@ -61,9 +81,9 @@ export class LoginService {
       tap((user) => {
         if (user) {
           this.persistUser(user);
-          this.currentUserSubject.next(user);
+          this._currentUser.set(user);
         }
-        this.isAuthenticated.next(true);
+        this._isAuthenticated.set(true);
         this.redirectIfProfileIncomplete(route);
       }),
       map(() => true),
@@ -84,7 +104,7 @@ export class LoginService {
 
   getCurrentUser(options: { forceRefresh?: boolean } = {}): Observable<Usuario> {
     const forceRefresh = options.forceRefresh ?? false;
-    const cached = this.currentUserSubject.value;
+    const cached = this._currentUser();
 
     if (!forceRefresh && cached) {
       return of(cached);
@@ -102,7 +122,7 @@ export class LoginService {
     const request$ = this.usuarioService.findByUsername(username).pipe(
       tap((user) => {
         this.persistUser(user);
-        this.currentUserSubject.next(user);
+        this._currentUser.set(user);
       }),
       finalize(() => {
         this.currentUserRequest$ = null;
@@ -118,10 +138,10 @@ export class LoginService {
     this.storageService.removeItem("token");
     this.storageService.removeItem("username");
     this.persistUser(null);
-    this.currentUserSubject.next(null);
+    this._currentUser.set(null);
     this.currentUserRequest$ = null;
     this.authValidation$ = null;
-    this.isAuthenticated.next(false);
+    this._isAuthenticated.set(false);
     this.router.navigate(["/login"]);
   }
 
@@ -150,15 +170,16 @@ export class LoginService {
     return this.getCurrentUser({ forceRefresh: true });
   }
 
-  private redirectIfProfileIncomplete(route: ActivatedRouteSnapshot) {
-    const user = this.currentUserSubject.value || this.loadUserFromStorage();
-    if (!user) {
-      return;
+  hasAnyRole(componentRoles: string[]): boolean {
+    const loggedUser = this._currentUser() || this.loadUserFromStorage();
+    if (loggedUser !== null && loggedUser !== undefined) {
+      const userRoles = loggedUser.authorities || loggedUser.permissoes || [];
+      if (Array.isArray(userRoles)) {
+        return userRoles.some((p: Permissao) => componentRoles.includes(p.nome));
+      }
     }
-    const firstSegment = route?.url?.length ? route.url[0].path || '' : '';
-    if (user.documento === '' && firstSegment && !firstSegment.includes('usuario')) {
-      this.router.navigate([`/usuario/edit/${user.id}`]);
-    }
+    this.logout();
+    return false;
   }
 
   /**
@@ -184,23 +205,13 @@ export class LoginService {
     );
   }
 
-  hasAnyRole(componentRoles: string[]): boolean {
-    const loggedUser = this.currentUserSubject.value || this.loadUserFromStorage();
-    if (loggedUser !== null && loggedUser !== undefined) {
-      const userRoles = loggedUser.authorities || loggedUser.permissoes || [];
-      if (Array.isArray(userRoles)) {
-        return userRoles.some((p: Permissao) => componentRoles.includes(p.nome));
-      }
-    }
-    this.logout();
-    return false;
+  async userLoggedIsAlunoOrProfessor(): Promise<boolean> {
+    // Usa computed signal para melhor performance
+    return this.isAlunoOrProfessor();
   }
 
-  async userLoggedIsAlunoOrProfessor(): Promise<boolean> {
-    const user = await firstValueFrom(this.getCurrentUser());
-    const userRoles = user?.authorities || user?.permissoes || [];
-    const roles = Array.isArray(userRoles) ? userRoles.map((p: Permissao) => p.nome) : [];
-    return !roles.some((role) => role === 'ROLE_ADMINISTRADOR' || role === 'ROLE_LABORATORISTA');
+  setAuthenticated() {
+    this._isAuthenticated.set(true);
   }
 
   private hasStoredAuth(): boolean {
@@ -213,7 +224,14 @@ export class LoginService {
     return this.http.post<string>(this.url, usuario, { responseType: "text" as "json" });
   }
 
-  setAuthenticated() {
-    this.isAuthenticated.next(true);
+  private redirectIfProfileIncomplete(route: ActivatedRouteSnapshot) {
+    const user = this._currentUser() || this.loadUserFromStorage();
+    if (!user) {
+      return;
+    }
+    const firstSegment = route?.url?.length ? route.url[0].path || '' : '';
+    if (user.documento === '' && firstSegment && !firstSegment.includes('usuario')) {
+      this.router.navigate([`/usuario/edit/${user.id}`]);
+    }
   }
 }

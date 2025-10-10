@@ -90,14 +90,13 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
   ngOnInit(): void {
     super.ngOnInit();
 
-    this.loginService.userLoggedIsAlunoOrProfessor().then(value => {
-      this.isAlunoOrProfessor = value;
-      if (this.isAlunoOrProfessor) {
-        this.findAllByUsername();
-      } else {
-        this.findAll();
-      }
-    });
+    // isAlunoOrProfessor is now a computed signal from base class
+    // Check permission and load appropriate data
+    if (this.isAlunoOrProfessor()) {
+      this.findAllByUsername();
+    } else {
+      this.findAll();
+    }
   }
 
   private configureTable(): void {

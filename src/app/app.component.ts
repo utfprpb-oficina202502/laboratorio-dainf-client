@@ -3,7 +3,8 @@ import {
   ChangeDetectorRef,
   Component,
   inject,
-  OnDestroy
+  OnDestroy,
+  signal
 } from '@angular/core';
 import {
   NavigationCancel,
@@ -55,8 +56,10 @@ export class AppComponent implements OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
 
   title = 'tcc-client';
-  isAuthenticated = false;
-  isNavigating = false;
+  // Signal para estado de navegação - atualização automática com OnPush
+  readonly isNavigating = signal<boolean>(false);
+  // Signal direto do LoginService - sem subscription necessária
+  protected readonly isAuthenticated = this.loginService.isAuthenticated;
   subscription!: Subscription;
   private readonly pwaService = inject(PwaService);
   // BFCache cleanup subscriptions
@@ -68,13 +71,7 @@ export class AppComponent implements OnDestroy {
     // NOSONAR: Mesmo acima
     void this.pwaService;
 
-    this.loginService.isAuthenticated.asObservable()
-    .subscribe({
-      next: (authenticated) => {
-        this.isAuthenticated = authenticated;
-        this.cdr?.markForCheck();
-      }
-    });
+    // Não precisa mais de subscription - isAuthenticated é signal direto
     this.buildSubscriptionEvent();
     this.setupBFCache();
     this.setupPWA();
@@ -88,11 +85,11 @@ export class AppComponent implements OnDestroy {
     this.subscription = this.router.events.subscribe({
       next: (event) => {
         if (event instanceof NavigationStart) {
-          this.isNavigating = true;
-          this.cdr?.markForCheck();
+          this.isNavigating.set(true);
+          // markForCheck removido - signal atualiza automaticamente com OnPush
         } else if (event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError) {
-          this.isNavigating = false;
-          this.cdr?.markForCheck();
+          this.isNavigating.set(false);
+          // markForCheck removido - signal atualiza automaticamente com OnPush
           browserChange.next(true);
         }
       }
@@ -128,10 +125,11 @@ export class AppComponent implements OnDestroy {
     // Handle page restoration from BFCache
     const restoredHandler = this.bfCacheService.onRestored(() => {
       // Refresh authentication state if needed
-      if (this.isAuthenticated) {
+      if (this.isAuthenticated()) {
         // Re-trigger authentication check to ensure session is still valid
         this.loginService.refreshCurrentUser().subscribe({
           next: () => {
+            // Signal atualiza automaticamente, mas mantemos markForCheck para garantir
             this.cdr?.markForCheck();
           },
           error: () => {
@@ -139,9 +137,6 @@ export class AppComponent implements OnDestroy {
           }
         });
       }
-
-      // Trigger change detection to refresh UI
-      this.cdr?.markForCheck();
     });
     this.bfCacheCleanupHandlers.push(restoredHandler);
 
