@@ -840,7 +840,11 @@ export class ChartService {
   }
 
   private updateAllChartsTheme(): void {
-    const {am5, am5xy, am5percent} = this.chartModules;
+    // Retornar cedo se módulos não estão carregados ainda
+    if (!this._chartModules) {
+      return;
+    }
+    const {am5, am5xy, am5percent} = this._chartModules;
 
     this.charts.forEach((root, containerId) => {
       // Update container background immediately to prevent flash
