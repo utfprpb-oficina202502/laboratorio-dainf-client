@@ -156,7 +156,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
    * Usage in template: @if (isDesktopView()) { ... }
    */
   protected readonly isDesktopView = computed(() => this.breakpointService.isDesktop());
-  private destroy$ = new Subject<void>();
+  private readonly destroy$ = new Subject<void>();
 
   ngOnInit(): void {
     this.buildMenu();
