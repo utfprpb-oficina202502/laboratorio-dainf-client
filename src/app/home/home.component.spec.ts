@@ -9,6 +9,7 @@ import {of} from 'rxjs';
 import {DashboardEmprestimoCountRange} from './dashboard/dashboardEmprestimoCountRange';
 import {provideAnimationsAsync} from '@angular/platform-browser/animations/async';
 import {provideRouter} from '@angular/router';
+import {MessageService} from 'primeng/api';
 
 describe('HomeComponent', () => {
   let component: HomeComponent;
@@ -17,6 +18,7 @@ describe('HomeComponent', () => {
   let mockLoginService: jest.Mocked<LoginService>;
   let mockChartService: jest.Mocked<ChartService>;
   let mockLoggerService: jest.Mocked<LoggerService>;
+  let mockMessageService: jest.Mocked<MessageService>;
 
   beforeEach(async () => {
     // Criar mocks dos serviços
@@ -43,6 +45,10 @@ describe('HomeComponent', () => {
       error: jest.fn()
     } as any;
 
+    mockMessageService = {
+      add: jest.fn()
+    } as any;
+
     // Configurar retornos padrão
     mockLoginService.userLoggedIsAlunoOrProfessor.mockResolvedValue(false);
     mockHomeService.findDadosEmprestimoCountInRange.mockReturnValue(of(new DashboardEmprestimoCountRange()));
@@ -56,7 +62,8 @@ describe('HomeComponent', () => {
         {provide: HomeService, useValue: mockHomeService},
         {provide: LoginService, useValue: mockLoginService},
         {provide: ChartService, useValue: mockChartService},
-        {provide: LoggerService, useValue: mockLoggerService}
+        {provide: LoggerService, useValue: mockLoggerService},
+        {provide: MessageService, useValue: mockMessageService}
       ]
     }).compileComponents();
 
@@ -76,7 +83,10 @@ describe('HomeComponent', () => {
     });
 
     afterEach(() => {
-      document.body.removeChild(mockWrapper);
+      // Verificar se o elemento está no DOM antes de remover
+      if (mockWrapper && mockWrapper.parentNode) {
+        document.body.removeChild(mockWrapper);
+      }
     });
 
     it('deve colocar o wrapper em fullscreen quando não está em fullscreen', async () => {

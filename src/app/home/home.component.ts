@@ -20,6 +20,7 @@ import {LoginService} from "../login/login.service";
 import {DateUtil} from "../framework/util/dateUtil";
 import {ChartService} from "../framework/charts/chart.service";
 import {LoggerService} from "../framework/services/logger.service";
+import {MessageService} from 'primeng/api';
 
 // PrimeNG
 import {DialogModule} from 'primeng/dialog';
@@ -79,6 +80,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   protected readonly hasPie1ChartData = signal(false);
   protected readonly hasPie2ChartData = signal(false);
   private readonly logger = inject(LoggerService);
+  private readonly messageService = inject(MessageService);
   // Computed - Derived State
   protected readonly disableBtnFiltrar = computed(() =>
     !this.dtIniFiltro() || !this.dtFimFiltro()
@@ -284,42 +286,55 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           return;
         }
 
-        setTimeout(() => {
+        setTimeout(async () => {
           if (this.destroyed || !this.hasDashboardData()) {
             return;
           }
-          // Create charts using the new chart service
-          this.chartService.createLineChart({
-            containerId: 'chartdiv2',
-            data: byDayProcessed,
-            dateField: '_dtParsed',
-            valueField: 'qtde',
-            noDataMessage: 'Nenhum empréstimo diário registrado no período.'
-          });
+          // Create charts using the new chart service (agora com carregamento dinâmico)
+          try {
+            await Promise.all([
+              this.chartService.createLineChart({
+                containerId: 'chartdiv2',
+                data: byDayProcessed,
+                dateField: '_dtParsed',
+                valueField: 'qtde',
+                noDataMessage: 'Nenhum empréstimo diário registrado no período.'
+              }),
 
-          this.chartService.createBarChart({
-            containerId: 'chartdiv4',
-            data: emprestadosTop,
-            categoryField: 'item',
-            valueField: 'qtde',
-            noDataMessage: 'Nenhum item emprestado no período.'
-          });
+              this.chartService.createBarChart({
+                containerId: 'chartdiv4',
+                data: emprestadosTop,
+                categoryField: 'item',
+                valueField: 'qtde',
+                noDataMessage: 'Nenhum item emprestado no período.'
+              }),
 
-          this.chartService.createPieChart({
-            containerId: 'chartdivPie1',
-            data: adquiridosList,
-            categoryField: 'item',
-            valueField: 'qtde',
-            noDataMessage: 'Nenhum item adquirido no período.'
-          });
+              this.chartService.createPieChart({
+                containerId: 'chartdivPie1',
+                data: adquiridosList,
+                categoryField: 'item',
+                valueField: 'qtde',
+                noDataMessage: 'Nenhum item adquirido no período.'
+              }),
 
-          this.chartService.createPieChart({
-            containerId: 'chartdivPie2',
-            data: saidasList,
-            categoryField: 'item',
-            valueField: 'qtde',
-            noDataMessage: 'Nenhum item com saídas no período.'
-          });
+              this.chartService.createPieChart({
+                containerId: 'chartdivPie2',
+                data: saidasList,
+                categoryField: 'item',
+                valueField: 'qtde',
+                noDataMessage: 'Nenhum item com saídas no período.'
+              })
+            ]);
+          } catch (error) {
+            this.logger.error('Erro ao carregar gráficos', error);
+            this.hasDashboardData.set(false);
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'Gráficos indisponíveis',
+              detail: 'Não foi possível carregar os gráficos. Tente recarregar a página.',
+              life: 5000
+            });
+          }
         }, 0);
       },
       error: () => {

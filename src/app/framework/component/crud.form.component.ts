@@ -3,7 +3,6 @@ import {CrudService} from '../service/crud.service';
 import {Directive, inject, OnInit} from '@angular/core';
 import {MessageService} from 'primeng/api';
 import {BaseFormComponent} from './base.form.component';
-import Swal from 'sweetalert2';
 import {LoaderService} from '../loader/loader.service';
 import {LoginService} from '../../login/login.service';
 import {LoggerService} from '../services/logger.service';
@@ -63,13 +62,23 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
           this.object = e;
           this.postSave(() => {
             this.loaderService.hide();
-            Swal.fire('Sucesso!', 'Registro salvo com sucesso!', 'success');
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Sucesso!',
+              detail: 'Registro salvo com sucesso!',
+              life: 3000
+            });
             this.back();
           });
         },
         error: (error) => {
           this.loaderService.hide();
-          Swal.fire('Atenção!', 'Ocorreu um erro ao salvar o registro!', 'error');
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Atenção!',
+            detail: 'Ocorreu um erro ao salvar o registro!',
+            life: 5000
+          });
           this.logger.error('Error saving record', error);
         }
         });
@@ -95,7 +104,12 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
       },
       error: () => {
         this.loaderService.hide();
-        Swal.fire('Atenção!', 'Ocorreu um erro ao buscar o registro!', 'error');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Atenção!',
+          detail: 'Ocorreu um erro ao buscar o registro!',
+          life: 5000
+        });
       }
       });
   }

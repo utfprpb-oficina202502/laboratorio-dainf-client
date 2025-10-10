@@ -17,7 +17,6 @@ import {DateUtil} from '../framework/util/dateUtil';
 import {EmprestimoFilter} from './emprestimo.filter';
 import {Usuario} from '../usuario/usuario';
 import {UsuarioService} from '../usuario/usuario.service';
-import Swal from 'sweetalert2';
 import {DialogModule} from 'primeng/dialog';
 import {AutoCompleteModule} from 'primeng/autocomplete';
 import {DatePicker, DatePickerModule} from 'primeng/datepicker';
@@ -253,28 +252,34 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   }
 
   changePrazoDevolucao() {
-    Swal.fire({
-      title: `Confirmação`,
-      text: `Você realmente deseja alterar o prazo de devolução para o dia ${this.dtNovaData}`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sim',
-      cancelButtonText: 'Não'
-    }).then((result) => {
-      if (result.value) {
+    this.confirmationService.confirm({
+      message: `Você realmente deseja alterar o prazo de devolução para o dia ${this.dtNovaData}?`,
+      header: 'Confirmação',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sim',
+      rejectLabel: 'Não',
+      accept: () => {
         this.loaderService.show();
         this.emprestimoService.changePrazoDevolucao(this.idEmprestimoToChangePrazoDev, this.dtNovaData)
         .subscribe({
           next: () => {
-            Swal.fire('Sucesso!', 'Prazo de devolução alterado com sucesso!', 'success');
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Sucesso!',
+              detail: 'Prazo de devolução alterado com sucesso!',
+              life: 3000
+            });
             this.findAll();
             this.loaderService.hide();
           },
           error: () => {
             this.loaderService.hide();
-            Swal.fire('Atenção!', 'Ocorreu um erro ao alterar a data do prazo de devolução!', 'error');
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Atenção!',
+              detail: 'Ocorreu um erro ao alterar a data do prazo de devolução!',
+              life: 5000
+            });
           }
           });
       }

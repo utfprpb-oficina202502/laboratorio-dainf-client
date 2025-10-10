@@ -3,7 +3,6 @@ import {CrudService} from '../service/crud.service';
 import {computed, Directive, inject, Injector, OnDestroy, OnInit, signal} from '@angular/core';
 import {FormGroup} from '@angular/forms';
 import {MessageService} from 'primeng/api';
-import Swal from 'sweetalert2';
 import {LoaderService} from '../loader/loader.service';
 import {LoginService} from '../../login/login.service';
 import {Subject} from 'rxjs';
@@ -102,14 +101,24 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
           this.postSave(() => {
             this.loaderService.hide();
             this.isLoading.set(false);
-            Swal.fire('Sucesso!', 'Registro salvo com sucesso!', 'success');
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Sucesso!',
+              detail: 'Registro salvo com sucesso!',
+              life: 3000
+            });
             this.back();
           });
         },
         error: (error) => {
           this.loaderService.hide();
           this.isLoading.set(false);
-          Swal.fire('Atenção!', 'Ocorreu um erro ao salvar o registro!', 'error');
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Atenção!',
+            detail: 'Ocorreu um erro ao salvar o registro!',
+            life: 5000
+          });
           this.logger.error('Error saving record', error);
         },
       });
@@ -141,7 +150,12 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
       error: (error) => {
         this.loaderService.hide();
         this.isLoading.set(false);
-        Swal.fire('Atenção!', 'Ocorreu um erro ao buscar o registro!', 'error');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Atenção!',
+          detail: 'Ocorreu um erro ao buscar o registro!',
+          life: 5000
+        });
         this.logger.error('Error fetching record', error);
       },
     });

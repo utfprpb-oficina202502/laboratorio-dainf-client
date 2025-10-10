@@ -19,7 +19,6 @@ import {CrudService} from '../service/crud.service';
 import {ConfirmationService, MessageService, SortEvent} from 'primeng/api';
 import {Table, TablePageEvent, TableRowCollapseEvent, TableRowExpandEvent} from 'primeng/table';
 import {MultiSelect} from 'primeng/multiselect';
-import Swal from 'sweetalert2';
 import {Exception} from '../../exception/exception';
 import {LoaderService} from '../loader/loader.service';
 import {LoginService} from '../../login/login.service';
@@ -112,6 +111,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   protected readonly tableRowExpansionManager: TableRowExpansionManagerService;
   protected readonly storageService: StorageService;
   protected readonly breakpointService: BreakpointService;
+  private readonly exception: Exception;
 
   /**
    * Computed signals for template usage - optimized for OnPush change detection
@@ -201,6 +201,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.tableRowExpansionManager = inject(TableRowExpansionManagerService);
     this.storageService = inject(StorageService);
     this.breakpointService = inject(BreakpointService);
+    this.exception = inject(Exception);
 
     // Get ChangeDetectorRef for OnPush components (optional)
     try {
@@ -304,31 +305,34 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     });
   }
 
-  protected applyTableDefaults(): void {
-    this.tableConfig.striped = this.tableConfig.striped !== false;
-    this.tableConfig.rowHover = this.tableConfig.rowHover !== false;
-    const resizableColumns = this.tableConfig.resizableColumns !== false && this.tableConfig.resizable !== false;
-    this.tableConfig.resizableColumns = resizableColumns;
-    this.tableConfig.columnResizeMode = this.tableConfig.columnResizeMode || 'fit';
-    // Default to true for proper server-side pagination with totalRecords
-    this.tableConfig.lazy ??= true;
-    this.tableConfig.lazyLoadOnInit ??= false;
-    this.tableConfig.preloadData = this.tableConfig.preloadData !== false;
-    this.tableConfig.columnToggle = this.tableConfig.columnToggle !== false;
-    this.tableConfig.keyboardShortcuts = this.tableConfig.keyboardShortcuts !== false;
-    this.tableConfig.stateful = this.tableConfig.stateful !== false;
-    this.tableConfig.stateStorage = this.tableConfig.stateStorage || 'local';
-    this.tableConfig.expandable = this.tableConfig.expandable === true;
-    if (this.tableConfig.expandable) {
-      this.tableConfig.expandMode = this.tableConfig.expandMode || 'single';
-      this.tableConfig.rowExpansionKey = this.tableConfig.rowExpansionKey || this.tableConfig.trackByField || 'id';
-    }
-    this.tableConfig.stateKey = this.tableConfig.stateKey || this.defaultStateKey;
-    this.tableConfig.pageSize = this.tableConfig.pageSize || this.pageSize;
-    this.tableConfig.pageSizeOptions = this.tableConfig.pageSizeOptions || [5, 10, 25, 50, 100];
-    this.tableConfig.globalFilter = this.tableConfig.globalFilter !== false;
-    this.pageSize = this.tableConfig.pageSize || 10;
-    this.rows = this.pageSize;
+  delete(id: ID) {
+    this.confirmationService.confirm({
+      message: 'Tem certeza que deseja remover o registro? A ação não poderá ser desfeita.',
+      header: 'Confirmação',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sim',
+      rejectLabel: 'Não',
+      accept: () => {
+        this.loaderService.show();
+        this.service.delete(id)
+        .subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Sucesso!',
+              detail: 'Registro excluído com sucesso!',
+              life: 3000
+            });
+            this.findAll();
+            this.loaderService.hide();
+          },
+          error: (error) => {
+            this.loaderService.hide();
+            this.showError(error);
+          }
+        });
+      }
+    });
   }
 
   onColumnToggleChange(selectedFields: string[]): void {
@@ -409,31 +413,8 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.saveTableState();
   }
 
-  delete(id: ID) {
-    Swal.fire({
-      title: `Tem certeza que deseja remover o registro?`,
-      text: 'A ação não poderá ser desfeita.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sim',
-      cancelButtonText: 'Não'
-    }).then((result) => {
-      if (result.value) {
-        this.loaderService.show();
-        this.service.delete(id)
-        .subscribe({
-          next: () => {
-            Swal.fire('Sucesso!', 'Registro excluído com sucesso!', 'success');
-            this.findAll();
-            this.loaderService.hide();
-          },
-          error: (error) => {
-            this.loaderService.hide();
-            this.showError(error);
-          }
-        });
-      }
-    });
+  showError(error: unknown): void {
+    this.exception.addMessage(error);
   }
 
   postFindAll(): void {
@@ -478,10 +459,6 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.loadData();
   }
 
-  showError(error: unknown): void {
-    Exception.addMessage(error);
-  }
-
   // Bulk delete functionality
   deleteSelectedItems() {
     const items = this.selectedItems();
@@ -495,15 +472,13 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     }
 
     const itemCount = items.length;
-    Swal.fire({
-      title: `Tem certeza que deseja remover ${itemCount} registro(s)?`,
-      text: 'A ação não poderá ser desfeita.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sim',
-      cancelButtonText: 'Não'
-    }).then((result) => {
-      if (result.value) {
+    this.confirmationService.confirm({
+      message: `Tem certeza que deseja remover ${itemCount} registro(s)? A ação não poderá ser desfeita.`,
+      header: 'Confirmação',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sim',
+      rejectLabel: 'Não',
+      accept: () => {
         this.loaderService.show();
 
         // Extract IDs from selected items
@@ -513,6 +488,32 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
         this.deleteItemsSequentially(ids, 0, itemCount);
       }
     });
+  }
+
+  protected applyTableDefaults(): void {
+    this.tableConfig.striped = this.tableConfig.striped !== false;
+    this.tableConfig.rowHover = this.tableConfig.rowHover !== false;
+    this.tableConfig.resizableColumns = this.tableConfig.resizableColumns !== false && this.tableConfig.resizable !== false;
+    this.tableConfig.columnResizeMode = this.tableConfig.columnResizeMode || 'fit';
+    // Default to true for proper server-side pagination with totalRecords
+    this.tableConfig.lazy ??= true;
+    this.tableConfig.lazyLoadOnInit ??= false;
+    this.tableConfig.preloadData = this.tableConfig.preloadData !== false;
+    this.tableConfig.columnToggle = this.tableConfig.columnToggle !== false;
+    this.tableConfig.keyboardShortcuts = this.tableConfig.keyboardShortcuts !== false;
+    this.tableConfig.stateful = this.tableConfig.stateful !== false;
+    this.tableConfig.stateStorage = this.tableConfig.stateStorage || 'local';
+    this.tableConfig.expandable = this.tableConfig.expandable === true;
+    if (this.tableConfig.expandable) {
+      this.tableConfig.expandMode = this.tableConfig.expandMode || 'single';
+      this.tableConfig.rowExpansionKey = this.tableConfig.rowExpansionKey || this.tableConfig.trackByField || 'id';
+    }
+    this.tableConfig.stateKey = this.tableConfig.stateKey || this.defaultStateKey;
+    this.tableConfig.pageSize = this.tableConfig.pageSize || this.pageSize;
+    this.tableConfig.pageSizeOptions = this.tableConfig.pageSizeOptions || [5, 10, 25, 50, 100];
+    this.tableConfig.globalFilter = this.tableConfig.globalFilter !== false;
+    this.pageSize = this.tableConfig.pageSize || 10;
+    this.rows = this.pageSize;
   }
 
   // CSV Export using PrimeNG built-in functionality
@@ -963,12 +964,12 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
               // Handle null/undefined
               if (aVal === null && bVal === null) return 0;
-              if (aVal === null || aVal === undefined) return 1 * this.sortOrder;
+              if (aVal === null || aVal === undefined) return this.sortOrder;
               if (bVal === null || bVal === undefined) return -1 * this.sortOrder;
 
               // Compare values (works for strings, numbers, dates)
               if (aVal < bVal) return -1 * this.sortOrder;
-              if (aVal > bVal) return 1 * this.sortOrder;
+              if (aVal > bVal) return this.sortOrder;
               return 0;
             });
           }
@@ -985,7 +986,12 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       this.selectedItems.set([]);
       this.saveTableState();
       this.loaderService.hide();
-      Swal.fire('Sucesso!', `${total} registro(s) excluído(s) com sucesso!`, 'success');
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Sucesso!',
+        detail: `${total} registro(s) excluído(s) com sucesso!`,
+        life: 3000
+      });
       this.findAll();
       return;
     }
@@ -999,7 +1005,12 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
       error: (error) => {
           this.loaderService.hide();
           this.showError(error);
-          Swal.fire('Erro!', `Erro ao excluir alguns registros. ${currentIndex} de ${total} foram excluídos.`, 'error');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro!',
+          detail: `Erro ao excluir alguns registros. ${currentIndex} de ${total} foram excluídos.`,
+          life: 5000
+        });
         }
     });
   }

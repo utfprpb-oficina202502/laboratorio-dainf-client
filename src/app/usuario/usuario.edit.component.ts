@@ -16,7 +16,6 @@ import {
   PrimeReactiveCrudFormComponent
 } from '../framework/component/prime-reactive-crud.form.component';
 import {Permissao} from './permissao';
-import Swal from 'sweetalert2';
 
 // PrimeNG Modules
 import {CardModule} from 'primeng/card';
@@ -119,13 +118,23 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
           this.storageService.setItem('userLogged', JSON.stringify(savedObject));
           this.loaderService.hide();
           this.isLoading.set(false);
-          Swal.fire('Sucesso!', 'Dados atualizados com sucesso!', 'success');
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Sucesso!',
+            detail: 'Dados atualizados com sucesso!',
+            life: 3000
+          });
           this.back();
         },
         error: (error) => {
           this.loaderService.hide();
           this.isLoading.set(false);
-          Swal.fire('Atenção!', 'Ocorreu um erro ao salvar o registro!', 'error');
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Atenção!',
+            detail: 'Ocorreu um erro ao salvar o registro!',
+            life: 5000
+          });
           this.logger.error('Erro ao trocar senha', error);
         }
       });

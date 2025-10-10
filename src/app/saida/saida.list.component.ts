@@ -4,7 +4,6 @@ import {TableColumn} from '../framework/model/table-config.interface';
 import {Saida} from './saida';
 import {SaidaService} from './saida.service';
 import {SaidaItem} from './saidaItem';
-import Swal from 'sweetalert2';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
 
@@ -144,7 +143,12 @@ export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
 
   preDelete(saida: Saida) {
     if (saida.idEmprestimo) {
-      Swal.fire('Atenção!', 'Não é possível remover um registro originado através de uma devolução.', 'info');
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Atenção!',
+        detail: 'Não é possível remover um registro originado através de uma devolução.',
+        life: 4000
+      });
     } else {
       this.delete(saida.id);
     }

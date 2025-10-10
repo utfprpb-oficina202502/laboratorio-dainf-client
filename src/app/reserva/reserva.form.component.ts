@@ -13,7 +13,6 @@ import {ItemService} from '../item/item.service';
 import {ReservaItem} from './reservaItem';
 import {ItemImage} from '../item/itemImage';
 import {environment} from 'src/environments/environment';
-import Swal from 'sweetalert2';
 import {BreakpointService} from '../framework/services/breakpoint.service';
 
 // PrimeNG
@@ -212,7 +211,12 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
           this.images.set(images);
           this.dialogImagens.set(true);
         } else {
-          Swal.fire('Ops...', 'Esse item não possui imagens.', 'info');
+          this.messageService.add({
+            severity: 'info',
+            summary: 'Ops...',
+            detail: 'Esse item não possui imagens.',
+            life: 4000
+          });
         }
       },
       error: () => {

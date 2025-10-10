@@ -1,13 +1,15 @@
 import {effect, inject, Injectable} from '@angular/core';
-import * as am5 from '@amcharts/amcharts5';
-import * as am5xy from '@amcharts/amcharts5/xy';
-import * as am5percent from '@amcharts/amcharts5/percent';
-import am5themes_Animated from '@amcharts/amcharts5/themes/Animated';
-import am5locales_pt_BR from '@amcharts/amcharts5/locales/pt_BR';
 import {ThemeService} from '../services/theme.service';
 import {chartColorSchemes, ChartColorsConfig} from './chart-colors.config';
 import {LoggerService} from '../services/logger.service';
 import {BreakpointService} from '../services/breakpoint.service';
+
+// Type imports para manter a tipagem sem forçar o bundling
+import type * as am5Types from '@amcharts/amcharts5';
+import type * as am5xyTypes from '@amcharts/amcharts5/xy';
+import type * as am5percentTypes from '@amcharts/amcharts5/percent';
+import type am5themes_AnimatedTypes from '@amcharts/amcharts5/themes/Animated';
+import type am5locales_pt_BRTypes from '@amcharts/amcharts5/locales/pt_BR';
 
 export interface ChartConfig {
   containerId: string;
@@ -101,8 +103,35 @@ export class ChartService {
   private readonly themeService = inject(ThemeService);
   private readonly logger = inject(LoggerService);
   private readonly breakpointService = inject(BreakpointService);
-  private readonly charts = new Map<string, am5.Root>();
+  private readonly charts = new Map<string, am5Types.Root>();
   private chartColors: ChartColorsConfig = chartColorSchemes.light;
+
+  // Cache para módulos carregados dinamicamente
+  private _chartModules: {
+    am5: typeof am5Types;
+    am5xy: typeof am5xyTypes;
+    am5percent: typeof am5percentTypes;
+    am5themes_Animated: typeof am5themes_AnimatedTypes;
+    am5locales_pt_BR: typeof am5locales_pt_BRTypes;
+  } | null = null;
+
+  /**
+   * Acessa os módulos de gráficos com garantia de tipo
+   * Lança erro se módulos não estiverem carregados
+   */
+  private get chartModules(): {
+    am5: typeof am5Types;
+    am5xy: typeof am5xyTypes;
+    am5percent: typeof am5percentTypes;
+    am5themes_Animated: typeof am5themes_AnimatedTypes;
+    am5locales_pt_BR: typeof am5locales_pt_BRTypes;
+  } {
+    if (!this._chartModules) {
+      this.logger.warn('Tentativa de acessar módulos de gráficos antes da inicialização');
+      throw new Error('Módulos de gráficos não inicializados. Crie um gráfico primeiro.');
+    }
+    return this._chartModules;
+  }
 
   constructor() {
     const themeMode = this.themeService.themeMode;
@@ -117,8 +146,9 @@ export class ChartService {
     }
   }
 
-  createLineChart(config: LineChartConfig): am5xy.XYChart | null {
-    const root = this.createRoot(config.containerId);
+  async createLineChart(config: LineChartConfig): Promise<am5xyTypes.XYChart | null> {
+    const {am5, am5xy} = await this.loadChartModules();
+    const root = await this.createRoot(config.containerId);
     if (!root) return null;
 
     const breakpoints = this.getDeviceBreakpoints();
@@ -224,8 +254,9 @@ export class ChartService {
     return chart;
   }
 
-  createBarChart(config: BarChartConfig): am5xy.XYChart | null {
-    const root = this.createRoot(config.containerId);
+  async createBarChart(config: BarChartConfig): Promise<am5xyTypes.XYChart | null> {
+    const {am5, am5xy} = await this.loadChartModules();
+    const root = await this.createRoot(config.containerId);
     if (!root) return null;
 
     const breakpoints = this.getDeviceBreakpoints();
@@ -343,8 +374,9 @@ export class ChartService {
     return chart;
   }
 
-  createPieChart(config: PieChartConfig): am5percent.PieChart | null {
-    const root = this.createRoot(config.containerId);
+  async createPieChart(config: PieChartConfig): Promise<am5percentTypes.PieChart | null> {
+    const {am5, am5percent} = await this.loadChartModules();
+    const root = await this.createRoot(config.containerId);
     if (!root) return null;
 
     const chart = root.container.children.push(
@@ -460,7 +492,12 @@ export class ChartService {
     return chart;
   }
 
-  updateChartData(containerId: string, data: unknown[]): void {
+  async updateChartData(containerId: string, data: unknown[]): Promise<void> {
+    if (!this._chartModules) {
+      return; // Charts not yet loaded
+    }
+    const {am5xy, am5percent} = this._chartModules;
+
     const root = this.charts.get(containerId);
     if (!root) return;
 
@@ -472,6 +509,45 @@ export class ChartService {
       if (series) {
         series.data.setAll(data);
       }
+    }
+  }
+
+  /**
+   * Carrega dinamicamente os módulos amCharts5 apenas quando necessário
+   * Cacheia os módulos após o primeiro carregamento
+   */
+  private async loadChartModules(): Promise<{
+    am5: typeof am5Types;
+    am5xy: typeof am5xyTypes;
+    am5percent: typeof am5percentTypes;
+    am5themes_Animated: typeof am5themes_AnimatedTypes;
+    am5locales_pt_BR: typeof am5locales_pt_BRTypes;
+  }> {
+    if (this._chartModules) {
+      return this._chartModules;
+    }
+
+    try {
+      const [am5, am5xy, am5percent, am5themes_Animated, am5locales_pt_BR] = await Promise.all([
+        import('@amcharts/amcharts5'),
+        import('@amcharts/amcharts5/xy'),
+        import('@amcharts/amcharts5/percent'),
+        import('@amcharts/amcharts5/themes/Animated').then(m => m.default),
+        import('@amcharts/amcharts5/locales/pt_BR').then(m => m.default)
+      ]);
+
+      this._chartModules = {
+        am5: am5 as typeof am5Types,
+        am5xy: am5xy as typeof am5xyTypes,
+        am5percent: am5percent as typeof am5percentTypes,
+        am5themes_Animated: am5themes_Animated,
+        am5locales_pt_BR: am5locales_pt_BR
+      };
+
+      return this._chartModules;
+    } catch (error) {
+      this.logger.error('Falha ao carregar módulos amCharts5', error);
+      throw error;
     }
   }
 
@@ -496,11 +572,12 @@ export class ChartService {
   }
 
   private addChartCursor(
-    chart: am5xy.XYChart,
-    xAxis: am5xy.Axis<am5xy.AxisRenderer>,
-    yAxis: am5xy.Axis<am5xy.AxisRenderer>,
+    chart: am5xyTypes.XYChart,
+    xAxis: am5xyTypes.Axis<am5xyTypes.AxisRenderer>,
+    yAxis: am5xyTypes.Axis<am5xyTypes.AxisRenderer>,
     behavior: 'none' | 'zoomX' | 'zoomY' | 'zoomXY' | 'selectX' | 'selectY' | 'selectXY'
   ): void {
+    const {am5xy} = this.chartModules;
     const cursor = chart.set('cursor', am5xy.XYCursor.new(chart.root, {
       behavior: behavior,
       xAxis: xAxis,
@@ -520,9 +597,11 @@ export class ChartService {
   }
 
   private createScrollbarAxisRenderer(
-    root: am5.Root,
+    root: am5Types.Root,
     minGridDistance: number
-  ): { xRenderer: am5xy.AxisRendererX; yRenderer: am5xy.AxisRendererY } {
+  ): { xRenderer: am5xyTypes.AxisRendererX; yRenderer: am5xyTypes.AxisRendererY } {
+    const {am5xy} = this.chartModules;
+
     const xRenderer = am5xy.AxisRendererX.new(root, {minGridDistance});
     xRenderer.labels.template.set('visible', false);
 
@@ -533,8 +612,8 @@ export class ChartService {
   }
 
   private addXScrollbar(
-    chart: am5xy.XYChart,
-    root: am5.Root,
+    chart: am5xyTypes.XYChart,
+    root: am5Types.Root,
     breakpoints: DeviceBreakpoints,
     config: {
       type: 'line' | 'bar';
@@ -544,6 +623,8 @@ export class ChartService {
       categoryField?: string;
     }
   ): void {
+    const {am5, am5xy} = this.chartModules;
+
     if (breakpoints.isDesktop) {
       const scrollbarX = am5xy.XYChartScrollbar.new(root, {
         orientation: 'horizontal',
@@ -623,14 +704,18 @@ export class ChartService {
     }
   }
 
-  private addYScrollbar(chart: am5xy.XYChart, root: am5.Root): void {
+  private addYScrollbar(chart: am5xyTypes.XYChart, root: am5Types.Root): void {
+    const {am5} = this.chartModules;
+
     const scrollbarY = am5.Scrollbar.new(root, {
       orientation: 'vertical'
     });
     chart.set('scrollbarY', scrollbarY);
   }
 
-  private createRoot(containerId: string): am5.Root | null {
+  private async createRoot(containerId: string): Promise<am5Types.Root | null> {
+    const {am5, am5themes_Animated, am5locales_pt_BR} = await this.loadChartModules();
+
     this.disposeChart(containerId);
 
     try {
@@ -713,7 +798,9 @@ export class ChartService {
     }).filter(item => !Number.isNaN((item as Record<string, unknown>)[dateField] as number));
   }
 
-  private addNoDataLabel(root: am5.Root, chart: am5.Chart, message: string): void {
+  private addNoDataLabel(root: am5Types.Root, chart: am5Types.Chart, message: string): void {
+    const {am5} = this.chartModules;
+
     chart.children.push(
       am5.Label.new(root, {
         text: message,
@@ -729,7 +816,9 @@ export class ChartService {
     );
   }
 
-  private applyThemeToChart(root: am5.Root, chart: am5.Chart): void {
+  private applyThemeToChart(root: am5Types.Root, chart: am5Types.Chart): void {
+    const {am5, am5xy} = this.chartModules;
+
     chart.set('background', am5.Rectangle.new(root, {
       fill: am5.color(this.chartColors.background),
       fillOpacity: 1
@@ -751,6 +840,8 @@ export class ChartService {
   }
 
   private updateAllChartsTheme(): void {
+    const {am5, am5xy, am5percent} = this.chartModules;
+
     this.charts.forEach((root, containerId) => {
       // Update container background immediately to prevent flash
       const container = document.getElementById(containerId);
@@ -759,32 +850,38 @@ export class ChartService {
       }
 
       const chart = root.container.children.getIndex(0);
-      if (chart instanceof am5.Chart) {
-        this.applyThemeToChart(root, chart);
+      if (!chart || !(chart instanceof am5.Chart)) {
+        return;
+      }
 
-        if (chart instanceof am5xy.XYChart) {
-          chart.series.each((series) => {
-            if (series instanceof am5xy.LineSeries) {
-              series.set('stroke', am5.color(this.chartColors.line.stroke));
-              series.set('fill', am5.color(this.chartColors.line.fill));
-            }
-          });
-        } else if (chart instanceof am5percent.PieChart) {
-          chart.series.each((series) => {
-            series.slices.each((slice, index) => {
+      this.applyThemeToChart(root, chart);
+
+      if (chart instanceof am5xy.XYChart) {
+        chart.series.each((series: am5xyTypes.XYSeries) => {
+          if (series instanceof am5xy.LineSeries) {
+            series.set('stroke', am5.color(this.chartColors.line.stroke));
+            series.set('fill', am5.color(this.chartColors.line.fill));
+          }
+        });
+      } else if (chart instanceof am5percent.PieChart) {
+        chart.series.each((series: am5percentTypes.PercentSeries) => {
+          if ('slices' in series) {
+            // Slice type not exported by am5percent, using any with runtime type safety
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            series.slices.each((slice: any, index: number) => {
               const color = this.chartColors.pie.palette[index % this.chartColors.pie.palette.length];
               slice.set('fill', am5.color(color));
             });
-          });
-        }
-
-        chart.children.each((child) => {
-          if (child instanceof am5.Legend) {
-            child.labels.template.set('fill', am5.color(this.chartColors.text));
-            child.valueLabels.template.set('fill', am5.color(this.chartColors.text));
           }
         });
       }
+
+      chart.children.each((child: am5Types.Sprite) => {
+        if (child instanceof am5.Legend) {
+          child.labels.template.set('fill', am5.color(this.chartColors.text));
+          child.valueLabels.template.set('fill', am5.color(this.chartColors.text));
+        }
+      });
     });
   }
 

@@ -12,7 +12,6 @@ import {ItemService} from '../item/item.service';
 import {UsuarioService} from '../usuario/usuario.service';
 import {Usuario} from '../usuario/usuario';
 import {SelectItem} from 'primeng/api';
-import Swal from 'sweetalert2';
 import {environment} from 'src/environments/environment';
 
 // PrimeNG
@@ -212,14 +211,24 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
         this.postSave(() => {
           this.loaderService.hide();
           this.isLoading.set(false);
-          Swal.fire('Sucesso!', 'Registro salvo com sucesso!', 'success');
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Sucesso!',
+            detail: 'Registro salvo com sucesso!',
+            life: 3000
+          });
           this.back();
         });
       },
       error: (error) => {
         this.loaderService.hide();
         this.isLoading.set(false);
-        Swal.fire('Atenção!', 'Ocorreu um erro ao salvar o registro!', 'error');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Atenção!',
+          detail: 'Ocorreu um erro ao salvar o registro!',
+          life: 5000
+        });
         this.logger.error('Erro ao buscar itens', error);
       }
     });

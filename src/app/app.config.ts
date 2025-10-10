@@ -6,13 +6,11 @@ import {provideServiceWorker} from '@angular/service-worker';
 import {DatePipe} from '@angular/common';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import {providePrimeNG} from 'primeng/config';
-import {CURRENCY_MASK_CONFIG} from 'ng2-currency-mask';
 
 import {routes} from './app.routes';
 import {HttpClientInterceptor} from './http-client.interceptor';
 import {LoginService} from './login/login.service';
 import {LoaderService} from './framework/loader/loader.service';
-import {CustomCurrencyMaskConfig} from './framework/util/currency.mask.config';
 import {ptBR} from '../locale/pt-BR';
 import PrimeUTFPRPreset from './theme/prime-utfpr-theme-preset';
 
@@ -93,10 +91,6 @@ export const appConfig: ApplicationConfig = {
     {
       provide: DEFAULT_CURRENCY_CODE,
       useValue: 'BRL'
-    },
-    {
-      provide: CURRENCY_MASK_CONFIG,
-      useValue: CustomCurrencyMaskConfig
     },
 
     // PrimeNG Configuration

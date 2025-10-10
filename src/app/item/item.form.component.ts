@@ -21,9 +21,9 @@ import {Grupo} from '../grupo/grupo';
 import {GrupoService} from '../grupo/grupo.service';
 import {FileUpload, FileUploadModule} from 'primeng/fileupload';
 import {environment} from '../../environments/environment';
-import Swal from 'sweetalert2';
 import {ItemImage} from './itemImage';
 import {LoggerService} from '../framework/services/logger.service';
+import {ConfirmationService} from 'primeng/api';
 
 // PrimeNG
 import {AutoCompleteCompleteEvent, AutoCompleteModule} from "primeng/autocomplete";
@@ -95,6 +95,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   private grupoSubscription?: Subscription;
   private imagesSubscription?: Subscription;
   protected readonly logger = inject(LoggerService);
+  private readonly confirmationService = inject(ConfirmationService);
 
   // Signals for component state
   protected readonly grupoList = signal<Grupo[]>([]);
@@ -310,6 +311,33 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   }
 
   /**
+   * Delete an image
+   */
+  deleteImage(image: ItemImage): void {
+    this.confirmationService.confirm({
+      message: 'Tem certeza que deseja remover a imagem? A ação não poderá ser desfeita.',
+      header: 'Confirmação',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sim',
+      rejectLabel: 'Não',
+      accept: () => {
+        this.performDeleteImage(image);
+      }
+    });
+  }
+
+  /**
+   * Cancel ongoing images request
+   */
+  private cancelImagesRequest(): void {
+    if (this.imagesSubscription && !this.imagesSubscription.closed) {
+      this.imagesSubscription.unsubscribe();
+      this.loadingImages.set(false);
+      this.loaderService.hide();
+    }
+  }
+
+  /**
    * Fetch item images
    */
   private findItemImages(): void {
@@ -331,45 +359,24 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
           this.images.set(images);
           this.dialogImagens.set(true);
         } else {
-          Swal.fire('Ops...', 'Esse item não possui imagens.', 'info');
+          this.messageService.add({
+            severity: 'info',
+            summary: 'Ops...',
+            detail: 'Esse item não possui imagens.',
+            life: 4000
+          });
         }
       },
       error: (error) => {
         this.loadingImages.set(false);
         this.loaderService.hide();
-        Swal.fire('Erro', 'Erro ao buscar imagens.', 'error');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Erro ao buscar imagens.',
+          life: 5000
+        });
         this.logger.error('Erro ao buscar imagens', error);
-      }
-    });
-  }
-
-  /**
-   * Cancel ongoing images request
-   */
-  private cancelImagesRequest(): void {
-    if (this.imagesSubscription && !this.imagesSubscription.closed) {
-      this.imagesSubscription.unsubscribe();
-      this.loadingImages.set(false);
-      this.loaderService.hide();
-    }
-  }
-
-  /**
-   * Delete an image
-   */
-  deleteImage(image: ItemImage): void {
-    Swal.fire({
-      title: 'Tem certeza que deseja remover a imagem?',
-      text: 'A ação não poderá ser desfeita.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sim',
-      cancelButtonText: 'Não'
-    }).then((result) => {
-      if (result.value) {
-        this.performDeleteImage(image);
       }
     });
   }
@@ -389,11 +396,21 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
         this.deleteImageInObject(image);
         this.loaderService.hide();
         this.dialogImagens.set(false);
-        Swal.fire('Sucesso!', 'Imagem removida com sucesso!', 'success');
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Sucesso!',
+          detail: 'Imagem removida com sucesso!',
+          life: 3000
+        });
       },
       error: (error) => {
         this.loaderService.hide();
-        Swal.fire('Atenção!', 'Ocorreu um erro ao remover a imagem', 'error');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Atenção!',
+          detail: 'Ocorreu um erro ao remover a imagem',
+          life: 5000
+        });
         this.logger.error('Erro ao remover a imagem', error);
       }
     });

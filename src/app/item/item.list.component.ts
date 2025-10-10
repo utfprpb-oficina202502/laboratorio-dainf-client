@@ -8,7 +8,6 @@ import {TableColumn} from '../framework/model/table-config.interface';
 import {MenuItem} from 'primeng/api';
 import {Popover, PopoverModule} from 'primeng/popover';
 import {ReservaService} from "../reserva/reserva.service";
-import Swal from "sweetalert2";
 import {Reserva} from "../reserva/reserva";
 import {environment} from "src/environments/environment";
 import {DialogModule} from 'primeng/dialog';
@@ -236,12 +235,22 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
           this.dialogReservaitem = true;
           this.cdr?.markForCheck();
         } else {
-          Swal.fire("Ops...", "Este item não possui nenhuma reserva.", "info");
+          this.messageService.add({
+            severity: 'info',
+            summary: 'Ops...',
+            detail: 'Este item não possui nenhuma reserva.',
+            life: 4000
+          });
         }
       },
       () => {
         this.loaderService.hide();
-        Swal.fire("Erro", "Erro ao buscar reservas do item.", "error");
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Erro ao buscar reservas do item.',
+          life: 5000
+        });
       }
     );
   }

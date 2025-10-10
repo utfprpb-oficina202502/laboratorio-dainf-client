@@ -1,8 +1,9 @@
 import {ApplicationRef, computed, inject, Injectable, signal} from '@angular/core';
 import {SwUpdate, VersionReadyEvent} from '@angular/service-worker';
 import {concat, filter, first, interval} from 'rxjs';
-import Swal from 'sweetalert2';
+import {ConfirmationService, MessageService} from 'primeng/api';
 import {LoggerService} from './logger.service';
+import {LoaderService} from '../loader/loader.service';
 
 /**
  * PWA Service - Progressive Web App Update Management
@@ -32,6 +33,9 @@ export class PwaService {
   private readonly swUpdate = inject(SwUpdate);
   private readonly appRef = inject(ApplicationRef);
   private readonly logger = inject(LoggerService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly loaderService = inject(LoaderService);
 
   // Signal-based reactive state
   private readonly updateAvailableSignal = signal<boolean>(false);
@@ -97,15 +101,12 @@ export class PwaService {
       this.logger.info('🔄 Activating update...');
 
       // Show loading indicator
-      Swal.fire({
-        title: 'Atualizando...',
-        text: 'Por favor, aguarde enquanto instalamos a atualização.',
-        icon: 'info',
-        allowOutsideClick: false,
-        showConfirmButton: false,
-        willOpen: () => {
-          Swal.showLoading();
-        }
+      this.loaderService.show();
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Atualizando...',
+        detail: 'Por favor, aguarde enquanto instalamos a atualização.',
+        life: 10000
       });
 
       // Activate the update
@@ -117,12 +118,13 @@ export class PwaService {
       globalThis.location.reload();
     } catch (error) {
       this.logger.error('❌ Update activation failed', error);
+      this.loaderService.hide();
 
-      Swal.fire({
-        title: 'Erro na Atualização',
-        text: 'Não foi possível instalar a atualização. Por favor, recarregue a página manualmente.',
-        icon: 'error',
-        confirmButtonText: 'OK'
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erro na Atualização',
+        detail: 'Não foi possível instalar a atualização. Por favor, recarregue a página manualmente.',
+        life: 8000
       });
     }
   }
@@ -141,12 +143,11 @@ export class PwaService {
     const updateAvailable = await this.checkForUpdate();
 
     if (!updateAvailable) {
-      Swal.fire({
-        title: 'Versão Atual',
-        text: 'Você já está usando a versão mais recente do sistema.',
-        icon: 'success',
-        confirmButtonText: 'OK',
-        timer: 3000
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Versão Atual',
+        detail: 'Você já está usando a versão mais recente do sistema.',
+        life: 3000
       });
     }
   }
@@ -186,7 +187,7 @@ export class PwaService {
     // Wait for app to stabilize before first update check
     // This prevents update checks during initial load
     const appIsStable$ = this.appRef.isStable.pipe(
-      first(isStable => isStable === true)
+      first(isStable => isStable)
     );
 
     // Check for updates 30 seconds after app stabilizes
@@ -251,14 +252,14 @@ export class PwaService {
   private logUnrecoverableState(): void {
     this.swUpdate.unrecoverable.subscribe(event => {
       this.logger.error('❌ Service worker in unrecoverable state', event.reason);
-      Swal.fire({
-        title: 'Erro Crítico',
-        text: 'A aplicação está em estado inconsistente. Por favor, recarregue a página.',
-        icon: 'error',
-        confirmButtonText: 'Recarregar',
-        allowOutsideClick: false
-      }).then((result) => {
-        if (result.isConfirmed) {
+      this.confirmationService.confirm({
+        message: 'A aplicação está em estado inconsistente. Por favor, recarregue a página.',
+        header: 'Erro Crítico',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Recarregar',
+        rejectVisible: false,
+        closeOnEscape: false,
+        accept: () => {
           globalThis.location.reload();
         }
       });
@@ -269,28 +270,17 @@ export class PwaService {
    * Prompt user to update application
    */
   private promptUserForUpdate(): void {
-    Swal.fire({
-      title: 'Atualização Disponível',
-      html: `
-        <p>Uma nova versão do sistema está disponível.</p>
-        <p class="text-sm text-gray-600 mt-2">A atualização inclui melhorias de desempenho e correções.</p>
-      `,
-      icon: 'info',
-      showCancelButton: true,
-      confirmButtonText: 'Atualizar Agora',
-      cancelButtonText: 'Depois',
-      confirmButtonColor: '#1976d2',
-      cancelButtonColor: '#6c757d',
-      allowOutsideClick: false,
-      customClass: {
-        popup: 'pwa-update-popup',
-        confirmButton: 'p-button p-button-primary',
-        cancelButton: 'p-button p-button-secondary'
-      }
-    }).then((result) => {
-      if (result.isConfirmed) {
+    this.confirmationService.confirm({
+      message: 'Uma nova versão do sistema está disponível com melhorias de desempenho e correções. Deseja atualizar agora?',
+      header: 'Atualização Disponível',
+      icon: 'pi pi-info-circle',
+      acceptLabel: 'Atualizar Agora',
+      rejectLabel: 'Depois',
+      closeOnEscape: false,
+      accept: () => {
         this.activateUpdate();
-      } else {
+      },
+      reject: () => {
         this.logger.info('ℹ️ User deferred update');
         // Update will be available on next page reload
       }

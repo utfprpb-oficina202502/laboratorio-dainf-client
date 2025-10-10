@@ -16,7 +16,6 @@ import {
   PrimeReactiveCrudFormComponent
 } from '../framework/component/prime-reactive-crud.form.component';
 import {Item} from '../item/item';
-import Swal from 'sweetalert2';
 
 // PrimeNG Modules
 import {DialogModule} from 'primeng/dialog';
@@ -123,7 +122,12 @@ export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, nu
         this.loadingItensVinculados.set(false);
         this.loaderService.hide();
         if (items.length === 0) {
-          Swal.fire('Ops...', 'Não existe nenhum item vinculado ao grupo.', 'info');
+          this.messageService.add({
+            severity: 'info',
+            summary: 'Ops...',
+            detail: 'Não existe nenhum item vinculado ao grupo.',
+            life: 4000
+          });
         } else {
           this.itensVinculados.set(items);
           this.dialogItensVinculados.set(true);
@@ -132,7 +136,12 @@ export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, nu
       error: (error) => {
         this.loadingItensVinculados.set(false);
         this.loaderService.hide();
-        Swal.fire('Erro', 'Erro ao buscar itens vinculados.', 'error');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Erro ao buscar itens vinculados.',
+          life: 5000
+        });
         this.logger.error('Erro ao buscar itens vinculados', error);
       }
     });

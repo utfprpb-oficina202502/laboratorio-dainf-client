@@ -14,7 +14,6 @@ import {
 import {EmprestimoDevolucaoItem, StatusDevolucao} from './emprestimoDevolucaoItem';
 import {MenuItem} from 'primeng/api';
 import {Menu, MenuModule} from 'primeng/menu';
-import Swal from 'sweetalert2';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
@@ -128,12 +127,22 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
     .subscribe({
       next: () => {
         this.loaderService.hide();
-        Swal.fire('Sucesso!', 'Devolução efetuada com sucesso!', 'success');
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Sucesso!',
+          detail: 'Devolução efetuada com sucesso!',
+          life: 3000
+        });
         this.back();
       },
       error: () => {
         this.loaderService.hide();
-        Swal.fire('Atenção!', 'Ocorreu um erro ao salvar a devolução!', 'error');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Atenção!',
+          detail: 'Ocorreu um erro ao salvar a devolução!',
+          life: 5000
+        });
       }
     });
   }

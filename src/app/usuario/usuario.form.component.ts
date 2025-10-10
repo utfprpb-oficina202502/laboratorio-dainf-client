@@ -8,7 +8,6 @@ import {
   PrimeReactiveCrudFormComponent
 } from '../framework/component/prime-reactive-crud.form.component';
 import {Permissao} from './permissao';
-import Swal from 'sweetalert2';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
@@ -149,7 +148,12 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
         },
         error: (error) => {
           this.logger.error('Error loading permissions', error);
-          Swal.fire('Erro', 'Erro ao carregar grupos de acesso.', 'error');
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erro',
+            detail: 'Erro ao carregar grupos de acesso.',
+            life: 5000
+          });
         }
       });
   }
@@ -197,7 +201,12 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
       const senhaAtual = form.get('senhaAtual')?.value;
 
       if (novaSenha !== confirmarNovaSenha) {
-        Swal.fire('Atenção', 'Senhas não conferem!', 'error');
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Atenção',
+          detail: 'Senhas não conferem!',
+          life: 5000
+        });
         return;
       }
 
@@ -211,14 +220,24 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
         .subscribe({
           next: () => {
             this.loaderService.hide();
-            Swal.fire('Sucesso', 'Senha redefinida com sucesso!', 'success');
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Sucesso',
+              detail: 'Senha redefinida com sucesso!',
+              life: 3000
+            });
             this.resetPasswordForm();
             this.dialogChangeSenha.set(false);
           },
           error: (error) => {
             this.loaderService.hide();
             this.logger.error('Error changing password', error);
-            Swal.fire('Atenção', 'A senha atual está incorreta!', 'error');
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Atenção',
+              detail: 'A senha atual está incorreta!',
+              life: 5000
+            });
           }
         });
     } else {

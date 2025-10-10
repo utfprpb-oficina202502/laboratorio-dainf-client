@@ -26,7 +26,6 @@ import {SidenavComponent} from './sidenav/sidenav.component';
 import {LoaderComponent} from './framework/loader/loader.component';
 import {ToastModule} from 'primeng/toast';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
-import {ScrollPanelModule} from 'primeng/scrollpanel';
 
 export const browserChange = new Subject<boolean>();
 
@@ -41,7 +40,6 @@ export const browserChange = new Subject<boolean>();
     LoaderComponent,
     ToastModule,
     ConfirmDialogModule,
-    ScrollPanelModule
   ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
