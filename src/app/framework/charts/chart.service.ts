@@ -7,6 +7,7 @@ import am5locales_pt_BR from '@amcharts/amcharts5/locales/pt_BR';
 import {ThemeService} from '../services/theme.service';
 import {chartColorSchemes, ChartColorsConfig} from './chart-colors.config';
 import {LoggerService} from '../services/logger.service';
+import {BreakpointService} from '../services/breakpoint.service';
 
 export interface ChartConfig {
   containerId: string;
@@ -99,6 +100,7 @@ export class ChartService {
 
   private readonly themeService = inject(ThemeService);
   private readonly logger = inject(LoggerService);
+  private readonly breakpointService = inject(BreakpointService);
   private readonly charts = new Map<string, am5.Root>();
   private chartColors: ChartColorsConfig = chartColorSchemes.light;
 
@@ -488,8 +490,8 @@ export class ChartService {
 
   private getDeviceBreakpoints(): DeviceBreakpoints {
     return {
-      isMobile: globalThis.innerWidth < 768,
-      isDesktop: globalThis.innerWidth >= 1200
+      isMobile: this.breakpointService.isMobile(),
+      isDesktop: this.breakpointService.isDesktop()
     };
   }
 
@@ -680,8 +682,7 @@ export class ChartService {
 
       root.setThemes([tooltipTheme, am5themes_Animated.new(root)]);
 
-      const isMobile = globalThis.innerWidth < 768;
-      if (isMobile) {
+      if (this.breakpointService.isMobile()) {
         root.numberFormatter.set('numberFormat', '#.#a');
       }
 

@@ -295,7 +295,7 @@
     max-width: 80%;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 767px) {
     .dialog-xl.p-dialog .p-dialog-content {
       max-width: 95%;
     }
@@ -319,7 +319,7 @@
     min-width: 650px;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 767px) {
     .dialog-md-lg.p-dialog .p-dialog-content {
       min-width: 90vw;
     }

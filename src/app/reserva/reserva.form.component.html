@@ -71,6 +71,8 @@
                   formControlName="dataReserva"
                   dataType="string"
                   dateFormat="dd/mm/yy"
+                  [touchUI]="breakpointService.isMobile()"
+                  [readonlyInput]="breakpointService.isMobile()"
                   styleClass="w-full">
                 </p-datePicker>
               </app-form-field>
@@ -88,6 +90,8 @@
                   formControlName="dataRetirada"
                   dataType="string"
                   dateFormat="dd/mm/yy"
+                  [touchUI]="breakpointService.isMobile()"
+                  [readonlyInput]="breakpointService.isMobile()"
                   styleClass="w-full">
                 </p-datePicker>
               </app-form-field>

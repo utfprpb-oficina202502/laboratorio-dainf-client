@@ -15,6 +15,7 @@ import {DialogModule} from 'primeng/dialog';
 import {MenuModule} from 'primeng/menu';
 import {NovoComponent} from '../geral/novo/novo.component';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
+import {BreakpointService} from '../framework/services/breakpoint.service';
 
 @Component({
     selector: "app-list-item",
@@ -38,6 +39,7 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   protected override columnsTable = ["id", "imagem", "nome", "localizacao", "grupo", "saldo", "actions"];
 
   private readonly reservaService = inject(ReservaService);
+  protected readonly breakpointService = inject(BreakpointService);
   // Constants for template
   protected readonly Z_INDEX = Z_INDEX;
   protected override urlForm = "item/form";
@@ -187,7 +189,7 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   async openOptions(event: Event, item: Item): Promise<void> {
     this.selectedItem = item;
     const isAlunoOrProfessor = await this.loginService.userLoggedIsAlunoOrProfessor();
-    const isMobile = globalThis.innerWidth <= 1200;
+    const isMobile = !this.breakpointService.isDesktop();
 
     this.contextMenuItems = [];
 

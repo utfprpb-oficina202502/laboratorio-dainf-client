@@ -18,7 +18,7 @@
 
 /* Removidos: aspect-ratio, min-height, max-height e media queries que alteravam .chart-pie */
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .card-icon { font-size: 2.5rem; }
   .card-number { font-size: 1.875rem; }
   #chartdiv2,

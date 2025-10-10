@@ -1,9 +1,9 @@
 import {
   ChangeDetectorRef,
+  computed,
   contentChild,
   Directive,
   ElementRef,
-  HostListener,
   inject,
   Injector,
   input,
@@ -24,7 +24,7 @@ import {LoaderService} from '../loader/loader.service';
 import {LoginService} from '../../login/login.service';
 import {PermissionService} from '../service/permission.service';
 import {ColumnState, TableColumn, TableConfiguration} from '../model/table-config.interface';
-import {debounceTime, distinctUntilChanged, Subject, takeUntil} from 'rxjs';
+import {debounceTime, distinctUntilChanged, fromEvent, Subject, takeUntil} from 'rxjs';
 import {LoggerService} from '../services/logger.service';
 import {TableExportService} from '../services/table-export.service';
 import {TableStateManagerService} from '../services/table-state-manager.service';
@@ -32,6 +32,7 @@ import {KeyboardShortcut, TableKeyboardService} from '../services/table-keyboard
 import {TableColumnManagerService} from '../services/table-column-manager.service';
 import {TableRowExpansionManagerService} from '../services/table-row-expansion-manager.service';
 import {StorageService} from '../services/storage.service';
+import {BreakpointService} from '../services/breakpoint.service';
 
 /**
  * Spring Data Page response interface
@@ -107,6 +108,16 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   protected readonly tableColumnManager: TableColumnManagerService;
   protected readonly tableRowExpansionManager: TableRowExpansionManagerService;
   protected readonly storageService: StorageService;
+  protected readonly breakpointService: BreakpointService;
+
+  /**
+   * Computed signals for template usage - optimized for OnPush change detection
+   * Automatically update when BreakpointService viewport signals change
+   */
+  protected readonly isDesktopView = computed(() => this.breakpointService.isDesktop());
+  protected readonly isMobileView = computed(() => this.breakpointService.isMobile());
+  protected readonly isTabletView = computed(() => this.breakpointService.isTablet());
+
   // Enhanced configuration system
   protected readonly _tableConfigInput = input<TableConfiguration>({
     columns: [],
@@ -171,6 +182,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.tableColumnManager = inject(TableColumnManagerService);
     this.tableRowExpansionManager = inject(TableRowExpansionManagerService);
     this.storageService = inject(StorageService);
+    this.breakpointService = inject(BreakpointService);
 
     // Get ChangeDetectorRef for OnPush components (optional)
     try {
@@ -205,6 +217,8 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.restoreTableState();
     this.initializeKeyboardShortcuts();
     this.setupUserPermissions();
+    this.setupBreakpointObserver();
+    this.setupKeyboardEventListener();
 
     if (this.tableConfig.preloadData === false) {
       this.buildColumnsTable();
@@ -236,13 +250,14 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     });
   }
 
-  @HostListener('document:keydown', ['$event'])
-  handleKeyboardInteractions(event: KeyboardEvent): void {
-    if (this.tableConfig.keyboardShortcuts === false) {
-      return;
-    }
-
-    this.tableKeyboardService.handleKeyboardEvent(event, this.keyboardShortcutHandlers);
+  buildColumnsTable() {
+    // Use BreakpointService for consistent responsive behavior
+    const currentWidth = this.breakpointService.isDesktop() ? 1024 : 767;
+    this.displayedColumns = this.tableColumnManager.buildDisplayedColumns(
+      this.columnsTable,
+      this.hostListenerColumnEnable,
+      currentWidth
+    );
   }
 
   ngOnDestroy(): void {
@@ -398,13 +413,30 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     // Hook para processamento customizado após carregar dados
   }
 
-  @HostListener('window:resize', ['$event'])
-  buildColumnsTable() {
-    this.displayedColumns = this.tableColumnManager.buildDisplayedColumns(
-      this.columnsTable,
-      this.hostListenerColumnEnable,
-      globalThis.innerWidth
-    );
+  /**
+   * Setup keyboard event listener using Angular v20 pattern with fromEvent
+   * Replaces @HostListener for better performance and modern Angular practices
+   */
+  private setupKeyboardEventListener(): void {
+    if (this.tableConfig.keyboardShortcuts === false) {
+      return;
+    }
+
+    fromEvent<KeyboardEvent>(document, 'keydown')
+    .pipe(takeUntil(this.destroy$))
+    .subscribe((event) => {
+      this.tableKeyboardService.handleKeyboardEvent(event, this.keyboardShortcutHandlers);
+    });
+  }
+
+  private setupBreakpointObserver(): void {
+    // Subscribe to breakpoint changes for responsive column adjustments
+    this.breakpointService.observe('(min-width: 768px)')
+    .pipe(takeUntil(this.destroy$))
+    .subscribe(() => {
+      this.buildColumnsTable();
+      this.cdr?.markForCheck();
+    });
   }
 
   // PrimeNG Sort event handler

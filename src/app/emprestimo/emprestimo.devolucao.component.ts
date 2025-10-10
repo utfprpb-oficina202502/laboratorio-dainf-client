@@ -34,6 +34,7 @@ import {TagModule} from 'primeng/tag';
 import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
+import {BreakpointService} from '../framework/services/breakpoint.service';
 
 @Component({
     selector: 'app-devolucao-emprestimo',
@@ -69,6 +70,7 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
   protected override service = inject(EmprestimoService);
   protected override urlList = '/emprestimo';
   protected override type = undefined;
+  protected readonly breakpointService = inject(BreakpointService);
 
   readonly frm = viewChild.required<NgForm>('form');
   readonly contextMenu = viewChild<Menu>('contextMenu');

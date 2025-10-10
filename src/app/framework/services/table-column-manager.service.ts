@@ -97,14 +97,14 @@ export class TableColumnManagerService {
    * @param columnsTable Base columns to display
    * @param enableResponsive Whether responsive behavior is enabled
    * @param windowWidth Current window width
-   * @param breakpoint Width breakpoint for hiding actions column (default: 1200px)
+   * @param breakpoint Width breakpoint for hiding actions column (default: 1024px)
    * @returns Array of column field names to display
    */
   buildDisplayedColumns(
     columnsTable: string[],
     enableResponsive: boolean,
     windowWidth: number,
-    breakpoint = 1200
+    breakpoint = 1024
   ): string[] {
     if (!enableResponsive) {
       return [...columnsTable];

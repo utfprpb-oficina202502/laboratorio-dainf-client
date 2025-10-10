@@ -50,6 +50,8 @@
                   dataType="string"
                   (onSelect)="onChangeValueParam($event, 'D', param.nameParam)"
                   dateFormat="dd/mm/yy"
+                  [touchUI]="breakpointService.isMobile()"
+                  [readonlyInput]="breakpointService.isMobile()"
                   class="w-full"
                   inputStyleClass="w-full">
                 </p-datePicker>

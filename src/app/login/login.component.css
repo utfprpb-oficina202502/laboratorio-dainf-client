@@ -144,7 +144,7 @@
   box-shadow: none;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .login-page {
     padding: clamp(2rem, 10vw, 3rem) clamp(1.25rem, 6vw, 2rem);
   }

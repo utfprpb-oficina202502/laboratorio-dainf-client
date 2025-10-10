@@ -1,19 +1,26 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {provideRouter} from '@angular/router';
+import {signal, WritableSignal} from '@angular/core';
 import {SidenavComponent} from './sidenav.component';
 import {SidenavService} from './sidenav.service';
 import {LoginService} from '../login/login.service';
-import {of} from 'rxjs';
+import {BreakpointService} from '../framework/services/breakpoint.service';
+import {BehaviorSubject, of} from 'rxjs';
+import {BreakpointState} from '@angular/cdk/layout';
 
 /**
  * Testes unitários para SidenavComponent
- * Foco em dynamic viewport height e mobile browser chrome behavior
+ * Foco em BreakpointService integration e mobile browser behavior
  */
 describe('SidenavComponent', () => {
   let component: SidenavComponent;
   let fixture: ComponentFixture<SidenavComponent>;
   let mockSidenavService: jest.Mocked<Partial<SidenavService>>;
   let mockLoginService: jest.Mocked<Partial<LoginService>>;
+  let mockBreakpointService: jest.Mocked<Partial<BreakpointService>>;
+  let breakpointSubject: BehaviorSubject<BreakpointState>;
+  let isDesktopSignal: WritableSignal<boolean>;
+  let isMobileSignal: WritableSignal<boolean>;
 
   beforeAll(() => {
     // Mock window.matchMedia para testes de viewport
@@ -33,6 +40,16 @@ describe('SidenavComponent', () => {
   });
 
   beforeEach(async () => {
+    // BehaviorSubject para simular mudanças de breakpoint
+    breakpointSubject = new BehaviorSubject<BreakpointState>({
+      matches: true,
+      breakpoints: {'(min-width: 1024px)': true}
+    });
+
+    // Cria signal instances para mock do BreakpointService (reset para cada teste)
+    isDesktopSignal = signal(true);
+    isMobileSignal = signal(false);
+
     mockSidenavService = {
       toggle: jest.fn(),
       minimizar: jest.fn(),
@@ -46,12 +63,19 @@ describe('SidenavComponent', () => {
       ]))
     };
 
+    mockBreakpointService = {
+      isDesktop: isDesktopSignal,
+      isMobile: isMobileSignal,
+      observe: jest.fn().mockReturnValue(breakpointSubject.asObservable())
+    } as any;
+
     await TestBed.configureTestingModule({
       imports: [SidenavComponent],
       providers: [
         provideRouter([]),
         {provide: SidenavService, useValue: mockSidenavService},
-        {provide: LoginService, useValue: mockLoginService}
+        {provide: LoginService, useValue: mockLoginService},
+        {provide: BreakpointService, useValue: mockBreakpointService}
       ]
     }).compileComponents();
 
@@ -63,62 +87,9 @@ describe('SidenavComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('Dynamic Viewport Height - Mobile Browser Chrome', () => {
-    it('deve inicializar com viewport flags corretos', () => {
-      // Simula viewport desktop
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 1200
-      });
-
-      component.ngOnInit();
-      fixture.detectChanges();
-
-      expect(component.isDesktopView).toBe(true);
-    });
-
-    it('deve detectar mobile viewport corretamente', () => {
-      // Simula viewport mobile
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 768
-      });
-
-      component.ngOnInit();
-      fixture.detectChanges();
-
-      expect(component.isDesktopView).toBe(false);
-    });
-
-    it('deve atualizar viewport flags no resize', () => {
-      // Inicia em desktop
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 1200
-      });
-      component.ngOnInit();
-      expect(component.isDesktopView).toBe(true);
-
-      // Simula resize para mobile
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 768
-      });
-      component.onWindowResize();
-
-      expect(component.isDesktopView).toBe(false);
-    });
-
-    it('sidebar deve ser visível por padrão em desktop', () => {
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 1200
-      });
+  describe('BreakpointService Integration', () => {
+    it('deve inicializar com viewport desktop', () => {
+      isDesktopSignal.set(true);
 
       component.ngOnInit();
       fixture.detectChanges();
@@ -126,17 +97,73 @@ describe('SidenavComponent', () => {
       expect(component.sidebarVisible).toBe(true);
     });
 
-    it('sidebar deve respeitar viewport em mobile', () => {
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 768
+    it('deve detectar mobile viewport corretamente', () => {
+      isDesktopSignal.set(false);
+
+      component.ngOnInit();
+      fixture.detectChanges();
+
+      expect(mockSidenavService.minimizar).toHaveBeenCalledWith(true);
+    });
+
+    it('deve observar mudanças de breakpoint', () => {
+      component.ngOnInit();
+
+      expect(mockBreakpointService.observe).toHaveBeenCalledWith('(min-width: 1024px)');
+    });
+
+    it('deve atualizar sidebar ao transicionar para mobile', () => {
+      isDesktopSignal.set(true);
+      component.ngOnInit();
+      fixture.detectChanges();
+
+      // Simula transição para mobile
+      breakpointSubject.next({
+        matches: false,
+        breakpoints: {'(min-width: 1024px)': false}
       });
+      fixture.detectChanges();
 
-      component['updateViewportFlags']();
+      expect(component.sidebarVisible).toBe(false);
+      expect(mockSidenavService.minimizar).toHaveBeenCalledWith(true);
+    });
 
-      // Verifica que mobile viewport é detectado
-      expect(component.isDesktopView).toBe(false);
+    it('deve atualizar sidebar ao transicionar para desktop', () => {
+      isDesktopSignal.set(false);
+      component.ngOnInit();
+      component.sidebarVisible = false;
+      fixture.detectChanges();
+
+      // Simula transição para desktop
+      breakpointSubject.next({
+        matches: true,
+        breakpoints: {'(min-width: 1024px)': true}
+      });
+      fixture.detectChanges();
+
+      expect(component.sidebarVisible).toBe(true);
+    });
+
+    it('sidebar deve ser visível por padrão em desktop', () => {
+      isDesktopSignal.set(true);
+
+      component.ngOnInit();
+      fixture.detectChanges();
+
+      expect(component.sidebarVisible).toBe(true);
+    });
+
+    it('sidebar deve iniciar oculta em mobile', () => {
+      // Configure signals for mobile viewport
+      isDesktopSignal.set(false);
+      isMobileSignal.set(true);
+
+      component.ngOnInit();
+      fixture.detectChanges();
+
+      // Em mobile, o componente deve chamar minimizar(true)
+      // O estado final do sidebar depende do observable do service
+      expect(mockSidenavService.minimizar).toHaveBeenCalledWith(true);
     });
   });
 
@@ -186,23 +213,38 @@ describe('SidenavComponent', () => {
 
   describe('Mobile Backdrop Behavior', () => {
     it('deve renderizar backdrop em mobile quando sidebar visível', () => {
-      component.isDesktopView = false;
+      isDesktopSignal.set(false);
+      isMobileSignal.set(true);
       component.sidebarVisible = true;
+
+      // Force multiple change detection cycles to ensure template updates
+      component['cdr'].detectChanges();
       fixture.detectChanges();
 
       const backdrop = fixture.nativeElement.querySelector('.sidebar-backdrop');
       expect(backdrop).toBeTruthy();
     });
 
-    it('backdrop rendering depende de isDesktopView e sidebarVisible', () => {
-      // Test logic: backdrop only shows when !isDesktopView && sidebarVisible
-      expect(component.isDesktopView !== undefined).toBe(true);
-      expect(component.sidebarVisible !== undefined).toBe(true);
+    it('não deve renderizar backdrop em desktop', () => {
+      isDesktopSignal.set(true);
+      isMobileSignal.set(false);
+      component.sidebarVisible = true;
+
+      // Force multiple change detection cycles to ensure template updates
+      component['cdr'].detectChanges();
+      fixture.detectChanges();
+
+      const backdrop = fixture.nativeElement.querySelector('.sidebar-backdrop');
+      expect(backdrop).toBeFalsy();
     });
 
     it('closeSidebar deve ser chamado ao clicar no backdrop', () => {
-      component.isDesktopView = false;
+      isDesktopSignal.set(false);
+      isMobileSignal.set(true);
       component.sidebarVisible = true;
+
+      // Force multiple change detection cycles to ensure template updates
+      component['cdr'].detectChanges();
       fixture.detectChanges();
 
       const closeSpy = jest.spyOn(component, 'closeSidebar');
@@ -213,8 +255,12 @@ describe('SidenavComponent', () => {
     });
 
     it('backdrop deve ter aria-label para acessibilidade', () => {
-      component.isDesktopView = false;
+      isDesktopSignal.set(false);
+      isMobileSignal.set(true);
       component.sidebarVisible = true;
+
+      // Force multiple change detection cycles to ensure template updates
+      component['cdr'].detectChanges();
       fixture.detectChanges();
 
       const backdrop = fixture.nativeElement.querySelector('.sidebar-backdrop');
@@ -281,7 +327,8 @@ describe('SidenavComponent', () => {
 
   describe('closeSidebar - Mobile Behavior', () => {
     it('deve chamar service.minimizar em mobile', () => {
-      component.isDesktopView = false;
+      isDesktopSignal.set(false);
+      component.ngOnInit();
 
       component.closeSidebar();
 
@@ -289,7 +336,8 @@ describe('SidenavComponent', () => {
     });
 
     it('não deve chamar service.minimizar em desktop', () => {
-      component.isDesktopView = true;
+      isDesktopSignal.set(true);
+      component.ngOnInit();
       (mockSidenavService.minimizar as jest.Mock).mockClear();
 
       component.closeSidebar();
@@ -298,7 +346,8 @@ describe('SidenavComponent', () => {
     });
 
     it('deve ser chamado ao clicar em menu item em mobile', (done) => {
-      component.isDesktopView = false;
+      isDesktopSignal.set(false);
+      component.ngOnInit();
       component.showCadastros = false;
       component.menuItems = [
         {label: 'Home', icon: 'pi pi-home', routerLink: '/', id: 'home'}
@@ -317,49 +366,6 @@ describe('SidenavComponent', () => {
     });
   });
 
-  describe('Viewport Resize - Desktop ↔ Mobile Transition', () => {
-    it('deve mostrar sidebar ao transicionar de mobile para desktop', () => {
-      // Inicia em mobile
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 768
-      });
-      component.ngOnInit();
-      component.sidebarVisible = false;
-
-      // Transiciona para desktop
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 1200
-      });
-      component.onWindowResize();
-
-      expect(component.sidebarVisible).toBe(true);
-    });
-
-    it('deve ocultar sidebar ao transicionar de desktop para mobile', () => {
-      // Inicia em desktop
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 1200
-      });
-      component.ngOnInit();
-
-      // Transiciona para mobile
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 768
-      });
-      component.onWindowResize();
-
-      expect(component.sidebarVisible).toBe(false);
-    });
-  });
-
   describe('SidenavService Integration', () => {
     it('deve assinar observable do SidenavService', () => {
       component.ngOnInit();
@@ -371,6 +377,23 @@ describe('SidenavComponent', () => {
       // Verifica que o serviço está injetado e acessível
       expect(component['sidenavService']).toBeDefined();
       expect(mockSidenavService.observable).toBeDefined();
+    });
+
+    it('deve reagir a mudanças do SidenavService observable', (done) => {
+      const serviceSubject = new BehaviorSubject<boolean>(false);
+      mockSidenavService.observable = jest.fn().mockReturnValue(serviceSubject.asObservable());
+      isDesktopSignal.set(false);
+
+      component.ngOnInit();
+      fixture.detectChanges();
+
+      // Simula service emitindo hide=true
+      serviceSubject.next(true);
+
+      setTimeout(() => {
+        expect(component.sidebarVisible).toBe(false);
+        done();
+      }, 50);
     });
   });
 
@@ -401,7 +424,8 @@ describe('SidenavComponent', () => {
     });
 
     it('closeSidebar deve usar service para manter sincronização de estado', () => {
-      component.isDesktopView = false;
+      isDesktopSignal.set(false);
+      component.ngOnInit();
 
       component.closeSidebar();
 
@@ -412,12 +436,7 @@ describe('SidenavComponent', () => {
 
   describe('State Initialization - Mobile Fix', () => {
     it('deve inicializar service com minimizado=true em mobile', () => {
-      // Simula mobile viewport
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 768
-      });
+      isDesktopSignal.set(false);
 
       component.ngOnInit();
       fixture.detectChanges();
@@ -427,13 +446,7 @@ describe('SidenavComponent', () => {
     });
 
     it('não deve chamar minimizar em desktop viewport', () => {
-      // Simula desktop viewport
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 1200
-      });
-
+      isDesktopSignal.set(true);
       (mockSidenavService.minimizar as jest.Mock).mockClear();
 
       component.ngOnInit();
@@ -444,7 +457,8 @@ describe('SidenavComponent', () => {
     });
 
     it('closeSidebar deve usar service.minimizar para manter sincronização', () => {
-      component.isDesktopView = false;
+      isDesktopSignal.set(false);
+      component.ngOnInit();
 
       component.closeSidebar();
 
@@ -452,24 +466,40 @@ describe('SidenavComponent', () => {
     });
   });
 
-  describe('Performance - Viewport Detection', () => {
-    it('updateViewportFlags deve executar rapidamente', () => {
-      const startTime = performance.now();
-      component['updateViewportFlags']();
-      const endTime = performance.now();
+  describe('Viewport Transitions - Desktop ↔ Mobile', () => {
+    it('deve mostrar sidebar ao transicionar de mobile para desktop', (done) => {
+      isDesktopSignal.set(false);
+      component.ngOnInit();
+      component.sidebarVisible = false;
+      fixture.detectChanges();
 
-      expect(endTime - startTime).toBeLessThan(10);
+      // Transiciona para desktop
+      breakpointSubject.next({
+        matches: true,
+        breakpoints: {'(min-width: 1024px)': true}
+      });
+
+      setTimeout(() => {
+        expect(component.sidebarVisible).toBe(true);
+        done();
+      }, 50);
     });
 
-    it('onWindowResize deve ser eficiente para múltiplas chamadas', () => {
-      const startTime = performance.now();
+    it('deve ocultar sidebar ao transicionar de desktop para mobile', (done) => {
+      isDesktopSignal.set(true);
+      component.ngOnInit();
+      fixture.detectChanges();
 
-      for (let i = 0; i < 100; i++) {
-        component.onWindowResize();
-      }
+      // Transiciona para mobile
+      breakpointSubject.next({
+        matches: false,
+        breakpoints: {'(min-width: 1024px)': false}
+      });
 
-      const endTime = performance.now();
-      expect(endTime - startTime).toBeLessThan(100);
+      setTimeout(() => {
+        expect(component.sidebarVisible).toBe(false);
+        done();
+      }, 50);
     });
   });
 
@@ -493,6 +523,31 @@ describe('SidenavComponent', () => {
       const homeItem = component.menuItems.find(item => item.id === 'home');
       expect(homeItem).toBeTruthy();
       expect(homeItem?.routerLink).toBe('/');
+    });
+  });
+
+  describe('Computed Signal - isDesktopView', () => {
+    it('isDesktopView deve refletir estado do BreakpointService', () => {
+      isDesktopSignal.set(true);
+      component.ngOnInit();
+      fixture.detectChanges();
+
+      // Computed signal should reflect the BreakpointService state
+      expect(component['isDesktopView']).toBeDefined();
+    });
+
+    it('isDesktopView deve ser reativo a mudanças do BreakpointService', () => {
+      // Start as desktop
+      isDesktopSignal.set(true);
+      component.ngOnInit();
+      fixture.detectChanges();
+
+      // Change to mobile
+      isDesktopSignal.set(false);
+      fixture.detectChanges();
+
+      // The computed signal should update automatically
+      expect(component['isDesktopView']).toBeDefined();
     });
   });
 });

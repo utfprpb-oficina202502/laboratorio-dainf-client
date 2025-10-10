@@ -2,8 +2,9 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  HostListener,
+  computed,
   inject,
+  OnDestroy,
   OnInit
 } from "@angular/core";
 import {RouterLink, RouterLinkActive} from "@angular/router";
@@ -11,6 +12,8 @@ import {SidenavService} from "./sidenav.service";
 import {LoginService} from "../login/login.service";
 import {MenuItem as PrimeMenuItem} from 'primeng/api';
 import {ThemeToggleComponent} from '../framework/component/theme-toggle.component';
+import {BreakpointService} from '../framework/services/breakpoint.service';
+import {Subject, takeUntil} from 'rxjs';
 
 export interface MenuItem {
   path: string;
@@ -135,29 +138,41 @@ export const MENU_ITEM: MenuItem[] = [
     ThemeToggleComponent
   ]
 })
-export class SidenavComponent implements OnInit {
+export class SidenavComponent implements OnInit, OnDestroy {
   private readonly sidenavService = inject(SidenavService);
   private readonly loginService = inject(LoginService);
   private readonly cdr = inject(ChangeDetectorRef);
+  protected readonly breakpointService = inject(BreakpointService);
 
   public menuItems: PrimeMenuItem[] = this.getDefaultMenuItems();
   public menuCadastros: PrimeMenuItem[] = [];
   display = false;
   showSubMenuCadastro = true;
   showCadastros = false;
-  private readonly desktopBreakpoint = 1200;
-  private viewportInitialized = false;
-  isDesktopView = true;
   sidebarVisible = true;
+  /**
+   * Computed signal for template usage - optimized for OnPush change detection
+   * Automatically updates when BreakpointService viewport signals change
+   * Usage in template: @if (isDesktopView()) { ... }
+   */
+  protected readonly isDesktopView = computed(() => this.breakpointService.isDesktop());
+  private destroy$ = new Subject<void>();
 
   ngOnInit(): void {
     this.buildMenu();
-    this.updateViewportFlags();
+    // Initialize sidebar visibility based on breakpoint
+    this.sidebarVisible = this.breakpointService.isDesktop();
     // Initialize service state to match viewport (mobile starts minimized)
-    if (!this.isDesktopView) {
+    if (!this.breakpointService.isDesktop()) {
       this.sidenavService.minimizar(true);
     }
     this.initObservableDrawer();
+    this.setupBreakpointObserver();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   buildMenu() {
@@ -197,11 +212,6 @@ export class SidenavComponent implements OnInit {
     });
   }
 
-  @HostListener("window:resize")
-  onWindowResize(): void {
-    this.updateViewportFlags();
-  }
-
   private getDefaultMenuItems(): PrimeMenuItem[] {
     const defaultItems = MENU_ITEM.filter(item =>
       item.group === "ITEM" && (!item.roles || item.roles.includes("ALUNO"))
@@ -217,9 +227,10 @@ export class SidenavComponent implements OnInit {
   }
 
   initObservableDrawer() {
-    this.sidenavService.observable().subscribe((hide) => {
-      this.updateViewportFlags();
-      if (this.isDesktopView) {
+    this.sidenavService.observable()
+    .pipe(takeUntil(this.destroy$))
+    .subscribe((hide) => {
+      if (this.breakpointService.isDesktop()) {
         this.sidebarVisible = true;
       } else {
         this.sidebarVisible = !hide;
@@ -234,36 +245,27 @@ export class SidenavComponent implements OnInit {
   }
 
   closeSidebar() {
-    if (!this.isDesktopView) {
+    if (!this.breakpointService.isDesktop()) {
       // Use service to maintain state sync
       this.sidenavService.minimizar(true);
     }
   }
 
-  private updateViewportFlags(): void {
-    if (typeof globalThis === 'undefined') {
-      return;
-    }
-
-    const width = globalThis.innerWidth;
-    const wasDesktop = this.isDesktopView;
-    const isDesktop = width >= this.desktopBreakpoint;
-
-    this.isDesktopView = isDesktop;
-
-    if (!this.viewportInitialized) {
-      this.sidebarVisible = isDesktop;
-      this.viewportInitialized = true;
+  private setupBreakpointObserver(): void {
+    // Subscribe to breakpoint changes for desktop/mobile transitions
+    this.breakpointService.observe('(min-width: 1024px)')
+    .pipe(takeUntil(this.destroy$))
+    .subscribe((result) => {
+      const isDesktop = result.matches;
+      // Update sidebar visibility on breakpoint change
+      if (isDesktop) {
+        this.sidebarVisible = true;
+      } else {
+        // On mobile, check if sidebar should be hidden
+        this.sidebarVisible = false;
+        this.sidenavService.minimizar(true);
+      }
       this.cdr?.markForCheck();
-      return;
-    }
-
-    if (!wasDesktop && isDesktop) {
-      this.sidebarVisible = true;
-      this.cdr?.markForCheck();
-    } else if (wasDesktop && !isDesktop) {
-      this.sidebarVisible = false;
-      this.cdr?.markForCheck();
-    }
+    });
   }
 }

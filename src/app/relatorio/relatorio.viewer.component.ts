@@ -10,6 +10,7 @@ import {Relatorio} from './relatorio';
 import {pt} from '../framework/constantes/calendarPt';
 import {RelatorioParamsValue} from './relatorioParamsValue';
 import {StringUtils} from '../framework/util/string.utils';
+import {BreakpointService} from '../framework/services/breakpoint.service';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
@@ -46,6 +47,7 @@ export class RelatorioViewerComponent implements OnInit {
   private readonly loaderService = inject(LoaderService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly relatorioService = inject(RelatorioService);
+  protected readonly breakpointService = inject(BreakpointService);
   localePt: unknown;
   relatorioCurrent!: Relatorio;
   dialogFiltroRelatorio = false;

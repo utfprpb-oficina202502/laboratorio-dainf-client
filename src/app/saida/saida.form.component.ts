@@ -10,6 +10,7 @@ import {
 import {Item} from '../item/item';
 import {ItemService} from '../item/item.service';
 import {SaidaItem} from './saidaItem';
+import {BreakpointService} from '../framework/services/breakpoint.service';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
@@ -61,6 +62,7 @@ export class SaidaFormComponent extends PrimeReactiveCrudFormComponent<Saida, nu
   protected override type = Saida;
   private readonly fb = inject(FormBuilder);
   private readonly itemService = inject(ItemService);
+  protected readonly breakpointService = inject(BreakpointService);
 
   // Signals for state management
   protected readonly itemList = signal<Item[]>([]);

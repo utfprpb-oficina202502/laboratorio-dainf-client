@@ -25,6 +25,7 @@ import {SelectModule} from 'primeng/select';
 import {MenuModule} from 'primeng/menu';
 import {NovoComponent} from '../geral/novo/novo.component';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
+import {BreakpointService} from '../framework/services/breakpoint.service';
 
 @Component({
     selector: 'app-list-emprestimo',
@@ -48,6 +49,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   readonly novaData = viewChild.required<DatePicker>('novaData');
   contextMenuItems: MenuItem[] = [];
   protected override service = inject(EmprestimoService);
+  protected readonly breakpointService = inject(BreakpointService);
 
   // Constants for template
   protected readonly Z_INDEX = Z_INDEX;

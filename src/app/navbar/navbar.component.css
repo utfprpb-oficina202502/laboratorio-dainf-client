@@ -59,11 +59,11 @@ p-toolbar ::ng-deep .p-toolbar *:not(button):not(a) {
 }
 
 /*
- * Responsive navbar controls - 1200px breakpoint
+ * Responsive navbar controls - 1024px breakpoint
  * NOTE: !important needed to override PrimeNG button display properties
  */
 
-/* Hamburger button: Show on mobile (<1200px), hide on desktop (≥1200px) */
+/* Hamburger button: Show on mobile (<1024px), hide on desktop (≥1024px) */
 .navbar-hamburger {
   display: flex !important; /* Override PrimeNG */
   touch-action: manipulation; /* Disable double-tap zoom and improve touch responsiveness */
@@ -73,7 +73,7 @@ p-toolbar ::ng-deep .p-toolbar *:not(button):not(a) {
 }
 
 /* Mobile-specific optimizations for hamburger button */
-@media (max-width: 1199px) {
+@media (max-width: 1023px) {
   .navbar-hamburger {
     /* Subtle tap highlight for immediate visual feedback */
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0.08);
@@ -124,7 +124,7 @@ p-toolbar ::ng-deep .p-toolbar *:not(button):not(a) {
   }
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1024px) {
   .navbar-hamburger {
     display: none !important; /* Override PrimeNG */
   }

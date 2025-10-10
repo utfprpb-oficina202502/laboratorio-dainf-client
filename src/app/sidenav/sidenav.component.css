@@ -33,7 +33,7 @@
   }
 
   /* Responsive behavior */
-  @media (max-width: 1199px) {
+  @media (max-width: 1023px) {
     z-index: 1050;
     top: 0;
     /* Use dvh (dynamic viewport height) to account for mobile browser chrome */
@@ -47,7 +47,7 @@
   }
 
   /* Desktop: Always visible */
-  @media (min-width: 1200px) {
+  @media (min-width: 1024px) {
     transform: translateX(0) !important;
   }
 }
@@ -69,7 +69,7 @@
   padding: 0.5rem 0 0;
   overflow-y: auto;
 
-  @media (max-width: 1199px) {
+  @media (max-width: 1023px) {
     padding-top: 66px;
   }
 

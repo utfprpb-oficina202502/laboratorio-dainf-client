@@ -291,6 +291,8 @@
             dataType="string"
             dateFormat="dd/mm/yy"
             [style]="{ width: '100%' }"
+            [readonlyInput]="breakpointService.isMobile()"
+            [touchUI]="breakpointService.isMobile()"
             [(ngModel)]="emprestimoFilter.dtIniEmp"
             inputStyleClass="form-control">
           </p-datePicker>
@@ -306,6 +308,8 @@
             dataType="string"
             dateFormat="dd/mm/yy"
             [style]="{ width: '100%' }"
+            [readonlyInput]="breakpointService.isMobile()"
+            [touchUI]="breakpointService.isMobile()"
             [(ngModel)]="emprestimoFilter.dtFimEmp"
             inputStyleClass="form-control">
           </p-datePicker>
@@ -353,10 +357,10 @@
 <div class="invisible">
   <p-datePicker
     #novaData
-    [touchUI]="true"
+    [readonlyInput]="breakpointService.isMobile()"
     appendTo="body"
     (onSelect)="changePrazoDevolucao()"
-    [readonlyInput]="false"
+    [touchUI]="breakpointService.isMobile()"
     dataType="string"
     dateFormat="dd/mm/yy"
     [(ngModel)]="dtNovaData">

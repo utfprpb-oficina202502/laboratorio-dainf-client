@@ -14,6 +14,7 @@ import {ReservaItem} from './reservaItem';
 import {ItemImage} from '../item/itemImage';
 import {environment} from 'src/environments/environment';
 import Swal from 'sweetalert2';
+import {BreakpointService} from '../framework/services/breakpoint.service';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
@@ -72,6 +73,7 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
   protected override type = Reserva;
   private readonly fb = inject(FormBuilder);
   private readonly itemService = inject(ItemService);
+  protected readonly breakpointService = inject(BreakpointService);
 
   // Signals for state management
   protected readonly itemList = signal<Item[]>([]);

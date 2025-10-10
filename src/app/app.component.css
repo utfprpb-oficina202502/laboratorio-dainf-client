@@ -17,7 +17,7 @@
 }
 
 /* Mobile: content takes full width when sidebar is hidden */
-@media (max-width: 1199px) {
+@media (max-width: 1023px) {
   .layout-content {
     left: 0;
   }

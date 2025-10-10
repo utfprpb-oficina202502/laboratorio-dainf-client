@@ -81,6 +81,8 @@
                 dataType="string"
                 dateFormat="dd/mm/yy"
                 inputStyleClass="form-control"
+                            [readonlyInput]="breakpointService.isMobile()"
+                            [touchUI]="breakpointService.isMobile()"
                 disabled
                             class="w-full"
                 [(ngModel)]="object.dataEmprestimo">
@@ -99,6 +101,8 @@
                 dataType="string"
                 dateFormat="dd/mm/yy"
                 inputStyleClass="form-control"
+                            [readonlyInput]="breakpointService.isMobile()"
+                            [touchUI]="breakpointService.isMobile()"
                 disabled
                             class="w-full"
                 [(ngModel)]="object.prazoDevolucao">
@@ -117,6 +121,8 @@
                 dataType="string"
                 dateFormat="dd/mm/yy"
                 inputStyleClass="form-control"
+                            [readonlyInput]="breakpointService.isMobile()"
+                            [touchUI]="breakpointService.isMobile()"
                 disabled
                             class="w-full"
                 [(ngModel)]="object.dataDevolucao">
