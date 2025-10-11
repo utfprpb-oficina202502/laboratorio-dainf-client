@@ -2,7 +2,7 @@ import {Usuario} from '../usuario/usuario';
 
 export class EmprestimoFilter {
   usuarioEmprestimo?: Usuario;
-  usuarioResponsalvel?: Usuario;
+  usuarioResponsavel?: Usuario;
   dtIniEmp?: string;
   dtFimEmp?: string;
   status?: string;

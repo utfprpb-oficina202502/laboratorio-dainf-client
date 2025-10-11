@@ -18,10 +18,10 @@ export class Exception {
     const httpError = error as HttpErrorResponse;
     let detail: string;
 
-    if (httpError.error?.message) {
-      detail = this.getMessage(httpError);
-    } else if (httpError.status === 403) {
+    if (httpError.status === 403) {
       detail = 'Acesso negado';
+    } else if (httpError.error?.message) {
+      detail = this.getMessage(httpError);
     } else {
       detail = 'Ocorreu um erro ao remover o registro';
     }

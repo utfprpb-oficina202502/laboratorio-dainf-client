@@ -1,4 +1,4 @@
-<div (keyup.control.n)="openForm()" class="container-fluid my-3" tabindex="0">
+<div (keyup.control.n)="openForm()" class="mx-auto max-w-7xl p-4 my-3" tabindex="0">
   <p-card>
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-3">
@@ -182,13 +182,13 @@
                   <p class="mb-1"><strong>Prazo de Devolucao:</strong> {{ row.prazoDevolucao }}</p>
                   <p class="mb-0"><strong>Status:</strong>
                   @if (getStatusEmprestimo(row) === 'P') {
-                    <span class="text-info">Em andamento</span>
+                    <span class="text-blue-500">Em andamento</span>
                   }
                   @if (getStatusEmprestimo(row) === 'A') {
-                    <span class="text-danger">Em atraso</span>
+                    <span class="text-red-500">Em atraso</span>
                   }
                   @if (getStatusEmprestimo(row) === 'F') {
-                    <span class="text-success">Finalizado</span>
+                    <span class="text-green-600">Finalizado</span>
                   }
                 </p>
               </div>
@@ -201,7 +201,7 @@
           <tr>
             <td [attr.colspan]="getColumnCount()">
               <div class="text-center py-4">
-                <p class="text-muted mt-2 mb-0">{{ tableConfig.loadingMessage }}</p>
+                <p class="text-gray-500 mt-2 mb-0">{{ tableConfig.loadingMessage }}</p>
               </div>
             </td>
           </tr>
@@ -211,8 +211,8 @@
         <tr>
           <td [attr.colspan]="getColumnCount()">
             <div class="text-center py-4">
-              <i class="pi pi-info-circle text-muted text-3xl"></i>
-              <p class="text-muted mt-2 mb-0">{{ tableConfig.emptyMessage }}</p>
+              <i class="pi pi-info-circle text-gray-500 text-3xl"></i>
+              <p class="text-gray-500 mt-2 mb-0">{{ tableConfig.emptyMessage }}</p>
             </div>
           </td>
         </tr>
@@ -232,9 +232,9 @@
 
   <form>
     @if (!isAlunoOrProfessor()) {
-      <div class="row mb-3">
-        <div class="col-md-12">
-          <div class="form-group">
+      <div class="grid grid-cols-12 gap-4 mb-3">
+        <div class="col-span-12">
+          <div class="space-y-2">
             <label for="usuarioEmprestimo">Aluno/Professor</label>
             <p-autoComplete
               id="usuarioEmprestimo"
@@ -242,12 +242,12 @@
               appendTo="body"
               optionLabel="nome"
               dataKey="id"
-              inputStyleClass="form-control"
+              inputStyleClass="w-full"
               [forceSelection]="true"
               [dropdown]="true"
               [(ngModel)]="emprestimoFilter.usuarioEmprestimo"
               [suggestions]="usuarioEmprestimoList"
-              (clear)="emprestimoFilter.usuarioEmprestimo = undefined"
+              (onClear)="emprestimoFilter.usuarioEmprestimo = undefined"
               (completeMethod)="findUsuarios($event)">
             </p-autoComplete>
           </div>
@@ -256,9 +256,9 @@
     }
 
     @if (!isAlunoOrProfessor()) {
-      <div class="row mb-3">
-        <div class="col-md-12">
-          <div class="form-group">
+      <div class="grid grid-cols-12 gap-4 mb-3">
+        <div class="col-span-12">
+          <div class="space-y-2">
             <label for="usuarioResponsavel">Usuario Responsavel</label>
             <p-autoComplete
               id="usuarioResponsavel"
@@ -266,12 +266,12 @@
               appendTo="body"
               optionLabel="nome"
               dataKey="id"
-              inputStyleClass="form-control"
+              inputStyleClass="w-full"
               [forceSelection]="true"
               [dropdown]="true"
-              [(ngModel)]="emprestimoFilter.usuarioResponsalvel"
+              [(ngModel)]="emprestimoFilter.usuarioResponsavel"
               [suggestions]="usuarioResponsalvel"
-              (clear)="emprestimoFilter.usuarioResponsalvel = undefined"
+              (onClear)="emprestimoFilter.usuarioResponsavel = undefined"
               (completeMethod)="findUsuarioResponsavel($event)">
             </p-autoComplete>
           </div>
@@ -279,9 +279,9 @@
       </div>
     }
 
-    <div class="row mb-3">
-      <div class="col-md-6">
-        <div class="form-group">
+    <div class="grid grid-cols-12 gap-4 mb-3">
+      <div class="col-span-12 md:col-span-6">
+        <div class="space-y-2">
           <label for="dtIni">Data Inicial</label>
           <p-datePicker
             name="dtIni"
@@ -293,12 +293,12 @@
             [readonlyInput]="breakpointService.isMobile()"
             [touchUI]="breakpointService.isMobile()"
             [(ngModel)]="emprestimoFilter.dtIniEmp"
-            inputStyleClass="form-control">
+            inputStyleClass="w-full">
           </p-datePicker>
         </div>
       </div>
-      <div class="col-md-6">
-        <div class="form-group">
+      <div class="col-span-12 md:col-span-6">
+        <div class="space-y-2">
           <label for="dtFim">Data Final</label>
           <p-datePicker
             name="dtFim"
@@ -310,15 +310,15 @@
             [readonlyInput]="breakpointService.isMobile()"
             [touchUI]="breakpointService.isMobile()"
             [(ngModel)]="emprestimoFilter.dtFimEmp"
-            inputStyleClass="form-control">
+            inputStyleClass="w-full">
           </p-datePicker>
         </div>
       </div>
     </div>
 
-    <div class="row mb-3">
-      <div class="col-md-12">
-        <div class="form-group">
+    <div class="grid grid-cols-12 gap-4 mb-3">
+      <div class="col-span-12">
+        <div class="space-y-2">
           <label for="status">Status</label>
           <p-select
             [options]="statusDropdown"

@@ -10,15 +10,6 @@ import {LoginService} from '../login/login.service';
 // Bound reference to the real component method; keeps assertions unchanged
 let getGrupoBadgeSeverity: (grupo: Grupo | undefined) => 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
 
-/**
- * Testes unitários para lógica de badge de categorias de grupo
- * Valida a atribuição de cores baseada em IDs de grupo
- * Extrai a lógica pura sem dependências do componente Angular
- */
-
-// Função pura extraída da lógica do componente para testes isolados
-
-
 describe('ItemListComponent - getGrupoBadgeSeverity', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({

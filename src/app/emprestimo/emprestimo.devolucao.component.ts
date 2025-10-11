@@ -1,4 +1,10 @@
-import {Component, inject, viewChild} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  inject,
+  viewChild
+} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule, NgForm} from '@angular/forms';
 import {Z_INDEX} from '../framework/constants';
@@ -39,6 +45,7 @@ import {BreakpointService} from '../framework/services/breakpoint.service';
     selector: 'app-devolucao-emprestimo',
     templateUrl: './emprestimo.devolucao.component.html',
     styleUrls: ['./emprestimo.devolucao.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     FormsModule,
@@ -70,6 +77,7 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
   protected override urlList = '/emprestimo';
   protected override type = undefined;
   protected readonly breakpointService = inject(BreakpointService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly frm = viewChild.required<NgForm>('form');
   readonly contextMenu = viewChild<Menu>('contextMenu');
@@ -100,6 +108,7 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
   postEdit(): void {
     this.documentoUsuario = this.object.usuarioEmprestimo.documento;
     this.buildItensKanban();
+    this.cdr.markForCheck();
   }
 
   buildItensKanban() {
@@ -133,6 +142,7 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
           detail: 'Devolução efetuada com sucesso!',
           life: 3000
         });
+        this.cdr.markForCheck();
         this.back();
       },
       error: () => {
@@ -143,6 +153,7 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
           detail: 'Ocorreu um erro ao salvar a devolução!',
           life: 5000
         });
+        this.cdr.markForCheck();
       }
     });
   }
@@ -157,6 +168,7 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
       this.itemIsEditing.qtde = this.itemIsEditing.qtde - this.qtdeItemDuplicado;
       this.qtdeItemDuplicado = undefined;
       this.dialogDuplicaItem = false;
+      this.cdr.markForCheck();
     }
   }
 
@@ -184,6 +196,7 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
     ];
 
     this.contextMenu()?.show(event);
+    this.cdr.markForCheck();
   }
 
   drop(event: CdkDragDrop<EmprestimoDevolucaoItem[]>) {
@@ -195,6 +208,7 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
         event.previousIndex,
         event.currentIndex);
     }
+    this.cdr.markForCheck();
   }
 
   removeItensDuplicadosByItem(item: EmprestimoDevolucaoItem) {
@@ -204,14 +218,21 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
       if (empDevItem.item.id === item.item.id) {
         qtdeTotal += Number(empDevItem.qtde);
       }
-      if (empDevItem.id === null) {
+      // Verifica itens duplicados (id === null ou id === 0)
+      if (empDevItem.id === null || empDevItem.id === 0) {
         empDetItemToRemove = empDevItem;
       }
     }
     if (empDetItemToRemove) {
-      this.object.emprestimoDevolucaoItem.splice(this.object.emprestimoDevolucaoItem
-      .indexOf(empDetItemToRemove), 1);
-      this.itensPendentes.splice(this.itensPendentes.indexOf(empDetItemToRemove), 1);
+      const indexEmpDevItem = this.object.emprestimoDevolucaoItem.indexOf(empDetItemToRemove);
+      const indexItensPendentes = this.itensPendentes.indexOf(empDetItemToRemove);
+
+      if (indexEmpDevItem >= 0) {
+        this.object.emprestimoDevolucaoItem.splice(indexEmpDevItem, 1);
+      }
+      if (indexItensPendentes >= 0) {
+        this.itensPendentes.splice(indexItensPendentes, 1);
+      }
 
       // Early exit: para após atualizar o primeiro item encontrado
       for (const empDevItem of this.object.emprestimoDevolucaoItem) {
@@ -220,6 +241,7 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
           break; // Sai após atualizar quantidade
         }
       }
+      this.cdr.markForCheck();
     }
   }
 

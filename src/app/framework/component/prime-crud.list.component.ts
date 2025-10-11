@@ -160,7 +160,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     resizableColumns: true,
     columnResizeMode: 'fit',
     lazy: true,
-    lazyLoadOnInit: true,
+    lazyLoadOnInit: false,
     preloadData: true,
     keyboardShortcuts: true
   });
@@ -258,7 +258,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   // Performance optimizations
   trackByFn = (index: number, item: T): string | number => {
     const trackByField = this.tableConfig.trackByField || 'id';
-    return (item as Record<string, string | number>)[trackByField] || index;
+    return (item as Record<string, string | number>)[trackByField] ?? index;
   };
 
   // PrimeNG DataView pagination event handler

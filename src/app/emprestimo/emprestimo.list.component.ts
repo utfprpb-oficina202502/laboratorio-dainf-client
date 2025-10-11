@@ -355,8 +355,8 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       resizableColumns: true,
       columnResizeMode: 'fit',
       lazy: true,
-      lazyLoadOnInit: true,
-      preloadData: false,
+      lazyLoadOnInit: false,
+      preloadData: true,
       keyboardShortcuts: true
     };
 

@@ -20,22 +20,20 @@ export class StatCardComponent {
   private readonly accentTint = computed(() => this.hexToRgba(this.accentColor(), 0.18));
   private readonly accentMuted = computed(() => this.hexToRgba(this.accentColor(), 0.24));
 
-  get iconClasses() {
-    return this.iconLibrary() === 'fa' ? `fa fa-${this.icon()}` : `pi pi-${this.icon()}`;
-  }
+  readonly iconClasses = computed(() =>
+    this.iconLibrary() === 'fa' ? `fa fa-${this.icon()}` : `pi pi-${this.icon()}`
+  );
 
-  get styleVariables() {
-    return {
-      '--stat-card-accent-color': this.accentColor(),
-      '--stat-card-accent-tint': this.accentTint(),
-      '--stat-card-accent-muted': this.accentMuted()
-    };
-  }
+  readonly styleVariables = computed(() => ({
+    '--stat-card-accent-color': this.accentColor(),
+    '--stat-card-accent-tint': this.accentTint(),
+    '--stat-card-accent-muted': this.accentMuted()
+  }));
 
-  get safeValue() {
+  readonly safeValue = computed(() => {
     const val = this.value();
     return val === null || val === undefined || val === '' ? '-' : val;
-  }
+  });
 
   onClick() {
     if (this.clickable()) {

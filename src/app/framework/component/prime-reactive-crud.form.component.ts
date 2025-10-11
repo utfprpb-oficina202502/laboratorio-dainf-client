@@ -312,10 +312,21 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
   ): K[] {
     return items.filter((item: K) => {
       const itemRecord = item as Record<string, unknown>;
-      const nestedId = idField.includes('.')
-        ? idField.split('.').reduce((obj: Record<string, unknown>, key: string) => (obj?.[key] as Record<string, unknown>) || {}, itemRecord)
-        : itemRecord[idField];
-      return nestedId !== itemId;
+
+      // Para campos aninhados (ex: 'item.id'), percorrer o caminho e extrair o valor final
+      if (idField.includes('.')) {
+        const keys = idField.split('.');
+        let current: unknown = itemRecord;
+
+        for (const key of keys) {
+          current = (current as Record<string, unknown>)?.[key];
+        }
+
+        return current !== itemId;
+      }
+
+      // Para campos simples, comparação direta
+      return itemRecord[idField] !== itemId;
     });
   }
 

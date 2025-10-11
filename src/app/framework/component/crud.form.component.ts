@@ -100,6 +100,7 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
       next: (e) => {
         this.object = e;
         this.editando = true;
+        this.postEdit();
         this.loaderService.hide();
       },
       error: () => {
@@ -112,6 +113,11 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
         });
       }
       });
+  }
+
+  protected postEdit(): void {
+    // Hook para lógica customizada após carregar entidade na edição
+    // Child classes podem sobrescrever para executar ações adicionais
   }
 
   back() {
