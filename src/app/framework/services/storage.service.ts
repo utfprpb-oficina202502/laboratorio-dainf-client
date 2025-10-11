@@ -98,7 +98,7 @@ export class StorageService {
   // Resolve o storage de forma segura conforme o ambiente
   private getStorage(): Storage {
     if (!this._storage) {
-      if (typeof globalThis.window !== 'undefined' && 'localStorage' in globalThis && globalThis.localStorage) {
+      if (globalThis.window !== undefined && 'localStorage' in globalThis && globalThis.localStorage) {
         this._storage = globalThis.localStorage;
       } else {
         this._storage = this.createInMemoryStorage();
