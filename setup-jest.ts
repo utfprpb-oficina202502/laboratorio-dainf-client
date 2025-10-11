@@ -1,11 +1,11 @@
 // jest-preset-angular setup para Angular 20
-import 'zone.js';
-import 'zone.js/testing';
+import {setupZoneTestEnv} from 'jest-preset-angular/setup-env/zone';
 import {getTestBed} from '@angular/core/testing';
-import {BrowserTestingModule, platformBrowserTesting} from '@angular/platform-browser/testing';
 
-// Initialize the Angular testing environment
-getTestBed().initTestEnvironment(
-  BrowserTestingModule,
-  platformBrowserTesting(),
-);
+// Initialize the Angular testing environment with protection against duplicate initialization
+try {
+  setupZoneTestEnv();
+} catch (e) {
+  getTestBed().resetTestEnvironment();
+  setupZoneTestEnv();
+}

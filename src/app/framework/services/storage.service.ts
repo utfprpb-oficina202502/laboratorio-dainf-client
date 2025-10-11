@@ -9,11 +9,10 @@ import {Injectable} from '@angular/core';
   providedIn: 'root'
 })
 export class StorageService {
-  private readonly storage: Storage;
+  private _storage?: Storage;
 
   constructor() {
-    // Usa localStorage para persistência de sessão
-    this.storage = localStorage;
+    // Resolução preguiçosa: não acessar localStorage no construtor
   }
 
   /**
@@ -21,7 +20,7 @@ export class StorageService {
    */
   setItem(key: string, value: string): void {
     try {
-      this.storage.setItem(key, value);
+      this.getStorage().setItem(key, value);
     } catch (error) {
       console.error('Erro ao armazenar item:', error);
     }
@@ -32,7 +31,7 @@ export class StorageService {
    */
   getItem(key: string): string | null {
     try {
-      return this.storage.getItem(key);
+      return this.getStorage().getItem(key);
     } catch (error) {
       console.error('Erro ao recuperar item:', error);
       return null;
@@ -44,7 +43,7 @@ export class StorageService {
    */
   removeItem(key: string): void {
     try {
-      this.storage.removeItem(key);
+      this.getStorage().removeItem(key);
     } catch (error) {
       console.error('Erro ao remover item:', error);
     }
@@ -55,10 +54,57 @@ export class StorageService {
    */
   clear(): void {
     try {
-      this.storage.clear();
+      this.getStorage().clear();
     } catch (error) {
       console.error('Erro ao limpar storage:', error);
     }
+  }
+
+  // Storage em memória para ambientes sem window/localStorage (SSR, testes sem DOM)
+  private createInMemoryStorage(): Storage {
+    class InMemoryStorage implements Storage {
+      private readonly map = new Map<string, string>();
+
+      get length(): number {
+        return this.map.size;
+      }
+
+      clear(): void {
+        this.map.clear();
+      }
+
+      getItem(key: string): string | null {
+        const value = this.map.get(key);
+        return value ?? null;
+      }
+
+      key(index: number): string | null {
+        const keys = Array.from(this.map.keys());
+        return keys[index] ?? null;
+      }
+
+      removeItem(key: string): void {
+        this.map.delete(key);
+      }
+
+      setItem(key: string, value: string): void {
+        this.map.set(key, String(value));
+      }
+    }
+
+    return new InMemoryStorage();
+  }
+
+  // Resolve o storage de forma segura conforme o ambiente
+  private getStorage(): Storage {
+    if (!this._storage) {
+      if (typeof globalThis.window !== 'undefined' && 'localStorage' in globalThis && globalThis.localStorage) {
+        this._storage = globalThis.localStorage;
+      } else {
+        this._storage = this.createInMemoryStorage();
+      }
+    }
+    return this._storage;
   }
 
   /**

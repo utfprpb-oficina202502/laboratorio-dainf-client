@@ -163,12 +163,13 @@ describe('StorageService', () => {
       localStorageSpy = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
         throw new Error('Storage access denied');
       });
-      jest.spyOn(console, 'error').mockImplementation();
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
       const hasKey = service.hasItem('testKey');
 
       expect(hasKey).toBe(false);
 
+      consoleErrorSpy.mockRestore();
       localStorageSpy.mockRestore();
     });
   });

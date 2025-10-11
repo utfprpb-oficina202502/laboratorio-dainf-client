@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, effect, input, output, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, input, output} from '@angular/core';
 
 @Component({
   selector: 'app-stat-card',
@@ -16,18 +16,9 @@ export class StatCardComponent {
   readonly iconLibrary = input<'pi' | 'fa'>('fa'); // padrão agora Font Awesome
   readonly cardClick = output<void>();
 
-  // Sinais derivados para as variantes de cor
-  private readonly accentTint = signal(this.hexToRgba(this.accentColor(), 0.18));
-  private readonly accentMuted = signal(this.hexToRgba(this.accentColor(), 0.24));
-
-  constructor() {
-    // Effect reage automaticamente quando accentColor() muda
-    effect(() => {
-      const color = this.accentColor();
-      this.accentTint.set(this.hexToRgba(color, 0.18));
-      this.accentMuted.set(this.hexToRgba(color, 0.24));
-    });
-  }
+  // Valores derivados reativos usando computed
+  private readonly accentTint = computed(() => this.hexToRgba(this.accentColor(), 0.18));
+  private readonly accentMuted = computed(() => this.hexToRgba(this.accentColor(), 0.24));
 
   get iconClasses() {
     return this.iconLibrary() === 'fa' ? `fa fa-${this.icon()}` : `pi pi-${this.icon()}`;

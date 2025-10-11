@@ -131,16 +131,45 @@ export class JwtUtil {
       base64 += '='.repeat(4 - pad);
     }
 
-    // Decodifica base64 para string
     try {
-      // Usa atob para decodificar base64
-      const decoded = atob(base64);
+      // Tipos mínimos para evitar any e manter compatibilidade
+      interface MinimalBuffer {
+        from(input: string, encoding: 'base64'): { toString(encoding: 'binary'): string };
+      }
 
-      // Converte para UTF-8 corretamente
+      type MinimalTextDecoder = new (label?: string) => { decode(input?: BufferSource): string };
+      const g = globalThis as unknown as {
+        Buffer?: MinimalBuffer;
+        TextDecoder?: MinimalTextDecoder
+      };
+
+      // Decodifica base64 para bytes
+      let binary: string;
+      if (typeof atob === 'function') {
+        binary = atob(base64);
+      } else if (g.Buffer) {
+        // Ambiente Node/teste sem atob
+        binary = g.Buffer.from(base64, 'base64').toString('binary');
+      } else {
+        throw new Error('Decodificador base64 indisponível no ambiente');
+      }
+
+      // Preferir TextDecoder para conversão UTF-8 moderna
+      if (g.TextDecoder) {
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        const decoder = new g.TextDecoder('utf-8');
+        return decoder.decode(bytes);
+      }
+
+      // Fallback: técnica com decodeURIComponent (compatibilidade ampla)
       return decodeURIComponent(
-        decoded.split('').map((c) => {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join('')
+        binary
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
       );
     } catch (error) {
       throw new Error('Erro ao decodificar base64: ' + (error as Error).message);

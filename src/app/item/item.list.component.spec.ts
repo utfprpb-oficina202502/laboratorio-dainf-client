@@ -1,4 +1,14 @@
 import {Grupo} from '../grupo/grupo';
+import {TestBed} from '@angular/core/testing';
+import {RouterTestingModule} from '@angular/router/testing';
+import {ConfirmationService, MessageService} from 'primeng/api';
+import {ItemListComponent} from './item.list.component';
+import {ItemService} from './item.service';
+import {ReservaService} from '../reserva/reserva.service';
+import {LoginService} from '../login/login.service';
+
+// Bound reference to the real component method; keeps assertions unchanged
+let getGrupoBadgeSeverity: (grupo: Grupo | undefined) => 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
 
 /**
  * Testes unitários para lógica de badge de categorias de grupo
@@ -7,25 +17,25 @@ import {Grupo} from '../grupo/grupo';
  */
 
 // Função pura extraída da lógica do componente para testes isolados
-function getGrupoBadgeSeverity(grupo: Grupo | undefined): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
-  if (!grupo) {
-    return 'secondary';
-  }
 
-  const severities: ('success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast')[] = [
-    'info',
-    'success',
-    'warn',
-    'danger',
-    'secondary',
-    'contrast'
-  ];
-
-  const colorIndex = grupo.id % severities.length;
-  return severities[colorIndex];
-}
 
 describe('ItemListComponent - getGrupoBadgeSeverity', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [RouterTestingModule, ItemListComponent],
+      providers: [
+        MessageService,
+        ConfirmationService,
+        {provide: ItemService, useValue: {}},
+        {provide: ReservaService, useValue: {}},
+        {provide: LoginService, useValue: {}},
+      ],
+    });
+
+    const fixture = TestBed.createComponent(ItemListComponent);
+    const component = fixture.componentInstance;
+    getGrupoBadgeSeverity = component.getGrupoBadgeSeverity.bind(component);
+  });
 
   describe('Atribuição de cores consistente', () => {
     it('deve retornar "success" (verde) para grupo com ID 1', () => {
