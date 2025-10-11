@@ -70,9 +70,9 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
   protected readonly maxDate = signal<Date>(new Date());
 
   // Temporary signals for adding items (not part of main form)
-  protected readonly tempItem = signal<Item | null>(null);
-  protected readonly tempQtde = signal<number>(1);
-  protected readonly tempValor = signal<number>(0);
+  protected tempItem = signal<Item | null>(null);
+  protected tempQtde = signal<number>(1);
+  protected tempValor = signal<number>(0);
 
   // Computed signals
   protected readonly totalCompra = computed(() => {

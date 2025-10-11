@@ -90,9 +90,9 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   protected readonly minioUrl = signal<string>(environment.minio_url);
 
   // Temporary signals for adding items
-  protected readonly tempItem = signal<Item | null>(null);
-  protected readonly tempQtde = signal<number>(1);
-  protected readonly tempDevolver = signal<boolean | null>(null);
+  protected tempItem = signal<Item | null>(null);
+  protected tempQtde = signal<number>(1);
+  protected tempDevolver = signal<boolean | null>(null);
 
   // Dropdown options
   protected readonly yesNoDropdown: SelectItem[] = [

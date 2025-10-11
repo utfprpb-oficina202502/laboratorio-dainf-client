@@ -504,7 +504,27 @@ export class ChartService {
     const chart = root.container.children.getIndex(0);
     if (!chart) return;
 
-    if (chart instanceof am5xy.XYChart || chart instanceof am5percent.PieChart) {
+    // Handle XY charts and pie charts separately
+    if (chart instanceof am5xy.XYChart) {
+      const series = chart.series.getIndex(0);
+      if (!series) return;
+
+      // If this is a LineSeries with a time-based x-axis, re-normalize date data
+      if (series instanceof am5xy.LineSeries) {
+        const dateField = series.get('valueXField');
+        if (typeof dateField === 'string' && dateField.length > 0) {
+          const processedData = this.processDateData(data, dateField);
+          series.data.setAll(processedData);
+          return;
+        }
+      }
+
+      // Fallback for other XY series types
+      series.data.setAll(data);
+      return;
+    }
+
+    if (chart instanceof am5percent.PieChart) {
       const series = chart.series.getIndex(0);
       if (series) {
         series.data.setAll(data);
