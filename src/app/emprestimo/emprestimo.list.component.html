@@ -1,5 +1,5 @@
-<div (keyup.control.n)="openForm()" class="mx-auto max-w-7xl p-4 my-3" tabindex="0">
-  <p-card>
+<div (keyup.control.n)="openForm()" class="container-fluid my-3" tabindex="0">
+  <p-card [attr.aria-busy]="loading()">
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-3">
         <span class="text-xl font-bold">Empréstimos</span>
@@ -7,7 +7,8 @@
     </ng-template>
 
     <ng-template pTemplate="content">
-      <app-prime-crud-toolbar [table]="dt" [list]="self">
+      <!-- Toolbar remains visible during loading for better UX -->
+      <app-prime-crud-toolbar [list]="self" [table]="dataTable()">
         <ng-template #toolbarStartTemplate>
           <p-button
             type="button"
@@ -25,7 +26,16 @@
         </ng-template>
       </app-prime-crud-toolbar>
 
-      <p-table
+      <!-- Wrapper component handles skeleton/table conditional rendering -->
+      <app-prime-crud-table-wrapper
+        [entityName]="getEntityName().toLowerCase()"
+        [entityPluralName]="getEntityPluralName().toLowerCase()"
+        [loading]="loading()"
+        [skeletonColumns]="displayedColumns.length"
+        [skeletonRows]="rows"
+        [totalElements]="totalElements">
+
+        <p-table
         #dt
         [loading]="loading()"
         [value]="objects"
@@ -197,27 +207,14 @@
         }
         </ng-template>
 
-        <ng-template pTemplate="loadingbody">
-          <tr>
-            <td [attr.colspan]="getColumnCount()">
-              <div class="text-center py-4">
-                <p class="text-gray-500 mt-2 mb-0">{{ tableConfig.loadingMessage }}</p>
-              </div>
-            </td>
-          </tr>
-      </ng-template>
+          <app-table-default-templates
+            [colspan]="getColumnCount()"
+            [emptyMessage]="tableConfig.emptyMessage || 'Nenhum empréstimo encontrado'"
+            [loadingMessage]="tableConfig.loadingMessage || 'Carregando empréstimos...'">
+          </app-table-default-templates>
+        </p-table>
 
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td [attr.colspan]="getColumnCount()">
-            <div class="text-center py-4">
-              <i class="pi pi-info-circle text-gray-500 text-3xl"></i>
-              <p class="text-gray-500 mt-2 mb-0">{{ tableConfig.emptyMessage }}</p>
-            </div>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
+      </app-prime-crud-table-wrapper>
   </ng-template>
 </p-card>
 </div>
@@ -270,7 +267,7 @@
               [forceSelection]="true"
               [dropdown]="true"
               [(ngModel)]="emprestimoFilter.usuarioResponsavel"
-              [suggestions]="usuarioResponsalvel"
+              [suggestions]="usuarioResponsavel"
               (onClear)="emprestimoFilter.usuarioResponsavel = undefined"
               (completeMethod)="findUsuarioResponsavel($event)">
             </p-autoComplete>

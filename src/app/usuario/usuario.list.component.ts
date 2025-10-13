@@ -5,6 +5,9 @@ import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.com
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Permissao} from './permissao';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
+import {
+  TableDefaultTemplatesComponent
+} from '../framework/component/table-default-templates.component';
 
 @Component({
     selector: 'app-list-usuario',
@@ -12,6 +15,7 @@ import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.mod
     styleUrls: ['./usuario.list.component.css'],
   imports: [
     PrimeTableSharedModule,
+    TableDefaultTemplatesComponent,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => UsuarioListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush

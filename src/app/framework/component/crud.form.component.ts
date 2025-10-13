@@ -6,6 +6,7 @@ import {BaseFormComponent} from './base.form.component';
 import {LoaderService} from '../loader/loader.service';
 import {LoginService} from '../../login/login.service';
 import {LoggerService} from '../services/logger.service';
+import {extractRouteParam, parseNumericId} from '../utils/route-params.operators';
 
 @Directive()
 export abstract class CrudFormComponent<T, ID> extends BaseFormComponent implements OnInit {
@@ -42,12 +43,20 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
     this.loginService.userLoggedIsAlunoOrProfessor()
       .then(value => this.isAlunosOrProfessor = value);
     this.newInstance();
-    this.route.params.subscribe({
-      next: (params) => {
-        if (params.id) {
-          if (!Number.isNaN(params.id)) {
-            this.edit(params.id);
-          }
+    // Extração e validação de parâmetro ID com operator utilitário
+    this.route.params.pipe(
+      extractRouteParam({
+        paramName: 'id',
+        converter: parseNumericId,
+        onError: (value) => {
+          this.logger.warn(`Invalid ID parameter: ${value}`);
+          this.back();
+        }
+      })
+    ).subscribe({
+      next: (id) => {
+        if (id !== null) {
+          this.edit(id as ID);
         }
       }
     });

@@ -4,6 +4,9 @@ import {PaisService} from './pais.service';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
+import {
+  TableDefaultTemplatesComponent
+} from '../framework/component/table-default-templates.component';
 
 @Component({
   selector: 'app-list-pais',
@@ -11,6 +14,7 @@ import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.mod
   styleUrls: ['./pais.list.component.css'],
   imports: [
     PrimeTableSharedModule,
+    TableDefaultTemplatesComponent,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => PaisListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush

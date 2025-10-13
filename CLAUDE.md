@@ -22,9 +22,11 @@ DAINF/UTFPR lab management system
 ## Key Patterns
 
 **Performance:** Permission pre-fetch → `setAuthenticated()` → navigate | Skeleton screens | Progressive data load | BFCache: `@HostListener('pageshow')` + `event.persisted` | PWA: `SwUpdate.checkForUpdate()`
+**Skeleton Loading:** Use `PrimeCrudTableWrapperComponent` with `[loading]="loading()"` signal | Toolbar stays visible with `[table]="dataTable()"` | WCAG 2.1 AA: `[attr.aria-busy]` on container + ARIA live region for screen readers | Wrapper eliminates template duplication | Example: `src/app/item/item.list.component.html`
 **Charts (amCharts5):** ALWAYS `disposeAllCharts()` before rebuild | `ngOnDestroy()` disposal | Update: change `chart.data` only
 **PrimeNG:** `[focusOnShow]="false"` for dialogs | `[lazy]="true"` + `[totalRecords]` for server pagination | `PrimeCrudListComponent` + `PrimeCrudToolbarComponent` base classes
 **Forms:** Extend `PrimeReactiveCrudFormComponent` | Use `FormFieldComponent` wrapper | `LoaderService`: `show()`, `hide()`, `showWithCancel()`
+**Route Params:** Use `extractRouteParam()` from `framework/utils/route-params.operators` | Converters: `parseNumericId`, `parseStringParam`, `parseCodeParam`, `parsePositiveId`, `parseBooleanParam` | Auto-unsubscribe with `take(1)` | Type-safe with generics | Error callbacks: `onError: (value) => logger.warn()` | Example: `this.route.params.pipe(extractRouteParam({paramName: 'id', converter: parseNumericId})).subscribe(id => {...})`
 **Examples:** `src/app/grupo/grupo.{list,form}.component.ts`
 
 ## Code Rules

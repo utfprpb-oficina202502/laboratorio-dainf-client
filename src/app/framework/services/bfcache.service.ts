@@ -88,7 +88,14 @@ export class BFCacheService {
    * Get BFCache compatibility issues
    * Returns array of reasons why page might not be cached
    *
-   * @returns Array of compatibility warnings
+   * ⚠️ LIMITAÇÃO: Não é possível detectar programaticamente todos os bloqueadores de BFCache.
+   * Alguns bloqueadores comuns (unload/beforeunload listeners) não podem ser detectados via JavaScript.
+   * Use Chrome DevTools → Application → Back/forward cache para diagnóstico completo.
+   *
+   * @returns Array of compatibility warnings (limitado a casos detectáveis)
+   *
+   * @see https://web.dev/bfcache/#optimize-your-pages-for-bfcache
+   * @see https://developer.chrome.com/docs/devtools/application/back-forward-cache/
    */
   getCompatibilityIssues(): string[] {
     const issues: string[] = [];
@@ -97,27 +104,20 @@ export class BFCacheService {
       return issues;
     }
 
-    // Check for BFCache blockers
-    if ('unload' in globalThis) {
-      const global = globalThis as typeof globalThis & { __hasUnloadListener?: boolean };
-      if (global.__hasUnloadListener) {
-        issues.push('unload event listener detected (blocks BFCache)');
-      }
-    }
-
-    // Check for beforeunload
-    if ('beforeunload' in globalThis) {
-      const global = globalThis as typeof globalThis & { __hasBeforeUnloadListener?: boolean };
-      if (global.__hasBeforeUnloadListener) {
-        issues.push('beforeunload event listener detected (may block BFCache)');
-      }
-    }
-
-    // Check for open connections (IndexedDB transactions, fetch, etc.)
-    // This is informational only - we can't detect all cases
+    // Verifica se a página está offline
+    // Nota: Páginas offline podem não ser elegíveis para BFCache em alguns browsers
     if (typeof navigator !== 'undefined' && 'onLine' in navigator && !navigator.onLine) {
       issues.push('Page is offline');
     }
+
+    // NOTA: Outros bloqueadores comuns não podem ser detectados programaticamente:
+    // - unload event listeners (uso de addEventListener('unload'))
+    // - beforeunload event listeners
+    // - Conexões abertas (WebSocket, IndexedDB transactions, fetch em andamento)
+    // - Cache-Control: no-store
+    //
+    // Para diagnóstico completo, use Chrome DevTools:
+    // Application → Back/forward cache → "Test back/forward cache"
 
     return issues;
   }
@@ -125,6 +125,9 @@ export class BFCacheService {
   /**
    * Log BFCache status and compatibility
    * Useful for debugging BFCache issues
+   *
+   * ⚠️ Para diagnóstico completo de bloqueadores, use Chrome DevTools:
+   * Application → Back/forward cache → "Test back/forward cache"
    */
   logStatus(): void {
     this.logger.debug('🔍 BFCache Status');
@@ -133,10 +136,13 @@ export class BFCacheService {
 
     const issues = this.getCompatibilityIssues();
     if (issues.length > 0) {
-      this.logger.warn('Compatibility issues:', issues);
+      this.logger.warn('⚠️ Compatibility issues detected:', issues);
     } else {
-      this.logger.debug('✅ No known compatibility issues');
+      this.logger.debug('✅ No detectable compatibility issues (use DevTools for complete analysis)');
     }
+
+    // Dica de diagnóstico
+    this.logger.debug('💡 Tip: Use Chrome DevTools → Application → Back/forward cache for complete diagnostic');
   }
 
   /**
@@ -148,13 +154,23 @@ export class BFCacheService {
   getTestInstructions(): string {
     return `
 BFCache Test Instructions:
+
+📋 Método 1 - Console Log (básico):
 1. Open DevTools Console
 2. Navigate to another page (e.g., click a link)
 3. Use browser back button to return
 4. Check console for "🔄 Page restored from BFCache" message
-5. If seen, BFCache is working! If not, check compatibility issues.
+5. Run bfCacheService.logStatus() to see current status
 
-Run bfCacheService.logStatus() to see current status.
+🔧 Método 2 - Chrome DevTools (completo e recomendado):
+1. Open DevTools → Application tab
+2. Click "Back/forward cache" in sidebar
+3. Click "Test back/forward cache" button
+4. DevTools will show ALL blockers preventing BFCache
+5. This is the ONLY way to detect unload/beforeunload listeners
+
+⚠️ Limitação: JavaScript não pode detectar todos os bloqueadores.
+Use sempre o DevTools para diagnóstico completo!
     `.trim();
   }
 

@@ -4,6 +4,9 @@ import {TableColumn} from '../framework/model/table-config.interface';
 import {Relatorio} from './relatorio';
 import {RelatorioService} from './relatorio.service';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
+import {
+  TableDefaultTemplatesComponent
+} from '../framework/component/table-default-templates.component';
 
 @Component({
   selector: 'app-list-relatorio',
@@ -15,6 +18,7 @@ import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.mod
   }],
   imports: [
     PrimeTableSharedModule,
+    TableDefaultTemplatesComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

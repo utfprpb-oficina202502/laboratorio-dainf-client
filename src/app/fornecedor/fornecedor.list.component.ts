@@ -4,6 +4,9 @@ import {TableColumn} from '../framework/model/table-config.interface';
 import {Fornecedor} from './fornecedor';
 import {FornecedorService} from './fornecedor.service';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
+import {
+  TableDefaultTemplatesComponent
+} from '../framework/component/table-default-templates.component';
 import {CpfCnpjPipe} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe";
 
 @Component({
@@ -12,6 +15,7 @@ import {CpfCnpjPipe} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe";
     styleUrls: ['./fornecedor.list.component.css'],
   imports: [
     PrimeTableSharedModule,
+    TableDefaultTemplatesComponent,
     CpfCnpjPipe,
 ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => FornecedorListComponent) }],

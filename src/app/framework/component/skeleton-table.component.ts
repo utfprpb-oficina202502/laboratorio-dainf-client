@@ -7,7 +7,13 @@ import {SkeletonModule} from 'primeng/skeleton';
   imports: [CommonModule, SkeletonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="skeleton-table">
+    <div class="skeleton-table"
+         role="status"
+         aria-label="Carregando conteúdo da tabela"
+         aria-live="polite">
+      <!-- Screen reader announcement -->
+      <span class="sr-only">Aguarde enquanto os dados são carregados</span>
+
       <!-- Table Header -->
       <div class="table-header">
         @for (col of columnArray(); track $index) {
@@ -70,6 +76,19 @@ import {SkeletonModule} from 'primeng/skeleton';
     .body-cell {
       display: flex;
       align-items: center;
+    }
+
+    /* Screen reader only content - WCAG 2.1 AA compliance */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
   `]
 })

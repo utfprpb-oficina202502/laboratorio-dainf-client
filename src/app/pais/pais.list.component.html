@@ -1,5 +1,5 @@
 <div class="container-fluid my-3">
-  <p-card>
+  <p-card [attr.aria-busy]="loading()">
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-3">
         <span class="text-xl font-bold">Países</span>
@@ -7,11 +7,20 @@
     </ng-template>
 
     <ng-template pTemplate="content">
-      <!-- Toolbar with standard CRUD operations -->
-      <app-prime-crud-toolbar [table]="dt" [list]="self"></app-prime-crud-toolbar>
+      <!-- Toolbar remains visible during loading for better UX -->
+      <app-prime-crud-toolbar [list]="self" [table]="dataTable()"></app-prime-crud-toolbar>
 
-      <!-- Main table -->
-      <p-table
+      <!-- Wrapper component handles skeleton/table conditional rendering -->
+      <app-prime-crud-table-wrapper
+        [entityName]="getEntityName().toLowerCase()"
+        [entityPluralName]="getEntityPluralName().toLowerCase()"
+        [loading]="loading()"
+        [skeletonColumns]="displayedColumns.length"
+        [skeletonRows]="rows"
+        [totalElements]="totalElements">
+
+        <!-- Main table -->
+        <p-table
         #dt
         [loading]="loading()"
         [value]="objects"
@@ -119,27 +128,14 @@
         </ng-template>
 
         <!-- Empty state -->
-        <ng-template pTemplate="loadingbody">
-          <tr>
-            <td [attr.colspan]="getColumnCount()">
-              <div class="text-center py-4">
-                <p class="text-muted mt-2 mb-0">{{ tableConfig.loadingMessage }}</p>
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td [attr.colspan]="getColumnCount()">
-              <div class="text-center py-4">
-                <i class="pi pi-info-circle text-muted" class="text-3xl"></i>
-                <p class="text-muted mt-2 mb-0">{{ tableConfig.emptyMessage }}</p>
-              </div>
-            </td>
-          </tr>
-        </ng-template>
+          <app-table-default-templates
+            [colspan]="getColumnCount()"
+            [emptyMessage]="tableConfig.emptyMessage || 'Nenhum país encontrado'"
+            [loadingMessage]="tableConfig.loadingMessage || 'Carregando países...'">
+          </app-table-default-templates>
       </p-table>
+
+      </app-prime-crud-table-wrapper>
     </ng-template>
   </p-card>
 </div>

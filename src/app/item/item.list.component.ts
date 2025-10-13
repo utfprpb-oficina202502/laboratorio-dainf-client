@@ -16,6 +16,9 @@ import {MenuModule} from 'primeng/menu';
 import {NovoComponent} from '../geral/novo/novo.component';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 import {BreakpointService} from '../framework/services/breakpoint.service';
+import {
+  TableDefaultTemplatesComponent
+} from '../framework/component/table-default-templates.component';
 
 @Component({
     selector: "app-list-item",
@@ -28,6 +31,7 @@ import {BreakpointService} from '../framework/services/breakpoint.service';
     MenuModule,
     NovoComponent,
     NgOptimizedImage,
+    TableDefaultTemplatesComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => ItemListComponent) }]

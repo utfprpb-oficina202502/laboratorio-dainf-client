@@ -119,6 +119,15 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
     this.fornecedorService.complete(event.query).subscribe({
       next: (e) => {
         this.fornecedorList.set(e);
+      },
+      error: (err) => {
+        this.logger.error('Erro ao buscar fornecedores:', err);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Não foi possível buscar fornecedores. Tente novamente.'
+        });
+        this.fornecedorList.set([]); // Limpa a lista para evitar dados obsoletos
       }
     });
   }
@@ -139,6 +148,15 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
     this.itemService.completeItem(query, false).subscribe({
       next: (e) => {
         this.itemList.set(e);
+      },
+      error: (err) => {
+        this.logger.error('Erro ao buscar itens:', err);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Não foi possível buscar itens. Tente novamente.'
+        });
+        this.itemList.set([]); // Limpa a lista para evitar dados obsoletos
       }
     });
   }

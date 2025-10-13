@@ -4,6 +4,9 @@ import {TableColumn} from '../framework/model/table-config.interface';
 import {SolicitacaoCompra} from './solicitacaoCompra';
 import {SolicitacaoCompraService} from './solicitacaoCompra.service';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
+import {
+  TableDefaultTemplatesComponent
+} from '../framework/component/table-default-templates.component';
 
 @Component({
     selector: 'app-list-solicitacao-compra',
@@ -11,6 +14,7 @@ import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.mod
     styleUrls: ['./solicitacaoCompra.list.component.css'],
   imports: [
     PrimeTableSharedModule,
+    TableDefaultTemplatesComponent,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => SolicitacaoCompraListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush

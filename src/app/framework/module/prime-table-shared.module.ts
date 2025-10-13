@@ -18,6 +18,8 @@ import {TagModule} from 'primeng/tag';
 import {PrimeCrudToolbarComponent} from '../component/prime-crud-toolbar.component';
 import {ActionButtonsComponent} from '../component/action-buttons.component';
 import {TableFilterCaptionComponent} from '../component/table-filter-caption.component';
+import {SkeletonTableComponent} from '../component/skeleton-table.component';
+import {PrimeCrudTableWrapperComponent} from '../component/prime-crud-table-wrapper.component';
 
 /**
  * Shared module for PrimeNG table list components
@@ -48,6 +50,8 @@ import {TableFilterCaptionComponent} from '../component/table-filter-caption.com
     PrimeCrudToolbarComponent,
     ActionButtonsComponent,
     TableFilterCaptionComponent,
+    SkeletonTableComponent,
+    PrimeCrudTableWrapperComponent,
   ],
   exports: [
     // Export all to make them available to importing components
@@ -66,6 +70,8 @@ import {TableFilterCaptionComponent} from '../component/table-filter-caption.com
     PrimeCrudToolbarComponent,
     ActionButtonsComponent,
     TableFilterCaptionComponent,
+    SkeletonTableComponent,
+    PrimeCrudTableWrapperComponent,
   ]
 })
 export class PrimeTableSharedModule {

@@ -11,6 +11,7 @@ import {pt} from '../framework/constantes/calendarPt';
 import {RelatorioParamsValue} from './relatorioParamsValue';
 import {StringUtils} from '../framework/util/string.utils';
 import {BreakpointService} from '../framework/services/breakpoint.service';
+import {extractRouteParam, parseNumericId} from '../framework/utils/route-params.operators';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
@@ -57,9 +58,20 @@ export class RelatorioViewerComponent implements OnInit {
 
   ngOnInit(): void {
     this.localePt = pt;
-    this.route.params.subscribe(params => {
-      if (params.id) {
-        this.findDadosRelatorio(params.id);
+    // Extração e validação de parâmetro ID com operator utilitário
+    this.route.params.pipe(
+      extractRouteParam({
+        paramName: 'id',
+        converter: parseNumericId,
+        onError: () => {
+          this.back();
+        }
+      })
+    ).subscribe({
+      next: (id) => {
+        if (id !== null) {
+          this.findDadosRelatorio(id);
+        }
       }
     });
   }

@@ -272,13 +272,8 @@ export class ChartService {
       })
     );
 
-    const sortedData = [...config.data]
-    .sort((a, b) => {
-      const aValue = (a as Record<string, unknown>)?.[config.valueField];
-      const bValue = (b as Record<string, unknown>)?.[config.valueField];
-      return (typeof bValue === 'number' ? bValue : 0) - (typeof aValue === 'number' ? aValue : 0);
-    })
-    .slice(0, ChartService.MAX_BAR_ITEMS);
+    // Processa dados: ordena, limita e adiciona cores
+    const dataWithColors = this.prepareBarChartData(config.data, config.valueField);
 
     const xAxis = chart.xAxes.push(
       am5xy.CategoryAxis.new(root, {
@@ -306,7 +301,7 @@ export class ChartService {
       ellipsis: '...'
     });
 
-    xAxis.data.setAll(sortedData);
+    xAxis.data.setAll(dataWithColors);
 
     const yAxis = chart.yAxes.push(
       am5xy.ValueAxis.new(root, {
@@ -334,13 +329,6 @@ export class ChartService {
         })
       })
     );
-
-    const dataWithColors = sortedData.map((item, index) => ({
-      ...(item as Record<string, unknown>),
-      columnSettings: {
-        fill: am5.color(this.chartColors.bar.palette[index % this.chartColors.bar.palette.length])
-      }
-    }));
 
     series.columns.template.setAll({
       cornerRadiusTL: ChartService.CORNER_RADIUS,
@@ -407,14 +395,8 @@ export class ChartService {
       forceHidden: true
     });
 
-    const limitedData = this.limitPieChartData(config.data, config.valueField, ChartService.MAX_PIE_ITEMS);
-
-    const dataWithColors = limitedData.map((item, index) => ({
-      ...(item as Record<string, unknown>),
-      sliceSettings: {
-        fill: am5.color(this.chartColors.pie.palette[index % this.chartColors.pie.palette.length])
-      }
-    }));
+    // Processa dados: limita quantidade e adiciona cores
+    const dataWithColors = this.preparePieChartData(config.data, config.valueField);
 
     series.slices.template.setAll({
       strokeWidth: ChartService.PIE_SLICE_STROKE_WIDTH,
@@ -490,46 +472,6 @@ export class ChartService {
     chart.appear(ChartService.ANIMATION_DURATION_MS, ChartService.ANIMATION_DELAY_MS);
 
     return chart;
-  }
-
-  async updateChartData(containerId: string, data: unknown[]): Promise<void> {
-    if (!this._chartModules) {
-      return; // Charts not yet loaded
-    }
-    const {am5xy, am5percent} = this._chartModules;
-
-    const root = this.charts.get(containerId);
-    if (!root) return;
-
-    const chart = root.container.children.getIndex(0);
-    if (!chart) return;
-
-    // Handle XY charts and pie charts separately
-    if (chart instanceof am5xy.XYChart) {
-      const series = chart.series.getIndex(0);
-      if (!series) return;
-
-      // If this is a LineSeries with a time-based x-axis, re-normalize date data
-      if (series instanceof am5xy.LineSeries) {
-        const dateField = series.get('valueXField');
-        if (typeof dateField === 'string' && dateField.length > 0) {
-          const processedData = this.processDateData(data, dateField);
-          series.data.setAll(processedData);
-          return;
-        }
-      }
-
-      // Fallback for other XY series types
-      series.data.setAll(data);
-      return;
-    }
-
-    if (chart instanceof am5percent.PieChart) {
-      const series = chart.series.getIndex(0);
-      if (series) {
-        series.data.setAll(data);
-      }
-    }
   }
 
   /**
@@ -921,5 +863,55 @@ export class ChartService {
       return (typeof bValue === 'number' ? bValue : 0) - (typeof aValue === 'number' ? aValue : 0);
     })
     .slice(0, maxEntries);
+  }
+
+  /**
+   * Processa dados para gráfico de barras: ordena por valor, limita quantidade e adiciona cores
+   */
+  private prepareBarChartData(data: unknown[], valueField: string, maxEntries = ChartService.MAX_BAR_ITEMS): unknown[] {
+    if (!Array.isArray(data) || data.length === 0) {
+      return data;
+    }
+
+    const {am5} = this.chartModules;
+
+    // Ordena por valor descendente e limita ao máximo
+    const sortedData = [...data]
+    .sort((a, b) => {
+      const aValue = (a as Record<string, unknown>)?.[valueField];
+      const bValue = (b as Record<string, unknown>)?.[valueField];
+      return (typeof bValue === 'number' ? bValue : 0) - (typeof aValue === 'number' ? aValue : 0);
+    })
+    .slice(0, maxEntries);
+
+    // Adiciona configurações de cor para cada barra
+    return sortedData.map((item, index) => ({
+      ...(item as Record<string, unknown>),
+      columnSettings: {
+        fill: am5.color(this.chartColors.bar.palette[index % this.chartColors.bar.palette.length])
+      }
+    }));
+  }
+
+  /**
+   * Processa dados para gráfico de pizza: limita quantidade e adiciona cores
+   */
+  private preparePieChartData(data: unknown[], valueField: string, maxEntries = ChartService.MAX_PIE_ITEMS): unknown[] {
+    if (!Array.isArray(data) || data.length === 0) {
+      return data;
+    }
+
+    const {am5} = this.chartModules;
+
+    // Limita e ordena os dados
+    const limitedData = this.limitPieChartData(data, valueField, maxEntries);
+
+    // Adiciona configurações de cor para cada fatia
+    return limitedData.map((item, index) => ({
+      ...(item as Record<string, unknown>),
+      sliceSettings: {
+        fill: am5.color(this.chartColors.pie.palette[index % this.chartColors.pie.palette.length])
+      }
+    }));
   }
 }

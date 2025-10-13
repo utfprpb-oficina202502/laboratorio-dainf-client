@@ -212,37 +212,71 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
   }
 
   removeItensDuplicadosByItem(item: EmprestimoDevolucaoItem) {
-    let qtdeTotal = 0;
-    let empDetItemToRemove: EmprestimoDevolucaoItem | undefined;
-    for (const empDevItem of this.object.emprestimoDevolucaoItem) {
-      if (empDevItem.item.id === item.item.id) {
-        qtdeTotal += Number(empDevItem.qtde);
-      }
-      // Verifica itens duplicados (id === null ou id === 0)
-      if (empDevItem.id === null || empDevItem.id === 0) {
-        empDetItemToRemove = empDevItem;
-      }
-    }
-    if (empDetItemToRemove) {
-      const indexEmpDevItem = this.object.emprestimoDevolucaoItem.indexOf(empDetItemToRemove);
-      const indexItensPendentes = this.itensPendentes.indexOf(empDetItemToRemove);
+    // Coleta todas as listas do Kanban para processamento
+    const allLists = [
+      this.object.emprestimoDevolucaoItem,
+      this.itensPendentes,
+      this.itensDevolvidos,
+      this.itensSaida
+    ];
 
-      if (indexEmpDevItem >= 0) {
-        this.object.emprestimoDevolucaoItem.splice(indexEmpDevItem, 1);
-      }
-      if (indexItensPendentes >= 0) {
-        this.itensPendentes.splice(indexItensPendentes, 1);
-      }
+    // Usa Set para garantir referências únicas (mesmo item pode estar em múltiplas listas)
+    const uniqueMatchingItems = new Set<EmprestimoDevolucaoItem>();
+    const duplicates: EmprestimoDevolucaoItem[] = [];
+    let canonicalItem: EmprestimoDevolucaoItem | undefined;
 
-      // Early exit: para após atualizar o primeiro item encontrado
-      for (const empDevItem of this.object.emprestimoDevolucaoItem) {
+    // Escaneia todas as listas procurando itens correspondentes
+    for (const list of allLists) {
+      for (const empDevItem of list) {
         if (empDevItem.item.id === item.item.id) {
-          empDevItem.qtde = qtdeTotal;
-          break; // Sai após atualizar quantidade
+          uniqueMatchingItems.add(empDevItem);
+
+          // Identifica duplicatas (id === null ou id === 0)
+          if (empDevItem.id === null || empDevItem.id === 0) {
+            if (!duplicates.includes(empDevItem)) {
+              duplicates.push(empDevItem);
+            }
+          } else // Preferência: primeiro item não-duplicado encontrado
+            canonicalItem ??= empDevItem;
         }
       }
-      this.cdr.markForCheck();
     }
+
+    const matchingItems = Array.from(uniqueMatchingItems);
+
+    // Se não há duplicatas, não há nada a fazer
+    if (duplicates.length === 0) {
+      return;
+    }
+
+    // Se não encontrou item canônico (não-duplicado), usa o primeiro encontrado
+    canonicalItem ??= matchingItems[0];
+
+    // Calcula quantidade total somando todos os itens correspondentes únicos
+    let qtdeTotal = 0;
+    for (const matchingItem of matchingItems) {
+      qtdeTotal += Number(matchingItem.qtde);
+    }
+
+    // Atualiza quantidade do item canônico
+    canonicalItem.qtde = qtdeTotal;
+
+    // Remove todas as duplicatas de todas as listas
+    for (const duplicate of duplicates) {
+      // Pula o item canônico se ele for uma duplicata
+      if (duplicate === canonicalItem) {
+        continue;
+      }
+
+      for (const list of allLists) {
+        const index = list.indexOf(duplicate);
+        if (index >= 0) {
+          list.splice(index, 1);
+        }
+      }
+    }
+
+    this.cdr.markForCheck();
   }
 
   verificaOptionsEnabled(item: EmprestimoDevolucaoItem): {

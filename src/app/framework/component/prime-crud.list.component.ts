@@ -15,7 +15,7 @@ import {
   viewChild
 } from '@angular/core';
 import {Router} from '@angular/router';
-import {CrudService} from '../service/crud.service';
+import {CrudService, PageResponse} from '../service/crud.service';
 import {ConfirmationService, MessageService, SortEvent} from 'primeng/api';
 import {Table, TablePageEvent, TableRowCollapseEvent, TableRowExpandEvent} from 'primeng/table';
 import {MultiSelect} from 'primeng/multiselect';
@@ -33,17 +33,6 @@ import {TableColumnManagerService} from '../services/table-column-manager.servic
 import {TableRowExpansionManagerService} from '../services/table-row-expansion-manager.service';
 import {StorageService} from '../services/storage.service';
 import {BreakpointService} from '../services/breakpoint.service';
-
-/**
- * Spring Data Page response interface
- */
-interface PageResponse<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-}
 
 @Directive()
 export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy {
@@ -572,20 +561,8 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     }
     this.service.findAllByUsername(u)
     .subscribe({
-      next: (e) => {
-        this.objects = e;
-        this.totalElements = e.length;
-        this.pageIndex = 0;
-        this.first = 0;
-        this.restoreSelectionFromKeys();
-        this.loading.set(false);
-        this.postFindAll();
-        this.saveTableState();
-      },
-      error: (error) => {
-        this.loading.set(false);
-        this.showError(error);
-      }
+      next: (e) => this.handleArrayDataLoadSuccess(e),
+      error: (error) => this.handleDataLoadError(error)
     });
   }
 
@@ -918,8 +895,20 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   }
 
   /**
-   * Common handler for successful data loading
-   * Extracts duplicated logic from findAll(), onPageChange(), and loadData()
+   * Common finalization logic for all data loading operations
+   * Ensures consistent post-load behavior including change detection
+   */
+  private finalizeDataLoad(): void {
+    this.restoreSelectionFromKeys();
+    this.loading.set(false);
+    this.postFindAll();
+    this.saveTableState();
+    this.triggerChangeDetection();
+  }
+
+  /**
+   * Handler for paginated responses (findAllPaged)
+   * Processes PageResponse<T> from Spring Data pagination endpoints
    */
   private handleDataLoadSuccess(response: PageResponse<T>): void {
     this.objects = response.content;
@@ -930,12 +919,20 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.rows = this.pageSize;
     this.first = this.pageIndex * this.pageSize;
 
-    this.restoreSelectionFromKeys();
-    this.loading.set(false);
-    this.postFindAll();
-    this.saveTableState();
+    this.finalizeDataLoad();
+  }
 
-    this.triggerChangeDetection();
+  /**
+   * Handler for array responses (findAllByUsername)
+   * Processes simple T[] from user-specific endpoints without pagination
+   */
+  private handleArrayDataLoadSuccess(data: T[]): void {
+    this.objects = data;
+    this.totalElements = data.length;
+    this.pageIndex = 0;
+    this.first = 0;
+
+    this.finalizeDataLoad();
   }
 
   /**

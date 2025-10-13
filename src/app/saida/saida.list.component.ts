@@ -6,6 +6,9 @@ import {SaidaService} from './saida.service';
 import {SaidaItem} from './saidaItem';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
+import {
+  TableDefaultTemplatesComponent
+} from '../framework/component/table-default-templates.component';
 
 @Component({
     selector: 'app-list-saida',
@@ -14,6 +17,7 @@ import {ConfirmDialogModule} from 'primeng/confirmdialog';
   imports: [
     PrimeTableSharedModule,
     ConfirmDialogModule,
+    TableDefaultTemplatesComponent,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => SaidaListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush

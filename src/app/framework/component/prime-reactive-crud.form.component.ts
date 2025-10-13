@@ -8,6 +8,7 @@ import {LoginService} from '../../login/login.service';
 import {Subject} from 'rxjs';
 import {takeUntil} from 'rxjs/operators';
 import {LoggerService} from '../services/logger.service';
+import {extractRouteParam, parseNumericId} from '../utils/route-params.operators';
 
 @Directive()
 export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, OnDestroy {
@@ -62,15 +63,23 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
     this.form.set(this.buildForm());
     this.preOnInit();
 
-    this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
-      if (params.id) {
-        if (Number.isNaN(params.id)) {
+    // Extração e validação de parâmetro ID com operator utilitário
+    this.route.params.pipe(
+      extractRouteParam({
+        paramName: 'id',
+        converter: parseNumericId,
+        onError: (value) => {
+          this.logger.warn(`Invalid ID parameter: ${value}`);
           this.initializeValues();
-        } else {
-          this.edit(params.id);
         }
-      } else {
-        this.initializeValues();
+      })
+    ).subscribe({
+      next: (id) => {
+        if (null !== id) {
+          this.edit(id as ID);
+        } else {
+          this.initializeValues();
+        }
       }
     });
   }

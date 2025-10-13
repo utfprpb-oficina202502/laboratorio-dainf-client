@@ -13,6 +13,7 @@ import {MessageService} from "primeng/api";
 import {ProgressBar} from "primeng/progressbar";
 import {InputTextModule} from "primeng/inputtext";
 import {CadastrarUsuarioService} from "./cadastrarUsuario.service";
+import {extractRouteParam, parseStringParam} from "../framework/utils/route-params.operators";
 
 @Component({
     selector: "app-recuperar-senha",
@@ -40,13 +41,21 @@ export class RecuperarSenhaComponent implements OnInit {
   hasCode = false;
 
   ngOnInit() {
-    this.route.params.subscribe((params) => {
-      this.hasCode = !!params.code;
-      this.buildForm();
-      if (this.hasCode) {
-        this.form.patchValue({ code: params.code });
+    // Extração e validação de token com operator utilitário
+    this.route.params.pipe(
+      extractRouteParam({
+        paramName: 'code',
+        converter: parseStringParam
+      })
+    ).subscribe({
+      next: (code) => {
+        this.hasCode = code !== null;
+        this.buildForm();
+        if (this.hasCode && code) {
+          this.form.patchValue({code});
+        }
+        this.cdr.markForCheck();
       }
-      this.cdr.markForCheck();
     });
   }
 

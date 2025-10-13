@@ -25,6 +25,9 @@ import {MenuModule} from 'primeng/menu';
 import {NovoComponent} from '../geral/novo/novo.component';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 import {BreakpointService} from '../framework/services/breakpoint.service';
+import {
+  TableDefaultTemplatesComponent
+} from '../framework/component/table-default-templates.component';
 
 @Component({
     selector: 'app-list-emprestimo',
@@ -39,6 +42,7 @@ import {BreakpointService} from '../framework/services/breakpoint.service';
     PopoverModule,
     MenuModule,
     NovoComponent,
+    TableDefaultTemplatesComponent,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => EmprestimoListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -57,7 +61,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   emprestimoFilter = new EmprestimoFilter();
   statusDropdown: SelectItem[] = [];
   usuarioEmprestimoList: Usuario[] = [];
-  usuarioResponsalvel: Usuario[] = [];
+  usuarioResponsavel: Usuario[] = [];
   dtNovaData!: string;
   idEmprestimoToChangePrazoDev!: number;
   protected override columnsTable = ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status'];
@@ -195,7 +199,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     this.usuarioService.completeCustomUsersLab($event.query)
     .subscribe({
       next: (e) => {
-        this.usuarioResponsalvel = e;
+        this.usuarioResponsavel = e;
       }
     });
   }
