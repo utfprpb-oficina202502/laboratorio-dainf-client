@@ -69,7 +69,6 @@
               }
               @for (column of getVisibleColumns(); track column.field) {
                 <th scope="col"
-                  scope="col"
                   [attr.id]="'col-' + column.field"
                   [attr.data-field]="column.field"
                     [pSortableColumn]="column.sortable === false || column.field === 'actions' ? undefined : column.field"

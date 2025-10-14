@@ -7,7 +7,7 @@ import {CrudListAriaAnnouncerComponent} from './crud-list-aria-announcer.compone
  * Wrapper component for PrimeNG tables with skeleton loading state and ARIA announcements
  *
  * Encapsulates the @if/@else pattern for loading states and ARIA live region
- * to eliminate template duplication across 13+ list components.
+ * to eliminate template duplication across 10+ list components.
  *
  * @example
  * <app-prime-crud-table-wrapper

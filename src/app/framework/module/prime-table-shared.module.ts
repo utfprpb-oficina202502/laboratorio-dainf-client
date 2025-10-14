@@ -23,7 +23,7 @@ import {PrimeCrudTableWrapperComponent} from '../component/prime-crud-table-wrap
 
 /**
  * Shared module for PrimeNG table list components
- * Consolidates common imports to reduce duplication across 13+ list components
+ * Consolidates common imports to reduce duplication across 10+ list components
  *
  * @usage Import this module instead of individual PrimeNG modules in list components
  * @savings ~117 lines of import statements across the codebase

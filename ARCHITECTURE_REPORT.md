@@ -619,8 +619,8 @@ export const appConfig: ApplicationConfig = {
 
 **Feature Components** (40+):
 
-- **List Components**: 13 entity lists (Cidade, Estado, País, Fornecedor, Grupo, Item, Usuário, Empréstimo, Reserva, Compra, Saída, Solicitação de Compra, Nada Consta)
-- **Form Components**: 13 corresponding forms with reactive validation
+- **List Components**: 10 entity lists (Fornecedor, Grupo, Item, Usuário, Empréstimo, Reserva, Compra, Saída, Solicitação de Compra, Nada Consta)
+- **Form Components**: 10 corresponding forms with reactive validation
 - **Special Views**: 3 specialized components (item view, empréstimo devolução, nada consta visualização)
 - **User Management**: 3 components (cadastro, edit, recovery)
 - **Reports**: 2 components (form, viewer)
@@ -1302,7 +1302,7 @@ export const routes: Routes = [
 **Route Structure**:
 
 - **Eager-loaded**: `HomeComponent`, `LoginComponent` (core app shell)
-- **Lazy-loaded**: All feature components (13 list + 13 form routes)
+- **Lazy-loaded**: All feature components (10 list + 10 form routes)
 - **Guards**: Service-based `LoginService` canActivate guard
 
 **Benefits**:
@@ -1842,7 +1842,7 @@ The project follows **100% Angular 20 best practices** with:
 1. **Shared Module for Import Optimization**:
 
 - Current: Single `PrimeTableSharedModule` consolidates common PrimeNG imports
-- Purpose: Reduces ~117 lines of duplicate imports across 13+ list components
+- Purpose: Reduces ~117 lines of duplicate imports across 10+ list components
 - Status: Intentional optimization, not technical debt
 - Note: All components are standalone by default in Angular 20
 

@@ -24,7 +24,6 @@ import {FornecedorService} from './fornecedor/fornecedor.service';
 import {GrupoService} from './grupo/grupo.service';
 import {HomeService} from './home/home.service';
 import {ItemService} from './item/item.service';
-import {PaisService} from './pais/pais.service';
 import {RelatorioService} from './relatorio/relatorio.service';
 import {ReservaService} from './reserva/reserva.service';
 import {SaidaService} from './saida/saida.service';
@@ -68,7 +67,6 @@ export const appConfig: ApplicationConfig = {
     GrupoService,
     HomeService,
     ItemService,
-    PaisService,
     RelatorioService,
     ReservaService,
     SaidaService,

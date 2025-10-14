@@ -26,8 +26,7 @@ import {ChangeDetectionStrategy, Component, input} from '@angular/core';
           <p class="text-muted mt-2 mb-0">{{ message() }}</p>
           @if (showAction() && actionLabel()) {
             <button
-              type="button"
-              class="mt-3"
+              type="button" 
               [class]="actionButtonClass()"
               (click)="onActionClick()">
               {{ actionLabel() }}
@@ -75,7 +74,7 @@ export class TableEmptyStateComponent {
    * Classes CSS do botão de ação
    * @default 'p-button p-button-primary'
    */
-  readonly actionButtonClass = input<string>('p-button p-button-primary');
+  readonly actionButtonClass = input<string>('p-button p-button-primary mt-3');
 
   /**
    * Callback quando botão de ação é clicado
