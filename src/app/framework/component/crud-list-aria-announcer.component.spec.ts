@@ -62,7 +62,7 @@ describe('CrudListAriaAnnouncerComponent', () => {
     fixture.detectChanges();
 
     const liveRegion = fixture.nativeElement.querySelector('[aria-live]');
-    expect(liveRegion.textContent).toContain('5 empréstimos carregado');
+    expect(liveRegion.textContent).toContain('5 empréstimos carregados');
   });
 
   it('should have correct ARIA attributes', () => {

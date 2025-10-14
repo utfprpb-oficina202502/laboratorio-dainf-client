@@ -61,7 +61,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   readonly loadingTemplate = contentChild<TemplateRef<any>>('loadingTemplate');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly captionTemplate = contentChild<TemplateRef<any>>('captionTemplate');
-  protected readonly cdr: ChangeDetectorRef | null = null;
+  protected readonly cdr = inject(ChangeDetectorRef, {optional: true});
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly rowExpansionTemplate = contentChild<TemplateRef<any>>('rowExpansionTemplate');
   readonly dataTable = viewChild<Table>('dt');
@@ -169,7 +169,6 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   protected columnState: ColumnState[] = [];
   protected destroy$ = new Subject<void>();
   private readonly filterSubject = new Subject<string>();
-  private readonly defaultStateKey: string;
   private stateKey: string;
   private stateStorageRef?: Storage;
 
@@ -192,18 +191,11 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.breakpointService = inject(BreakpointService);
     this.exception = inject(Exception);
 
-    // Get ChangeDetectorRef for OnPush components (optional)
-    try {
-      this.cdr = inject(ChangeDetectorRef);
-    } catch {
-      this.cdr = null;
-    }
-
     // Initialize displayedColumns as an empty array, will be set in buildColumnsTable()
     this.displayedColumns = [];
     this.rows = this.pageSize;
-    this.defaultStateKey = this.buildDefaultStateKey();
-    this.stateKey = this.defaultStateKey;
+    // stateKey will be properly initialized in initializeStateStorage() after urlForm is available
+    this.stateKey = '';
 
     // Set up debounced filtering
     this.setupDebouncedFiltering();
@@ -479,30 +471,9 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     });
   }
 
-  protected applyTableDefaults(): void {
-    this.tableConfig.striped = this.tableConfig.striped !== false;
-    this.tableConfig.rowHover = this.tableConfig.rowHover !== false;
-    this.tableConfig.resizableColumns = this.tableConfig.resizableColumns !== false && this.tableConfig.resizable !== false;
-    this.tableConfig.columnResizeMode = this.tableConfig.columnResizeMode || 'fit';
-    // Default to true for proper server-side pagination with totalRecords
-    this.tableConfig.lazy ??= true;
-    this.tableConfig.lazyLoadOnInit ??= false;
-    this.tableConfig.preloadData = this.tableConfig.preloadData !== false;
-    this.tableConfig.columnToggle = this.tableConfig.columnToggle !== false;
-    this.tableConfig.keyboardShortcuts = this.tableConfig.keyboardShortcuts !== false;
-    this.tableConfig.stateful = this.tableConfig.stateful !== false;
-    this.tableConfig.stateStorage = this.tableConfig.stateStorage || 'local';
-    this.tableConfig.expandable = this.tableConfig.expandable === true;
-    if (this.tableConfig.expandable) {
-      this.tableConfig.expandMode = this.tableConfig.expandMode || 'single';
-      this.tableConfig.rowExpansionKey = this.tableConfig.rowExpansionKey || this.tableConfig.trackByField || 'id';
-    }
-    this.tableConfig.stateKey = this.tableConfig.stateKey || this.defaultStateKey;
-    this.tableConfig.pageSize = this.tableConfig.pageSize || this.pageSize;
-    this.tableConfig.pageSizeOptions = this.tableConfig.pageSizeOptions || [5, 10, 25, 50, 100];
-    this.tableConfig.globalFilter = this.tableConfig.globalFilter !== false;
-    this.pageSize = this.tableConfig.pageSize || 10;
-    this.rows = this.pageSize;
+  // Get accessibility labels
+  getTableAriaLabel(): string {
+    return `Tabela de ${this.getEntityPluralName()} com ${this.totalElements} registros`;
   }
 
   // CSV Export using PrimeNG built-in functionality
@@ -665,13 +636,34 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     return classes.trim();
   }
 
-  // Get accessibility labels
-  getTableAriaLabel(): string {
-    return `${this.getEntityPluralName()} table with ${this.totalElements} records`;
+  getTableAriaDescription(): string {
+    return `Tabela contendo ${this.totalElements} ${this.getEntityName().toLowerCase()} registros. Use as setas para navegar.`;
   }
 
-  getTableAriaDescription(): string {
-    return `Table containing ${this.totalElements} ${this.getEntityName().toLowerCase()} records. Use arrow keys to navigate.`;
+  protected applyTableDefaults(): void {
+    this.tableConfig.striped = this.tableConfig.striped !== false;
+    this.tableConfig.rowHover = this.tableConfig.rowHover !== false;
+    this.tableConfig.resizableColumns = this.tableConfig.resizableColumns !== false && this.tableConfig.resizable !== false;
+    this.tableConfig.columnResizeMode = this.tableConfig.columnResizeMode || 'fit';
+    // Default to true for proper server-side pagination with totalRecords
+    this.tableConfig.lazy ??= true;
+    this.tableConfig.lazyLoadOnInit ??= false;
+    this.tableConfig.preloadData = this.tableConfig.preloadData !== false;
+    this.tableConfig.columnToggle = this.tableConfig.columnToggle !== false;
+    this.tableConfig.keyboardShortcuts = this.tableConfig.keyboardShortcuts !== false;
+    this.tableConfig.stateful = this.tableConfig.stateful !== false;
+    this.tableConfig.stateStorage = this.tableConfig.stateStorage || 'local';
+    this.tableConfig.expandable = this.tableConfig.expandable === true;
+    if (this.tableConfig.expandable) {
+      this.tableConfig.expandMode = this.tableConfig.expandMode || 'single';
+      this.tableConfig.rowExpansionKey = this.tableConfig.rowExpansionKey || this.tableConfig.trackByField || 'id';
+    }
+    this.tableConfig.stateKey = this.tableConfig.stateKey || this.buildDefaultStateKey();
+    this.tableConfig.pageSize = this.tableConfig.pageSize || this.pageSize;
+    this.tableConfig.pageSizeOptions = this.tableConfig.pageSizeOptions || [5, 10, 25, 50, 100];
+    this.tableConfig.globalFilter = this.tableConfig.globalFilter !== false;
+    this.pageSize = this.tableConfig.pageSize || 10;
+    this.rows = this.pageSize;
   }
 
   // Get dynamic entity names for messages
@@ -887,7 +879,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   }
 
   private initializeStateStorage(): void {
-    this.stateKey = this.tableConfig.stateKey || this.defaultStateKey;
+    this.stateKey = this.tableConfig.stateKey || this.buildDefaultStateKey();
     this.stateStorageRef = this.tableStateManager.initializeStorage(
       this.tableConfig.stateful || false,
       this.tableConfig.stateStorage || 'local'

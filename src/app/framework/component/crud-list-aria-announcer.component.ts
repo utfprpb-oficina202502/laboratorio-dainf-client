@@ -24,7 +24,7 @@ import {ChangeDetectionStrategy, Component, input} from '@angular/core';
         <span>Nenhum {{ entityName() }} encontrado.</span>
       } @else if (!loading() && totalElements() > 0) {
         <span>{{ totalElements() }} {{ totalElements() === 1 ? entityName() : entityPluralName() }}
-          carregado(s).</span>
+          {{ totalElements() === 1 ? 'carregado' : 'carregados' }}.</span>
       }
     </div>
   `,

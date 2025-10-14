@@ -1,4 +1,4 @@
-<div class="container-fluid my-3">
+<div class="w-full px-4 my-3">
   <p-card>
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-4">
@@ -47,8 +47,7 @@
                     [forceSelection]="true"
                     minQueryLength="2"
                     placeholder="Digite para buscar..."
-                    styleClass="w-full"
-                    [inputStyle]="{ width: '100%' }">
+                    styleClass="w-full">
                   </p-autoComplete>
                   <app-cadastro-rapido
                     [href]="'/fornecedor/form'"
@@ -87,8 +86,7 @@
                   dataType="string"
                   [maxDate]="maxDate()"
                   [showIcon]="true"
-                  styleClass="w-full"
-                  [inputStyle]="{ width: '100%' }">
+                  styleClass="w-full">
                 </p-datepicker>
               </app-form-field>
             </div>
@@ -118,8 +116,7 @@
                     (onSelect)="setPrecoProduto()"
                     minQueryLength="2"
                     placeholder="Digite para buscar itens..."
-                    styleClass="w-full"
-                    [inputStyle]="{ width: '100%' }">
+                    styleClass="w-full">
                     <ng-template let-item pTemplate="item">
                       <div class="flex justify-between items-center w-full">
                         <span>{{ item.nome }}</span>
@@ -193,9 +190,9 @@
                 <ng-template pTemplate="header">
                   <tr>
                     <th scope="col">Item</th>
-                    <th scope="col" class="w-120px">Qtde</th>
-                    <th scope="col" class="w-150px">Valor</th>
-                    <th scope="col" class="w-100px">Opções</th>
+                    <th class="w-[120px]" scope="col">Qtde</th>
+                    <th class="w-[150px]" scope="col">Valor</th>
+                    <th class="w-[100px]" scope="col">Opções</th>
                   </tr>
                 </ng-template>
 

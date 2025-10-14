@@ -23,7 +23,7 @@ import {ChangeDetectionStrategy, Component, input} from '@angular/core';
       <td [attr.colspan]="colspan()">
         <div class="text-center py-4">
           @if (showSpinner()) {
-            <i class="pi pi-spin pi-spinner text-muted text-3xl"></i>
+            <i class="pi pi-spin pi-spinner text-gray-500 text-3xl"></i>
           }
           <p [class]="messageClass()">{{ message() }}</p>
         </div>
@@ -55,7 +55,7 @@ export class TableLoadingStateComponent {
 
   /**
    * Classes CSS para a mensagem
-   * @default 'text-muted mt-2 mb-0'
+   * @default 'text-gray-500 mt-2 mb-0'
    */
-  readonly messageClass = input<string>('text-muted mt-2 mb-0');
+  readonly messageClass = input<string>('text-gray-500 mt-2 mb-0');
 }

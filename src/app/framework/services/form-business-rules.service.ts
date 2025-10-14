@@ -166,8 +166,9 @@ export class FormBusinessRulesService {
    *
    * @remarks
    * Retorna false imediatamente se item for null/undefined.
+   * Valida primeiro se qtdeInserir é um número finito e maior que 0.
+   * Valida também se saldo é maior que 0 e se qtdeInserir não excede o saldo.
    * Mensagem de erro é exibida automaticamente via MessageService.
-   * Valida também se saldo é maior que 0.
    */
   validateItemSaldo<K extends { saldo: number }>(
     item: K | null | undefined,
@@ -177,6 +178,16 @@ export class FormBusinessRulesService {
       return false;
     }
 
+    // Validar se qtdeInserir é um número finito e maior que 0
+    if (!Number.isFinite(qtdeInserir) || qtdeInserir <= 0) {
+      this.messageService.add({
+        severity: 'info',
+        detail: 'A quantidade deve ser um número válido maior que zero.'
+      });
+      return false;
+    }
+
+    // Validar se a quantidade não excede o saldo disponível
     const isValid = item.saldo > 0 && qtdeInserir <= item.saldo;
 
     if (!isValid) {
