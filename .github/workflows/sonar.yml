@@ -20,10 +20,10 @@ jobs:
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Install dependencies
-        run: npm
+        run: npm install
       - name: Test and coverage
         run: npm run test:ci
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
