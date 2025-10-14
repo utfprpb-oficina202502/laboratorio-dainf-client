@@ -11,7 +11,7 @@
     "dev": "ng serve",
     "lint": "ng lint",
     "test": "jest",
-    "test:ci": "jest --ci --runInBand --coverage",
+    "test:ci": "jest --ci --runInBand",
     "test:watch": "jest --watch",
     "start": "node server.js",
     "heroku-postbuild": "node set-env.js && npm run build"
@@ -30,7 +30,7 @@
     "@angular/router": "^20.3.2",
     "@angular/service-worker": "^20.3.3",
     "@eslint/js": "^9.37.0",
-    "@primeuix/themes": "^1.2.3",
+    "@primeuix/themes": "^1.2.5",
     "compression": "^1.8.1",
     "exceljs": "^4.4.0",
     "express": "^5.1.0",
