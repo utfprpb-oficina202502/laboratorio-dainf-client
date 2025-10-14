@@ -11,14 +11,10 @@
     "dev": "ng serve",
     "lint": "ng lint",
     "test": "jest",
+    "test:ci": "jest --ci --runInBand --coverage",
     "test:watch": "jest --watch",
     "start": "node server.js",
-    "heroku-postbuild": "node set-env.js && npm run build",
-    "pwa:generate-icons": "node generate-pwa-icons.js",
-    "pwa:convert-icons": "node convert-icons-to-png.js",
-    "pwa:test": "npm run build && cd dist/tcc-client/browser && http-server -p 8080 -c-1",
-    "pwa:test:windows": "test-pwa-local.bat",
-    "pwa:test:unix": "bash test-pwa-local.sh"
+    "heroku-postbuild": "node set-env.js && npm run build"
   },
   "private": true,
   "dependencies": {
