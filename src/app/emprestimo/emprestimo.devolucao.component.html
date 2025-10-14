@@ -1,12 +1,12 @@
-<div class="container-fluid my-3">
+<div class="w-full px-4 my-3">
   <p-card>
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
-          <app-voltar (onClick)="back()"></app-voltar>
+          <app-voltar (backClick)="back()"></app-voltar>
           <h2 class="text-xl font-semibold m-0">Devolução do Empréstimo</h2>
         </div>
-        @if (object.dataDevolucao) {
+        @if (emprestimo()?.dataDevolucao) {
           <p-tag value="Devolução Finalizada" severity="success"></p-tag>
         }
       </div>
@@ -23,7 +23,7 @@
                 name="id"
                 disabled
                 class="form-control"
-                [(ngModel)]="object.id"
+                     [ngModel]="emprestimo()?.id"
                 pInputText>
             </div>
           </div>
@@ -37,7 +37,7 @@
                 name="usuarioEmprestimo"
                 disabled
                 class="form-control"
-                [(ngModel)]="object.usuarioEmprestimo.nome"
+                     [ngModel]="emprestimo()?.usuarioEmprestimo?.nome"
                 pInputText>
             </div>
           </div>
@@ -49,7 +49,7 @@
                 id="documento"
                 name="documento"
                 class="form-control"
-                [(ngModel)]="documentoUsuario"
+                     [ngModel]="documentoUsuario()"
                 disabled
                 pInputText>
             </div>
@@ -64,7 +64,7 @@
                 id="usuarioResponsavel"
                 name="usuarioResponsavel"
                 class="form-control"
-                [(ngModel)]="object.usuarioResponsavel.nome"
+                     [ngModel]="emprestimo()?.usuarioResponsavel?.nome"
                 pInputText
                 disabled>
             </div>
@@ -81,9 +81,11 @@
                 dataType="string"
                 dateFormat="dd/mm/yy"
                 inputStyleClass="form-control"
+                            [readonlyInput]="breakpointService.isMobile()"
+                            [touchUI]="breakpointService.isMobile()"
                 disabled
-                [style]="{width: '100%'}"
-                [(ngModel)]="object.dataEmprestimo">
+                            class="w-full"
+                            [ngModel]="emprestimo()?.dataEmprestimo">
               </p-datePicker>
             </div>
           </div>
@@ -99,9 +101,11 @@
                 dataType="string"
                 dateFormat="dd/mm/yy"
                 inputStyleClass="form-control"
+                            [readonlyInput]="breakpointService.isMobile()"
+                            [touchUI]="breakpointService.isMobile()"
                 disabled
-                [style]="{width: '100%'}"
-                [(ngModel)]="object.prazoDevolucao">
+                            class="w-full"
+                            [ngModel]="emprestimo()?.prazoDevolucao">
               </p-datePicker>
             </div>
           </div>
@@ -117,9 +121,11 @@
                 dataType="string"
                 dateFormat="dd/mm/yy"
                 inputStyleClass="form-control"
+                            [readonlyInput]="breakpointService.isMobile()"
+                            [touchUI]="breakpointService.isMobile()"
                 disabled
-                [style]="{width: '100%'}"
-                [(ngModel)]="object.dataDevolucao">
+                            class="w-full"
+                            [ngModel]="emprestimo()?.dataDevolucao">
               </p-datePicker>
             </div>
           </div>
@@ -130,17 +136,17 @@
             <div cdkDropList
               #pendentesList="cdkDropList"
               class="container-kanban border-primary"
-              [cdkDropListData]="itensPendentes"
+                 [cdkDropListData]="itensPendentes()"
               [cdkDropListConnectedTo]="[devolvidosList, saidasList]"
               (cdkDropListDropped)="drop($event)">
 
               <div class="flex justify-between container-title-kanban">
                 <h4 class="m-0">Pendentes</h4>
-                <p-tag [value]="(itensPendentes?.length || 0).toString()" severity="info"></p-tag>
+                <p-tag [value]="(itensPendentes().length || 0).toString()" severity="info"></p-tag>
               </div>
 
               <p-scrollPanel [style]="{width: '100%', height: '450px'}">
-                @for (item of itensPendentes; track item) {
+                @for (item of itensPendentes(); track item) {
                   <div class="card-item-kanban border-primary shadow-md"
                     (contextmenu)="onContextMenu($event, item)"
                     cdkDrag>
@@ -149,7 +155,7 @@
                   </div>
                 }
 
-                @if (itensPendentes?.length === 0) {
+                @if (itensPendentes().length === 0) {
                   <div class="flex items-center justify-center h-full">
                     <span class="font-semibold text-gray-600">Não há nenhum item pendente para devolução.</span>
                   </div>
@@ -168,26 +174,27 @@
             <div cdkDropList
               #devolvidosList="cdkDropList"
               class="container-kanban border-success"
-              [cdkDropListData]="itensDevolvidos"
+                 [cdkDropListData]="itensDevolvidos()"
               [cdkDropListConnectedTo]="[pendentesList, saidasList]"
               (cdkDropListDropped)="drop($event)">
 
               <div class="flex justify-between container-title-kanban items-center">
                 <h4 class="m-0">Devolvidos</h4>
-                <p-tag [value]="(itensDevolvidos?.length || 0).toString()" severity="success"></p-tag>
+                <p-tag [value]="(itensDevolvidos().length || 0).toString()"
+                       severity="success"></p-tag>
               </div>
 
               <p-scrollPanel [style]="{width: '100%', height: '450px'}">
-                @for (item of itensDevolvidos; track item) {
+                @for (item of itensDevolvidos(); track item) {
                   <div class="card-item-kanban border-success shadow-md"
-                    [cdkDragDisabled]="object.dataDevolucao"
+                       [cdkDragDisabled]="emprestimo()?.dataDevolucao"
                     cdkDrag>
                     <span>{{item.item.nome}}</span>
                     <p-tag [value]="item.qtde.toString()" severity="secondary"></p-tag>
                   </div>
                 }
 
-                @if (itensDevolvidos?.length === 0) {
+                @if (itensDevolvidos().length === 0) {
                   <div class="flex items-center justify-center h-full">
                     <span class="font-semibold text-gray-600">Arraste até aqui os itens que serão devolvidos.</span>
                   </div>
@@ -199,27 +206,27 @@
           <div class="col-span-12 md:col-span-4">
             <div cdkDropList
               #saidasList="cdkDropList"
-              [cdkDropListData]="itensSaida"
+                 [cdkDropListData]="itensSaida()"
               [cdkDropListConnectedTo]="[pendentesList, devolvidosList]"
               class="container-kanban border-danger"
               (cdkDropListDropped)="drop($event)">
 
               <div class="flex justify-between container-title-kanban">
                 <h4 class="m-0">Saída</h4>
-                <p-tag [value]="(itensSaida?.length || 0).toString()" severity="danger"></p-tag>
+                <p-tag [value]="(itensSaida().length || 0).toString()" severity="danger"></p-tag>
               </div>
 
               <p-scrollPanel [style]="{width: '100%', height: '450px'}">
-                @for (item of itensSaida; track item) {
+                @for (item of itensSaida(); track item) {
                   <div
                     class="card-item-kanban border-danger shadow-md"
-                    [cdkDragDisabled]="object.dataDevolucao"
+                    [cdkDragDisabled]="emprestimo()?.dataDevolucao"
                     cdkDrag>
                     <span>{{item.item.nome}}</span>
                     <p-tag [value]="item.qtde.toString()" severity="secondary"></p-tag>
                   </div>
                 }
-                @if (itensSaida?.length === 0) {
+                @if (itensSaida().length === 0) {
                   <div class="flex items-center justify-center h-full">
                     <span class="font-semibold text-gray-600">Arraste até aqui os itens que terão saídas permanentes.</span>
                   </div>
@@ -239,7 +246,7 @@
                 class="form-control"
                 disabled
                 pInputTextarea
-                [(ngModel)]="object.observacao"
+                        [ngModel]="emprestimo()?.observacao"
                 autoResize="autoResize">
               </textarea>
             </div>
@@ -247,8 +254,9 @@
         </div>
 
         <div class="flex justify-end gap-2 mt-4">
-          <app-cancelar (onClick)="back()"></app-cancelar>
-          <app-salvar (onClick)="saveDevolucao()" [typeButton]="'button'" [disabled]="!!object.dataDevolucao"></app-salvar>
+          <app-cancelar (cancelClick)="back()"></app-cancelar>
+          <app-salvar (saveClick)="saveDevolucao()" [disabled]="!!emprestimo()?.dataDevolucao"
+                      [typeButton]="'button'"></app-salvar>
         </div>
       </form>
     </ng-template>
@@ -257,9 +265,9 @@
 
 <p-dialog header="Duplicar Item"
   [(visible)]="dialogDuplicaItem"
-  [style]="{minWidth: '400px'}"
+          [baseZIndex]="Z_INDEX.DIALOG"
   [modal]="true"
-  [baseZIndex]="10000"
+          class="dialog-sm"
   [focusOnShow]="false">
 
   <form (submit)="duplicarItem()">
@@ -267,7 +275,7 @@
       <div class="col-span-12">
         <div class="form-group">
           <label for="dtIni">Informe a nova quantidade</label>
-          <span class="float-right font-semibold">Max.: {{itemIsEditing?.qtde - 1}}</span>
+          <span class="float-right font-semibold">Max.: {{ itemIsEditing.qtde - 1 }}</span>
           <input name="dtIni"
             id="dtIni"
             onlyNumber

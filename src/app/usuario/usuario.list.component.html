@@ -1,16 +1,27 @@
-<div class="container-fluid my-3">
-  <p-card>
+<div class="w-full px-4 my-3">
+  <p-card [attr.aria-busy]="loading()">
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-3">
-        <span class="text-xl font-bold">Usuarios</span>
+        <span class="text-xl font-bold">Usuários</span>
       </div>
     </ng-template>
 
     <ng-template pTemplate="content">
-      <app-prime-crud-toolbar [table]="dt" [list]="self"></app-prime-crud-toolbar>
+      <!-- Toolbar remains visible during loading for better UX -->
+      <app-prime-crud-toolbar [list]="self" [table]="dataTable()"></app-prime-crud-toolbar>
 
-      <p-table
+      <!-- Wrapper component handles skeleton/table conditional rendering -->
+      <app-prime-crud-table-wrapper
+        [entityName]="getEntityName().toLowerCase()"
+        [entityPluralName]="getEntityPluralName().toLowerCase()"
+        [loading]="loading()"
+        [skeletonColumns]="displayedColumns.length"
+        [skeletonRows]="rows"
+        [totalElements]="totalElements">
+
+        <p-table
         #dt
+        [loading]="loading()"
         [value]="objects"
         [rows]="rows"
         [totalRecords]="totalElements"
@@ -21,7 +32,7 @@
         [first]="first"
         [lazy]="tableConfig.lazy !== false"
         [lazyLoadOnInit]="tableConfig.lazyLoadOnInit !== false"
-        [(selection)]="selectedItems"
+        [selection]="selectedItems()"
         (selectionChange)="onSelectionChange($event)"
         [dataKey]="tableConfig.rowExpansionKey || 'id'"
         [resizableColumns]="tableConfig.resizableColumns !== false"
@@ -35,54 +46,38 @@
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
         [showCurrentPageReport]="true"
         [tableStyleClass]="getTableStyleClass()"
-        [attr.aria-label]="'Lista de usuarios com ' + totalElements + ' registro(s)'">
+        [attr.aria-label]="'Lista de usuários com ' + totalElements + ' registro(s)'">
 
         <ng-template pTemplate="caption">
-          <div class="flex items-center justify-end gap-2 flex-wrap">
-            <p-iconField iconPosition="left" style="flex: 0 1 auto; min-width: 200px; max-width: 300px;">
-              <p-inputIcon class="pi pi-search" aria-hidden="true"></p-inputIcon>
-              <input
-                #globalFilterInput
-                pInputText
-                type="text"
-                (input)="onGlobalFilter($any($event.target).value)"
-                [value]="filterValue"
-                [placeholder]="getGlobalFilterPlaceholder()"
-                [attr.aria-label]="'Campo de busca para filtrar usuarios'"
-                autocomplete="off"/>
-            </p-iconField>
-            <p-button
-              type="button"
-              severity="secondary"
-              [outlined]="true"
-              (onClick)="clearGlobalFilter()"
-              [attr.aria-label]="'Limpar filtro global'">
-              <span pButtonIcon class="pi pi-filter-slash"></span>
-              <span pButtonLabel>Limpar</span>
-            </p-button>
-          </div>
+          <app-table-filter-caption
+            (clear)="clearGlobalFilter()"
+            (filter)="onGlobalFilter($event)"
+            [ariaLabel]="'Campo de busca para filtrar usuários'"
+            [filterValue]="filterValue"
+            [placeholder]="getGlobalFilterPlaceholder()">
+          </app-table-filter-caption>
         </ng-template>
 
         <ng-template pTemplate="header">
           <tr>
             @if (tableConfig.expandable) {
-              <th scope="col" style="width: 3rem" [attr.aria-label]="'Alternar detalhes'"></th>
+              <th scope="col" class="w-3rem" [attr.aria-label]="'Alternar detalhes'"></th>
             }
-            @if (!isReadOnly && tableConfig.selectable !== false) {
-              <th scope="col" style="width: 3rem" [attr.aria-label]="'Selecao de usuarios'">
+            @if (!isReadOnly() && tableConfig.selectable !== false) {
+              <th scope="col" class="w-3rem" [attr.aria-label]="'Selecao de usuarios'">
                 <p-tableHeaderCheckbox
                   [attr.aria-label]="'Selecionar todos os usuarios'"></p-tableHeaderCheckbox>
               </th>
             }
             @for (column of getVisibleColumns(); track column.field) {
-              <th
+              <th scope="col"
                 scope="col"
                 [attr.id]="'col-' + column.field"
                 [attr.data-field]="column.field"
-                [pSortableColumn]="column.sortable === false || column.field === 'actions' ? null : column.field"
+                  [pSortableColumn]="column.sortable === false || column.field === 'actions' ? undefined : column.field"
                 [style.width]="column.width"
                 [style.min-width]="column.minWidth"
-                [ngClass]="column.headerClass"
+                  [class]="column.headerClass"
                 [attr.aria-label]="column.tooltip || column.header">
                 <div class="flex items-center gap-2"
                      [class.justify-center]="column.align === 'center'">
@@ -99,7 +94,7 @@
         <ng-template pTemplate="body" let-row>
           <tr>
             @if (tableConfig.expandable) {
-              <td style="width: 3rem">
+              <td class="w-3rem">
                 <button
                   type="button"
                   pButton
@@ -107,12 +102,12 @@
                   class="p-button-text p-button-rounded"
                   [attr.aria-label]="(isRowExpanded(row) ? 'Recolher' : 'Expandir') + ' detalhes do usuario ' + row.nome">
                   <span pButtonIcon
-                        [ngClass]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
+                        [class]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
                 </button>
               </td>
             }
-            @if (!isReadOnly && tableConfig.selectable !== false) {
-              <td style="width: 3rem">
+            @if (!isReadOnly() && tableConfig.selectable !== false) {
+              <td class="w-3rem">
                 <p-tableCheckbox
                   [value]="row"
                   [attr.aria-label]="'Selecionar usuario ' + row.nome">
@@ -128,8 +123,8 @@
                 @switch (column.field) {
                   @case ('actions') {
                     <app-action-buttons
-                      [showEdit]="canEdit"
-                      [showDelete]="canDelete"
+                      [showEdit]="canEdit()"
+                      [showDelete]="canDelete()"
                       [editTooltip]="'Editar usuario'"
                       [deleteTooltip]="'Remover usuario'"
                       [editAriaLabel]="'Editar usuario ' + row.nome"
@@ -140,25 +135,12 @@
                   }
                   @case ('permissoes') {
                     <span
-                      [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
-                      [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
-                      [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                      (click)="handleInteractiveCell($event, row.id)"
-                      (keydown.enter)="handleInteractiveCell($event, row.id)"
-                      (keydown.space)="handleInteractiveCell($event, row.id)"
                       [attr.aria-label]="column.header + ': ' + formatGruposAcesso(row[column.field])">
                         {{ formatGruposAcesso(row[column.field]) }}
                       </span>
                   }
                   @default {
-                    <span
-                      [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
-                      [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
-                      [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                      (click)="handleInteractiveCell($event, row.id)"
-                      (keydown.enter)="handleInteractiveCell($event, row.id)"
-                      (keydown.space)="handleInteractiveCell($event, row.id)"
-                      [attr.aria-label]="column.header + ': ' + row[column.field]">
+                    <span [attr.aria-label]="column.header + ': ' + row[column.field]">
                         {{ row[column.field] }}
                       </span>
                   }
@@ -168,8 +150,8 @@
         </ng-template>
 
         <ng-template pTemplate="rowexpansion" let-row>
-          @if (rowExpansionTemplate) {
-            <ng-container [ngTemplateOutlet]="rowExpansionTemplate"
+          @if (rowExpansionTemplate()) {
+            <ng-container [ngTemplateOutlet]="rowExpansionTemplate()"
                           [ngTemplateOutletContext]="{$implicit: row}"></ng-container>
           } @else {
             <div class="p-3">
@@ -183,15 +165,14 @@
           }
         </ng-template>
 
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td [attr.colspan]="getColumnCount()" class="text-center p-4">
-              <i class="pi pi-search" style="font-size: 3rem; color: #dee2e6;"></i>
-              <p class="mt-3 mb-0">Nenhum usuario encontrado.</p>
-            </td>
-          </tr>
-        </ng-template>
+          <app-table-default-templates
+            [colspan]="getColumnCount()"
+            [emptyMessage]="tableConfig.emptyMessage || 'Nenhum usuário encontrado'"
+            [loadingMessage]="tableConfig.loadingMessage || 'Carregando usuários...'">
+          </app-table-default-templates>
       </p-table>
+
+      </app-prime-crud-table-wrapper>
     </ng-template>
   </p-card>
 </div>

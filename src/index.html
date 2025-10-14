@@ -1,18 +1,43 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <title>DAINF - UTFPR</title>
   <base href="/#">
 
+  <!-- Viewport -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- PWA Meta Tags -->
+  <meta content="Sistema de gerenciamento de laboratórios do DAINF - UTFPR Campus Pato Branco"
+        name="description">
+  <meta content="#1976d2" name="theme-color">
+  <meta content="yes" name="mobile-web-app-capable">
+  <meta content="yes" name="apple-mobile-web-app-capable">
+  <meta content="default" name="apple-mobile-web-app-status-bar-style">
+  <meta content="Lab DAINF" name="apple-mobile-web-app-title">
+
+  <!-- Favicon -->
   <link href="favicon.ico" rel="icon" type="image/x-icon">
+
+  <!-- Apple Touch Icons -->
   <link href="touch_icon.png" rel="apple-touch-icon">
-  <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap" rel="stylesheet">
+  <link href="assets/icons/icon-152x152.svg" rel="apple-touch-icon" sizes="152x152">
+  <link href="assets/icons/icon-192x192.svg" rel="apple-touch-icon" sizes="192x192">
+
+  <!-- Web App Manifest -->
+  <link href="manifest.webmanifest" rel="manifest">
+
+  <!-- Microsoft Tiles -->
+  <meta content="#1976d2" name="msapplication-TileColor">
+  <meta content="assets/icons/icon-144x144.svg" name="msapplication-TileImage">
+
+  <!-- Fonts loaded via CSS with @font-face -->
 </head>
 <body>
-  <app-root></app-root>
+<!-- Service Worker Registration -->
+<noscript>Este aplicativo requer JavaScript habilitado.</noscript>
+
+<app-root></app-root>
 </body>
 </html>

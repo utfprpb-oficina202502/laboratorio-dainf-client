@@ -4,14 +4,14 @@ import {StringUtils} from '../../util/string.utils';
 import {EmailUtil} from '../../util/email.util';
 
 @Directive({
-    selector: '[validateEmail][ngModel],[validateEmail][formControl]',
+  selector: '[appValidateEmail][ngModel],[appValidateEmail][formControl]',
     providers: [
         { provide: NG_VALIDATORS, useExisting: forwardRef(() => EmailValidatorDirective), multi: true }
     ],
 })
 export class EmailValidatorDirective implements Validator {
 
-  validator: Function;
+  validator: (c: FormControl) => { validateEmail: { valid: boolean } } | null;
 
   constructor() {
     this.validator = validateEmail();

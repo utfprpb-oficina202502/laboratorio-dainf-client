@@ -1,10 +1,26 @@
-<div class="container-fluid my-3">
-  <p-card>
+<div class="w-full px-4 my-3">
+  <p-card [attr.aria-busy]="loading()">
     <ng-template pTemplate="header">
-      <app-prime-crud-toolbar [table]='dt' [list]='self'></app-prime-crud-toolbar>
+      <div class="flex items-center justify-between p-3">
+        <span class="text-xl font-bold">Fornecedores</span>
+      </div>
     </ng-template>
 
-    <p-table #dt
+    <ng-template pTemplate="content">
+      <!-- Toolbar remains visible during loading for better UX -->
+      <app-prime-crud-toolbar [list]="self" [table]="dataTable()"></app-prime-crud-toolbar>
+
+      <!-- Wrapper component handles skeleton/table conditional rendering -->
+      <app-prime-crud-table-wrapper
+        [entityName]="getEntityName().toLowerCase()"
+        [entityPluralName]="getEntityPluralName().toLowerCase()"
+        [loading]="loading()"
+        [skeletonColumns]="displayedColumns.length"
+        [skeletonRows]="rows"
+        [totalElements]="totalElements">
+
+        <p-table #dt
+             [loading]="loading()"
              [value]="objects"
              [rows]="rows"
              [totalRecords]="totalElements"
@@ -15,7 +31,7 @@
              [first]="first"
              [lazy]="tableConfig.lazy !== false"
              [lazyLoadOnInit]="tableConfig.lazyLoadOnInit !== false"
-             [(selection)]="selectedItems"
+               [selection]="selectedItems()"
              (selectionChange)="onSelectionChange($event)"
              [dataKey]="tableConfig.rowExpansionKey || 'id'"
              [resizableColumns]="tableConfig.resizableColumns !== false"
@@ -31,35 +47,19 @@
              [attr.aria-label]="'Lista de fornecedores com ' + totalElements + ' registro(s)'">
 
       <ng-template pTemplate="caption">
-        <div class="flex items-center justify-end gap-2 flex-wrap">
-          <p-iconField iconPosition="left" style="flex: 0 1 auto; min-width: 200px; max-width: 300px;">
-            <p-inputIcon class="pi pi-search" aria-hidden="true"></p-inputIcon>
-            <input
-              #globalFilterInput
-              pInputText
-              type="text"
-              (input)="onGlobalFilter($any($event.target).value)"
-              [value]="filterValue"
-              [placeholder]="'Buscar fornecedores...'"
-              [attr.aria-label]="'Campo de busca para filtrar fornecedores'"
-              autocomplete="off" />
-          </p-iconField>
-          <p-button
-            type="button"
-            severity="secondary"
-            [outlined]="true"
-            (onClick)="clearGlobalFilter()"
-            [attr.aria-label]="'Limpar filtro global'">
-            <span pButtonIcon class="pi pi-filter-slash"></span>
-            <span pButtonLabel>Limpar</span>
-          </p-button>
-        </div>
+        <app-table-filter-caption
+          (clear)="clearGlobalFilter()"
+          (filter)="onGlobalFilter($event)"
+          [ariaLabel]="'Campo de busca para filtrar fornecedores'"
+          [filterValue]="filterValue"
+          [placeholder]="'Buscar fornecedores...'">
+        </app-table-filter-caption>
       </ng-template>
 
       <ng-template pTemplate="header">
         <tr>
           @for (column of getVisibleColumns(); track column.field) {
-            <th
+            <th scope="col"
               [style.text-align]="column.align || 'left'"
               [style.width]="column.width"
               [style.min-width]="column.minWidth"
@@ -79,41 +79,35 @@
               [style.min-width]="column.minWidth">
               @switch (column.field) {
                 @case ('id') {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.id }}</span>
+                  <span [attr.aria-label]="'Código: ' + rowData.id">{{ rowData.id }}</span>
                 }
                 @case ('razaoSocial') {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.razaoSocial }}</span>
+                  <span
+                    [attr.aria-label]="'Razão Social: ' + rowData.razaoSocial">{{ rowData.razaoSocial }}</span>
                 }
                 @case ('nomeFantasia') {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.nomeFantasia }}</span>
+                  <span
+                    [attr.aria-label]="'Nome Fantasia: ' + rowData.nomeFantasia">{{ rowData.nomeFantasia }}</span>
                 }
                 @case ('cnpj') {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData.cnpj | cpfCnpj }}</span>
+                  <span
+                    [attr.aria-label]="'CNPJ: ' + (rowData.cnpj | cpfCnpj)">{{ rowData.cnpj | cpfCnpj }}</span>
                 }
                 @case ('actions') {
-                  <div class="flex items-center gap-1 justify-center">
-                    <p-button
-                      icon="pi pi-pencil"
-                      [outlined]="true"
-                      severity="secondary"
-                      size="small"
-                      pTooltip="Editar"
-                      tooltipPosition="top"
-                      (onClick)="edit(rowData.id)">
-                    </p-button>
-                    <p-button
-                      icon="pi pi-trash"
-                      [outlined]="true"
-                      severity="danger"
-                      size="small"
-                      pTooltip="Remover"
-                      tooltipPosition="top"
-                      (onClick)="delete(rowData.id)">
-                    </p-button>
-                  </div>
+                  <app-action-buttons
+                    [showEdit]="canEdit()"
+                    [showDelete]="canDelete()"
+                    [editTooltip]="'Editar fornecedor'"
+                    [deleteTooltip]="'Remover fornecedor'"
+                    [editAriaLabel]="'Editar fornecedor ' + rowData.nomeFantasia"
+                    [deleteAriaLabel]="'Remover fornecedor ' + rowData.nomeFantasia"
+                    (edit)="edit(rowData.id)"
+                    (delete)="delete(rowData.id)">
+                  </app-action-buttons>
                 }
                 @default {
-                  <span (click)="openBottomSheet(rowData.id)" style="cursor: pointer;">{{ rowData[column.field] }}</span>
+                  <span
+                    [attr.aria-label]="column.header + ': ' + rowData[column.field]">{{ rowData[column.field] }}</span>
                 }
               }
             </td>
@@ -121,27 +115,14 @@
         </tr>
       </ng-template>
 
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td [attr.colspan]="getVisibleColumns().length">
-            <div class="text-center py-4">
-              <i class="pi pi-info-circle text-muted" style="font-size: 2rem;"></i>
-              <p class="text-muted mt-2 mb-0">{{tableConfig.emptyMessage}}</p>
-            </div>
-          </td>
-        </tr>
-      </ng-template>
-
-      <ng-template pTemplate="loadingbody">
-        <tr>
-          <td [attr.colspan]="getVisibleColumns().length">
-            <div class="text-center py-4">
-              <i class="pi pi-spin pi-spinner text-muted" style="font-size: 2rem;"></i>
-              <p class="text-muted mt-2 mb-0">{{tableConfig.loadingMessage}}</p>
-            </div>
-          </td>
-        </tr>
-      </ng-template>
+          <app-table-default-templates
+            [colspan]="getColumnCount()"
+            [emptyMessage]="tableConfig.emptyMessage || 'Nenhum fornecedor encontrado'"
+            [loadingMessage]="tableConfig.loadingMessage || 'Carregando fornecedores...'">
+          </app-table-default-templates>
     </p-table>
+
+      </app-prime-crud-table-wrapper>
+    </ng-template>
   </p-card>
 </div>

@@ -11,9 +11,9 @@ import {TooltipModule} from 'primeng/tooltip';
   ]
 })
 export class VoltarComponent {
-  readonly onClick = output<void>();
+  readonly backClick = output<void>();
 
   click(): void {
-    this.onClick.emit();
+    this.backClick.emit();
   }
 }

@@ -1,8 +1,11 @@
-import {Directive, DoCheck, ElementRef, HostListener, inject} from '@angular/core';
+import {Directive, DoCheck, ElementRef, inject} from '@angular/core';
 import {NgControl} from '@angular/forms';
 
 @Directive({
-    selector: '[formatCnpj]',
+  selector: '[appFormatCnpj]',
+  host: {
+    '(input)': 'onInput()'
+  }
 })
 export class CnpjDirective implements DoCheck {
   el = inject(ElementRef);
@@ -12,13 +15,12 @@ export class CnpjDirective implements DoCheck {
     this.format();
   }
 
-  @HostListener('input', ['$event'])
-  onInput(e) {
+  onInput() {
     this.format();
   }
 
   private format(): void {
     const value = this.el.nativeElement.value.replace(/\D/g, '');
-    this.control.valueAccessor.writeValue(value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/g, '$1.$2.$3/$4-$5'));
+    this.control.valueAccessor?.writeValue(value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/g, '$1.$2.$3/$4-$5'));
   }
 }

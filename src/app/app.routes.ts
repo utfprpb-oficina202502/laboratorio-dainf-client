@@ -1,8 +1,7 @@
 import {Routes} from '@angular/router';
 import {LoginService} from './login/login.service';
 
-// Components
-import {HomeComponent} from './home/home.component';
+// Components (only eager-loaded)
 import {LoginComponent} from './login/login.component';
 import {PageNotFoundComponent} from './pageNotFound/pageNotFound.component';
 import {NotAuthorizedComponent} from './notAuthorized/notAuthorized.component';
@@ -12,9 +11,6 @@ import {GrupoFormComponent} from './grupo/grupo.form.component';
 import {UsuarioFormComponent} from './usuario/usuario.form.component';
 import {UsuarioEditComponent} from './usuario/usuario.edit.component';
 import {FornecedorFormComponent} from './fornecedor/fornecedor.form.component';
-import {EstadoFormComponent} from './estado/estado.form.component';
-import {PaisFormComponent} from './pais/pais.form.component';
-import {CidadeFormComponent} from './cidade/cidade.form.component';
 import {ItemFormComponent} from './item/item.form.component';
 import {ItemViewComponent} from './item/item.view.component';
 import {CompraFormComponent} from './compra/compra.form.component';
@@ -40,7 +36,11 @@ export const routes: Routes = [
   {path: 'recupear-senha', component: RecuperarSenhaComponent},
   {path: 'recupear-senha/:code', component: RecuperarSenhaComponent},
   {path: 'confirmar-email/:code', component: ConfirmarEmailComponent},
-  {path: '', canActivate: [LoginService], component: HomeComponent},
+  {
+    path: '',
+    canActivate: [LoginService],
+    loadComponent: () => import('./home/home.component').then(m => m.HomeComponent)
+  },
 
   // Grupo
   {
@@ -69,33 +69,6 @@ export const routes: Routes = [
   },
   {path: 'fornecedor/form', canActivate: [LoginService], component: FornecedorFormComponent},
   {path: 'fornecedor/form/:id', canActivate: [LoginService], component: FornecedorFormComponent},
-
-  // Estado
-  {
-    path: 'estado',
-    canActivate: [LoginService],
-    loadComponent: () => import('./estado/estado.list.component').then(m => m.EstadoListComponent)
-  },
-  {path: 'estado/form', canActivate: [LoginService], component: EstadoFormComponent},
-  {path: 'estado/form/:id', canActivate: [LoginService], component: EstadoFormComponent},
-
-  // Pais
-  {
-    path: 'pais',
-    canActivate: [LoginService],
-    loadComponent: () => import('./pais/pais.list.component').then(m => m.PaisListComponent)
-  },
-  {path: 'pais/form', canActivate: [LoginService], component: PaisFormComponent},
-  {path: 'pais/form/:id', canActivate: [LoginService], component: PaisFormComponent},
-
-  // Cidade
-  {
-    path: 'cidade',
-    canActivate: [LoginService],
-    loadComponent: () => import('./cidade/cidade.list.component').then(m => m.CidadeListComponent)
-  },
-  {path: 'cidade/form', canActivate: [LoginService], component: CidadeFormComponent},
-  {path: 'cidade/form/:id', canActivate: [LoginService], component: CidadeFormComponent},
 
   // Item
   {
@@ -185,7 +158,7 @@ export const routes: Routes = [
     loadComponent: () => import('./nada-consta/list/nada-consta-list.component').then(m => m.NadaConstaListComponent)
   },
   {
-    path: 'nada-consta/adicionar',
+    path: 'nada-consta/consultar',
     canActivate: [LoginService],
     loadComponent: () => import('./nada-consta/nada-consta-visualizar.component').then(m => m.NadaConstaVisualizarComponent)
   },

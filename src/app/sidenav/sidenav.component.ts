@@ -2,26 +2,27 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  HostListener,
+  computed,
+  effect,
   inject,
+  OnDestroy,
   OnInit
 } from "@angular/core";
-import {Router, RouterLink, RouterLinkActive} from "@angular/router";
+import {RouterLink, RouterLinkActive} from "@angular/router";
 import {SidenavService} from "./sidenav.service";
-import {browserChange} from "../app.component";
 import {LoginService} from "../login/login.service";
-import {UsuarioService} from "../usuario/usuario.service";
-import {ThemeService} from "../framework/services/theme.service";
 import {MenuItem as PrimeMenuItem} from 'primeng/api';
 import {ThemeToggleComponent} from '../framework/component/theme-toggle.component';
+import {BreakpointService} from '../framework/services/breakpoint.service';
+import {Subject, takeUntil} from 'rxjs';
 
 export interface MenuItem {
   path: string;
   title: string;
   icon: string;
   id: string;
-  roles?: any;
-  group?: any;
+  roles?: string[];
+  group?: string;
 }
 
 export const MENU_ITEM: MenuItem[] = [
@@ -35,22 +36,22 @@ export const MENU_ITEM: MenuItem[] = [
   {
     path: "/emprestimo",
     title: "Empréstimo",
-    icon: "handshake-o",
+    icon: "arrow-right-arrow-left",
     id: "emprestimo",
     group: "ITEM",
   },
   {
     path: "/item",
     title: "Item",
-    icon: "microchip",
-    id: "item",
+    icon: "box",
+    id: "item-cadastro",
     roles: ["ADMINISTRADOR", "LABORATORISTA"],
     group: "CADASTRO",
   },
   {
     path: "/grupo",
     title: "Grupo",
-    icon: "sitemap",
+    icon: "objects-column",
     id: "grupo",
     roles: ["ADMINISTRADOR", "LABORATORISTA"],
     group: "CADASTRO",
@@ -82,15 +83,15 @@ export const MENU_ITEM: MenuItem[] = [
   {
     path: "/reserva",
     title: "Reserva",
-    icon: "paste",
+    icon: "calendar",
     id: "reserva",
     group: "ITEM",
   },
   {
     path: "/item",
     title: "Itens",
-    icon: "microchip",
-    id: "item",
+    icon: "box",
+    id: "item-aluno",
     roles: ["ALUNO"],
     group: "ITEM",
   },
@@ -112,7 +113,7 @@ export const MENU_ITEM: MenuItem[] = [
   {
     path: "/relatorio",
     title: "Relatórios",
-    icon: "line-chart",
+    icon: "chart-line",
     id: "relatorios",
     roles: ["ADMINISTRADOR", "LABORATORISTA"],
     group: "ITEM",
@@ -120,7 +121,7 @@ export const MENU_ITEM: MenuItem[] = [
   {
     path: "/nada-consta",
     title: "Nada Consta",
-    icon: "file-text-o",
+    icon: "file-check",
     id: "nada-consta",
     group: "ITEM",
     roles: ["ADMINISTRADOR", "LABORATORISTA"],
@@ -138,66 +139,56 @@ export const MENU_ITEM: MenuItem[] = [
     ThemeToggleComponent
   ]
 })
-export class SidenavComponent implements OnInit {
+export class SidenavComponent implements OnInit, OnDestroy {
   private readonly sidenavService = inject(SidenavService);
   private readonly loginService = inject(LoginService);
-  private readonly usuarioService = inject(UsuarioService);
-  private readonly router = inject(Router);
-  readonly themeService = inject(ThemeService);
   private readonly cdr = inject(ChangeDetectorRef);
+  protected readonly breakpointService = inject(BreakpointService);
 
   public menuItems: PrimeMenuItem[] = this.getDefaultMenuItems();
   public menuCadastros: PrimeMenuItem[] = [];
   display = false;
   showSubMenuCadastro = true;
   showCadastros = false;
-  private readonly desktopBreakpoint = 1200;
-  private viewportInitialized = false;
-  isDesktopView = true;
   sidebarVisible = true;
+  /**
+   * Computed signal for template usage - optimized for OnPush change detection
+   * Automatically updates when BreakpointService viewport signals change
+   * Usage in template: @if (isDesktopView()) { ... }
+   */
+  protected readonly isDesktopView = computed(() => this.breakpointService.isDesktop());
+  private readonly destroy$ = new Subject<void>();
+
+  constructor() {
+    // Initialize effect in constructor to maintain injection context
+    this.initSidenavEffect();
+  }
 
   ngOnInit(): void {
     this.buildMenu();
-    this.updateViewportFlags();
-    this.changeStylesDrawer();
-    this.changeColorMenuItem();
-    this.initObservableDrawer();
-    this.initObservableMenuItem();
+    // Initialize sidebar visibility based on breakpoint
+    this.sidebarVisible = this.breakpointService.isDesktop();
+    // Initialize service state to match viewport (mobile starts minimized)
+    if (!this.breakpointService.isDesktop()) {
+      this.sidenavService.minimizar(true);
+    }
+    this.setupBreakpointObserver();
   }
 
-  private getDefaultMenuItems(): PrimeMenuItem[] {
-    const defaultItems = MENU_ITEM.filter(item =>
-      item.group === "ITEM" && (!item.roles || item.roles.includes("ALUNO"))
-    );
-
-    return defaultItems.map(item => ({
-      label: item.title,
-      icon: `fa fa-${item.icon}`,
-      routerLink: item.path,
-      id: item.id,
-      styleClass: 'sidebar-menu-item'
-    }));
-  }
-
-  @HostListener("window:resize")
-  onWindowResize(): void {
-    this.updateViewportFlags();
-    this.changeStylesDrawer();
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   buildMenu() {
     this.loginService.getPermissoesUser().subscribe((permissoes) => {
-      const userRoles = permissoes.map((x: any) => x.nome.replace("ROLE_", ""));
-      this.showCadastros = userRoles.indexOf("ADMINISTRADOR") >= 0 || userRoles.indexOf("LABORATORISTA") >= 0;
-      const items = [];
+      const userRoles = new Set(permissoes.map((x) => x.nome.replaceAll("ROLE_", "")));
+      this.showCadastros = userRoles.has("ADMINISTRADOR") || userRoles.has("LABORATORISTA");
+      const items: MenuItem[] = [];
 
-      MENU_ITEM.forEach((menu: any) => {
-        if (menu.roles == null) {
+      MENU_ITEM.forEach((menu) => {
+        if (!menu.roles || menu.roles.some((value) => userRoles.has(value))) {
           items.push(menu);
-        } else {
-          if (menu.roles.filter((value) => -1 !== userRoles.indexOf(value)).length > 0) {
-            items.push(menu);
-          }
         }
       });
 
@@ -207,7 +198,7 @@ export class SidenavComponent implements OnInit {
       items.forEach((value) => {
         const primeMenuItem: PrimeMenuItem = {
           label: value.title,
-          icon: `fa fa-${value.icon}`,
+          icon: `pi pi-${value.icon}`,
           routerLink: value.path,
           id: value.id,
           styleClass: 'sidebar-menu-item'
@@ -222,73 +213,65 @@ export class SidenavComponent implements OnInit {
 
       this.menuItems = newMenuItems;
       this.menuCadastros = newMenuCadastros;
-      this.cdr.markForCheck();
+      this.cdr?.markForCheck();
     });
   }
 
-  initObservableDrawer() {
-    this.sidenavService.observable().subscribe((hide) => {
-      this.updateViewportFlags();
-      if (this.isDesktopView) {
+  private getDefaultMenuItems(): PrimeMenuItem[] {
+    const defaultItems = MENU_ITEM.filter(item =>
+      item.group === "ITEM" && (!item.roles || item.roles.includes("ALUNO"))
+    );
+
+    return defaultItems.map(item => ({
+      label: item.title,
+      icon: `pi pi-${item.icon}`,
+      routerLink: item.path,
+      id: item.id,
+      styleClass: 'sidebar-menu-item'
+    }));
+  }
+
+  // Usa effect() para reagir automaticamente às mudanças do signal
+  private initSidenavEffect(): void {
+    effect(() => {
+      const isMinimized = this.sidenavService.isMinimized();
+
+      if (this.breakpointService.isDesktop()) {
         this.sidebarVisible = true;
       } else {
-        this.sidebarVisible = !hide;
+        this.sidebarVisible = !isMinimized;
       }
-      this.changeStylesDrawer();
-      this.cdr.markForCheck();
-    });
-  }
-
-  initObservableMenuItem() {
-    browserChange.asObservable().subscribe((value) => {
-      if (value) {
-        this.changeColorMenuItem();
-      }
+      this.cdr?.markForCheck();
     });
   }
 
   toggleSubMenuCadastro() {
     this.showSubMenuCadastro = !this.showSubMenuCadastro;
-    this.cdr.markForCheck();
+    this.cdr?.markForCheck();
   }
 
   closeSidebar() {
-    if (!this.isDesktopView) {
-      this.sidebarVisible = false;
-      this.cdr.markForCheck();
+    if (!this.breakpointService.isDesktop()) {
+      // Use service to maintain state sync
+      this.sidenavService.minimizar(true);
     }
   }
 
-  private updateViewportFlags(): void {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const width = window.innerWidth;
-    const wasDesktop = this.isDesktopView;
-    const isDesktop = width >= this.desktopBreakpoint;
-
-    this.isDesktopView = isDesktop;
-
-    if (!this.viewportInitialized) {
-      this.sidebarVisible = isDesktop;
-      this.viewportInitialized = true;
-      this.cdr.markForCheck();
-      return;
-    }
-
-    if (!wasDesktop && isDesktop) {
-      this.sidebarVisible = true;
-      this.cdr.markForCheck();
-    } else if (wasDesktop && !isDesktop) {
-      this.sidebarVisible = false;
-      this.cdr.markForCheck();
-    }
-  }
-
-  changeColorMenuItem() {
-  }
-
-  changeStylesDrawer() {
+  private setupBreakpointObserver(): void {
+    // Subscribe to breakpoint changes for desktop/mobile transitions
+    this.breakpointService.observe('(min-width: 1024px)')
+    .pipe(takeUntil(this.destroy$))
+    .subscribe((result) => {
+      const isDesktop = result.matches;
+      // Update sidebar visibility on breakpoint change
+      if (isDesktop) {
+        this.sidebarVisible = true;
+      } else {
+        // On mobile, check if sidebar should be hidden
+        this.sidebarVisible = false;
+        this.sidenavService.minimizar(true);
+      }
+      this.cdr?.markForCheck();
+    });
   }
 }

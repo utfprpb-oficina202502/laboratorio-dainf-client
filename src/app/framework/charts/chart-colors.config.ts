@@ -26,8 +26,37 @@ export interface ChartColorsConfig {
 }
 
 /**
+ * Shared color palette constants - single source of truth
+ */
+const LIGHT_PALETTE = [
+  '#00468C', // Blue UTFPR
+  '#FCBC00', // Yellow UTFPR
+  '#E63946', // Red
+  '#06A77D', // Green
+  '#8338EC', // Purple
+  '#FB8500', // Orange
+  '#219EBC', // Cyan
+  '#D62828', // Dark Red
+  '#2A9D8F', // Teal
+  '#F77F00'  // Dark Orange
+] as const;
+
+const DARK_PALETTE = [
+  '#3B82F6', // Blue
+  '#F3C400', // Yellow
+  '#EF4444', // Red
+  '#10B981', // Green
+  '#A78BFA', // Purple
+  '#F97316', // Orange
+  '#06B6D4', // Cyan
+  '#DC2626', // Dark Red
+  '#14B8A6', // Teal
+  '#EA580C'  // Dark Orange
+] as const;
+
+/**
  * Paleta de cores padrão para todos os gráficos
- * Separada em tons de amarelo/dourado e tons de azul
+ * Expandida com mais variedade de cores para melhor visualização
  */
 export const lightChartColors: ChartColorsConfig = {
   primary: '#FCBC00',
@@ -37,28 +66,18 @@ export const lightChartColors: ChartColorsConfig = {
   text: '#374151',
   gridLines: '#E5E7EB',
   tooltip: {
-    background: '#1F2937',
-    text: '#F9FAFB'
+    background: '#00468C', // UTFPR Blue - better contrast and brand consistency
+    text: '#FFFFFF'
   },
   line: {
     stroke: '#00468C',
     fill: '#00468C'
   },
   bar: {
-    palette: [
-      // Tons de amarelo/dourado (primeiras 5 cores)
-      '#B8860B', '#DAA520', '#FCBC00', '#FFD700', '#FFFF99',
-      // Tons de azul (últimas 5 cores)
-      '#003366', '#004080', '#00468C', '#0066CC', '#99CCFF'
-    ]
+    palette: [...LIGHT_PALETTE]
   },
   pie: {
-    palette: [
-      // Tons de amarelo/dourado (primeiras 5 cores)
-      '#B8860B', '#DAA520', '#FCBC00', '#FFD700', '#FFFF99',
-      // Tons de azul (últimas 5 cores)
-      '#003366', '#004080', '#00468C', '#0066CC', '#99CCFF'
-    ]
+    palette: [...LIGHT_PALETTE]
   }
 };
 
@@ -70,24 +89,18 @@ export const darkChartColors: ChartColorsConfig = {
   text: '#E5E7EB',
   gridLines: '#2F3439',
   tooltip: {
-    background: '#111827',
-    text: '#F9FAFB'
+    background: '#3B82F6', // Bright blue - readable on dark background, not pure black
+    text: '#FFFFFF'
   },
   line: {
     stroke: '#60A5FA',
     fill: '#1D4ED8'
   },
   bar: {
-    palette: [
-      '#F59E0B', '#F3C400', '#FBBF24', '#FACC15', '#FDE68A',
-      '#2563EB', '#3B82F6', '#60A5FA', '#1D4ED8', '#93C5FD'
-    ]
+    palette: [...DARK_PALETTE]
   },
   pie: {
-    palette: [
-      '#F59E0B', '#F3C400', '#FBBF24', '#FACC15', '#FDE68A',
-      '#2563EB', '#3B82F6', '#60A5FA', '#1D4ED8', '#93C5FD'
-    ]
+    palette: [...DARK_PALETTE]
   }
 };
 

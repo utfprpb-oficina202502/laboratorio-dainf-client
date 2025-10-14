@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, inject, Injector, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Fornecedor} from './fornecedor';
@@ -15,7 +15,7 @@ import {
 import {CardModule} from 'primeng/card';
 import {InputTextModule} from 'primeng/inputtext';
 import {TextareaModule} from 'primeng/textarea';
-import {AutoCompleteModule} from 'primeng/autocomplete';
+import {AutoCompleteCompleteEvent, AutoCompleteModule} from 'primeng/autocomplete';
 import {ButtonModule} from 'primeng/button';
 import {TooltipModule} from 'primeng/tooltip';
 
@@ -24,11 +24,9 @@ import {FormFieldComponent} from '../framework/component/form-field.component';
 import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
+import {LoggerService} from '../framework/services/logger.service';
 
 // Directives
-import {OnlyNumberDirective} from '../framework/directives/onlyNumber/onlyNumber.directive';
-import {CnpjDirective} from '../framework/directives/cnpj/cnpj.directive';
-import {TelefoneFormatDirective} from '../framework/directives/telefone/telefone.format.directive';
 
 @Component({
   selector: 'app-form-fornecedor',
@@ -48,34 +46,25 @@ import {TelefoneFormatDirective} from '../framework/directives/telefone/telefone
     FormFieldComponent,
     VoltarComponent,
     CancelarComponent,
-    SalvarComponent,
-    // Directives
-    OnlyNumberDirective,
-    CnpjDirective,
-    TelefoneFormatDirective
+    SalvarComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FornecedorFormComponent extends PrimeReactiveCrudFormComponent<Fornecedor, number> {
-  protected fornecedorService: FornecedorService;
-  protected injector: Injector;
-
-  private readonly fb = this.injector.get(FormBuilder);
-  private readonly cidadeService = this.injector.get(CidadeService);
-  private readonly estadoService = this.injector.get(EstadoService);
+  protected override service = inject(FornecedorService);
+  protected override urlList = '/fornecedor';
+  protected override type = Fornecedor;
+  private readonly fb = inject(FormBuilder);
+  private readonly cidadeService = inject(CidadeService);
+  private readonly estadoService = inject(EstadoService);
+  protected readonly logger = inject(LoggerService);
 
   // Signals for autocomplete lists
   protected readonly cidadeList = signal<Cidade[]>([]);
   protected readonly estadoList = signal<Estado[]>([]);
 
   constructor() {
-    const fornecedorService = inject(FornecedorService);
-    const injector = inject(Injector);
-
-    super(fornecedorService, injector, '/fornecedor', Fornecedor);
-
-    this.fornecedorService = fornecedorService;
-    this.injector = injector;
+    super();
   }
 
   /**
@@ -100,7 +89,7 @@ export class FornecedorFormComponent extends PrimeReactiveCrudFormComponent<Forn
   /**
    * Handle autocomplete search for cities filtered by selected state
    */
-  findCidadesByEstado(event: any): void {
+  findCidadesByEstado(event: AutoCompleteCompleteEvent): void {
     const formGroup = this.form();
     if (!formGroup) return;
 
@@ -112,7 +101,7 @@ export class FornecedorFormComponent extends PrimeReactiveCrudFormComponent<Forn
         this.cidadeList.set(cidades);
       },
       error: (error) => {
-        console.error('Erro ao buscar cidades:', error);
+        this.logger.error('Erro ao buscar cidades', error);
         this.cidadeList.set([]);
       }
     });
@@ -121,13 +110,13 @@ export class FornecedorFormComponent extends PrimeReactiveCrudFormComponent<Forn
   /**
    * Handle autocomplete search for states
    */
-  findEstados(event: any): void {
+  findEstados(event: AutoCompleteCompleteEvent): void {
     this.estadoService.complete(event.query).subscribe({
       next: (estados) => {
         this.estadoList.set(estados);
       },
       error: (error) => {
-        console.error('Erro ao buscar estados:', error);
+        this.logger.error('Erro ao buscar estados', error);
         this.estadoList.set([]);
       }
     });

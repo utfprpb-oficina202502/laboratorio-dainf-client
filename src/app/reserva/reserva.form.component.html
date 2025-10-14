@@ -1,9 +1,9 @@
-<div class="container-fluid my-3">
+<div class="w-full px-4 my-3">
   <p-card>
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
-          <app-voltar (onClick)="back()"></app-voltar>
+          <app-voltar (backClick)="back()"></app-voltar>
           <h2 class="text-xl font-semibold m-0">Cadastro de Reserva</h2>
         </div>
       </div>
@@ -71,6 +71,8 @@
                   formControlName="dataReserva"
                   dataType="string"
                   dateFormat="dd/mm/yy"
+                  [touchUI]="breakpointService.isMobile()"
+                  [readonlyInput]="breakpointService.isMobile()"
                   styleClass="w-full">
                 </p-datePicker>
               </app-form-field>
@@ -88,6 +90,8 @@
                   formControlName="dataRetirada"
                   dataType="string"
                   dateFormat="dd/mm/yy"
+                  [touchUI]="breakpointService.isMobile()"
+                  [readonlyInput]="breakpointService.isMobile()"
                   styleClass="w-full">
                 </p-datePicker>
               </app-form-field>
@@ -104,11 +108,13 @@
                   <span class="float-right text-sm text-gray-600">(Saldo: {{tempItem()?.saldo}})</span>
                 }
               </label>
+              <small class="block mb-2 text-gray-600">Digite pelo menos 2 caracteres para
+                buscar</small>
               <div class="flex items-center gap-2">
-                <app-cadastroRapido
+                <app-cadastro-rapido
                   [href]="'/item/form'"
                   [id]="tempItem()?.id">
-                </app-cadastroRapido>
+                </app-cadastro-rapido>
                 @if (tempItem()) {
                   <button
                     type="button"
@@ -127,9 +133,10 @@
                   (onSelect)="setQtdeDefaultItem()"
                   optionLabel="nome"
                   dataKey="id"
-                  [dropdown]="true"
+                  minQueryLength="2"
                   appendTo="body"
                   styleClass="flex-1"
+                  placeholder="Digite para buscar..."
                   [forceSelection]="true">
                   <ng-template let-item pTemplate="item">
                     <div class="flex items-center gap-2">
@@ -167,12 +174,13 @@
 
             <!-- Add Button -->
             <div class="col-span-12 md:col-span-2">
-              <label class="block mb-2 font-medium invisible">Action</label>
+              <div class="block mb-2 font-medium invisible" aria-hidden="true">Action</div>
               <p-button
                 label="Adicionar"
                 icon="pi pi-check"
                 (onClick)="insertItem()"
                 severity="success"
+                [attr.aria-label]="'Adicionar item à reserva'"
                 styleClass="w-full">
               </p-button>
             </div>
@@ -184,9 +192,9 @@
               <p-table [value]="reservaItems()" styleClass="p-datatable-sm">
                 <ng-template pTemplate="header">
                   <tr>
-                    <th>Item</th>
-                    <th class="text-center" style="width: 150px">Qtde</th>
-                    <th class="text-center" style="width: 100px">Opções</th>
+                    <th scope="col">Item</th>
+                    <th scope="col" class="text-center" style="width: 150px">Qtde</th>
+                    <th class="text-center w-100px" scope="col">Opções</th>
                   </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-reservaItem>
@@ -244,7 +252,7 @@
 
           <!-- Action Buttons -->
           <div class="flex justify-end gap-2 mt-4">
-            <app-cancelar (onClick)="back()"></app-cancelar>
+            <app-cancelar (cancelClick)="back()"></app-cancelar>
             <app-salvar [typeButton]="'submit'" [disabled]="isLoading()"></app-salvar>
           </div>
         </form>
@@ -258,8 +266,8 @@
   header="Imagens do Item"
   [(visible)]="dialogImagens"
   [modal]="true"
-  [baseZIndex]="10000"
-  [style]="{ minWidth: '400px', maxWidth: '80%' }">
+  [baseZIndex]="Z_INDEX.DIALOG"
+  class="dialog-xl">
   <p-carousel
     [value]="images()"
     [numVisible]="3"
@@ -271,8 +279,8 @@
         <img
           ngSrc="minioUrl() + image.nameImage"
           alt="Item"
-          class="max-w-full rounded shadow-md"
-          style="width: 300px" fill/>
+          class="max-w-full rounded shadow-md w-300px"
+          fill/>
       </div>
     </ng-template>
   </p-carousel>

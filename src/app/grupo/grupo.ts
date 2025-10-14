@@ -1,4 +1,4 @@
 export class Grupo {
-  id: number;
-  descricao: string;
+  id!: number;
+  descricao!: string;
 }

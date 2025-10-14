@@ -1,4 +1,11 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  inject,
+  OnDestroy,
+  signal
+} from '@angular/core';
 import {
   NavigationCancel,
   NavigationEnd,
@@ -10,12 +17,15 @@ import {
 import {LoginService} from './login/login.service';
 import {Subject, Subscription} from 'rxjs';
 import {LoaderService} from './framework/loader/loader.service';
+import {ThemeService} from './framework/services/theme.service';
+import {BFCacheService} from './framework/services/bfcache.service';
+import {PwaService} from './framework/services/pwa.service';
+import {Z_INDEX} from './framework/constants';
 import {NavbarComponent} from './navbar/navbar.component';
 import {SidenavComponent} from './sidenav/sidenav.component';
 import {LoaderComponent} from './framework/loader/loader.component';
 import {ToastModule} from 'primeng/toast';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
-import {ScrollPanelModule} from 'primeng/scrollpanel';
 
 export const browserChange = new Subject<boolean>();
 
@@ -30,51 +40,112 @@ export const browserChange = new Subject<boolean>();
     LoaderComponent,
     ToastModule,
     ConfirmDialogModule,
-    ScrollPanelModule
   ],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AppComponent {
+export class AppComponent implements OnDestroy {
   private readonly loginService = inject(LoginService);
   private readonly router = inject(Router);
   private readonly loaderService = inject(LoaderService);
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
+  private readonly themeService = inject(ThemeService);
+  private readonly bfCacheService = inject(BFCacheService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   title = 'tcc-client';
-  isAuthenticated = false;
-  isNavigating = false;
-  subscription: Subscription;
+  // Signal para estado de navegação - atualização automática com OnPush
+  readonly isNavigating = signal<boolean>(false);
+  // Signal direto do LoginService - sem subscription necessária
+  protected readonly isAuthenticated = this.loginService.isAuthenticated;
+  subscription!: Subscription;
+  private readonly pwaService = inject(PwaService);
+  // BFCache cleanup subscriptions
+  private readonly bfCacheCleanupHandlers: (() => void)[] = [];
 
   constructor() {
-    const loginService = this.loginService;
+    // NOSONAR: void operator usado intencionalmente para inicialização precoce de serviços com side-effects
+    void this.themeService;
+    // NOSONAR: Mesmo acima
+    void this.pwaService;
 
-    loginService.isAuthenticated.asObservable()
-      .subscribe(e => {
-        this.isAuthenticated = e;
-        this.cdr.markForCheck();
-      });
+    // Não precisa mais de subscription - isAuthenticated é signal direto
     this.buildSubscriptionEvent();
+    this.setupBFCache();
+    this.setupPWA();
   }
 
   verifyAccess(role: string): boolean {
-    return this.loginService.hasAnyRole(role);
+    return this.loginService.hasAnyRole([role]);
   }
 
   buildSubscriptionEvent() {
-    this.subscription = this.router.events.subscribe((event) => {
-      if (event instanceof NavigationStart) {
-        this.isNavigating = true;
-        this.loaderService.show();
-        this.cdr.markForCheck();
-      } else if (event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError) {
-        if (event instanceof NavigationError) {
-          console.error('[NavigationError]', event.error);
+    this.subscription = this.router.events.subscribe({
+      next: (event) => {
+        if (event instanceof NavigationStart) {
+          this.isNavigating.set(true);
+          // markForCheck removido - signal atualiza automaticamente com OnPush
+        } else if (event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError) {
+          this.isNavigating.set(false);
+          // markForCheck removido - signal atualiza automaticamente com OnPush
+          browserChange.next(true);
         }
-        this.isNavigating = false;
-        this.loaderService.hide();
-        this.cdr.markForCheck();
-        browserChange.next(true);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    // Clean up router subscription
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+
+    // Clean up BFCache handlers
+    this.bfCacheCleanupHandlers.forEach(cleanup => cleanup());
+  }
+
+  /**
+   * Setup PWA (Progressive Web App) capabilities
+   * Enables automatic update detection and management
+   */
+  private setupPWA(): void {
+    // PWA service handles everything automatically:
+    // - Update detection and user prompts
+    // - Online/offline status tracking
+    // - Service worker lifecycle management
+  }
+
+  /**
+   * Setup BFCache (Back/Forward Cache) optimization
+   * Handles page restoration and cleanup for browser navigation cache
+   */
+  private setupBFCache(): void {
+    // Handle page restoration from BFCache
+    const restoredHandler = this.bfCacheService.onRestored(() => {
+      // Refresh authentication state if needed
+      if (this.isAuthenticated()) {
+        // Re-trigger authentication check to ensure session is still valid
+        this.loginService.refreshCurrentUser().subscribe({
+          next: () => {
+            // Signal atualiza automaticamente, mas mantemos markForCheck para garantir
+            this.cdr?.markForCheck();
+          },
+          error: () => {
+            this.cdr?.markForCheck();
+          }
+        });
+      }
+    });
+    this.bfCacheCleanupHandlers.push(restoredHandler);
+
+    // Handle page being stored in BFCache (cleanup)
+    const hideHandler = this.bfCacheService.onPageHide(() => {
+      // Hide loader to prevent frozen UI state
+      this.loaderService.hide();
+
+      // No need to close HTTP connections - browser handles this
+      // Just ensure no active UI state that would confuse users
+    });
+    this.bfCacheCleanupHandlers.push(hideHandler);
   }
 }

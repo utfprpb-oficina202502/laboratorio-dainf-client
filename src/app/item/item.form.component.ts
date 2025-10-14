@@ -4,14 +4,14 @@ import {
   computed,
   effect,
   inject,
-  Injector,
   OnDestroy,
   signal,
-  ViewChild
+  viewChild
 } from '@angular/core';
 import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
+import {Z_INDEX} from '../framework/constants';
 import {
   PrimeReactiveCrudFormComponent
 } from '../framework/component/prime-reactive-crud.form.component';
@@ -21,11 +21,12 @@ import {Grupo} from '../grupo/grupo';
 import {GrupoService} from '../grupo/grupo.service';
 import {FileUpload, FileUploadModule} from 'primeng/fileupload';
 import {environment} from '../../environments/environment';
-import Swal from 'sweetalert2';
 import {ItemImage} from './itemImage';
+import {LoggerService} from '../framework/services/logger.service';
+import {ConfirmationService} from 'primeng/api';
 
 // PrimeNG
-import {AutoCompleteModule} from "primeng/autocomplete";
+import {AutoCompleteCompleteEvent, AutoCompleteModule} from "primeng/autocomplete";
 import {ButtonModule} from "primeng/button";
 import {CardModule} from "primeng/card";
 import {CarouselModule} from "primeng/carousel";
@@ -82,15 +83,19 @@ interface TipoItemOption {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, number> implements OnDestroy {
-  protected itemService: ItemService;
-  protected injector: Injector;
+  readonly fileUpload = viewChild<FileUpload>('fileUpload');
 
-  private readonly fb = this.injector.get(FormBuilder);
-  private readonly grupoService = this.injector.get(GrupoService);
+  protected override service = inject(ItemService);
+  protected override urlList = '/item';
+  protected override type = Item;
+  private readonly fb = inject(FormBuilder);
+  private readonly grupoService = inject(GrupoService);
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
   private grupoSubscription?: Subscription;
   private imagesSubscription?: Subscription;
-
-  @ViewChild('fileUpload') fileUpload?: FileUpload;
+  protected readonly logger = inject(LoggerService);
+  private readonly confirmationService = inject(ConfirmationService);
 
   // Signals for component state
   protected readonly grupoList = signal<Grupo[]>([]);
@@ -118,23 +123,17 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     const formGroup = this.form();
     return formGroup?.get('tipoItem')?.value === 'P';
   });
-
   protected readonly isSaldoDisabled = computed(() => {
     const formGroup = this.form();
     const patrimonio = formGroup?.get('patrimonio')?.value;
     const tipoItem = formGroup?.get('tipoItem')?.value;
-    return (patrimonio != null && patrimonio !== '') || tipoItem === 'P';
+    return (patrimonio !== null && patrimonio !== undefined && patrimonio !== '') || tipoItem === 'P';
   });
 
-  private callback?: Function;
+  private callback?: () => void;
 
   constructor() {
-    const itemService = inject(ItemService);
-    const injector = inject(Injector);
-
-    super(itemService, injector, '/item', Item);
-    this.itemService = itemService;
-    this.injector = injector;
+    super();
 
     // Effect to handle form fields enable/disable based on user role
     effect(() => {
@@ -201,7 +200,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
    * Post edit hook for copy functionality
    */
   protected override postEdit(): void {
-    if (window.location.href.includes('copy')) {
+    if (globalThis.location.href.includes('copy')) {
       this.isEditing.set(false);
       const formGroup = this.form();
       if (formGroup) {
@@ -249,22 +248,25 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   }
 
   /**
-   * Post save hook for file upload
+   * Find grupos for autocomplete
    */
-  protected override postSave(callback: Function): void {
-    if (this.fileUpload) {
-      this.fileUpload.url = this.getUrlUploadImages();
-      this.fileUpload.upload();
-      this.callback = callback;
-    } else {
-      callback();
-    }
+  findGrupos($event: AutoCompleteCompleteEvent): void {
+    this.cancelGrupoRequest();
+
+    this.grupoSubscription = this.grupoService.complete($event.query).subscribe({
+      next: (grupos) => {
+        this.grupoList.set(grupos);
+      },
+      error: (error) => {
+        this.logger.error('Error fetching grupos', error);
+      }
+    });
   }
 
   /**
    * Handle file upload complete
    */
-  onUpload($event: any): void {
+  onUpload(): void {
     if (this.callback) {
       this.callback();
     }
@@ -279,19 +281,17 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   }
 
   /**
-   * Find grupos for autocomplete
+   * Post save hook for file upload
    */
-  findGrupos($event: any): void {
-    this.cancelGrupoRequest();
-
-    this.grupoSubscription = this.grupoService.complete($event.query).subscribe({
-      next: (grupos) => {
-        this.grupoList.set(grupos);
-      },
-      error: (error) => {
-        console.error('Error fetching grupos:', error);
-      }
-    });
+  protected override postSave(callback: () => void): void {
+    const upload = this.fileUpload();
+    if (upload) {
+      upload.url = this.getUrlUploadImages();
+      upload.upload();
+      this.callback = callback;
+    } else {
+      callback();
+    }
   }
 
   /**
@@ -311,35 +311,17 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   }
 
   /**
-   * Fetch item images
+   * Delete an image
    */
-  private findItemImages(): void {
-    const obj = this.object();
-    if (!obj || !('id' in obj) || !obj.id) {
-      return;
-    }
-
-    this.cancelImagesRequest();
-
-    this.loadingImages.set(true);
-    this.loaderService.show();
-
-    this.imagesSubscription = this.itemService.findAllImagesItem(obj.id).subscribe({
-      next: (images) => {
-        this.loadingImages.set(false);
-        this.loaderService.hide();
-        if (images.length > 0) {
-          this.images.set(images);
-          this.dialogImagens.set(true);
-        } else {
-          Swal.fire('Ops...', 'Esse item não possui imagens.', 'info');
-        }
-      },
-      error: (error) => {
-        this.loadingImages.set(false);
-        this.loaderService.hide();
-        Swal.fire('Erro', 'Erro ao buscar imagens.', 'error');
-        console.error(error);
+  deleteImage(image: ItemImage): void {
+    this.confirmationService.confirm({
+      message: 'Tem certeza que deseja remover a imagem? A ação não poderá ser desfeita.',
+      header: 'Confirmação',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sim',
+      rejectLabel: 'Não',
+      accept: () => {
+        this.performDeleteImage(image);
       }
     });
   }
@@ -356,21 +338,45 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   }
 
   /**
-   * Delete an image
+   * Fetch item images
    */
-  deleteImage(image: ItemImage): void {
-    Swal.fire({
-      title: 'Tem certeza que deseja remover a imagem?',
-      text: 'A ação não poderá ser desfeita.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sim',
-      cancelButtonText: 'Não'
-    }).then((result) => {
-      if (result.value) {
-        this.performDeleteImage(image);
+  private findItemImages(): void {
+    const obj = this.object();
+    if (!obj || !('id' in obj) || !obj.id) {
+      return;
+    }
+
+    this.cancelImagesRequest();
+
+    this.loadingImages.set(true);
+    this.loaderService.show();
+
+    this.imagesSubscription = this.service.findAllImagesItem(obj.id).subscribe({
+      next: (images) => {
+        this.loadingImages.set(false);
+        this.loaderService.hide();
+        if (images.length > 0) {
+          this.images.set(images);
+          this.dialogImagens.set(true);
+        } else {
+          this.messageService.add({
+            severity: 'info',
+            summary: 'Ops...',
+            detail: 'Esse item não possui imagens.',
+            life: 4000
+          });
+        }
+      },
+      error: (error) => {
+        this.loadingImages.set(false);
+        this.loaderService.hide();
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Erro ao buscar imagens.',
+          life: 5000
+        });
+        this.logger.error('Erro ao buscar imagens', error);
       }
     });
   }
@@ -385,17 +391,27 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     }
 
     this.loaderService.show();
-    this.itemService.deleteImage(image, obj.id).subscribe({
+    this.service.deleteImage(image, obj.id).subscribe({
       next: () => {
         this.deleteImageInObject(image);
         this.loaderService.hide();
         this.dialogImagens.set(false);
-        Swal.fire('Sucesso!', 'Imagem removida com sucesso!', 'success');
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Sucesso!',
+          detail: 'Imagem removida com sucesso!',
+          life: 3000
+        });
       },
       error: (error) => {
         this.loaderService.hide();
-        Swal.fire('Atenção!', 'Ocorreu um erro ao remover a imagem', 'error');
-        console.error(error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Atenção!',
+          detail: 'Ocorreu um erro ao remover a imagem',
+          life: 5000
+        });
+        this.logger.error('Erro ao remover a imagem', error);
       }
     });
   }
@@ -458,7 +474,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     const patrimonio = formGroup.get('patrimonio')?.value;
     const tipoItem = formGroup.get('tipoItem')?.value;
 
-    if ((patrimonio != null && patrimonio !== '') || tipoItem === 'P') {
+    if ((patrimonio !== null && patrimonio !== undefined && patrimonio !== '') || tipoItem === 'P') {
       formGroup.patchValue({
         saldo: 1,
         qtdeMinima: 1

@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { LoaderService } from './loader.service';
-import { ProgressSpinner } from "primeng/progressspinner";
+import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
+import {LoaderService} from './loader.service';
+import {ProgressSpinner} from "primeng/progressspinner";
 
 @Component({
   selector: 'app-loader',

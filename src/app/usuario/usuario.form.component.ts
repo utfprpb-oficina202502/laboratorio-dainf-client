@@ -1,20 +1,13 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  Injector,
-  signal
-} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import {Z_INDEX} from '../framework/constants';
 import {Usuario} from './usuario';
 import {UsuarioService} from './usuario.service';
 import {
   PrimeReactiveCrudFormComponent
 } from '../framework/component/prime-reactive-crud.form.component';
 import {Permissao} from './permissao';
-import Swal from 'sweetalert2';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
@@ -31,6 +24,7 @@ import {FormFieldComponent} from '../framework/component/form-field.component';
 import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
+import {LoggerService} from '../framework/services/logger.service';
 
 interface PermissaoSelectItem {
   label: string;
@@ -63,10 +57,14 @@ interface PermissaoSelectItem {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario, number> {
-  protected usuarioService: UsuarioService;
-  protected injector: Injector;
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
 
-  private readonly fb = this.injector.get(FormBuilder);
+  protected override service = inject(UsuarioService);
+  protected override urlList = '/usuario';
+  protected override type = Usuario;
+  private readonly fb = inject(FormBuilder);
+  protected readonly logger = inject(LoggerService);
 
   // Signals for dropdown options and dialog state
   protected readonly grupoAcessoDropdown = signal<PermissaoSelectItem[]>([]);
@@ -90,13 +88,7 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
   protected readonly canShowPasswordChange = computed(() => this.isEditMode());
 
   constructor() {
-    const usuarioService = inject(UsuarioService);
-    const injector = inject(Injector);
-
-    super(usuarioService, injector, '/usuario', Usuario);
-    this.usuarioService = usuarioService;
-    this.injector = injector;
-
+    super();
     this.buildGrupoDeAcesso();
     this.buildPasswordChangeForm();
   }
@@ -135,7 +127,7 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
    * Load permission options for dropdown
    */
   buildGrupoDeAcesso(): void {
-    this.usuarioService.findAllPermissao()
+    this.service.findAllPermissao()
       .subscribe({
         next: (permissoes) => {
           if (permissoes && permissoes.length > 0) {
@@ -155,8 +147,13 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
           }
         },
         error: (error) => {
-          console.error('Error loading permissions:', error);
-          Swal.fire('Erro', 'Erro ao carregar grupos de acesso.', 'error');
+          this.logger.error('Error loading permissions', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erro',
+            detail: 'Erro ao carregar grupos de acesso.',
+            life: 5000
+          });
         }
       });
   }
@@ -165,7 +162,7 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
    * Format permission name for display
    */
   formatRule(nome: string): string {
-    let toReturn = nome.replace('ROLE_', '');
+    let toReturn = nome.replaceAll('ROLE_', '');
     toReturn = toReturn.charAt(0).toUpperCase() + toReturn.slice(1).toLowerCase();
     return toReturn;
   }
@@ -204,7 +201,12 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
       const senhaAtual = form.get('senhaAtual')?.value;
 
       if (novaSenha !== confirmarNovaSenha) {
-        Swal.fire('Atenção', 'Senhas não conferem!', 'error');
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Atenção',
+          detail: 'Senhas não conferem!',
+          life: 5000
+        });
         return;
       }
 
@@ -214,18 +216,28 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
       this.loaderService.show();
 
       const usuarioComNovaSenha = { ...obj, password: novaSenha };
-      this.usuarioService.changeSenha(usuarioComNovaSenha, senhaAtual)
+      this.service.changeSenha(usuarioComNovaSenha, senhaAtual)
         .subscribe({
           next: () => {
             this.loaderService.hide();
-            Swal.fire('Sucesso', 'Senha redefinida com sucesso!', 'success');
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Sucesso',
+              detail: 'Senha redefinida com sucesso!',
+              life: 3000
+            });
             this.resetPasswordForm();
             this.dialogChangeSenha.set(false);
           },
           error: (error) => {
             this.loaderService.hide();
-            console.error('Error changing password:', error);
-            Swal.fire('Atenção', 'A senha atual está incorreta!', 'error');
+            this.logger.error('Error changing password', error);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Atenção',
+              detail: 'A senha atual está incorreta!',
+              life: 5000
+            });
           }
         });
     } else {

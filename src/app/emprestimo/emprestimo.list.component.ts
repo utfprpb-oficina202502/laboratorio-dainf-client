@@ -1,14 +1,5 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  forwardRef,
-  inject,
-  Injector,
-  OnInit,
-  ViewChild
-} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, viewChild} from '@angular/core';
+import {Z_INDEX} from '../framework/constants';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Emprestimo} from './emprestimo';
@@ -19,75 +10,56 @@ import {DateUtil} from '../framework/util/dateUtil';
 import {EmprestimoFilter} from './emprestimo.filter';
 import {Usuario} from '../usuario/usuario';
 import {UsuarioService} from '../usuario/usuario.service';
-import Swal from 'sweetalert2';
-
-// PrimeNG Components
-import {CardModule} from 'primeng/card';
-import {TableModule} from 'primeng/table';
-import {MultiSelectModule} from 'primeng/multiselect';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ButtonModule} from 'primeng/button';
-import {InputTextModule} from 'primeng/inputtext';
-import {IconFieldModule} from 'primeng/iconfield';
-import {InputIconModule} from 'primeng/inputicon';
-import {TooltipModule} from 'primeng/tooltip';
-import {TagModule} from 'primeng/tag';
 import {DialogModule} from 'primeng/dialog';
 import {AutoCompleteModule} from 'primeng/autocomplete';
 import {DatePicker, DatePickerModule} from 'primeng/datepicker';
 import {SelectModule} from 'primeng/select';
-
 import {MenuModule} from 'primeng/menu';
-import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
 import {NovoComponent} from '../geral/novo/novo.component';
+import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
+import {BreakpointService} from '../framework/services/breakpoint.service';
+import {
+  TableDefaultTemplatesComponent
+} from '../framework/component/table-default-templates.component';
 
 @Component({
     selector: 'app-list-emprestimo',
     templateUrl: './emprestimo.list.component.html',
     styleUrls: ['./emprestimo.list.component.css'],
   imports: [
-    CommonModule,
-    FormsModule,
-    CardModule,
-    TableModule,
-    MultiSelectModule,
-    ToolbarModule,
-    ButtonModule,
-    InputTextModule,
-    IconFieldModule,
-    InputIconModule,
-    TooltipModule,
-    TagModule,
+    PrimeTableSharedModule,
     DialogModule,
     AutoCompleteModule,
     DatePickerModule,
     SelectModule,
     PopoverModule,
     MenuModule,
-    PrimeCrudToolbarComponent,
-    NovoComponent
+    NovoComponent,
+    TableDefaultTemplatesComponent,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => EmprestimoListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, number> implements OnInit{
-  protected emprestimoService: EmprestimoService;
-  protected injector: Injector;
-  private readonly usuarioService = inject(UsuarioService);
-
-  @ViewChild('actionsMenu') actionsMenu: Popover;
-  @ViewChild('novaData') novaData: DatePicker;
-
+export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, number> {
+  readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
+  readonly novaData = viewChild.required<DatePicker>('novaData');
   contextMenuItems: MenuItem[] = [];
-  selectedEmprestimoId: number;
-  dialogFiltroEmprestimo = false;
-  emprestimoFilter: EmprestimoFilter;
-  statusDropdown: SelectItem[];
-  usuarioEmprestimoList: Usuario[];
-  usuarioResponsalvel: Usuario[];
-  dtNovaData: string;
-  idEmprestimoToChangePrazoDev: number;
+  protected override service = inject(EmprestimoService);
+  protected readonly breakpointService = inject(BreakpointService);
 
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
+  selectedEmprestimoId!: number;
+  dialogFiltroEmprestimo = false;
+  emprestimoFilter = new EmprestimoFilter();
+  statusDropdown: SelectItem[] = [];
+  usuarioEmprestimoList: Usuario[] = [];
+  usuarioResponsavel: Usuario[] = [];
+  dtNovaData!: string;
+  idEmprestimoToChangePrazoDev!: number;
+  protected override columnsTable = ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status'];
+  protected override urlForm = 'emprestimo/form';
+  private readonly usuarioService = inject(UsuarioService);
   private readonly tableColumns: TableColumn[] = [
     {
       field: 'id',
@@ -104,7 +76,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       type: 'custom',
       sortable: true,
       filterable: true,
-      minWidth: '16rem'
+      width: '20rem'
     },
     {
       field: 'dataEmprestimo',
@@ -136,78 +108,80 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   ];
 
   constructor() {
-    const emprestimoService = inject(EmprestimoService);
-    const injector = inject(Injector);
+    super();
 
-    super(emprestimoService, injector, ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status'], 'emprestimo/form');
-    this.emprestimoService = emprestimoService;
-    this.injector = injector;
-
-    this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.emprestimoFilter = new EmprestimoFilter();
     this.buildDropdown();
     this.configureTable();
   }
 
-  protected override getEntityName(): string {
-    return 'Emprestimo';
+  // Getter for backwards compatibility with custom methods
+  protected get emprestimoService(): EmprestimoService {
+    return this.service;
   }
 
-  protected override getEntityPluralName(): string {
-    return 'Emprestimos';
+  openOptions(event: Event, id: number): void {
+    this.selectedEmprestimoId = id;
+    const isAlunoOrProfessor = this.isAlunoOrProfessor();
+
+    this.contextMenuItems = [];
+
+    if (!isAlunoOrProfessor) {
+      this.contextMenuItems.push(
+        {
+          label: 'Devolução',
+          icon: 'pi pi-undo',
+          command: () => this.openDevolucao(id)
+        },
+        {
+          label: 'Novo Prazo',
+          icon: 'pi pi-clock',
+          command: () => {
+            this.idEmprestimoToChangePrazoDev = id;
+            this.openCalendarNewDate();
+          }
+        }
+      );
+    }
+
+    this.contextMenuItems.push({
+      label: isAlunoOrProfessor ? 'Visualizar' : 'Editar',
+      icon: isAlunoOrProfessor ? 'pi pi-eye' : 'pi pi-pencil',
+      command: () => this.edit(id)
+    });
+
+    if (!isAlunoOrProfessor) {
+      this.contextMenuItems.push({
+        label: 'Remover',
+        icon: 'pi pi-trash',
+        command: () => this.delete(id)
+      });
+    }
+
+    this.actionsMenu().toggle(event);
+    this.cdr?.markForCheck();
   }
 
-  // Override export filename for emprestimos
+  findUsuarios($event: { query: string }) {
+    this.usuarioService.completeCustom($event.query)
+    .subscribe({
+      next: (e) => {
+        this.usuarioEmprestimoList = e;
+      }
+    });
+  }
+
   protected override getExportFileName(): string {
     return 'emprestimos';
   }
 
-  private configureTable(): void {
-    this.tableConfig = {
-      ...this.tableConfig,
-      columns: this.tableColumns,
-      globalFilterFields: ['id', 'dataEmprestimo', 'prazoDevolucao'],
-      defaultSortField: 'dataEmprestimo',
-      defaultSortOrder: -1,
-      caption: 'Lista de Emprestimos',
-      trackByField: 'id',
-      emptyMessage: 'Nenhum emprestimo encontrado.',
-      loadingMessage: 'Carregando emprestimos...',
-      globalFilterPlaceholder: 'Buscar emprestimos...',
-      columnToggle: true,
-      expandable: false,
-      expandMode: 'single',
-      rowExpansionKey: 'id',
-      stateful: true,
-      stateKey: 'emprestimo-list',
-      stateStorage: 'local',
-      stateProps: {
-        columns: true,
-        filters: true,
-        sort: true,
-        pagination: true,
-        selection: true,
-        expandedRows: true
-      },
-      resizableColumns: true,
-      columnResizeMode: 'fit',
-      lazy: true,
-      lazyLoadOnInit: true,
-      preloadData: true,
-      keyboardShortcuts: true
-    };
-
-    this.columnsTable = this.tableConfig.columns.map(column => column.field);
-    this.displayedColumns = [...this.columnsTable];
-  }
-
-  // tslint:disable-next-line:use-lifecycle-interface
-  ngOnInit(): void {
-    this.loginService.userLoggedIsAlunoOrProfessor().then(value => {
-      this.isAlunoOrProfessor = value;
-      this.cdr.markForCheck();
-      this.isAlunoOrProfessor ? this.findAllByUsername() : this.findAll();
+  findUsuarioResponsavel($event: { query: string }) {
+    this.usuarioService.completeCustomUsersLab($event.query)
+    .subscribe({
+      next: (e) => {
+        this.usuarioResponsavel = e;
+      }
     });
   }
 
@@ -226,59 +200,32 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     // Custom sorting and filtering logic is now handled in the tableConfig
   }
 
-  async openOptions(event: Event, id: number): Promise<void> {
-    this.selectedEmprestimoId = id;
-    const isAlunoOrProfessor = await this.loginService.userLoggedIsAlunoOrProfessor();
-
-    this.contextMenuItems = [];
-
-    if (!isAlunoOrProfessor) {
-      this.contextMenuItems.push({
-        label: 'Devolução',
-        icon: 'fa fa-undo',
-        command: () => this.openDevolucao(id)
+  findByFilter() {
+    this.emprestimoService.filter(this.emprestimoFilter)
+    .subscribe({
+      next: (e) => {
+        this.objects = e;
+        this.totalElements = e.length;
+        this.loaderService.hide();
+      },
+      error: () => {
+        this.loaderService.hide();
+      }
       });
-
-      this.contextMenuItems.push({
-        label: 'Novo Prazo',
-        icon: 'fa fa-clock-o',
-        command: () => {
-          this.idEmprestimoToChangePrazoDev = id;
-          this.openCalendarNewDate();
-        }
-      });
-    }
-
-    this.contextMenuItems.push({
-      label: isAlunoOrProfessor ? 'Visualizar' : 'Editar',
-      icon: isAlunoOrProfessor ? 'fa fa-eye' : 'fa fa-edit',
-      command: () => this.edit(id)
-    });
-
-    if (!isAlunoOrProfessor) {
-      this.contextMenuItems.push({
-        label: 'Remover',
-        icon: 'fa fa-trash-o',
-        command: () => this.delete(id)
-      });
-    }
-
-    this.actionsMenu.toggle(event);
-    this.cdr.markForCheck();
   }
 
-  openDevolucao(id) {
+  openDevolucao(id: number) {
     this.router.navigate(['emprestimo/devolucao', id]);
   }
 
   openCalendarNewDate() {
-    this.novaData.overlayVisible = true;
+    this.novaData().overlayVisible = true;
   }
 
   getStatusEmprestimo(emprestimo: Emprestimo) {
-    if (DateUtil.dtIsBeforeToday(emprestimo.prazoDevolucao) && emprestimo.dataDevolucao == null) {
+    if (DateUtil.dtIsBeforeToday(emprestimo.prazoDevolucao) && emprestimo.dataDevolucao === null) {
       return 'A';
-    } else if (emprestimo.dataDevolucao == null) {
+    } else if (emprestimo.dataDevolucao === null) {
       return 'P';
     } else {
       return 'F';
@@ -289,30 +236,55 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     this.dialogFiltroEmprestimo = true;
   }
 
-  findUsuarios($event: any) {
-    this.usuarioService.completeCustom($event.query)
-      .subscribe(e => {
-        this.usuarioEmprestimoList = e;
-      });
-  }
-
-  findUsuarioResponsavel($event: any) {
-    this.usuarioService.completeCustomUsersLab($event.query)
-      .subscribe(e => {
-        this.usuarioResponsalvel = e;
-      });
+  changePrazoDevolucao() {
+    this.confirmationService.confirm({
+      message: `Você realmente deseja alterar o prazo de devolução para o dia ${this.dtNovaData}?`,
+      header: 'Confirmação',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sim',
+      rejectLabel: 'Não',
+      accept: () => {
+        this.loaderService.show();
+        this.emprestimoService.changePrazoDevolucao(this.idEmprestimoToChangePrazoDev, this.dtNovaData)
+        .subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Sucesso!',
+              detail: 'Prazo de devolução alterado com sucesso!',
+              life: 3000
+            });
+            this.findAll();
+            this.loaderService.hide();
+          },
+          error: () => {
+            this.loaderService.hide();
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Atenção!',
+              detail: 'Ocorreu um erro ao alterar a data do prazo de devolução!',
+              life: 5000
+            });
+          }
+          });
+      }
+    });
   }
 
   clearFilter() {
     this.emprestimoFilter = new EmprestimoFilter();
     this.buildDropdown();
-    this.isAlunoOrProfessor ? this.findAllByUsername() : this.findAll();
+    if (this.isAlunoOrProfessor()) {
+      this.findAllByUsername();
+    } else {
+      this.findAll();
+    }
   }
 
   filter() {
     this.dialogFiltroEmprestimo = false;
     this.loaderService.show();
-    if (this.isAlunoOrProfessor) {
+    if (this.isAlunoOrProfessor()) {
       this.setUserLogadoInFilter().then(() => {
         this.findByFilter();
       });
@@ -321,49 +293,58 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     }
   }
 
-  findByFilter() {
-    this.emprestimoService.filter(this.emprestimoFilter)
-      .subscribe(e => {
-        this.objects = e;
-        this.totalElements = e.length;
-        this.loaderService.hide();
-      }, error => {
-        this.loaderService.hide();
-      });
-  }
-
   setUserLogadoInFilter(): Promise<void> {
     return new Promise<void>(resolve => {
       const u = new Usuario();
-      u.username = localStorage.getItem('username');
+      u.username = this.storageService.getItem('username') ?? '';
       this.emprestimoFilter.usuarioEmprestimo = u;
       resolve();
     });
   }
 
-  changePrazoDevolucao() {
-    Swal.fire({
-      title: `Confirmação`,
-      text: `Você realmente deseja alterar o prazo de devolução para o dia ${this.dtNovaData}`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sim',
-      cancelButtonText: 'Não'
-    }).then((result) => {
-      if (result.value) {
-        this.loaderService.show();
-        this.emprestimoService.changePrazoDevolucao(this.idEmprestimoToChangePrazoDev, this.dtNovaData)
-          .subscribe(e => {
-            Swal.fire('Sucesso!', 'Prazo de devolução alterado com sucesso!', 'success');
-            this.findAll();
-            this.loaderService.hide();
-          }, error => {
-            this.loaderService.hide();
-            Swal.fire('Atenção!', 'Ocorreu um erro ao alterar a data do prazo de devolução!', 'error');
-          });
-      }
-    });
+  protected override getEntityName(): string {
+    return 'Empréstimo';
+  }
+
+  protected override getEntityPluralName(): string {
+    return 'Empréstimos';
+  }
+
+  private configureTable(): void {
+    this.tableConfig = {
+      ...this.tableConfig,
+      columns: this.tableColumns,
+      globalFilterFields: ['id', 'dataEmprestimo', 'prazoDevolucao'],
+      defaultSortField: 'dataEmprestimo',
+      defaultSortOrder: -1,
+      caption: 'Lista de Empréstimos',
+      trackByField: 'id',
+      emptyMessage: 'Nenhum empréstimo encontrado.',
+      loadingMessage: 'Carregando empréstimos...',
+      globalFilterPlaceholder: 'Buscar empréstimos...',
+      columnToggle: true,
+      expandable: false,
+      expandMode: 'single',
+      rowExpansionKey: 'id',
+      stateful: true,
+      stateKey: 'emprestimo-list-v2',
+      stateStorage: 'local',
+      stateProps: {
+        columns: true,
+        filters: true,
+        sort: true,
+        pagination: true,
+        selection: true,
+        expandedRows: true
+      },
+      resizableColumns: true,
+      columnResizeMode: 'fit',
+      lazy: true,
+      preloadData: true,
+      keyboardShortcuts: true
+    };
+
+    this.columnsTable = this.tableConfig.columns.map(column => column.field);
+    this.displayedColumns = [...this.columnsTable];
   }
 }

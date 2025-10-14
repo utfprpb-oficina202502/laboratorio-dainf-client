@@ -1,13 +1,7 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  Injector,
-  signal
-} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import {Z_INDEX} from '../framework/constants';
 
 import {Reserva} from './reserva';
 import {ReservaService} from './reserva.service';
@@ -19,12 +13,12 @@ import {ItemService} from '../item/item.service';
 import {ReservaItem} from './reservaItem';
 import {ItemImage} from '../item/itemImage';
 import {environment} from 'src/environments/environment';
-import Swal from 'sweetalert2';
+import {BreakpointService} from '../framework/services/breakpoint.service';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
 import {InputTextModule} from 'primeng/inputtext';
-import {AutoCompleteModule} from 'primeng/autocomplete';
+import {AutoCompleteCompleteEvent, AutoCompleteModule} from 'primeng/autocomplete';
 import {DatePickerModule} from 'primeng/datepicker';
 import {ButtonModule} from 'primeng/button';
 import {TableModule} from 'primeng/table';
@@ -70,11 +64,15 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva, number> {
-  protected reservaService: ReservaService;
-  protected injector: Injector;
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
 
-  private readonly fb = this.injector.get(FormBuilder);
-  private readonly itemService = this.injector.get(ItemService);
+  protected override service = inject(ReservaService);
+  protected override urlList = '/reserva';
+  protected override type = Reserva;
+  private readonly fb = inject(FormBuilder);
+  private readonly itemService = inject(ItemService);
+  protected readonly breakpointService = inject(BreakpointService);
 
   // Signals for state management
   protected readonly itemList = signal<Item[]>([]);
@@ -109,13 +107,7 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
   protected readonly hasItems = computed(() => this.reservaItems().length > 0);
 
   constructor() {
-    const reservaService = inject(ReservaService);
-    const injector = inject(Injector);
-
-    super(reservaService, injector, '/reserva', Reserva);
-
-    this.reservaService = reservaService;
-    this.injector = injector;
+    super();
   }
 
   /**
@@ -143,7 +135,7 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
   /**
    * Autocomplete for Items
    */
-  findProdutos(event: any): void {
+  findProdutos(event: AutoCompleteCompleteEvent): void {
     this.itemService.completeItem(event.query, true).subscribe(e => {
       this.itemList.set(e);
     });
@@ -219,7 +211,12 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
           this.images.set(images);
           this.dialogImagens.set(true);
         } else {
-          Swal.fire('Ops...', 'Esse item não possui imagens.', 'info');
+          this.messageService.add({
+            severity: 'info',
+            summary: 'Ops...',
+            detail: 'Esse item não possui imagens.',
+            life: 4000
+          });
         }
       },
       error: () => {

@@ -1,7 +1,7 @@
-import { Injectable, inject } from '@angular/core';
+import {inject, Injectable} from '@angular/core';
 import {CrudService} from '../framework/service/crud.service';
 import {Relatorio} from './relatorio';
-import { HttpClient } from '@angular/common/http';
+import {HttpClient} from '@angular/common/http';
 import {environment} from '../../environments/environment';
 import {Observable} from 'rxjs';
 
@@ -14,7 +14,7 @@ export class RelatorioService extends CrudService<Relatorio, number> {
     super(`${environment.api_url}relatorio/`, http);
   }
 
-  generateReport(map: any): Observable<any> {
-    return this.http.post<any>(this.url + `generate-report`, map, {responseType: 'arraybuffer' as 'json'});
+  generateReport(map: Record<string, unknown>): Observable<ArrayBuffer> {
+    return this.http.post<ArrayBuffer>(this.url + `generate-report`, map, {responseType: 'arraybuffer' as 'json'});
   }
 }

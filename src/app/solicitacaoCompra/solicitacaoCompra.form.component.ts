@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  Injector,
-  signal
-} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 
@@ -17,11 +10,12 @@ import {
 import {Item} from '../item/item';
 import {ItemService} from '../item/item.service';
 import {SolicitacaoCompraItem} from './solicitacaoCompraItem';
+import {BreakpointService} from '../framework/services/breakpoint.service';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
 import {InputTextModule} from 'primeng/inputtext';
-import {AutoCompleteModule} from 'primeng/autocomplete';
+import {AutoCompleteCompleteEvent, AutoCompleteModule} from 'primeng/autocomplete';
 import {DatePickerModule} from 'primeng/datepicker';
 import {ButtonModule} from 'primeng/button';
 import {TableModule} from 'primeng/table';
@@ -63,11 +57,12 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SolicitacaoCompraFormComponent extends PrimeReactiveCrudFormComponent<SolicitacaoCompra, number> {
-  protected solicitacaoCompraService: SolicitacaoCompraService;
-  protected injector: Injector;
-
-  private readonly fb = this.injector.get(FormBuilder);
-  private readonly itemService = this.injector.get(ItemService);
+  protected override service = inject(SolicitacaoCompraService);
+  protected override urlList = '/solicitacao-compra';
+  protected override type = SolicitacaoCompra;
+  private readonly fb = inject(FormBuilder);
+  private readonly itemService = inject(ItemService);
+  protected readonly breakpointService = inject(BreakpointService);
 
   // Signals for state management
   protected readonly itemList = signal<Item[]>([]);
@@ -85,13 +80,7 @@ export class SolicitacaoCompraFormComponent extends PrimeReactiveCrudFormCompone
   protected readonly hasItems = computed(() => this.solicitacaoItems().length > 0);
 
   constructor() {
-    const solicitacaoCompraService = inject(SolicitacaoCompraService);
-    const injector = inject(Injector);
-
-    super(solicitacaoCompraService, injector, '/solicitacao-compra', SolicitacaoCompra);
-
-    this.solicitacaoCompraService = solicitacaoCompraService;
-    this.injector = injector;
+    super();
   }
 
   /**
@@ -118,7 +107,7 @@ export class SolicitacaoCompraFormComponent extends PrimeReactiveCrudFormCompone
   /**
    * Autocomplete for Items
    */
-  findProdutos(event: any): void {
+  findProdutos(event: AutoCompleteCompleteEvent): void {
     this.itemService.completeItem(event.query, false).subscribe(e => {
       this.itemList.set(e);
     });

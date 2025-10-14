@@ -1,13 +1,14 @@
-<div class="container-fluid my-3" (keyup.control.n)="openForm()">
-  <p-card>
+<div (keyup.control.n)="openForm()" class="w-full px-4 my-3" tabindex="0">
+  <p-card [attr.aria-busy]="loading()">
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-3">
-        <span class="text-xl font-bold">Emprestimos</span>
+        <span class="text-xl font-bold">Empréstimos</span>
       </div>
     </ng-template>
 
     <ng-template pTemplate="content">
-      <app-prime-crud-toolbar [table]="dt" [list]="self">
+      <!-- Toolbar remains visible during loading for better UX -->
+      <app-prime-crud-toolbar [list]="self" [table]="dataTable()">
         <ng-template #toolbarStartTemplate>
           <p-button
             type="button"
@@ -19,14 +20,24 @@
             [attr.aria-label]="'Abrir filtros'">
             <span pButtonIcon class="pi pi-search"></span>
           </p-button>
-          @if (!isAlunoOrProfessor) {
-            <app-novo (onClick)="openForm()"></app-novo>
+          @if (!isAlunoOrProfessor()) {
+            <app-novo (novoClick)="openForm()"></app-novo>
           }
         </ng-template>
       </app-prime-crud-toolbar>
 
-      <p-table
+      <!-- Wrapper component handles skeleton/table conditional rendering -->
+      <app-prime-crud-table-wrapper
+        [entityName]="getEntityName().toLowerCase()"
+        [entityPluralName]="getEntityPluralName().toLowerCase()"
+        [loading]="loading()"
+        [skeletonColumns]="displayedColumns.length"
+        [skeletonRows]="rows"
+        [totalElements]="totalElements">
+
+        <p-table
         #dt
+        [loading]="loading()"
         [value]="objects"
         [rows]="rows"
         [totalRecords]="totalElements"
@@ -36,8 +47,8 @@
         (onSort)="onSort($event)"
         [first]="first"
         [lazy]="tableConfig.lazy !== false"
-        [lazyLoadOnInit]="tableConfig.lazyLoadOnInit !== false"
-        [(selection)]="selectedItems"
+        [lazyLoadOnInit]="tableConfig.lazyLoadOnInit === true"
+        [selection]="selectedItems()"
         (selectionChange)="onSelectionChange($event)"
         [dataKey]="tableConfig.rowExpansionKey || 'id'"
         [resizableColumns]="tableConfig.resizableColumns !== false"
@@ -51,53 +62,37 @@
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
         [showCurrentPageReport]="true"
         [tableStyleClass]="getTableStyleClass()"
-        [attr.aria-label]="'Lista de emprestimos com ' + totalElements + ' registro(s)'">
+        [attr.aria-label]="'Lista de empréstimos com ' + totalElements + ' registro(s)'">
 
         <ng-template pTemplate="caption">
-          <div class="flex items-center justify-end gap-2 flex-wrap">
-            <p-iconField iconPosition="left" style="flex: 0 1 auto; min-width: 200px; max-width: 300px;">
-              <p-inputIcon class="pi pi-search" aria-hidden="true"></p-inputIcon>
-              <input
-                #globalFilterInput
-                pInputText
-                type="text"
-                (input)="onGlobalFilter($any($event.target).value)"
-                [value]="filterValue"
-                [placeholder]="getGlobalFilterPlaceholder()"
-                [attr.aria-label]="'Campo de busca para filtrar emprestimos'"
-                autocomplete="off" />
-              </p-iconField>
-              <p-button
-                type="button"
-                severity="secondary"
-                [outlined]="true"
-                (onClick)="clearGlobalFilter()"
-                [attr.aria-label]="'Limpar filtro global'">
-                <span pButtonIcon class="pi pi-filter-slash"></span>
-                <span pButtonLabel>Limpar</span>
-              </p-button>
-            </div>
-          </ng-template>
+          <app-table-filter-caption
+            (clear)="clearGlobalFilter()"
+            (filter)="onGlobalFilter($event)"
+            [ariaLabel]="'Campo de busca para filtrar empréstimos'"
+            [filterValue]="filterValue"
+            [placeholder]="getGlobalFilterPlaceholder()">
+          </app-table-filter-caption>
+        </ng-template>
 
           <ng-template pTemplate="header">
             <tr>
               @if (tableConfig.expandable) {
-                <th scope="col" style="width: 3rem" [attr.aria-label]="'Alternar detalhes'"></th>
+                <th scope="col" class="w-3rem" [attr.aria-label]="'Alternar detalhes'"></th>
               }
-              @if (!isReadOnly && tableConfig.selectable !== false) {
-                <th scope="col" style="width: 3rem" [attr.aria-label]="'Selecao de emprestimos'">
-                  <p-tableHeaderCheckbox [attr.aria-label]="'Selecionar todos os emprestimos'"></p-tableHeaderCheckbox>
+              @if (!isReadOnly() && tableConfig.selectable !== false) {
+                <th scope="col" class="w-3rem" [attr.aria-label]="'Seleção de empréstimos'">
+                  <p-tableHeaderCheckbox
+                    [attr.aria-label]="'Selecionar todos os empréstimos'"></p-tableHeaderCheckbox>
                 </th>
               }
               @for (column of getVisibleColumns(); track column.field) {
-                <th
-                  scope="col"
+                <th scope="col"
                   [attr.id]="'col-' + column.field"
                   [attr.data-field]="column.field"
-                  [pSortableColumn]="column.sortable === false || column.field === 'actions' ? null : column.field"
+                    [pSortableColumn]="column.sortable === false || column.field === 'actions' ? undefined : column.field"
                   [style.width]="column.width"
                   [style.min-width]="column.minWidth"
-                  [ngClass]="column.headerClass"
+                    [class]="column.headerClass"
                   [attr.aria-label]="column.tooltip || column.header">
                   <div class="flex items-center gap-2" [class.justify-center]="column.align === 'center'">
                     {{ column.header }}
@@ -113,19 +108,20 @@
           <ng-template pTemplate="body" let-row>
             <tr>
               @if (tableConfig.expandable) {
-                <td style="width: 3rem">
+                <td class="w-3rem">
                   <button
                     type="button"
                     pButton
                     [pRowToggler]="row"
                     class="p-button-text p-button-rounded"
                     [attr.aria-label]="(isRowExpanded(row) ? 'Recolher' : 'Expandir') + ' detalhes do emprestimo ' + row.id">
-                    <span pButtonIcon [ngClass]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
+                    <span pButtonIcon
+                          [class]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
                   </button>
                 </td>
               }
-              @if (!isReadOnly && tableConfig.selectable !== false) {
-                <td style="width: 3rem">
+              @if (!isReadOnly() && tableConfig.selectable !== false) {
+                <td class="w-3rem">
                   <p-tableCheckbox
                     [value]="row"
                     [attr.aria-label]="'Selecionar emprestimo ' + row.id">
@@ -137,17 +133,12 @@
                   [style.text-align]="column.align || 'left'"
                   [style.width]="column.width"
                   [style.min-width]="column.minWidth"
-                  [attr.headers]="'col-' + column.field">
+                  [attr.headers]="'col-' + column.field"
+                  (click)="openOptions($event, row.id)"
+                  class="cursor-pointer">
                   @switch (column.field) {
                     @case ('usuarioEmprestimo') {
-                      <span
-                        [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
-                        [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
-                        [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                        (click)="openOptions($event, row.id)"
-                        (keydown.enter)="openOptions($event, row.id)"
-                        (keydown.space)="openOptions($event, row.id)"
-                        [attr.aria-label]="column.header + ': ' + row.usuarioEmprestimo?.nome">
+                      <span [attr.aria-label]="column.header + ': ' + row.usuarioEmprestimo?.nome">
                         {{ row.usuarioEmprestimo?.nome }}
                       </span>
                     }
@@ -157,8 +148,6 @@
                           <p-tag
                             value="Em andamento"
                             severity="info"
-                            (click)="openOptions($event, row.id)"
-                            [style.cursor]="'pointer'"
                             [attr.aria-label]="'Status: Em andamento'">
                           </p-tag>
                         }
@@ -166,8 +155,6 @@
                           <p-tag
                             value="Em atraso"
                             severity="danger"
-                            (click)="openOptions($event, row.id)"
-                            [style.cursor]="'pointer'"
                             [attr.aria-label]="'Status: Em atraso'">
                           </p-tag>
                         }
@@ -175,22 +162,13 @@
                           <p-tag
                             value="Finalizado"
                             severity="success"
-                            (click)="openOptions($event, row.id)"
-                            [style.cursor]="'pointer'"
                             [attr.aria-label]="'Status: Finalizado'">
                           </p-tag>
                         }
                       </div>
                     }
                     @default {
-                      <span
-                        [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
-                        [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
-                        [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                        (click)="openOptions($event, row.id)"
-                        (keydown.enter)="openOptions($event, row.id)"
-                        (keydown.space)="openOptions($event, row.id)"
-                        [attr.aria-label]="column.header + ': ' + row[column.field]">
+                      <span [attr.aria-label]="column.header + ': ' + row[column.field]">
                         {{ row[column.field] }}
                       </span>
                     }
@@ -201,8 +179,9 @@
         </ng-template>
 
         <ng-template pTemplate="rowexpansion" let-row>
-          @if (rowExpansionTemplate) {
-            <ng-container [ngTemplateOutlet]="rowExpansionTemplate" [ngTemplateOutletContext]="{$implicit: row}"></ng-container>
+          @if (rowExpansionTemplate()) {
+            <ng-container [ngTemplateOutlet]="rowExpansionTemplate()"
+                          [ngTemplateOutletContext]="{$implicit: row}"></ng-container>
           } @else {
             <div class="p-3">
               <div class="flex gap-4">
@@ -213,30 +192,29 @@
                   <p class="mb-1"><strong>Prazo de Devolucao:</strong> {{ row.prazoDevolucao }}</p>
                   <p class="mb-0"><strong>Status:</strong>
                   @if (getStatusEmprestimo(row) === 'P') {
-                    <span class="text-info">Em andamento</span>
+                    <span class="text-blue-500">Em andamento</span>
                   }
                   @if (getStatusEmprestimo(row) === 'A') {
-                    <span class="text-danger">Em atraso</span>
+                    <span class="text-red-500">Em atraso</span>
                   }
                   @if (getStatusEmprestimo(row) === 'F') {
-                    <span class="text-success">Finalizado</span>
+                    <span class="text-green-600">Finalizado</span>
                   }
                 </p>
               </div>
             </div>
           </div>
         }
-      </ng-template>
+        </ng-template>
 
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td [attr.colspan]="getColumnCount()" class="text-center p-4">
-            <i class="pi pi-search" style="font-size: 3rem; color: #dee2e6;"></i>
-            <p class="mt-3 mb-0">Nenhum emprestimo encontrado.</p>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
+          <app-table-default-templates
+            [colspan]="getColumnCount()"
+            [emptyMessage]="tableConfig.emptyMessage || 'Nenhum empréstimo encontrado'"
+            [loadingMessage]="tableConfig.loadingMessage || 'Carregando empréstimos...'">
+          </app-table-default-templates>
+        </p-table>
+
+      </app-prime-crud-table-wrapper>
   </ng-template>
 </p-card>
 </div>
@@ -245,15 +223,15 @@
 <p-dialog
   header="Filtro"
   [(visible)]="dialogFiltroEmprestimo"
-  [style]="{ minWidth: '400px', maxWidth: '400px' }"
+  [baseZIndex]="Z_INDEX.DIALOG"
   [modal]="true"
-  [baseZIndex]="10000">
+  class="dialog-sm-fixed">
 
   <form>
-    @if (!isAlunoOrProfessor) {
-      <div class="row mb-3">
-        <div class="col-md-12">
-          <div class="form-group">
+    @if (!isAlunoOrProfessor()) {
+      <div class="grid grid-cols-12 gap-4 mb-3">
+        <div class="col-span-12">
+          <div class="space-y-2">
             <label for="usuarioEmprestimo">Aluno/Professor</label>
             <p-autoComplete
               id="usuarioEmprestimo"
@@ -261,12 +239,12 @@
               appendTo="body"
               optionLabel="nome"
               dataKey="id"
-              inputStyleClass="form-control"
+              inputStyleClass="w-full"
               [forceSelection]="true"
               [dropdown]="true"
               [(ngModel)]="emprestimoFilter.usuarioEmprestimo"
               [suggestions]="usuarioEmprestimoList"
-              (onClear)="emprestimoFilter.usuarioEmprestimo = null"
+              (onClear)="emprestimoFilter.usuarioEmprestimo = undefined"
               (completeMethod)="findUsuarios($event)">
             </p-autoComplete>
           </div>
@@ -274,10 +252,10 @@
       </div>
     }
 
-    @if (!isAlunoOrProfessor) {
-      <div class="row mb-3">
-        <div class="col-md-12">
-          <div class="form-group">
+    @if (!isAlunoOrProfessor()) {
+      <div class="grid grid-cols-12 gap-4 mb-3">
+        <div class="col-span-12">
+          <div class="space-y-2">
             <label for="usuarioResponsavel">Usuario Responsavel</label>
             <p-autoComplete
               id="usuarioResponsavel"
@@ -285,12 +263,12 @@
               appendTo="body"
               optionLabel="nome"
               dataKey="id"
-              inputStyleClass="form-control"
+              inputStyleClass="w-full"
               [forceSelection]="true"
               [dropdown]="true"
-              [(ngModel)]="emprestimoFilter.usuarioResponsalvel"
-              [suggestions]="usuarioResponsalvel"
-              (onClear)="emprestimoFilter.usuarioResponsalvel = null"
+              [(ngModel)]="emprestimoFilter.usuarioResponsavel"
+              [suggestions]="usuarioResponsavel"
+              (onClear)="emprestimoFilter.usuarioResponsavel = undefined"
               (completeMethod)="findUsuarioResponsavel($event)">
             </p-autoComplete>
           </div>
@@ -298,9 +276,9 @@
       </div>
     }
 
-    <div class="row mb-3">
-      <div class="col-md-6">
-        <div class="form-group">
+    <div class="grid grid-cols-12 gap-4 mb-3">
+      <div class="col-span-12 md:col-span-6">
+        <div class="space-y-2">
           <label for="dtIni">Data Inicial</label>
           <p-datePicker
             name="dtIni"
@@ -309,13 +287,15 @@
             dataType="string"
             dateFormat="dd/mm/yy"
             [style]="{ width: '100%' }"
+            [readonlyInput]="breakpointService.isMobile()"
+            [touchUI]="breakpointService.isMobile()"
             [(ngModel)]="emprestimoFilter.dtIniEmp"
-            inputStyleClass="form-control">
+            inputStyleClass="w-full">
           </p-datePicker>
         </div>
       </div>
-      <div class="col-md-6">
-        <div class="form-group">
+      <div class="col-span-12 md:col-span-6">
+        <div class="space-y-2">
           <label for="dtFim">Data Final</label>
           <p-datePicker
             name="dtFim"
@@ -324,16 +304,18 @@
             dataType="string"
             dateFormat="dd/mm/yy"
             [style]="{ width: '100%' }"
+            [readonlyInput]="breakpointService.isMobile()"
+            [touchUI]="breakpointService.isMobile()"
             [(ngModel)]="emprestimoFilter.dtFimEmp"
-            inputStyleClass="form-control">
+            inputStyleClass="w-full">
           </p-datePicker>
         </div>
       </div>
     </div>
 
-    <div class="row mb-3">
-      <div class="col-md-12">
-        <div class="form-group">
+    <div class="grid grid-cols-12 gap-4 mb-3">
+      <div class="col-span-12">
+        <div class="space-y-2">
           <label for="status">Status</label>
           <p-select
             [options]="statusDropdown"
@@ -371,10 +353,10 @@
 <div class="invisible">
   <p-datePicker
     #novaData
-    [touchUI]="true"
+    [readonlyInput]="breakpointService.isMobile()"
     appendTo="body"
     (onSelect)="changePrazoDevolucao()"
-    [readonlyInput]="false"
+    [touchUI]="breakpointService.isMobile()"
     dataType="string"
     dateFormat="dd/mm/yy"
     [(ngModel)]="dtNovaData">

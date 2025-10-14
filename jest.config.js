@@ -1,6 +1,9 @@
 module.exports = {
   preset: 'jest-preset-angular',
   setupFilesAfterEnv: ['<rootDir>/setup-jest.ts'],
+  moduleNameMapper: {
+    '^src/(.*)$': '<rootDir>/src/$1'
+  },
   testPathIgnorePatterns: ['/node_modules/', '/dist/'],
   coverageDirectory: 'coverage',
   collectCoverageFrom: [
@@ -15,5 +18,6 @@ module.exports = {
       functions: 70,
       lines: 70
     }
-  }
+  },
+  transformIgnorePatterns: [String.raw`node_modules/(?!(@amcharts|d3-.*|.*\.mjs))`]
 };

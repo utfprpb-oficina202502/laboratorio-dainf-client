@@ -1,12 +1,17 @@
-/* Fix navbar vertical alignment */
+/*
+ * Navbar alignment and sizing
+ * NOTE: !important used to override PrimeNG's default padding/height
+ */
 p-toolbar ::ng-deep .p-toolbar {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   display: flex;
   align-items: center;
-  padding: 0 0.5rem !important; /* Minimal padding for edge spacing */
+  padding: 0 0.5rem !important; /* Override PrimeNG default */
   min-height: 56px !important;
   height: 56px !important;
   gap: 0;
+  position: relative;
+  z-index: 1000; /* Above backdrop (999) but below sidenav (1050) */
 }
 
 p-toolbar ::ng-deep .p-toolbar-group-start,
@@ -14,7 +19,7 @@ p-toolbar ::ng-deep .p-toolbar-group-end {
   display: flex;
   align-items: center;
   height: 100%;
-  padding: 0 !important; /* Remove any default padding from groups */
+  padding: 0 !important; /* Override PrimeNG default */
 }
 
 /* Ensure content fills the available height */
@@ -24,33 +29,110 @@ p-toolbar ::ng-deep .p-toolbar-group-end > * {
   align-items: center;
 }
 
+/* Ensure wrapper divs don't block touch events */
+p-toolbar ::ng-deep .p-toolbar-group-start > div,
+p-toolbar ::ng-deep .p-toolbar-group-end > div {
+  pointer-events: none;
+}
+
+/* Re-enable pointer events for interactive elements inside wrappers */
+p-toolbar ::ng-deep .p-toolbar-group-start > div > button,
+p-toolbar ::ng-deep .p-toolbar-group-start > div > a,
+p-toolbar ::ng-deep .p-toolbar-group-end > div > button,
+p-toolbar ::ng-deep .p-toolbar-group-end > div > a {
+  pointer-events: auto;
+}
+
 /* Ensure buttons don't flash on theme change */
 button {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-/* Remove any selection/highlight styling */
+/* Remove selection but preserve tap highlight for buttons */
 p-toolbar ::ng-deep .p-toolbar * {
   user-select: none;
+}
+
+/* Only disable tap highlight on non-interactive elements */
+p-toolbar ::ng-deep .p-toolbar *:not(button):not(a) {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Responsive navbar controls - exact 1200px breakpoint */
+/*
+ * Responsive navbar controls - 1024px breakpoint
+ * NOTE: !important needed to override PrimeNG button display properties
+ */
 
-/* Hamburger button: Show on mobile (<1200px), hide on desktop (≥1200px) */
+/* Hamburger button: Show on mobile (<1024px), hide on desktop (≥1024px) */
 .navbar-hamburger {
-  display: flex !important;
+  display: flex !important; /* Override PrimeNG */
+  touch-action: manipulation; /* Disable double-tap zoom and improve touch responsiveness */
+  cursor: pointer;
+  /* Prevent any transitions that could delay touch feedback */
+  transition: none !important;
 }
 
-@media (min-width: 1200px) {
+/* Mobile-specific optimizations for hamburger button */
+@media (max-width: 1023px) {
   .navbar-hamburger {
+    /* Subtle tap highlight for immediate visual feedback */
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.08);
+    /* Ensure button receives all pointer events */
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* CRITICAL: Remove ALL hover effects using @media (hover) query
+     This ensures hover states NEVER activate on touch-only devices */
+  @media (hover: hover) {
+    .navbar-hamburger:hover,
+    .navbar-hamburger.p-button:hover {
+      background: var(--p-button-text-primary-hover-background, rgba(0, 0, 0, 0.04));
+    }
+  }
+
+  /* On touch-only devices, explicitly disable hover */
+  @media (hover: none) {
+    .navbar-hamburger:hover,
+    .navbar-hamburger.p-button:hover,
+    .navbar-hamburger.p-button:not(:disabled):hover {
+      background: transparent !important;
+      border-color: transparent !important;
+      box-shadow: none !important;
+    }
+  }
+
+  /* Active state for immediate touch feedback - triggers on touchend */
+  .navbar-hamburger:active,
+  .navbar-hamburger.p-button:active {
+    background: var(--p-button-text-primary-active-background, rgba(0, 0, 0, 0.12)) !important;
+    transition: none !important;
+  }
+
+  /* Remove focus outline completely - not needed on touch devices */
+  .navbar-hamburger:focus,
+  .navbar-hamburger:focus-visible,
+  .navbar-hamburger.p-button:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Remove any PrimeNG ripple effects that could interfere */
+  .navbar-hamburger ::ng-deep .p-ink {
     display: none !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .navbar-hamburger {
+    display: none !important; /* Override PrimeNG */
   }
 }
 
 /* User menu: Full text on desktop, icon-only on mobile */
 .navbar-user-menu {
-  display: flex !important;
+  display: flex !important; /* Override PrimeNG */
   align-items: center;
   gap: 0.5rem;
 }
@@ -85,8 +167,8 @@ p-toolbar ::ng-deep .p-toolbar * {
   }
 
   .navbar-user-menu.p-button {
-    border-radius: 6px !important; /* Square with slight rounding */
-    width: 2rem !important; /* Smaller, more compact */
+    border-radius: 6px !important; /* Override PrimeNG default */
+    width: 2rem !important;
     height: 2rem !important;
     min-width: 2rem !important;
     padding: 0 !important;

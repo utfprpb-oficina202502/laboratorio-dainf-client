@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  Injector,
-  signal
-} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 
@@ -23,7 +16,7 @@ import {CompraItem} from './compraItem';
 // PrimeNG
 import {CardModule} from 'primeng/card';
 import {InputTextModule} from 'primeng/inputtext';
-import {AutoCompleteModule} from 'primeng/autocomplete';
+import {AutoCompleteCompleteEvent, AutoCompleteModule} from 'primeng/autocomplete';
 import {DatePickerModule} from 'primeng/datepicker';
 import {ButtonModule} from 'primeng/button';
 import {TableModule} from 'primeng/table';
@@ -63,12 +56,12 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, number> {
-  protected compraService: CompraService;
-  protected injector: Injector;
-
-  private readonly fb = this.injector.get(FormBuilder);
-  private readonly fornecedorService = this.injector.get(FornecedorService);
-  private readonly itemService = this.injector.get(ItemService);
+  protected override service = inject(CompraService);
+  protected override urlList = '/compra';
+  protected override type = Compra;
+  private readonly fb = inject(FormBuilder);
+  private readonly fornecedorService = inject(FornecedorService);
+  private readonly itemService = inject(ItemService);
 
   // Signals for state management
   protected readonly fornecedorList = signal<Fornecedor[]>([]);
@@ -77,9 +70,9 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
   protected readonly maxDate = signal<Date>(new Date());
 
   // Temporary signals for adding items (not part of main form)
-  protected readonly tempItem = signal<Item | null>(null);
-  protected readonly tempQtde = signal<number>(1);
-  protected readonly tempValor = signal<number>(0);
+  protected tempItem = signal<Item | null>(null);
+  protected tempQtde = signal<number>(1);
+  protected tempValor = signal<number>(0);
 
   // Computed signals
   protected readonly totalCompra = computed(() => {
@@ -96,13 +89,7 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
   protected readonly hasItems = computed(() => this.compraItems().length > 0);
 
   constructor() {
-    const compraService = inject(CompraService);
-    const injector = inject(Injector);
-
-    super(compraService, injector, '/compra', Compra);
-
-    this.compraService = compraService;
-    this.injector = injector;
+    super();
   }
 
   /**
@@ -128,9 +115,20 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
   /**
    * Autocomplete for Fornecedores
    */
-  findFornecedores(event: any): void {
-    this.fornecedorService.complete(event.query).subscribe(e => {
-      this.fornecedorList.set(e);
+  findFornecedores(event: AutoCompleteCompleteEvent): void {
+    this.fornecedorService.complete(event.query).subscribe({
+      next: (e) => {
+        this.fornecedorList.set(e);
+      },
+      error: (err) => {
+        this.logger.error('Erro ao buscar fornecedores:', err);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Não foi possível buscar fornecedores. Tente novamente.'
+        });
+        this.fornecedorList.set([]); // Limpa a lista para evitar dados obsoletos
+      }
     });
   }
 
@@ -138,7 +136,7 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
    * Autocomplete for Items
    * Requires minimum 2 characters to search (performance optimization for 700+ items)
    */
-  findProdutos(event: any): void {
+  findProdutos(event: AutoCompleteCompleteEvent): void {
     const query = event.query || '';
 
     // Require minimum 2 characters to search
@@ -147,8 +145,19 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
       return;
     }
 
-    this.itemService.completeItem(query, false).subscribe(e => {
-      this.itemList.set(e);
+    this.itemService.completeItem(query, false).subscribe({
+      next: (e) => {
+        this.itemList.set(e);
+      },
+      error: (err) => {
+        this.logger.error('Erro ao buscar itens:', err);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Não foi possível buscar itens. Tente novamente.'
+        });
+        this.itemList.set([]); // Limpa a lista para evitar dados obsoletos
+      }
     });
   }
 

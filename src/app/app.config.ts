@@ -1,17 +1,16 @@
-import {ApplicationConfig, DEFAULT_CURRENCY_CODE, LOCALE_ID} from '@angular/core';
-import {provideRouter} from '@angular/router';
+import {ApplicationConfig, DEFAULT_CURRENCY_CODE, isDevMode, LOCALE_ID} from '@angular/core';
+import {provideRouter, withInMemoryScrolling} from '@angular/router';
 import {provideAnimations} from '@angular/platform-browser/animations';
 import {HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
+import {provideServiceWorker} from '@angular/service-worker';
 import {DatePipe} from '@angular/common';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import {providePrimeNG} from 'primeng/config';
-import {CURRENCY_MASK_CONFIG} from 'ng2-currency-mask';
 
 import {routes} from './app.routes';
 import {HttpClientInterceptor} from './http-client.interceptor';
 import {LoginService} from './login/login.service';
 import {LoaderService} from './framework/loader/loader.service';
-import {CustomCurrencyMaskConfig} from './framework/util/currency.mask.config';
 import {ptBR} from '../locale/pt-BR';
 import PrimeUTFPRPreset from './theme/prime-utfpr-theme-preset';
 
@@ -25,7 +24,6 @@ import {FornecedorService} from './fornecedor/fornecedor.service';
 import {GrupoService} from './grupo/grupo.service';
 import {HomeService} from './home/home.service';
 import {ItemService} from './item/item.service';
-import {PaisService} from './pais/pais.service';
 import {RelatorioService} from './relatorio/relatorio.service';
 import {ReservaService} from './reserva/reserva.service';
 import {SaidaService} from './saida/saida.service';
@@ -35,8 +33,16 @@ import {SidenavService} from './sidenav/sidenav.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // Router
-    provideRouter(routes),
+    // Router with BFCache optimization
+    provideRouter(
+      routes,
+      // Enable scroll position restoration for BFCache compatibility
+      // Restores scroll position when navigating back/forward
+      withInMemoryScrolling({
+        scrollPositionRestoration: 'top',
+        anchorScrolling: 'enabled'
+      })
+    ),
 
     // Animations
     provideAnimations(),
@@ -61,7 +67,6 @@ export const appConfig: ApplicationConfig = {
     GrupoService,
     HomeService,
     ItemService,
-    PaisService,
     RelatorioService,
     ReservaService,
     SaidaService,
@@ -85,10 +90,6 @@ export const appConfig: ApplicationConfig = {
       provide: DEFAULT_CURRENCY_CODE,
       useValue: 'BRL'
     },
-    {
-      provide: CURRENCY_MASK_CONFIG,
-      useValue: CustomCurrencyMaskConfig
-    },
 
     // PrimeNG Configuration
     providePrimeNG({
@@ -101,6 +102,13 @@ export const appConfig: ApplicationConfig = {
         }
       },
       translation: ptBR
+    }),
+
+    // Service Worker (PWA)
+    // Enabled in production builds only (development uses isDevMode() check)
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000'
     })
   ]
 };

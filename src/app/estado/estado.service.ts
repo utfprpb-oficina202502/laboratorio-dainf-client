@@ -1,9 +1,8 @@
-import { Injectable, inject } from '@angular/core';
+import {inject, Injectable} from '@angular/core';
 import {CrudService} from '../framework/service/crud.service';
 import {Estado} from './estado';
-import { HttpClient } from '@angular/common/http';
+import {HttpClient} from '@angular/common/http';
 import {environment} from '../../environments/environment';
-import {Observable} from 'rxjs';
 
 @Injectable()
 export class EstadoService extends CrudService<Estado, number> {
@@ -12,9 +11,5 @@ export class EstadoService extends CrudService<Estado, number> {
     const http = inject<HttpClient>(HttpClient);
 
     super(`${environment.api_url}estado/`, http);
-  }
-
-  complete(query: string): Observable<Estado[]> {
-    return this.http.get<Estado[]>(`${this.url}complete?query=${query}`);
   }
 }

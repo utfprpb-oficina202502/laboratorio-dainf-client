@@ -2,7 +2,7 @@ import {StringUtils} from './string.utils';
 
 export class EmailUtil {
 
-  private static EMAIL_REGEXP = /^[a-z0-9!#$%&'*+\/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
+  private static readonly EMAIL_REGEXP = /^[a-z0-9!#$%&'*+/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
 
   public static isValid(valor: string): boolean {
     if (StringUtils.isBlank(valor)) {
@@ -15,8 +15,7 @@ export class EmailUtil {
   public static listIsValid(valor: string): boolean {
     const emailList = valor.split(';');
 
-    for (let i = 0; i < emailList.length; i++) {
-      const email = emailList[i];
+    for (const email of emailList) {
       if (!EmailUtil.isValid(email)) {
         return false;
       }

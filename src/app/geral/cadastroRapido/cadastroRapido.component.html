@@ -1,4 +1,5 @@
-<a tabindex="-1" target="_blank" routerLinkActive="active" [routerLink]="href + (id ? '/' + id : '')"
+<a [routerLink]="href() + (id() ? '/' + id() : '')" routerLinkActive="active" tabindex="-1"
+   target="_blank"
    class="link-cadastroRapido" pTooltip="Abrir Cadastro" tooltipPosition="left">
-  <i class="fa fa-external-link"></i>
+  <i class="pi pi-external-link"></i>
 </a>

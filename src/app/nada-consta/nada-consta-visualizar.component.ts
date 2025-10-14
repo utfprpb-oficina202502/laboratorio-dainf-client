@@ -1,13 +1,14 @@
-import { Component, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { NadaConstaService, NadaConsta } from './nada-consta.service';
-import { Subject, takeUntil } from 'rxjs';
+import {Component, inject, OnDestroy} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {Router} from '@angular/router';
+import {NadaConsta, NadaConstaService} from './nada-consta.service';
+import {Subject, takeUntil} from 'rxjs';
 // PrimeNG modules
-import { CardModule } from 'primeng/card';
-import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
-import { ProgressBarModule } from 'primeng/progressbar';
+import {CardModule} from 'primeng/card';
+import {InputTextModule} from 'primeng/inputtext';
+import {ButtonModule} from 'primeng/button';
+import {ProgressBarModule} from 'primeng/progressbar';
 
 @Component({
   selector: 'app-nada-consta-visualizar',
@@ -24,13 +25,14 @@ import { ProgressBarModule } from 'primeng/progressbar';
   ]
 })
 export class NadaConstaVisualizarComponent implements OnDestroy {
+  private readonly nadaConstaService = inject(NadaConstaService);
+  private readonly router = inject(Router);
+
   alunoId: number | null = null;
   resultado: NadaConsta | null = null;
   erro: string | null = null;
   carregando = false;
-  private destroyed$ = new Subject<void>();
-
-  constructor(private nadaConstaService: NadaConstaService) {}
+  private readonly destroyed$ = new Subject<void>();
 
   consultar() {
     if (!this.alunoId) {
@@ -53,6 +55,10 @@ export class NadaConstaVisualizarComponent implements OnDestroy {
           this.carregando = false;
         }
       });
+  }
+
+  voltar() {
+    this.router.navigate(['/nada-consta']);
   }
 
   ngOnDestroy() {

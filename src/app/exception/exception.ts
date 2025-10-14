@@ -1,19 +1,41 @@
-import Swal from 'sweetalert2';
+import {inject, Injectable} from '@angular/core';
+import {MessageService} from 'primeng/api';
 
+interface HttpErrorResponse {
+  error?: {
+    message?: string;
+  };
+  status?: number;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
 export class Exception {
+  private readonly messageService = inject(MessageService);
 
-  static addMessage(error: any): void {
-    if (error.error != null && error.error.message != null) {
-      Swal.fire('Atenção!', this.getMessage(error), 'error');
-    } else if (error.status === 403) {
-      Swal.fire('Atenção!', 'Acesso negado', 'error');
+  addMessage(error: unknown): void {
+    const httpError = error as HttpErrorResponse;
+    let detail: string;
+
+    if (httpError.status === 403) {
+      detail = 'Acesso negado';
+    } else if (httpError.error?.message) {
+      detail = this.getMessage(httpError);
     } else {
-      Swal.fire('Atenção!', 'Ocorreu um erro ao remover o registro', 'error');
+      detail = 'Ocorreu um erro ao remover o registro';
     }
+
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Atenção!',
+      detail,
+      life: 5000
+    });
   }
 
-  static getMessage(error: any): string {
-    const message = error.error.message.toString().toUpperCase();
+  private getMessage(error: HttpErrorResponse): string {
+    const message = (error.error?.message || '').toString().toUpperCase();
     if (message.includes('ConstraintViolationException'.toUpperCase())) {
       return 'Erro ao remover o registro, o mesmo possui vínculo com outros registros.';
     } else {

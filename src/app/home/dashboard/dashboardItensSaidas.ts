@@ -1,4 +1,4 @@
 export class DashboardItensSaidas {
-  item: string;
-  qtde: number;
+  item!: string;
+  qtde!: number;
 }

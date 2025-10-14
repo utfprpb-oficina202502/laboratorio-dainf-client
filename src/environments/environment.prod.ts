@@ -1,4 +1,4 @@
-import { defaultChartColors } from '../app/framework/charts/chart-colors.config';
+import {defaultChartColors} from '../app/framework/charts/chart-colors.config';
 
 export const environment = {
   production: true,

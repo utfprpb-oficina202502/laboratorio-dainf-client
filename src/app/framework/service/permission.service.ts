@@ -1,5 +1,6 @@
-import {inject, Injectable} from '@angular/core';
+import {computed, inject, Injectable, Signal} from '@angular/core';
 import {LoginService} from '../../login/login.service';
+import {Permissao} from '../../usuario/permissao';
 
 export interface UserPermissions {
   canCreate: boolean;
@@ -18,65 +19,117 @@ export class PermissionService {
   private readonly loginService = inject(LoginService);
 
   /**
-   * Get comprehensive user permissions based on their role
+   * Computed signal para permissões baseadas no usuário atual
+   * Atualiza automaticamente quando o usuário muda
+   */
+  readonly permissions: Signal<UserPermissions> = computed(() => {
+    const user = this.loginService.currentUser();
+    if (!user) {
+      return this.getGuestPermissions();
+    }
+
+    const userRoles = user.authorities || user.permissoes || [];
+    return this.computePermissionsFromRoles(userRoles);
+  });
+
+  // Computed signals para checks individuais de permissão
+  readonly canCreate = computed(() => this.permissions().canCreate);
+  readonly canEdit = computed(() => this.permissions().canEdit);
+  readonly canDelete = computed(() => this.permissions().canDelete);
+  readonly canExport = computed(() => this.permissions().canExport);
+  readonly isReadOnly = computed(() => this.permissions().isReadOnly);
+  readonly userRole = computed(() => this.permissions().userRole);
+  readonly isAlunoOrProfessor = computed(() => this.permissions().isAlunoOrProfessor);
+
+  /**
+   * @deprecated Use o signal `permissions` diretamente
+   * Mantido para compatibilidade temporária
    */
   async getUserPermissions(): Promise<UserPermissions> {
-    const isAlunoOrProfessor = await this.loginService.userLoggedIsAlunoOrProfessor();
-    const loggedUser = JSON.parse(localStorage.getItem('userLogged') || '{}');
+    return this.permissions();
+  }
 
-    const permissions: UserPermissions = {
+  /**
+   * Calcula permissões baseadas nas roles do usuário
+   */
+  private computePermissionsFromRoles(roles: Permissao[] | string[]): UserPermissions {
+    // Normaliza roles para array de strings (pode vir como string[] ou Permissao[])
+    const roleNames = new Set(
+      roles
+      .map(r => typeof r === 'string' ? r : (r.nome || ''))
+      .map(name => name.trim())
+      .filter(name => name.length > 0)
+    );
+
+    // Admin has full access to everything
+    if (roleNames.has('ROLE_ADMINISTRADOR')) {
+      return {
+        canCreate: true,
+        canEdit: true,
+        canDelete: true,
+        canExport: true,
+        isReadOnly: false,
+        userRole: 'ADMINISTRADOR',
+        isAlunoOrProfessor: false
+      };
+    }
+
+    // Laboratorista has full CRUD but may have some restrictions in future
+    if (roleNames.has('ROLE_LABORATORISTA')) {
+      return {
+        canCreate: true,
+        canEdit: true,
+        canDelete: true,
+        canExport: true,
+        isReadOnly: false,
+        userRole: 'LABORATORISTA',
+        isAlunoOrProfessor: false
+      };
+    }
+
+    // Professor - view only with export
+    if (roleNames.has('ROLE_PROFESSOR')) {
+      return {
+        canCreate: false,
+        canEdit: false,
+        canDelete: false,
+        canExport: true,
+        isReadOnly: true,
+        userRole: 'PROFESSOR',
+        isAlunoOrProfessor: true
+      };
+    }
+
+    // Aluno is most restricted - view only
+    if (roleNames.has('ROLE_ALUNO')) {
+      return {
+        canCreate: false,
+        canEdit: false,
+        canDelete: false,
+        canExport: true,
+        isReadOnly: true,
+        userRole: 'ALUNO',
+        isAlunoOrProfessor: true
+      };
+    }
+
+    // Default to guest permissions
+    return this.getGuestPermissions();
+  }
+
+  /**
+   * Retorna permissões padrão para usuários não autenticados
+   */
+  private getGuestPermissions(): UserPermissions {
+    return {
       canCreate: false,
       canEdit: false,
       canDelete: false,
       canExport: false,
       isReadOnly: true,
       userRole: 'GUEST',
-      isAlunoOrProfessor: isAlunoOrProfessor
+      isAlunoOrProfessor: true
     };
-
-    // Check if user has authorities or permissoes
-    const userRoles = loggedUser?.authorities || loggedUser?.permissoes || [];
-    if (userRoles && Array.isArray(userRoles) && userRoles.length > 0) {
-
-      // Admin has full access to everything
-      if (this.loginService.hasAnyRole(['ROLE_ADMINISTRADOR'])) {
-        permissions.canCreate = true;
-        permissions.canEdit = true;
-        permissions.canDelete = true;
-        permissions.canExport = true;
-        permissions.isReadOnly = false;
-        permissions.userRole = 'ADMINISTRADOR';
-      }
-      // Laboratorista has full CRUD but may have some restrictions in future
-      else if (this.loginService.hasAnyRole(['ROLE_LABORATORISTA'])) {
-        permissions.canCreate = true;
-        permissions.canEdit = true;
-        permissions.canDelete = true;
-        permissions.canExport = true;
-        permissions.isReadOnly = false;
-        permissions.userRole = 'LABORATORISTA';
-      }
-
-      else if (this.loginService.hasAnyRole(['ROLE_PROFESSOR'])) {
-        permissions.canCreate = false;
-        permissions.canEdit = false;
-        permissions.canDelete = false;
-        permissions.canExport = true;
-        permissions.isReadOnly = true;
-        permissions.userRole = 'PROFESSOR';
-      }
-      // Aluno is most restricted - view only
-      else if (this.loginService.hasAnyRole(['ROLE_ALUNO'])) {
-        permissions.canCreate = false;
-        permissions.canEdit = false;
-        permissions.canDelete = false;
-        permissions.canExport = true;
-        permissions.isReadOnly = true;
-        permissions.userRole = 'ALUNO';
-      }
-    }
-
-    return permissions;
   }
 
   /**
@@ -125,7 +178,7 @@ export class PermissionService {
    * Get user role display name in Portuguese
    */
   getUserRoleDisplayName(userRole: string): string {
-    const roleNames: { [key: string]: string } = {
+    const roleNames: Record<string, string> = {
       'ADMINISTRADOR': 'Administrador',
       'LABORATORISTA': 'Laboratorista',
       'PROFESSOR': 'Professor',

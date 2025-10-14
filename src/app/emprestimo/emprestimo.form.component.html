@@ -1,9 +1,9 @@
-<div class="container-fluid my-3">
+<div class="w-full px-4 my-3">
   <p-card>
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
-          <app-voltar (onClick)="back()"></app-voltar>
+          <app-voltar (backClick)="back()"></app-voltar>
           <h2 class="text-xl font-semibold m-0">Cadastro de Empréstimo</h2>
         </div>
         @if (isEmprestimoFinalizado()) {
@@ -38,7 +38,8 @@
                 [control]="formGroup.get('usuarioEmprestimo')"
                 label="Aluno/Professor"
                 [required]="true"
-                fieldId="usuarioEmprestimo">
+                fieldId="usuarioEmprestimo"
+                hint="Digite pelo menos 2 caracteres para buscar">
                 <p-autoComplete
                   inputId="usuarioEmprestimo"
                   formControlName="usuarioEmprestimo"
@@ -48,9 +49,9 @@
                   (completeMethod)="findUsuarios($event)"
                   (onSelect)="onUsuarioEmprestimoChange($event)"
                   [forceSelection]="true"
-                  [dropdown]="true"
                   [disabled]="disableForm()"
-                  placeholder="Selecione o aluno/professor"
+                  minQueryLength="2"
+                  placeholder="Digite para buscar..."
                   styleClass="w-full"
                   [inputStyle]="{ width: '100%' }">
                 </p-autoComplete>
@@ -152,7 +153,10 @@
               </div>
 
               <div class="col-span-12 md:col-span-6">
-                <app-form-field label="Item" fieldId="item">
+                <app-form-field
+                  fieldId="item"
+                  hint="Digite pelo menos 2 caracteres para buscar"
+                  label="Item">
                   <div class="flex flex-col gap-1">
                     <div class="flex items-center gap-2">
                       <p-autoComplete
@@ -164,8 +168,8 @@
                         [suggestions]="itemList()"
                         (completeMethod)="findProdutos($event)"
                         (onSelect)="setDevolucaoItem()"
-                        [dropdown]="true"
-                        placeholder="Selecione o item"
+                        minQueryLength="2"
+                        placeholder="Digite para buscar..."
                         class="w-full"
                         [inputStyle]="{ width: '100%' }">
                         <ng-template let-item pTemplate="item">
@@ -185,10 +189,10 @@
                           </div>
                         </ng-template>
                       </p-autoComplete>
-                      <app-cadastroRapido
+                      <app-cadastro-rapido
                         [href]="'/item/form'"
                         [id]="tempItem()?.id">
-                      </app-cadastroRapido>
+                      </app-cadastro-rapido>
                     </div>
                     @if (tempItem()) {
                       <small class="text-gray-600">Saldo: {{ tempItem()?.saldo }}</small>
@@ -250,10 +254,10 @@
                 styleClass="p-datatable-sm">
                 <ng-template pTemplate="header">
                   <tr>
-                    <th>Item</th>
-                    <th style="width: 120px">Devolver</th>
-                    <th style="width: 100px">Qtde</th>
-                    <th style="width: 100px">Opções</th>
+                    <th scope="col">Item</th>
+                    <th scope="col" class="w-[120px]">Devolver</th>
+                    <th scope="col" class="w-[100px]">Qtde</th>
+                    <th scope="col" class="w-[100px]">Opções</th>
                   </tr>
                 </ng-template>
 
@@ -327,7 +331,7 @@
           <!-- Action Buttons -->
           @if (!disableForm()) {
             <div class="flex justify-end gap-2 mt-4">
-              <app-cancelar (onClick)="back()"></app-cancelar>
+              <app-cancelar (cancelClick)="back()"></app-cancelar>
               <app-salvar
                 [typeButton]="'submit'"
                 [disabled]="isLoading() || isEmprestimoFinalizado()">

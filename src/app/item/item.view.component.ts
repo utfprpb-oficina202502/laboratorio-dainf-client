@@ -31,26 +31,28 @@ export class ItemViewComponent implements OnInit {
   private readonly loginService = inject(LoginService);
 
   isAlunoOrProfessor = false;
-  reservasItem: Reserva[];
+  reservasItem: Reserva[] = [];
   dialogReservaitem = false;
   displayedColumnsReserva = ['dataRetirada', 'qtde'];
   layout: 'grid' | 'list' = 'grid';
   minioUrl: string;
-  itens: Item[];
+  itens: Item[] = [];
 
   constructor() {
     this.minioUrl = environment.minio_url;
   }
 
   ngOnInit() {
-    this.itemService.findAll().subscribe(value => this.itens = value);
+    this.itemService.findAll().subscribe({
+      next: (value) => this.itens = value
+    });
   }
 
   postFindAll(): void {
     this.loginService.userLoggedIsAlunoOrProfessor().then(value => this.isAlunoOrProfessor = value);
   }
 
-  applyFilter(valor: string) {
+  applyFilter() {
     //todo ver pq isso aqui tá vazio
   }
 }

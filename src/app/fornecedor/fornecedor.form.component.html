@@ -1,9 +1,9 @@
-<div class="container-fluid my-3">
+<div class="w-full px-4 my-3">
   <p-card>
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
-          <app-voltar (onClick)="back()"></app-voltar>
+          <app-voltar (backClick)="back()"></app-voltar>
           <h2 class="text-xl font-semibold m-0">Cadastro de Fornecedor</h2>
         </div>
       </div>
@@ -159,7 +159,7 @@
                 label="Estado"
                 [required]="true"
                 fieldId="estado"
-                hint="Selecione o estado">
+                hint="Digite pelo menos 2 caracteres para buscar">
                 <p-autoComplete
                   inputId="estado"
                   formControlName="estado"
@@ -167,13 +167,13 @@
                   dataKey="id"
                   appendTo="body"
                   [forceSelection]="true"
-                  [dropdown]="true"
+                  [minQueryLength]="2"
                   [suggestions]="estadoList()"
                   (completeMethod)="findEstados($event)"
                   (onChange)="onEstadoChange()"
                   styleClass="w-full"
                   [inputStyleClass]="'w-full'"
-                  placeholder="Digite ou selecione o estado">
+                  placeholder="Digite para buscar...">
                 </p-autoComplete>
               </app-form-field>
             </div>
@@ -184,7 +184,7 @@
                 label="Cidade"
                 [required]="true"
                 fieldId="cidade"
-                hint="Selecione primeiro o estado">
+                hint="Digite pelo menos 2 caracteres para buscar">
                 <p-autoComplete
                   inputId="cidade"
                   formControlName="cidade"
@@ -192,12 +192,12 @@
                   dataKey="id"
                   [forceSelection]="true"
                   [disabled]="!formGroup.get('estado')?.value"
-                  [dropdown]="true"
+                  minQueryLength="2"
                   [suggestions]="cidadeList()"
                   (completeMethod)="findCidadesByEstado($event)"
                   styleClass="w-full"
                   [inputStyleClass]="'w-full'"
-                  placeholder="Digite ou selecione a cidade">
+                  placeholder="Digite para buscar...">
                 </p-autoComplete>
               </app-form-field>
             </div>
@@ -226,7 +226,7 @@
 
           <!-- Action Buttons -->
           <div class="flex justify-end gap-2 mt-4">
-            <app-cancelar (onClick)="back()"></app-cancelar>
+            <app-cancelar (cancelClick)="back()"></app-cancelar>
             <app-salvar [typeButton]="'submit'" [disabled]="isLoading()"></app-salvar>
           </div>
         </form>

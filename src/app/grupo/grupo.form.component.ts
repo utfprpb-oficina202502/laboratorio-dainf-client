@@ -3,20 +3,19 @@ import {
   Component,
   computed,
   inject,
-  Injector,
   OnDestroy,
   signal
 } from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
+import {Z_INDEX} from '../framework/constants';
 import {Grupo} from './grupo';
 import {GrupoService} from './grupo.service';
 import {
   PrimeReactiveCrudFormComponent
 } from '../framework/component/prime-reactive-crud.form.component';
 import {Item} from '../item/item';
-import Swal from 'sweetalert2';
 
 // PrimeNG Modules
 import {DialogModule} from 'primeng/dialog';
@@ -32,6 +31,7 @@ import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
 import {FormFieldComponent} from '../framework/component/form-field.component';
+import {LoggerService} from '../framework/services/logger.service';
 
 @Component({
   selector: 'app-form-grupo',
@@ -57,10 +57,14 @@ import {FormFieldComponent} from '../framework/component/form-field.component';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, number> implements OnDestroy {
-  protected grupoService: GrupoService;
-  protected injector: Injector;
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
 
-  private readonly fb = this.injector.get(FormBuilder);
+  protected override service = inject(GrupoService);
+  protected override urlList = '/grupo';
+  protected override type = Grupo;
+  private readonly fb = inject(FormBuilder);
+  protected readonly logger = inject(LoggerService);
   private itensVinculadosSubscription?: Subscription;
 
   // Signals for dialog state and related items
@@ -75,13 +79,7 @@ export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, nu
   });
 
   constructor() {
-    const grupoService = inject(GrupoService);
-    const injector = inject(Injector);
-
-    super(grupoService, injector, '/grupo', Grupo);
-
-    this.grupoService = grupoService;
-    this.injector = injector;
+    super();
   }
 
   /**
@@ -119,12 +117,17 @@ export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, nu
       'Cancelar Busca'
     );
 
-    this.itensVinculadosSubscription = this.grupoService.findItensVinculados(obj.id).subscribe({
+    this.itensVinculadosSubscription = this.service.findItensVinculados(obj.id).subscribe({
       next: (items) => {
         this.loadingItensVinculados.set(false);
         this.loaderService.hide();
         if (items.length === 0) {
-          Swal.fire('Ops...', 'Não existe nenhum item vinculado ao grupo.', 'info');
+          this.messageService.add({
+            severity: 'info',
+            summary: 'Ops...',
+            detail: 'Não existe nenhum item vinculado ao grupo.',
+            life: 4000
+          });
         } else {
           this.itensVinculados.set(items);
           this.dialogItensVinculados.set(true);
@@ -133,8 +136,13 @@ export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, nu
       error: (error) => {
         this.loadingItensVinculados.set(false);
         this.loaderService.hide();
-        Swal.fire('Erro', 'Erro ao buscar itens vinculados.', 'error');
-        console.error(error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Erro ao buscar itens vinculados.',
+          life: 5000
+        });
+        this.logger.error('Erro ao buscar itens vinculados', error);
       }
     });
   }

@@ -1,81 +1,56 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  forwardRef,
-  inject,
-  Injector,
-  ViewChild
-} from "@angular/core";
-import {CommonModule, NgOptimizedImage} from '@angular/common';
-import {FormsModule} from '@angular/forms';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, viewChild} from "@angular/core";
+import {NgOptimizedImage} from '@angular/common';
+import {Z_INDEX} from '../framework/constants';
 import {Item} from "./item";
 import {ItemService} from "./item.service";
+import {Grupo} from '../grupo/grupo';
 import {PrimeCrudListComponent} from "../framework/component/prime-crud.list.component";
 import {TableColumn} from '../framework/model/table-config.interface';
 import {MenuItem} from 'primeng/api';
 import {Popover, PopoverModule} from 'primeng/popover';
 import {ReservaService} from "../reserva/reserva.service";
-import Swal from "sweetalert2";
 import {Reserva} from "../reserva/reserva";
 import {environment} from "src/environments/environment";
-
-// PrimeNG Components
-import {CardModule} from 'primeng/card';
-import {TableModule} from 'primeng/table';
-import {MultiSelectModule} from 'primeng/multiselect';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ButtonModule} from 'primeng/button';
-import {InputTextModule} from 'primeng/inputtext';
-import {IconFieldModule} from 'primeng/iconfield';
-import {InputIconModule} from 'primeng/inputicon';
-import {TooltipModule} from 'primeng/tooltip';
-import {TagModule} from 'primeng/tag';
 import {DialogModule} from 'primeng/dialog';
-
 import {MenuModule} from 'primeng/menu';
-import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
 import {NovoComponent} from '../geral/novo/novo.component';
+import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
+import {BreakpointService} from '../framework/services/breakpoint.service';
+import {
+  TableDefaultTemplatesComponent
+} from '../framework/component/table-default-templates.component';
 
 @Component({
     selector: "app-list-item",
     templateUrl: "./item.list.component.html",
     styleUrls: ["./item.list.component.css"],
   imports: [
-    CommonModule,
-    FormsModule,
-    CardModule,
-    TableModule,
-    MultiSelectModule,
-    ToolbarModule,
-    ButtonModule,
-    InputTextModule,
-    IconFieldModule,
-    InputIconModule,
-    TooltipModule,
-    TagModule,
+    PrimeTableSharedModule,
     DialogModule,
     PopoverModule,
     MenuModule,
-    PrimeCrudToolbarComponent,
-    ActionButtonsComponent,
     NovoComponent,
-    NgOptimizedImage
+    NgOptimizedImage,
+    TableDefaultTemplatesComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => ItemListComponent) }]
 })
 export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
-  protected itemService: ItemService;
-  protected injector: Injector;
+  readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
+
+  protected override service = inject(ItemService);
+  protected override columnsTable = ["id", "imagem", "nome", "localizacao", "grupo", "saldo", "actions"];
+
   private readonly reservaService = inject(ReservaService);
-
-  @ViewChild('actionsMenu') actionsMenu: Popover;
+  protected readonly breakpointService = inject(BreakpointService);
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
+  protected override urlForm = "item/form";
   contextMenuItems: MenuItem[] = [];
-  selectedItem: Item;
+  selectedItem!: Item;
 
-  isAlunoOrProfessor = false;
-  reservasItem: Reserva[];
+  reservasItem: Reserva[] = [];
   dialogReservaitem = false;
   displayedColumnsReserva = ["dataRetirada", "qtde"];
   minioUrl: string;
@@ -122,7 +97,8 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
       type: 'custom',
       sortable: true,
       filterable: true,
-      minWidth: '12rem'
+      minWidth: '12rem',
+      align: 'center'
     },
     {
       field: 'saldo',
@@ -147,20 +123,9 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   ];
 
   constructor() {
-    const itemService = inject(ItemService);
-    const injector = inject(Injector);
-
-    super(
-      itemService,
-      injector,
-      ["id", "imagem", "nome", "localizacao", "grupo","saldo", "actions"],
-      "item/form"
-    );
-    this.itemService = itemService;
-    this.injector = injector;
+    super();
 
     this.minioUrl = environment.minio_url;
-    this.bottomSheetEnabled = false;
     this.configureTable();
   }
 
@@ -170,6 +135,31 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
 
   protected override getEntityPluralName(): string {
     return 'Itens';
+  }
+
+  /**
+   * Retorna a severidade (cor) do badge para categorias de itens
+   * Usa o ID do grupo para distribuir cores de forma consistente
+   */
+  getGrupoBadgeSeverity(grupo: Grupo | undefined): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
+    if (!grupo) {
+      return 'secondary';
+    }
+
+    // Array de cores disponíveis no PrimeNG
+    const severities: ('success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast')[] = [
+      'info',      // Azul
+      'success',   // Verde
+      'warn',      // Laranja
+      'danger',    // Vermelho
+      'secondary', // Cinza
+      'contrast'   // Preto/Branco (tema dependente)
+    ];
+
+    // Usa o ID do grupo para selecionar uma cor de forma consistente
+    // Mesmo grupo sempre terá a mesma cor
+    const colorIndex = grupo.id % severities.length;
+    return severities[colorIndex];
   }
 
   // Override export filename for items
@@ -207,7 +197,6 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
       resizableColumns: true,
       columnResizeMode: 'fit',
       lazy: true,
-      lazyLoadOnInit: true,
       preloadData: true,
       keyboardShortcuts: true
     };
@@ -217,56 +206,56 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   }
 
   postFindAll(): void {
-    this.loginService
-      .userLoggedIsAlunoOrProfessor()
-      .then((value) => {
-        this.isAlunoOrProfessor = value;
-        this.cdr.markForCheck();
-      });
+    // No longer needed - isAlunoOrProfessor is now a computed signal from base class
+    // that automatically updates when user changes
   }
 
-  async openOptions(event: Event, item: Item): Promise<void> {
+  openOptions(event: Event, item: Item): void {
     this.selectedItem = item;
-    const isAlunoOrProfessor = await this.loginService.userLoggedIsAlunoOrProfessor();
-    const isMobile = window.innerWidth <= 1200;
+    const isAlunoOrProfessor = this.isAlunoOrProfessor();
+    const isMobile = !this.breakpointService.isDesktop();
 
     this.contextMenuItems = [];
 
     if (!isAlunoOrProfessor) {
       this.contextMenuItems.push({
         label: 'Copiar',
-        icon: 'fa fa-copy',
+        icon: 'pi pi-copy',
         command: () => this.copyItem(item.id)
       });
     }
 
     this.contextMenuItems.push({
       label: 'Reservas',
-      icon: 'fa fa-paste',
+      icon: 'pi pi-clone',
       command: () => this.findReservasItem(item.id)
     });
 
     if (isMobile) {
-      this.contextMenuItems.push({
-        label: isAlunoOrProfessor ? 'Visualizar' : 'Editar',
-        icon: isAlunoOrProfessor ? 'fa fa-eye' : 'fa fa-edit',
-        command: () => this.edit(item.id)
-      });
+      const mobileMenuItems = [
+        {
+          label: isAlunoOrProfessor ? 'Visualizar' : 'Editar',
+          icon: isAlunoOrProfessor ? 'pi pi-eye' : 'pi pi-pencil',
+          command: () => this.edit(item.id)
+        }
+      ];
 
       if (!isAlunoOrProfessor) {
-        this.contextMenuItems.push({
+        mobileMenuItems.push({
           label: 'Remover',
-          icon: 'fa fa-trash-o',
+          icon: 'pi pi-trash',
           command: () => this.delete(item.id)
         });
       }
+
+      this.contextMenuItems.push(...mobileMenuItems);
     }
 
-    this.actionsMenu.toggle(event);
-    this.cdr.markForCheck();
+    this.actionsMenu().toggle(event);
+    this.cdr?.markForCheck();
   }
 
-  findReservasItem(id) {
+  findReservasItem(id: number): void {
     this.loaderService.show();
     this.reservaService.findAllByIdItem(id).subscribe(
       (e) => {
@@ -274,19 +263,29 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
         if (e.length > 0) {
           this.reservasItem = e;
           this.dialogReservaitem = true;
-          this.cdr.markForCheck();
+          this.cdr?.markForCheck();
         } else {
-          Swal.fire("Ops...", "Este item não possui nenhuma reserva.", "info");
+          this.messageService.add({
+            severity: 'info',
+            summary: 'Ops...',
+            detail: 'Este item não possui nenhuma reserva.',
+            life: 4000
+          });
         }
       },
-      (error) => {
-        console.log(error);
+      () => {
         this.loaderService.hide();
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Erro ao buscar reservas do item.',
+          life: 5000
+        });
       }
     );
   }
 
-  copyItem(id) {
+  copyItem(id: number): void {
     this.router.navigate(["item/form/copy", id]);
   }
 }

@@ -1,19 +1,14 @@
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  inject,
-  OnInit,
-  ViewChild
-} from "@angular/core";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit} from "@angular/core";
 import {LoginService} from "./login.service";
 import {Usuario} from "../usuario/usuario";
-import {FormsModule, NgForm} from "@angular/forms";
+import {FormsModule} from "@angular/forms";
 import {Router} from "@angular/router";
 import {MessageService} from "primeng/api";
-import {finalize} from "rxjs/operators";
+import {catchError, finalize, switchMap} from "rxjs/operators";
+import {of} from "rxjs";
 import {ProgressBar} from "primeng/progressbar";
 import {NgOptimizedImage} from "@angular/common";
+import {StorageService} from "../framework/services/storage.service";
 
 @Component({
   selector: "app-login",
@@ -31,10 +26,10 @@ export class LoginComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly messageService = inject(MessageService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly storageService = inject(StorageService);
 
-  usuario: Usuario;
+  usuario!: Usuario;
   showProgress = false;
-  @ViewChild("form", { static: true }) form: NgForm;
 
   ngOnInit() {
     this.usuario = new Usuario();
@@ -42,16 +37,16 @@ export class LoginComponent implements OnInit {
 
   login() {
     this.showProgress = true;
-    this.cdr.markForCheck();
+    this.cdr?.markForCheck();
     this.loginService.login(this.usuario).subscribe({
-      next: (e) => {
-        localStorage.setItem("token", e);
-        localStorage.setItem("username", this.usuario.username);
+      next: (e: string) => {
+        this.storageService.setItem("token", e);
+        this.storageService.setItem("username", this.usuario.username);
         this.setUserInLocalStorage();
       },
-      error: (error) => {
+      error: () => {
         this.showProgress = false;
-        this.cdr.markForCheck();
+        this.cdr?.markForCheck();
         this.messageService.add({
           severity: "error",
           summary: "Atenção",
@@ -76,22 +71,19 @@ export class LoginComponent implements OnInit {
   setUserInLocalStorage() {
     this.loginService
       .refreshCurrentUser()
-      .pipe(finalize(() => {
+    .pipe(
+      switchMap(() => this.loginService.getPermissoesUser().pipe(
+        catchError(() => of(null)) // Handle permission errors gracefully
+      )),
+      finalize(() => {
         this.showProgress = false;
-        this.cdr.markForCheck();
-      }))
+        this.cdr?.markForCheck();
+      })
+    )
       .subscribe({
         next: () => {
-          this.loginService.getPermissoesUser().subscribe({
-            next: () => {
-              this.loginService.setAuthenticated();
-              this.router.navigate(["/"]);
-            },
-            error: () => {
-              this.loginService.setAuthenticated();
-              this.router.navigate(["/"]);
-            }
-          });
+          this.loginService.setAuthenticated();
+          this.router.navigate(["/"]);
         },
         error: () => {
           this.messageService.add({

@@ -10,48 +10,7 @@ import {TooltipModule} from 'primeng/tooltip';
 @Component({
   selector: 'app-action-buttons',
   imports: [CommonModule, ButtonModule, TooltipModule],
-  template: `
-    <div class="flex items-center gap-1 justify-center">
-      @if (showEdit()) {
-        <p-button
-          icon="pi pi-pencil"
-          [outlined]="true"
-          severity="secondary"
-          size="small"
-          [pTooltip]="editTooltip()"
-          tooltipPosition="top"
-          (onClick)="edit.emit()"
-          [attr.aria-label]="editAriaLabel() || editTooltip()">
-        </p-button>
-      }
-
-      @if (showView()) {
-        <p-button
-          icon="pi pi-eye"
-          [outlined]="true"
-          severity="secondary"
-          size="small"
-          [pTooltip]="viewTooltip()"
-          tooltipPosition="top"
-          (onClick)="view.emit()"
-          [attr.aria-label]="viewAriaLabel() || viewTooltip()">
-        </p-button>
-      }
-
-      @if (showDelete()) {
-        <p-button
-          icon="pi pi-trash"
-          [outlined]="true"
-          severity="danger"
-          size="small"
-          [pTooltip]="deleteTooltip()"
-          tooltipPosition="top"
-          (onClick)="delete.emit()"
-          [attr.aria-label]="deleteAriaLabel() || deleteTooltip()">
-        </p-button>
-      }
-    </div>
-  `,
+  templateUrl: './action-buttons.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActionButtonsComponent {

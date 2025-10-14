@@ -1,49 +1,28 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
+import {ChangeDetectionStrategy, Component, forwardRef, inject} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Compra} from './compra';
 import {CompraService} from './compra.service';
-
-// PrimeNG Components
-import {CardModule} from 'primeng/card';
-import {TableModule} from 'primeng/table';
-import {MultiSelectModule} from 'primeng/multiselect';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ButtonModule} from 'primeng/button';
-import {InputTextModule} from 'primeng/inputtext';
-import {IconFieldModule} from 'primeng/iconfield';
-import {InputIconModule} from 'primeng/inputicon';
-import {TooltipModule} from 'primeng/tooltip';
-import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
+import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
+import {
+  TableDefaultTemplatesComponent
+} from '../framework/component/table-default-templates.component';
 
 @Component({
     selector: 'app-list-compra',
     templateUrl: './compra.list.component.html',
     styleUrls: ['./compra.list.component.css'],
   imports: [
-    CommonModule,
-    FormsModule,
-    CardModule,
-    TableModule,
-    MultiSelectModule,
-    ToolbarModule,
-    ButtonModule,
-    InputTextModule,
-    IconFieldModule,
-    InputIconModule,
-    TooltipModule,
-    PrimeCrudToolbarComponent,
-    ActionButtonsComponent,
+    PrimeTableSharedModule,
+    TableDefaultTemplatesComponent,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => CompraListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CompraListComponent extends PrimeCrudListComponent<Compra, number> {
-  protected compraService: CompraService;
-  protected injector: Injector;
+  protected override service = inject(CompraService);
+  protected override columnsTable = ['id', 'fornecedor', 'dataCompra', 'actions'];
+  protected override urlForm = 'compra/form';
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -78,20 +57,16 @@ export class CompraListComponent extends PrimeCrudListComponent<Compra, number> 
       type: 'custom',
       sortable: false,
       filterable: false,
+      exportable: false,
+      toggleable: false,
       width: '12rem',
       align: 'center'
     }
   ];
 
   constructor() {
-    const compraService = inject(CompraService);
-    const injector = inject(Injector);
+    super();
 
-    super(compraService, injector, ['id', 'fornecedor', 'dataCompra', 'actions'], 'compra/form');
-    this.compraService = compraService;
-    this.injector = injector;
-
-    this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.configureTable();
   }
@@ -125,7 +100,7 @@ export class CompraListComponent extends PrimeCrudListComponent<Compra, number> 
       expandMode: 'single',
       rowExpansionKey: 'id',
       stateful: true,
-      stateKey: 'compra-list',
+      stateKey: 'compra-list-v2',
       stateStorage: 'local',
       stateProps: {
         columns: true,

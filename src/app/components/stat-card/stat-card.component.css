@@ -1,8 +1,8 @@
 .stat-card {
-  --stat-card-accent-color: #3B82F6;
-  --stat-card-accent-tint: rgba(59, 130, 246, 0.18);
-  --stat-card-accent-muted: rgba(59, 130, 246, 0.22);
-  --stat-card-surface: var(--color-card-surface, rgba(255, 255, 255, 0.92));
+  --stat-card-accent-color: var(--p-primary-color);
+  --stat-card-accent-tint: color-mix(in srgb, var(--p-primary-color) 18%, transparent);
+  --stat-card-accent-muted: color-mix(in srgb, var(--p-primary-color) 22%, transparent);
+  --stat-card-surface: var(--p-content-background);
   position: relative;
   display: flex;
   align-items: center;
@@ -44,7 +44,7 @@
     --color-card-hover-shadow,
     0 6px 12px -2px rgba(0, 0, 0, 0.15),
     0 3px 6px -1px rgba(0, 0, 0, 0.1),
-    0 0 0 3px rgba(59, 130, 246, 0.25)
+    0 0 0 3px color-mix(in srgb, var(--p-primary-color) 25%, transparent)
   );
   background-image: linear-gradient(135deg, var(--stat-card-accent-muted) 0%, var(--stat-card-surface) 70%);
   outline: none;
@@ -55,7 +55,7 @@
     --color-card-hover-shadow,
     0 6px 12px -2px rgba(0, 0, 0, 0.15),
     0 3px 6px -1px rgba(0, 0, 0, 0.1),
-    0 0 0 3px rgba(59, 130, 246, 0.25)
+    0 0 0 3px color-mix(in srgb, var(--p-primary-color) 25%, transparent)
   );
 }
 
@@ -129,7 +129,7 @@
   );
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .stat-card-number {
     font-size: 1.9rem;
   }

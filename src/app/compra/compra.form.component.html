@@ -1,9 +1,9 @@
-<div class="container-fluid my-3">
+<div class="w-full px-4 my-3">
   <p-card>
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
-          <app-voltar (onClick)="back()"></app-voltar>
+          <app-voltar (backClick)="back()"></app-voltar>
           <h2 class="text-xl font-semibold m-0">Cadastro de Compra</h2>
         </div>
       </div>
@@ -34,7 +34,8 @@
                 [control]="formGroup.get('fornecedor')"
                 label="Fornecedor"
                 [required]="true"
-                fieldId="fornecedor">
+                fieldId="fornecedor"
+                hint="Digite pelo menos 2 caracteres para buscar">
                 <div class="flex items-center gap-2">
                   <p-autoComplete
                     inputId="fornecedor"
@@ -44,15 +45,14 @@
                     [suggestions]="fornecedorList()"
                     (completeMethod)="findFornecedores($event)"
                     [forceSelection]="true"
-                    [dropdown]="true"
-                    placeholder="Selecione o fornecedor"
-                    styleClass="w-full"
-                    [inputStyle]="{ width: '100%' }">
+                    minQueryLength="2"
+                    placeholder="Digite para buscar..."
+                    styleClass="w-full">
                   </p-autoComplete>
-                  <app-cadastroRapido
+                  <app-cadastro-rapido
                     [href]="'/fornecedor/form'"
                     [id]="formGroup.get('fornecedor')?.value?.id">
-                  </app-cadastroRapido>
+                  </app-cadastro-rapido>
                 </div>
               </app-form-field>
             </div>
@@ -86,8 +86,7 @@
                   dataType="string"
                   [maxDate]="maxDate()"
                   [showIcon]="true"
-                  styleClass="w-full"
-                  [inputStyle]="{ width: '100%' }">
+                  styleClass="w-full">
                 </p-datepicker>
               </app-form-field>
             </div>
@@ -115,10 +114,9 @@
                     [suggestions]="itemList()"
                     (completeMethod)="findProdutos($event)"
                     (onSelect)="setPrecoProduto()"
-                    [minLength]="2"
+                    minQueryLength="2"
                     placeholder="Digite para buscar itens..."
-                    styleClass="w-full"
-                    [inputStyle]="{ width: '100%' }">
+                    styleClass="w-full">
                     <ng-template let-item pTemplate="item">
                       <div class="flex justify-between items-center w-full">
                         <span>{{ item.nome }}</span>
@@ -128,10 +126,10 @@
                       </div>
                     </ng-template>
                   </p-autoComplete>
-                  <app-cadastroRapido
+                  <app-cadastro-rapido
                     [href]="'/item/form'"
                     [id]="tempItem()?.id">
-                  </app-cadastroRapido>
+                  </app-cadastro-rapido>
                 </div>
               </app-form-field>
             </div>
@@ -169,17 +167,15 @@
             </div>
 
             <!-- Add Button -->
-            <div class="col-span-12 md:col-span-1">
-              <app-form-field label="Inserir" fieldId="btnInserir">
-                <p-button
-                  type="button"
-                  severity="success"
-                  (onClick)="insertItem()"
-                  styleClass="w-full"
-                  [attr.aria-label]="'Adicionar item'">
-                  <span pButtonIcon class="pi pi-plus"></span>
-                </p-button>
-              </app-form-field>
+            <div class="col-span-12 md:col-span-1 flex items-end">
+              <p-button
+                type="button"
+                severity="success"
+                (onClick)="insertItem()"
+                styleClass="w-full"
+                [attr.aria-label]="'Adicionar item'">
+                <span pButtonIcon class="pi pi-plus"></span>
+              </p-button>
             </div>
           </div>
 
@@ -193,10 +189,10 @@
                 styleClass="p-datatable-sm">
                 <ng-template pTemplate="header">
                   <tr>
-                    <th>Item</th>
-                    <th style="width: 120px">Qtde</th>
-                    <th style="width: 150px">Valor</th>
-                    <th style="width: 100px">Opções</th>
+                    <th scope="col">Item</th>
+                    <th class="w-[120px]" scope="col">Qtde</th>
+                    <th class="w-[150px]" scope="col">Valor</th>
+                    <th class="w-[100px]" scope="col">Opções</th>
                   </tr>
                 </ng-template>
 
@@ -241,7 +237,7 @@
 
           <!-- Action Buttons -->
           <div class="flex justify-end gap-2 mt-4">
-            <app-cancelar (onClick)="back()"></app-cancelar>
+            <app-cancelar (cancelClick)="back()"></app-cancelar>
             <app-salvar [typeButton]="'submit'" [disabled]="isLoading()"></app-salvar>
           </div>
         </form>

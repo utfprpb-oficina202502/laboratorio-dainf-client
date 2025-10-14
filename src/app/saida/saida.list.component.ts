@@ -1,53 +1,31 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
+import {ChangeDetectionStrategy, Component, forwardRef, inject} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Saida} from './saida';
 import {SaidaService} from './saida.service';
 import {SaidaItem} from './saidaItem';
-import Swal from 'sweetalert2';
-
-// PrimeNG Components
-import {CardModule} from 'primeng/card';
-import {TableModule} from 'primeng/table';
-import {MultiSelectModule} from 'primeng/multiselect';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ButtonModule} from 'primeng/button';
-import {InputTextModule} from 'primeng/inputtext';
-import {IconFieldModule} from 'primeng/iconfield';
-import {InputIconModule} from 'primeng/inputicon';
-import {TooltipModule} from 'primeng/tooltip';
+import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
-import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
+import {
+  TableDefaultTemplatesComponent
+} from '../framework/component/table-default-templates.component';
 
 @Component({
     selector: 'app-list-saida',
     templateUrl: './saida.list.component.html',
     styleUrls: ['./saida.list.component.css'],
   imports: [
-    CommonModule,
-    FormsModule,
-    CardModule,
-    TableModule,
-    MultiSelectModule,
-    ToolbarModule,
-    ButtonModule,
-    InputTextModule,
-    IconFieldModule,
-    InputIconModule,
-    TooltipModule,
+    PrimeTableSharedModule,
     ConfirmDialogModule,
-    PrimeCrudToolbarComponent,
-    ActionButtonsComponent
+    TableDefaultTemplatesComponent,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => SaidaListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
-  protected saidaService: SaidaService;
-  protected injector: Injector;
+  protected override service = inject(SaidaService);
+  protected override columnsTable = ['id', 'dataSaida', 'qtde', 'usuarioResponsavel', 'observacao', 'actions'];
+  protected override urlForm = 'saida/form';
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -99,28 +77,25 @@ export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
       type: 'custom',
       sortable: false,
       filterable: false,
+      exportable: false,
+      toggleable: false,
       width: '12rem',
       align: 'center'
     }
   ];
 
   constructor() {
-    const saidaService = inject(SaidaService);
-    const injector = inject(Injector);
-
-    super(saidaService, injector, ['id', 'dataSaida', 'qtde', 'usuarioResponsavel', 'observacao', 'actions'], 'saida/form');
-    this.saidaService = saidaService;
-    this.injector = injector;
+    super();
 
     this.configureTable();
   }
 
   protected override getEntityName(): string {
-    return 'Saida';
+    return 'Saída';
   }
 
   protected override getEntityPluralName(): string {
-    return 'Saidas';
+    return 'Saídas';
   }
 
   protected override getExportFileName(): string {
@@ -134,17 +109,17 @@ export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
       globalFilterFields: ['id', 'dataSaida', 'usuarioResponsavel', 'observacao'],
       defaultSortField: 'dataSaida',
       defaultSortOrder: -1,
-      caption: 'Lista de Saidas',
+      caption: 'Lista de Saídas',
       trackByField: 'id',
-      emptyMessage: 'Nenhuma saida encontrada.',
-      loadingMessage: 'Carregando saidas...',
-      globalFilterPlaceholder: 'Buscar saidas...',
+      emptyMessage: 'Nenhuma saída encontrada.',
+      loadingMessage: 'Carregando saídas...',
+      globalFilterPlaceholder: 'Buscar saídas...',
       columnToggle: true,
       expandable: false,
       expandMode: 'single',
       rowExpansionKey: 'id',
       stateful: true,
-      stateKey: 'saida-list',
+      stateKey: 'saida-list-v2',
       stateStorage: 'local',
       stateProps: {
         columns: true,
@@ -172,7 +147,12 @@ export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
 
   preDelete(saida: Saida) {
     if (saida.idEmprestimo) {
-      Swal.fire('Atenção!', 'Não é possível remover um registro originado através de uma devolução.', 'info');
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Atenção!',
+        detail: 'Não é possível remover um registro originado através de uma devolução.',
+        life: 4000
+      });
     } else {
       this.delete(saida.id);
     }

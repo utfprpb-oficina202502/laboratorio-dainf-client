@@ -1,22 +1,12 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
-
-import {FormsModule} from '@angular/forms';
+import {ChangeDetectionStrategy, Component, forwardRef, inject} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Fornecedor} from './fornecedor';
 import {FornecedorService} from './fornecedor.service';
-
-// PrimeNG Components
-import {CardModule} from 'primeng/card';
-import {TableModule} from 'primeng/table';
-import {MultiSelectModule} from 'primeng/multiselect';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ButtonModule} from 'primeng/button';
-import {InputTextModule} from 'primeng/inputtext';
-import {IconFieldModule} from 'primeng/iconfield';
-import {InputIconModule} from 'primeng/inputicon';
-import {TooltipModule} from 'primeng/tooltip';
-import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
+import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
+import {
+  TableDefaultTemplatesComponent
+} from '../framework/component/table-default-templates.component';
 import {CpfCnpjPipe} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe";
 
 @Component({
@@ -24,25 +14,17 @@ import {CpfCnpjPipe} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe";
     templateUrl: './fornecedor.list.component.html',
     styleUrls: ['./fornecedor.list.component.css'],
   imports: [
-    FormsModule,
-    CardModule,
-    TableModule,
-    MultiSelectModule,
-    ToolbarModule,
-    ButtonModule,
-    InputTextModule,
-    IconFieldModule,
-    InputIconModule,
-    TooltipModule,
-    PrimeCrudToolbarComponent,
-    CpfCnpjPipe
+    PrimeTableSharedModule,
+    TableDefaultTemplatesComponent,
+    CpfCnpjPipe,
 ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => FornecedorListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, number> {
-  protected fornecedorService: FornecedorService;
-  protected injector: Injector;
+  protected override service = inject(FornecedorService);
+  protected override columnsTable = ['id', 'razaoSocial', 'nomeFantasia', 'cnpj', 'actions'];
+  protected override urlForm = 'fornecedor/form';
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -85,20 +67,16 @@ export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, 
       type: 'custom',
       sortable: false,
       filterable: false,
+      exportable: false,
+      toggleable: false,
       width: '12rem',
       align: 'center'
     }
   ];
 
   constructor() {
-    const fornecedorService = inject(FornecedorService);
-    const injector = inject(Injector);
+    super();
 
-    super(fornecedorService, injector, ['id', 'razaoSocial', 'nomeFantasia', 'cnpj', 'actions'], 'fornecedor/form');
-    this.fornecedorService = fornecedorService;
-    this.injector = injector;
-
-    this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.configureTable();
   }
@@ -132,7 +110,7 @@ export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, 
       expandMode: 'single',
       rowExpansionKey: 'id',
       stateful: true,
-      stateKey: 'fornecedor-list',
+      stateKey: 'fornecedor-list-v2',
       stateStorage: 'local',
       stateProps: {
         columns: true,

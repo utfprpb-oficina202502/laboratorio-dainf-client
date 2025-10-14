@@ -46,7 +46,13 @@ testem.log
 .angular/
 .claude/
 
+# Build artifacts
+build-output.txt
+**/nul
+
 # System Files
 .DS_Store
 Thumbs.db
 package-lock.json
+/claudedocs/
+/.serena/

@@ -1,7 +1,7 @@
 import {CrudService} from '../framework/service/crud.service';
 import {Cidade} from './cidade';
-import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import {inject, Injectable} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
 import {environment} from '../../environments/environment';
 import {Observable} from 'rxjs';
 import {Estado} from '../estado/estado';

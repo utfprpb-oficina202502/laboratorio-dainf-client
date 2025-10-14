@@ -12,7 +12,9 @@
           [id]="menuItem.id"
           [routerLink]="menuItem.routerLink"
           routerLinkActive="active-menu-item"
-          class="sidebar-menu-item">
+          [routerLinkActiveOptions]="menuItem.id === 'home' ? {exact: true} : {exact: false}"
+          class="sidebar-menu-item"
+          (click)="closeSidebar()">
           <i [class]="menuItem.icon" class="sidebar-menu-icon"></i>
           <span class="sidebar-menu-label">{{ menuItem.label }}</span>
         </a>
@@ -21,19 +23,16 @@
       <!-- Cadastros submenu -->
       @if (showCadastros) {
         <div class="cadastros-section">
-          <a
+          <button
+            type="button"
             class="sidebar-menu-item submenu-toggle"
             (click)="toggleSubMenuCadastro()"
-            role="button"
-            tabindex="0"
-            [attr.aria-expanded]="showSubMenuCadastro"
-            (keydown.enter)="toggleSubMenuCadastro()"
-            (keydown.space)="toggleSubMenuCadastro(); $event.preventDefault()">
-            <i class="fa fa-pencil sidebar-menu-icon"></i>
+            [attr.aria-expanded]="showSubMenuCadastro">
+            <i class="pi pi-pencil sidebar-menu-icon"></i>
             <span class="sidebar-menu-label">Cadastros</span>
             <i [class]="showSubMenuCadastro ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
                class="submenu-arrow"></i>
-          </a>
+          </button>
 
           @if (showSubMenuCadastro) {
             <div class="submenu-content">
@@ -42,7 +41,9 @@
                   [id]="menuItem.id"
                   [routerLink]="menuItem.routerLink"
                   routerLinkActive="active-menu-item"
-                  class="sidebar-menu-item submenu-item">
+                  [routerLinkActiveOptions]="{exact: false}"
+                  class="sidebar-menu-item submenu-item"
+                  (click)="closeSidebar()">
                   <i [class]="menuItem.icon" class="sidebar-menu-icon"></i>
                   <span class="sidebar-menu-label">{{ menuItem.label }}</span>
                 </a>
@@ -65,14 +66,11 @@
 </aside>
 
 <!-- Backdrop for mobile view -->
-@if (!isDesktopView && sidebarVisible) {
-  <div
+@if (!isDesktopView() && sidebarVisible) {
+  <button
+    type="button"
     class="sidebar-backdrop"
     (click)="closeSidebar()"
-    role="button"
-    tabindex="0"
-    aria-label="Fechar menu"
-    (keydown.enter)="closeSidebar()"
-    (keydown.space)="closeSidebar(); $event.preventDefault()">
-  </div>
+    aria-label="Fechar menu">
+  </button>
 }

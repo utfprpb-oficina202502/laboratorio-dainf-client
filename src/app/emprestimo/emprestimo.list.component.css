@@ -1,7 +1,4 @@
-td, th {
-  width: 25%;
-}
-
-::ng-deep .ui-datepicker-touch-ui {
-  min-width: 30% !important;
+/* PrimeNG Calendar touch UI - wider on mobile */
+::ng-deep .p-datepicker.p-datepicker-touch-ui {
+  min-width: 30%;
 }

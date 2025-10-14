@@ -1,16 +1,17 @@
-<div class="container-fluid my-3">
+<div class="w-full px-4 my-3">
   <p-card>
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
-          <app-voltar (onClick)="back()"></app-voltar>
+          <app-voltar (backClick)="back()"></app-voltar>
           <h2 class="text-xl font-semibold m-0">Cadastro de Relatório</h2>
         </div>
       </div>
     </ng-template>
 
     <ng-template pTemplate="content">
-      <form #form="ngForm" (submit)="preSave()" enctype="multipart/form-data">
+      @if (form(); as formGroup) {
+        <form (ngSubmit)="save()" [formGroup]="formGroup" enctype="multipart/form-data">
         <div class="grid grid-cols-12 gap-4">
           <div class="col-span-12 md:col-span-2">
             <div class="form-group">
@@ -19,29 +20,29 @@
                 pInputText
                 type="text"
                 id="id"
-                name="id"
-                disabled
-                [(ngModel)]="object.id"
+                formControlName="id"
                 class="w-full">
             </div>
           </div>
 
           <div class="col-span-12 md:col-span-10">
             <div class="form-group">
-              <label for="descricao">Nome</label>
+              <label for="nome">Nome</label>
               <span class="field-required">*</span>
-              <i class="fa fa-question-circle-o float-right"
+              <i class="pi pi-question-circle float-right"
                 pTooltip="Campo responsável pelo nome que irá aparecer na parte superior da tela de geração do relatório">
               </i>
               <input
                 pInputText
                 type="text"
-                id="descricao"
-                name="descricao"
-                required
-                validation
-                [(ngModel)]="object.nome"
+                [class.ng-dirty]="hasError('nome')"
+                [class.ng-invalid]="hasError('nome')"
+                formControlName="nome"
+                id="nome"
                 class="w-full">
+              @if (hasError('nome')) {
+                <small class="p-error">{{ getErrorMessage('nome') }}</small>
+              }
             </div>
           </div>
         </div>
@@ -52,7 +53,7 @@
               name="anexo"
               #fileUpload
               [url]="getUrlUploadImages()"
-              (onUpload)="onUpload($event)"
+              (onUpload)="onUpload()"
               [showUploadButton]="false"
               chooseLabel="Inserir Arquivo Jrxml"
               cancelLabel="Remover"
@@ -78,7 +79,7 @@
                 <div class="col-span-12 md:col-span-4">
                   <div class="form-group">
                     <label for="nameParam">Nome do Parâmetro</label>
-                    <i class="fa fa-question-circle-o float-right"
+                    <i class="pi pi-question-circle float-right"
                       pTooltip="O nome do parâmetro deverá ser exatamente igual ao informado na criação do relatório Jasper.">
                     </i>
                     <input
@@ -87,7 +88,8 @@
                       id="nameParam"
                       name="nameParam"
                       #nomeParam
-                      [(ngModel)]="relatorioParams.nameParam"
+                      (ngModelChange)="updateParamName($event)"
+                      [ngModel]="currentParam().nameParam"
                       class="w-full">
                   </div>
                 </div>
@@ -95,7 +97,7 @@
                 <div class="col-span-12 md:col-span-4">
                   <div class="form-group">
                     <label for="aliasParam">Alias do Parâmetro</label>
-                    <i class="fa fa-question-circle-o float-right"
+                    <i class="pi pi-question-circle float-right"
                       pTooltip="O alias é o nome que será utilizado no filtro do relatório, ao executá-lo no sistema.">
                     </i>
                     <input
@@ -103,7 +105,8 @@
                       type="text"
                       id="aliasParam"
                       name="aliasParam"
-                      [(ngModel)]="relatorioParams.aliasParam"
+                      (ngModelChange)="updateParamAlias($event)"
+                      [ngModel]="currentParam().aliasParam"
                       class="w-full">
                   </div>
                 </div>
@@ -113,7 +116,8 @@
                     <label for="tipoParam">Tipo do Parâmetro</label>
                     <p-select
                       [options]="tipoParamDropdown"
-                      [(ngModel)]="relatorioParams.tipoParam"
+                      (ngModelChange)="updateParamType($event)"
+                      [ngModel]="currentParam().tipoParam"
                       inputId="tipoParam"
                       name="tipoParam"
                       styleClass="w-full">
@@ -123,12 +127,13 @@
 
                 <div class="col-span-12 md:col-span-1">
                   <div class="form-group">
-                    <label class="invisible">Action</label>
+                    <div aria-hidden="true" class="invisible">Action</div>
                     <p-button
                       type="submit"
-                      icon="fa fa-check"
+                      icon="pi pi-check"
                       severity="secondary"
                       [outlined]="true"
+                      [attr.aria-label]="'Adicionar parâmetro'"
                       styleClass="w-full">
                     </p-button>
                   </div>
@@ -136,15 +141,15 @@
               </div>
             </form>
 
-            @if (object?.paramsList?.length > 0) {
+            @if (paramsList().length > 0) {
               <div class="mt-4">
-                <p-table #table [value]="object.paramsList" styleClass="p-datatable-sm">
+                <p-table #table [value]="paramsList()" styleClass="p-datatable-sm">
                   <ng-template pTemplate="header">
                     <tr>
-                      <th>Nome Parâmetro</th>
-                      <th>Alias Parâmetro</th>
-                      <th>Tipo Parâmetro</th>
-                      <th class="w-24">Opções</th>
+                      <th scope="col">Nome Parâmetro</th>
+                      <th scope="col">Alias Parâmetro</th>
+                      <th scope="col">Tipo Parâmetro</th>
+                      <th scope="col" class="w-24">Opções</th>
                     </tr>
                   </ng-template>
                   <ng-template pTemplate="body" let-param>
@@ -165,7 +170,7 @@
                       <td>
                         <p-button
                           type="button"
-                          icon="fa fa-trash"
+                          icon="pi pi-trash"
                           severity="danger"
                           [outlined]="true"
                           size="small"
@@ -182,10 +187,11 @@
         </div>
 
         <div class="flex justify-end gap-2 mt-4">
-          <app-cancelar (onClick)="back()"></app-cancelar>
+          <app-cancelar (cancelClick)="back()"></app-cancelar>
           <app-salvar [typeButton]="'submit'"></app-salvar>
         </div>
       </form>
+      }
     </ng-template>
   </p-card>
 </div>

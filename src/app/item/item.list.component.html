@@ -1,5 +1,5 @@
-<div class="container-fluid my-3">
-  <p-card>
+<div class="w-full px-4 my-3">
+  <p-card [attr.aria-busy]="loading()">
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-3">
         <span class="text-xl font-bold">Itens</span>
@@ -7,15 +7,25 @@
     </ng-template>
 
     <ng-template pTemplate="content">
-      <app-prime-crud-toolbar [table]="dt" [list]="self">
+      <!-- Toolbar remains visible during loading for better UX -->
+      <app-prime-crud-toolbar [list]="self" [table]="dataTable()">
         <ng-template #toolbarStartTemplate>
-          @if (!isAlunoOrProfessor) {
-            <app-novo (onClick)="openForm()"></app-novo>
+          @if (!isAlunoOrProfessor()) {
+            <app-novo (novoClick)="openForm()"></app-novo>
           }
         </ng-template>
       </app-prime-crud-toolbar>
 
-      <p-table
+      <!-- Wrapper component handles skeleton/table conditional rendering -->
+      <app-prime-crud-table-wrapper
+        [entityName]="getEntityName().toLowerCase()"
+        [entityPluralName]="getEntityPluralName().toLowerCase()"
+        [loading]="loading()"
+        [skeletonColumns]="displayedColumns.length"
+        [skeletonRows]="rows"
+        [totalElements]="totalElements">
+
+        <p-table
         #dt
         [value]="objects"
         [rows]="rows"
@@ -27,7 +37,7 @@
         [first]="first"
         [lazy]="tableConfig.lazy !== false"
         [lazyLoadOnInit]="tableConfig.lazyLoadOnInit !== false"
-        [(selection)]="selectedItems"
+        [selection]="selectedItems()"
         (selectionChange)="onSelectionChange($event)"
         [dataKey]="tableConfig.rowExpansionKey || 'id'"
         [resizableColumns]="tableConfig.resizableColumns !== false"
@@ -44,50 +54,33 @@
         [attr.aria-label]="'Lista de itens com ' + totalElements + ' registro(s)'">
 
         <ng-template pTemplate="caption">
-          <div class="flex items-center justify-end gap-2 flex-wrap">
-            <p-iconField iconPosition="left" style="flex: 0 1 auto; min-width: 200px; max-width: 300px;">
-              <p-inputIcon class="pi pi-search" aria-hidden="true"></p-inputIcon>
-              <input
-                #globalFilterInput
-                pInputText
-                type="text"
-                (input)="onGlobalFilter($any($event.target).value)"
-                [value]="filterValue"
-                [placeholder]="getGlobalFilterPlaceholder()"
-                [attr.aria-label]="'Campo de busca para filtrar itens'"
-                autocomplete="off" />
-              </p-iconField>
-              <p-button
-                type="button"
-                severity="secondary"
-                [outlined]="true"
-                (onClick)="clearGlobalFilter()"
-                [attr.aria-label]="'Limpar filtro global'">
-                <span pButtonIcon class="pi pi-filter-slash"></span>
-                <span pButtonLabel>Limpar</span>
-              </p-button>
-            </div>
-          </ng-template>
+          <app-table-filter-caption
+            (clear)="clearGlobalFilter()"
+            (filter)="onGlobalFilter($event)"
+            [ariaLabel]="'Campo de busca para filtrar itens'"
+            [filterValue]="filterValue"
+            [placeholder]="getGlobalFilterPlaceholder()">
+          </app-table-filter-caption>
+        </ng-template>
 
           <ng-template pTemplate="header">
             <tr>
               @if (tableConfig.expandable) {
-                <th scope="col" style="width: 3rem" [attr.aria-label]="'Alternar detalhes'"></th>
+                <th scope="col" class="w-3rem" [attr.aria-label]="'Alternar detalhes'"></th>
               }
-              @if (!isReadOnly && tableConfig.selectable !== false) {
-                <th scope="col" style="width: 3rem" [attr.aria-label]="'Selecao de itens'">
+              @if (!isReadOnly() && tableConfig.selectable !== false) {
+                <th scope="col" class="w-3rem" [attr.aria-label]="'Selecao de itens'">
                   <p-tableHeaderCheckbox [attr.aria-label]="'Selecionar todos os itens'"></p-tableHeaderCheckbox>
                 </th>
               }
               @for (column of getVisibleColumns(); track column.field) {
-                <th
-                  scope="col"
+                <th scope="col"
                   [attr.id]="'col-' + column.field"
                   [attr.data-field]="column.field"
-                  [pSortableColumn]="column.sortable === false || column.field === 'actions' ? null : column.field"
+                    [pSortableColumn]="column.sortable === false || column.field === 'actions' ? undefined : column.field"
                   [style.width]="column.width"
                   [style.min-width]="column.minWidth"
-                  [ngClass]="column.headerClass"
+                    [class]="column.headerClass"
                   [attr.aria-label]="column.tooltip || column.header">
                   <div class="flex items-center gap-2" [class.justify-center]="column.align === 'center'">
                     {{ column.header }}
@@ -103,19 +96,20 @@
           <ng-template pTemplate="body" let-row>
             <tr>
               @if (tableConfig.expandable) {
-                <td style="width: 3rem">
+                <td class="w-3rem">
                   <button
                     type="button"
                     pButton
                     [pRowToggler]="row"
                     class="p-button-text p-button-rounded"
                     [attr.aria-label]="(isRowExpanded(row) ? 'Recolher' : 'Expandir') + ' detalhes do item ' + row.nome">
-                    <span pButtonIcon [ngClass]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
+                    <span pButtonIcon
+                          [class]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
                   </button>
                 </td>
               }
-              @if (!isReadOnly && tableConfig.selectable !== false) {
-                <td style="width: 3rem">
+              @if (!isReadOnly() && tableConfig.selectable !== false) {
+                <td class="w-3rem">
                   <p-tableCheckbox
                     [value]="row"
                     [attr.aria-label]="'Selecionar item ' + row.nome">
@@ -131,9 +125,9 @@
                   @switch (column.field) {
                     @case ('actions') {
                       <app-action-buttons
-                        [showEdit]="row.id !== 1 && !isAlunoOrProfessor && canEdit"
-                        [showDelete]="row.id !== 1 && !isAlunoOrProfessor && canDelete"
-                        [showView]="row.id !== 1 && isAlunoOrProfessor"
+                        [showEdit]="row.id !== 1 && !isAlunoOrProfessor() && canEdit()"
+                        [showDelete]="row.id !== 1 && !isAlunoOrProfessor() && canDelete()"
+                        [showView]="row.id !== 1 && isAlunoOrProfessor()"
                         [editTooltip]="'Editar item'"
                         [deleteTooltip]="'Remover item'"
                         [viewTooltip]="'Visualizar item'"
@@ -147,49 +141,69 @@
                     }
                     @case ('imagem') {
                       <div class="flex justify-center">
-                        <img
-                          style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px;"
-                          [ngSrc]="row.imageItem?.length > 0 ? minioUrl + row.imageItem[0].nameImage : 'no-image.svg'"
-                          [alt]="'Item ' + row.nome"
-                          (click)="openOptions($event, row)"
-                          class="cursor-pointer" />
-                        </div>
-                      }
-                      @case ('nome') {
-                        <span
-                          [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
-                          [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
-                          [class.cursor-pointer]="!displayedColumns.includes('actions')"
+                        <button
+                          class="relative w-80px h-[60px] cursor-pointer"
                           (click)="openOptions($event, row)"
                           (keydown.enter)="openOptions($event, row)"
                           (keydown.space)="openOptions($event, row)"
-                          [attr.aria-label]="column.header + ': ' + (row.patrimonio ? row.patrimonio + ' - ' : '') + row.nome">
-                          {{ row.patrimonio ? row.patrimonio + ' - ' : '' }}{{ row.nome }}
-                        </span>
+                          tabindex="0"
+                          [attr.aria-label]="'Visualizar item ' + row.nome">
+                          <img
+                            [ngSrc]="row.imageItem?.length > 0 ? minioUrl + row.imageItem[0].nameImage : 'no-image.svg'"
+                            [alt]="'Item ' + row.nome"
+                            fill
+                            priority="false"
+                            loading="lazy"
+                            class="object-cover rounded cursor-pointer"
+                          />
+                        </button>
+                      </div>
+                    }
+                      @case ('nome') {
+                        @if (!displayedColumns.includes('actions')) {
+                          <button
+                            type="button"
+                            class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                            (click)="openOptions($event, row)"
+                            [attr.aria-label]="column.header + ': ' + (row.patrimonio ? row.patrimonio + ' - ' : '') + row.nome">
+                            {{ row.patrimonio ? row.patrimonio + ' - ' : '' }}{{ row.nome }}
+                          </button>
+                        } @else {
+                          <span
+                            [attr.aria-label]="column.header + ': ' + (row.patrimonio ? row.patrimonio + ' - ' : '') + row.nome">
+                            {{ row.patrimonio ? row.patrimonio + ' - ' : '' }}{{ row.nome }}
+                          </span>
+                        }
                       }
                       @case ('grupo') {
-                        <span
-                          [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
-                          [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
-                          [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                          (click)="openOptions($event, row)"
-                          (keydown.enter)="openOptions($event, row)"
-                          (keydown.space)="openOptions($event, row)"
-                          [attr.aria-label]="column.header + ': ' + row.grupo?.descricao">
-                          {{ row.grupo?.descricao }}
-                        </span>
+                        <div class="flex justify-center">
+                          <p-tag
+                            [value]="row.grupo?.descricao"
+                            [severity]="getGrupoBadgeSeverity(row.grupo)"
+                            [attr.aria-label]="'Grupo: ' + row.grupo?.descricao"
+                            [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : undefined"
+                            [attr.role]="!displayedColumns.includes('actions') ? 'button' : undefined"
+                            class="cursor-pointer"
+                            (click)="!displayedColumns.includes('actions') && openOptions($event, row)"
+                            (keydown.enter)="!displayedColumns.includes('actions') && openOptions($event, row)"
+                            (keydown.space)="!displayedColumns.includes('actions') && openOptions($event, row)">
+                          </p-tag>
+                        </div>
                       }
                       @default {
-                        <span
-                          [attr.role]="!displayedColumns.includes('actions') ? 'button' : null"
-                          [attr.tabindex]="!displayedColumns.includes('actions') ? '0' : null"
-                          [class.cursor-pointer]="!displayedColumns.includes('actions')"
-                          (click)="openOptions($event, row)"
-                          (keydown.enter)="openOptions($event, row)"
-                          (keydown.space)="openOptions($event, row)"
-                          [attr.aria-label]="column.header + ': ' + row[column.field]">
-                          {{ row[column.field] }}
-                        </span>
+                        @if (!displayedColumns.includes('actions')) {
+                          <button
+                            type="button"
+                            class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                            (click)="openOptions($event, row)"
+                            [attr.aria-label]="column.header + ': ' + row[column.field]">
+                            {{ row[column.field] }}
+                          </button>
+                        } @else {
+                          <span [attr.aria-label]="column.header + ': ' + row[column.field]">
+                            {{ row[column.field] }}
+                          </span>
+                        }
                       }
                     }
                   </td>
@@ -198,55 +212,62 @@
           </ng-template>
 
           <ng-template pTemplate="rowexpansion" let-row>
-            @if (rowExpansionTemplate) {
-              <ng-container [ngTemplateOutlet]="rowExpansionTemplate" [ngTemplateOutletContext]="{$implicit: row}"></ng-container>
+            @if (rowExpansionTemplate()) {
+              <ng-container [ngTemplateOutlet]="rowExpansionTemplate()"
+                            [ngTemplateOutletContext]="{$implicit: row}"></ng-container>
             } @else {
               <div class="p-3">
                 <div class="flex gap-4">
                   <div class="flex-shrink-0">
-                    <img
-                      style="width: 120px; height: 90px; object-fit: cover; border-radius: 8px;"
-                      [src]="row.imageItem?.length > 0 ? minioUrl + row.imageItem[0].nameImage : 'no-image.svg'"
-                      [alt]="'Item ' + row.nome" />
-                    </div>
-                    <div class="flex-grow-1">
-                      <p class="mb-1"><strong>Codigo:</strong> {{ row.id }}</p>
-                      <p class="mb-1"><strong>Descricao:</strong> {{ row.patrimonio ? row.patrimonio + ' - ' : '' }}{{ row.nome }}</p>
-                      <p class="mb-1"><strong>Grupo:</strong> {{ row.grupo?.descricao }}</p>
-                      <p class="mb-1"><strong>Localizacao:</strong> {{ row.localizacao }}</p>
-                      <p class="mb-0"><strong>Saldo:</strong> {{ row.saldo }}</p>
+                    <div class="relative w-120px h-[90px]">
+                      <img
+                        [ngSrc]="row.imageItem?.length > 0 ? minioUrl + row.imageItem[0].nameImage : 'no-image.svg'"
+                        [alt]="'Item ' + row.nome"
+                        fill
+                        priority="false"
+                        loading="lazy"
+                        class="object-cover rounded-lg"/>
                     </div>
                   </div>
+                  <div class="flex-grow-1">
+                    <p class="mb-1"><strong>Codigo:</strong> {{ row.id }}</p>
+                    <p class="mb-1"><strong>Descricao:</strong> {{
+                        row.patrimonio ? row.patrimonio + ' - ' : ''
+                      }}{{ row.nome }}</p>
+                    <p class="mb-1"><strong>Grupo:</strong> {{ row.grupo?.descricao }}</p>
+                    <p class="mb-1"><strong>Localizacao:</strong> {{ row.localizacao }}</p>
+                    <p class="mb-0"><strong>Saldo:</strong> {{ row.saldo }}</p>
+                  </div>
                 </div>
-              }
-            </ng-template>
+              </div>
+            }
+          </ng-template>
 
-            <ng-template pTemplate="emptymessage">
-              <tr>
-                <td [attr.colspan]="getColumnCount()" class="text-center p-4">
-                  <i class="pi pi-search" style="font-size: 3rem; color: #dee2e6;"></i>
-                  <p class="mt-3 mb-0">Nenhum item encontrado.</p>
-                </td>
-              </tr>
-            </ng-template>
-          </p-table>
-        </ng-template>
-      </p-card>
-    </div>
+          <app-table-default-templates
+            [colspan]="getColumnCount()"
+            [emptyMessage]="tableConfig.emptyMessage || 'Nenhum item encontrado'"
+            [loadingMessage]="tableConfig.loadingMessage || 'Carregando itens...'">
+          </app-table-default-templates>
+        </p-table>
 
-    <!-- Dialog for Item Reservations -->
-    <p-dialog
+      </app-prime-crud-table-wrapper>
+    </ng-template>
+  </p-card>
+</div>
+
+<!-- Dialog for Item Reservations -->
+<p-dialog
       header="Reservas do Item"
       [modal]="true"
       [(visible)]="dialogReservaitem"
-      [style]="{minWidth: '650px'}"
-      [baseZIndex]="10000">
+      [baseZIndex]="Z_INDEX.DIALOG"
+      class="dialog-md-lg">
 
       <p-table [value]="reservasItem" [tableStyle]="{'min-width': '50rem'}">
         <ng-template pTemplate="header">
           <tr>
-            <th>Reservado para</th>
-            <th>Qtde Reservada</th>
+            <th scope="col">Reservado para</th>
+            <th scope="col">Qtde Reservada</th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-reserva>
@@ -255,6 +276,16 @@
             <td>{{ reserva.reservaItem[0].qtde }}</td>
           </tr>
         </ng-template>
+        <ng-template pTemplate="loadingbody">
+          <tr>
+            <td [attr.colspan]="getColumnCount()">
+              <div class="text-center py-4">
+                <p class="text-muted mt-2 mb-0">{{ tableConfig.loadingMessage }}</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
         <ng-template pTemplate="emptymessage">
           <tr>
             <td colspan="2" class="text-center p-4">

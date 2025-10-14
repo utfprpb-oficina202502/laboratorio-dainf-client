@@ -1,56 +1,28 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  forwardRef,
-  inject,
-  Injector,
-  OnInit
-} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, OnInit} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {SolicitacaoCompra} from './solicitacaoCompra';
 import {SolicitacaoCompraService} from './solicitacaoCompra.service';
-
-// PrimeNG Components
-import {CardModule} from 'primeng/card';
-import {TableModule} from 'primeng/table';
-import {MultiSelectModule} from 'primeng/multiselect';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ButtonModule} from 'primeng/button';
-import {InputTextModule} from 'primeng/inputtext';
-import {IconFieldModule} from 'primeng/iconfield';
-import {InputIconModule} from 'primeng/inputicon';
-import {TooltipModule} from 'primeng/tooltip';
-import {PrimeCrudToolbarComponent} from '../framework/component/prime-crud-toolbar.component';
-import {ActionButtonsComponent} from '../framework/component/action-buttons.component';
+import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
+import {
+  TableDefaultTemplatesComponent
+} from '../framework/component/table-default-templates.component';
 
 @Component({
     selector: 'app-list-solicitacao-compra',
     templateUrl: './solicitacaoCompra.list.component.html',
     styleUrls: ['./solicitacaoCompra.list.component.css'],
   imports: [
-    CommonModule,
-    FormsModule,
-    CardModule,
-    TableModule,
-    MultiSelectModule,
-    ToolbarModule,
-    ButtonModule,
-    InputTextModule,
-    IconFieldModule,
-    InputIconModule,
-    TooltipModule,
-    PrimeCrudToolbarComponent,
-    ActionButtonsComponent,
+    PrimeTableSharedModule,
+    TableDefaultTemplatesComponent,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => SolicitacaoCompraListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<SolicitacaoCompra, number> implements OnInit {
-  protected solicitacaoCompraService: SolicitacaoCompraService;
-  protected injector: Injector;
+  protected override service = inject(SolicitacaoCompraService);
+  protected override columnsTable = ['id', 'descricao', 'dataSolicitacao', 'usuario', 'actions'];
+  protected override urlForm = 'solicitacao-compra/form';
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -93,34 +65,42 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
       type: 'custom',
       sortable: false,
       filterable: false,
+      exportable: false,
+      toggleable: false,
       width: '12rem',
       align: 'center'
     }
   ];
 
   constructor() {
-    const solicitacaoCompraService = inject(SolicitacaoCompraService);
-    const injector = inject(Injector);
+    super();
 
-    super(solicitacaoCompraService, injector, ['id', 'descricao', 'dataSolicitacao', 'usuario', 'actions'], 'solicitacao-compra/form');
-    this.solicitacaoCompraService = solicitacaoCompraService;
-    this.injector = injector;
-
-    this.bottomSheetEnabled = false;
     this.hostListenerColumnEnable = false;
     this.configureTable();
   }
 
   protected override getEntityName(): string {
-    return 'Solicitacao de Compra';
+    return 'Solicitação de Compra';
   }
 
   protected override getEntityPluralName(): string {
-    return 'Solicitacoes de Compra';
+    return 'Solicitações de Compra';
   }
 
   protected override getExportFileName(): string {
     return 'solicitacoes-compra';
+  }
+
+  ngOnInit(): void {
+    super.ngOnInit();
+
+    // isAlunoOrProfessor is now a computed signal from base class
+    // Check permission and load appropriate data
+    if (this.isAlunoOrProfessor()) {
+      this.findAllByUsername();
+    } else {
+      this.findAll();
+    }
   }
 
   private configureTable(): void {
@@ -130,17 +110,17 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
       globalFilterFields: ['id', 'descricao', 'dataSolicitacao'],
       defaultSortField: 'dataSolicitacao',
       defaultSortOrder: -1,
-      caption: 'Lista de Solicitacoes de Compra',
+      caption: 'Lista de Solicitações de Compra',
       trackByField: 'id',
-      emptyMessage: 'Nenhuma solicitacao de compra encontrada.',
-      loadingMessage: 'Carregando solicitacoes de compra...',
-      globalFilterPlaceholder: 'Buscar solicitacoes de compra...',
+      emptyMessage: 'Nenhuma solicitação de compra encontrada.',
+      loadingMessage: 'Carregando solicitações de compra...',
+      globalFilterPlaceholder: 'Buscar solicitações de compra...',
       columnToggle: true,
       expandable: false,
       expandMode: 'single',
       rowExpansionKey: 'id',
       stateful: true,
-      stateKey: 'solicitacao-compra-list',
+      stateKey: 'solicitacao-compra-list-v2',
       stateStorage: 'local',
       stateProps: {
         columns: true,
@@ -154,19 +134,12 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
       columnResizeMode: 'fit',
       lazy: true,
       lazyLoadOnInit: true,
-      preloadData: true,
+      preloadData: false,
       keyboardShortcuts: true
     };
 
     this.columnsTable = this.tableConfig.columns.map(column => column.field);
     this.displayedColumns = [...this.columnsTable];
-  }
-
-  ngOnInit(): void {
-    this.loginService.userLoggedIsAlunoOrProfessor().then(value => {
-      this.isAlunoOrProfessor = value;
-      this.isAlunoOrProfessor ? this.findAllByUsername() : this.findAll();
-    });
   }
 
   postFindAll(): void {

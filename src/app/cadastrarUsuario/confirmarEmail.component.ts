@@ -4,6 +4,7 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {MessageService} from "primeng/api";
 import {ProgressBar} from "primeng/progressbar";
 import {CadastrarUsuarioService} from "./cadastrarUsuario.service";
+import {extractRouteParam, parseStringParam} from "../framework/utils/route-params.operators";
 
 @Component({
     selector: "app-confirmarvalidar-email",
@@ -27,10 +28,26 @@ export class ConfirmarEmailComponent implements OnInit {
   code = '';
 
   ngOnInit() {
-    this.route.params.subscribe((params) => {
-      if (params.code) {
-        this.code = params.code;
-        this.cdr.markForCheck();
+    // Extração e validação de token com operator utilitário
+    this.route.params.pipe(
+      extractRouteParam({
+        paramName: 'code',
+        converter: parseStringParam,
+        onError: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erro',
+            detail: 'Token de confirmação inválido.'
+          });
+          this.router.navigate(['/login']);
+        }
+      })
+    ).subscribe({
+      next: (code) => {
+        if (code !== null) {
+          this.code = code;
+          this.cdr.markForCheck();
+        }
       }
     });
   }
@@ -42,7 +59,7 @@ export class ConfirmarEmailComponent implements OnInit {
     const emailConfirmacao = { code: this.code };
 
     this.cadastrarUsuarioService.confirmarEmail(emailConfirmacao).subscribe({
-      next: (e) => {
+      next: () => {
         this.showProgress = false;
         this.cdr.markForCheck();
         this.messageService.add({
@@ -52,7 +69,7 @@ export class ConfirmarEmailComponent implements OnInit {
         });
         this.router.navigate(["/login"]);
       },
-      error: (error) => {
+      error: () => {
         this.showProgress = false;
         this.cdr.markForCheck();
         this.messageService.add({

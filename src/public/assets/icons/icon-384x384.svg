@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg height="384" viewBox="0 0 384 384" width="384" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with theme color -->
+  <rect fill="#1976d2" height="384" width="384"/>
+
+  <!-- Safe zone for maskable icons (80% of size, centered) -->
+  <rect fill="#ffffff" height="307.20000000000005" opacity="0.2"
+        rx="8" width="307.20000000000005" x="38.400000000000006" y="38.400000000000006"/>
+
+  <!-- UTFPR/DAINF Logo placeholder -->
+  <text fill="#ffffff" font-family="Arial, sans-serif" font-size="57.599999999999994"
+        font-weight="bold"
+        text-anchor="middle" x="192" y="182">DAINF
+  </text>
+  <text fill="#ffffff" font-family="Arial, sans-serif" font-size="38.400000000000006"
+        text-anchor="middle"
+        x="192" y="212">UTFPR
+  </text>
+
+  <!-- Size label for development -->
+  <text fill="#ffffff" font-family="Arial, sans-serif" font-size="30.72" opacity="0.7"
+        text-anchor="middle"
+        x="192" y="374">384x384
+  </text>
+</svg>

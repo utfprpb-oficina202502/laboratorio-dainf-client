@@ -1,8 +1,12 @@
-import {Directive, ElementRef, HostListener, inject, OnInit} from '@angular/core';
+import {Directive, ElementRef, inject, OnInit} from '@angular/core';
 import {NgControl} from '@angular/forms';
 
 @Directive({
-  selector: '[formatTelefone]',
+  selector: '[appFormatTelefone]',
+  host: {
+    '(keydown)': 'onKeyDown($event)',
+    '(input)': 'onInput()'
+  }
 })
 export class TelefoneFormatDirective implements OnInit {
   private readonly el = inject<ElementRef<HTMLInputElement>>(ElementRef);
@@ -13,7 +17,6 @@ export class TelefoneFormatDirective implements OnInit {
     this.format();
   }
 
-  @HostListener('keydown', ['$event'])
   onKeyDown(e: KeyboardEvent) {
     // Permite edição/navegação e atalhos
     if (
@@ -29,7 +32,6 @@ export class TelefoneFormatDirective implements OnInit {
     e.preventDefault();
   }
 
-  @HostListener('input')
   onInput() {
     this.format();
   }

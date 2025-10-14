@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, Input} from '@angular/core';
+import {ChangeDetectionStrategy, Component, input} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {SkeletonModule} from 'primeng/skeleton';
 
@@ -7,11 +7,11 @@ import {SkeletonModule} from 'primeng/skeleton';
   imports: [CommonModule, SkeletonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+    <div class="skeleton-chart">
       <p-skeleton width="50%" height="1.5rem" class="mb-4"></p-skeleton>
-      <div [ngSwitch]="type">
+      <div [ngSwitch]="type()">
         <!-- Line/Bar Chart -->
-        @if (type === 'line' || type === 'bar') {
+        @if (type() === 'line' || type() === 'bar') {
           <div class="space-y-2">
             <div class="flex items-end gap-2 h-32">
               @for (item of [1,2,3,4,5,6,7,8,9,10]; track item) {
@@ -27,7 +27,7 @@ import {SkeletonModule} from 'primeng/skeleton';
         }
 
         <!-- Pie Chart -->
-        @if (type === 'pie') {
+        @if (type() === 'pie') {
           <div class="flex items-center justify-center">
             <p-skeleton shape="circle" size="10rem"></p-skeleton>
           </div>
@@ -43,10 +43,18 @@ import {SkeletonModule} from 'primeng/skeleton';
       </div>
     </div>
   `,
-  styles: []
+  styles: [`
+    .skeleton-chart {
+      background: var(--p-content-background, #ffffff);
+      border: 1px solid var(--p-content-border-color, #e2e8f0);
+      border-radius: var(--p-content-border-radius, 0.5rem);
+      padding: 1rem;
+      box-shadow: var(--p-card-shadow, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+    }
+  `]
 })
 export class SkeletonChartComponent {
-  @Input() type: 'line' | 'bar' | 'pie' = 'line';
+  readonly type = input<'line' | 'bar' | 'pie'>('line');
 
   getRandomHeight(): string {
     const heights = ['40%', '60%', '80%', '100%', '70%', '50%'];

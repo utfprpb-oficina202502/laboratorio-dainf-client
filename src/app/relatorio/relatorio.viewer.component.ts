@@ -1,14 +1,16 @@
+import {Z_INDEX} from '../framework/constants';
 import {Component, inject, OnInit} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {ActivatedRoute, Router} from '@angular/router';
 import {RelatorioService} from './relatorio.service';
 import {LoaderService} from '../framework/loader/loader.service';
-import {DomSanitizer} from '@angular/platform-browser';
 import {Relatorio} from './relatorio';
 import {pt} from '../framework/constantes/calendarPt';
 import {RelatorioParamsValue} from './relatorioParamsValue';
 import {StringUtils} from '../framework/util/string.utils';
+import {BreakpointService} from '../framework/services/breakpoint.service';
+import {extractRouteParam, parseNumericId} from '../framework/utils/route-params.operators';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
@@ -19,9 +21,6 @@ import {DatePickerModule} from 'primeng/datepicker';
 
 // Custom modules
 import {VoltarComponent} from '../geral/voltar/voltar.component';
-
-// Validation
-import {OnlyNumberDirective} from '../framework/directives/onlyNumber/onlyNumber.directive';
 
 @Component({
     selector: 'app-viewer-relatorio',
@@ -38,28 +37,40 @@ import {OnlyNumberDirective} from '../framework/directives/onlyNumber/onlyNumber
     DatePickerModule,
     // Custom
     VoltarComponent,
-    // Validation
-    OnlyNumberDirective
   ]
 })
 export class RelatorioViewerComponent implements OnInit {
+  reportURL: string | null = null;
+  reportBlob: Blob | null = null;
+
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly loaderService = inject(LoaderService);
-  private readonly sanitizer = inject(DomSanitizer);
   private readonly relatorioService = inject(RelatorioService);
-
-  reportHTML: any;
-  relatorioCurrent: Relatorio;
+  protected readonly breakpointService = inject(BreakpointService);
+  localePt: unknown;
+  relatorioCurrent: Relatorio | null = null;
   dialogFiltroRelatorio = false;
-  localePt: any;
-  relatorioParamValue: RelatorioParamsValue[];
+  // Constants for template
+  protected readonly Z_INDEX = Z_INDEX;
+  relatorioParamValue!: RelatorioParamsValue[];
 
   ngOnInit(): void {
     this.localePt = pt;
-    this.route.params.subscribe(params => {
-      if (params.id) {
-        this.findDadosRelatorio(params.id);
+    // Extração e validação de parâmetro ID com operator utilitário
+    this.route.params.pipe(
+      extractRouteParam({
+        paramName: 'id',
+        converter: parseNumericId,
+        onError: () => {
+          this.back();
+        }
+      })
+    ).subscribe({
+      next: (id) => {
+        if (id !== null) {
+          this.findDadosRelatorio(id);
+        }
       }
     });
   }
@@ -72,10 +83,10 @@ export class RelatorioViewerComponent implements OnInit {
     this.relatorioService.findOne(id)
       .subscribe(e => {
         this.relatorioCurrent = e;
-        if (this.relatorioCurrent.paramsList.length > 0) {
+        if (this.relatorioCurrent?.paramsList && this.relatorioCurrent.paramsList.length > 0) {
           this.openFiltro();
         } else {
-          this.generateReport(id, null);
+          this.generateReport(id, []);
         }
       });
   }
@@ -87,39 +98,43 @@ export class RelatorioViewerComponent implements OnInit {
 
   generateReport(id: number, params: RelatorioParamsValue[]) {
     this.loaderService.show();
-    const mapToSend: Map<string, any> = new Map<string, any>();
+    const mapToSend = new Map<string, unknown>();
     mapToSend.set("idRel", id);
     mapToSend.set("params", params);
 
-    const convMap = {};
-    mapToSend.forEach((val: string, key: string) => {
+    const convMap: Record<string, unknown> = {};
+    mapToSend.forEach((val: unknown, key: string) => {
       convMap[key] = val;
     });
 
     this.relatorioService.generateReport(convMap)
       .subscribe(e => {
-        let file = new Blob([e], {type: 'application/pdf'});
-        let fileURL = URL.createObjectURL(file);
-        this.reportHTML = this.getSafeUrl(fileURL);
+        this.reportBlob = new Blob([e], {type: 'application/pdf'});
+        this.reportURL = URL.createObjectURL(this.reportBlob);
         this.loaderService.hide();
       });
   }
 
-  getSafeUrl(url) {
-    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  downloadReport() {
+    if (this.reportURL && this.relatorioCurrent) {
+      const link = document.createElement('a');
+      link.href = this.reportURL;
+      link.download = `${this.relatorioCurrent.nome}.pdf`;
+      link.click();
+    }
   }
 
   filtroIsValid() {
     let isValid = true;
     this.relatorioParamValue.forEach(value => {
-      if (StringUtils.isBlank(value.valueParam)) {
+      if (StringUtils.isBlank(value.valueParam as string)) {
         isValid = false;
       }
     });
     return isValid;
   }
 
-  updateParamsValue(tipoFiltro: string, nameFiltro: string, valueFiltro: any) {
+  updateParamsValue(tipoFiltro: string, nameFiltro: string, valueFiltro: unknown) {
     this.relatorioParamValue.forEach(param => {
       if (param.nameParam === nameFiltro) {
         if (tipoFiltro === 'D') {
@@ -137,25 +152,29 @@ export class RelatorioViewerComponent implements OnInit {
     });
   }
 
-  onChangeValueParam($event: any, tipoFiltro: string, nameFiltro: string) {
+  onChangeValueParam($event: unknown, tipoFiltro: string, nameFiltro: string) {
     if (tipoFiltro === 'D') {
-      this.updateParamsValue(tipoFiltro, nameFiltro, new Date($event).toLocaleDateString());
+      this.updateParamsValue(tipoFiltro, nameFiltro, new Date($event as string | number | Date).toLocaleDateString());
     } else {
-      this.updateParamsValue(tipoFiltro, nameFiltro, $event.target.value);
+      this.updateParamsValue(tipoFiltro, nameFiltro, ($event as {
+        target: { value: unknown }
+      }).target.value);
     }
   }
 
   initValueDefaultFiltro() {
-    this.relatorioParamValue = new Array();
-    this.relatorioCurrent.paramsList.forEach(param => {
-      let valueParamFiltro = new RelatorioParamsValue();
+    this.relatorioParamValue = [];
+    this.relatorioCurrent?.paramsList?.forEach(param => {
+      const valueParamFiltro = new RelatorioParamsValue();
       valueParamFiltro.nameParam = param.nameParam;
       this.relatorioParamValue.push(valueParamFiltro);
     });
   }
 
   filtrar() {
-    this.generateReport(this.relatorioCurrent.id, this.relatorioParamValue);
-    this.dialogFiltroRelatorio = false;
+    if (this.relatorioCurrent?.id) {
+      this.generateReport(this.relatorioCurrent.id, this.relatorioParamValue);
+      this.dialogFiltroRelatorio = false;
+    }
   }
 }

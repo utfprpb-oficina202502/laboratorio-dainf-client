@@ -1,20 +1,20 @@
-<div class="container-fluid my-3">
+<div class="w-full px-4 my-3">
   <p-card>
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
-          <app-voltar (onClick)="back()"></app-voltar>
+          <app-voltar (backClick)="back()"></app-voltar>
           <h2 class="text-xl font-semibold m-0">Cadastro de Item</h2>
         </div>
         @if (canShowImagens()) {
-          <button
+          <p-button
             type="button"
-            pButton
             icon="pi pi-images"
-            class="p-button-text"
+            [text]="true"
             pTooltip="Imagens"
-            (click)="showDialogImagens()"
-          ></button>
+            [attr.aria-label]="'Ver imagens do item'"
+            (onClick)="showDialogImagens()">
+          </p-button>
         }
       </div>
     </ng-template>
@@ -180,7 +180,8 @@
                 [control]="formGroup.get('grupo')"
                 label="Grupo"
                 [required]="true"
-                fieldId="grupo">
+                fieldId="grupo"
+                hint="Digite pelo menos 2 caracteres para buscar">
                 <div class="flex items-center gap-2">
                   <p-autoComplete
                     inputId="grupo"
@@ -189,17 +190,18 @@
                     dataKey="id"
                     appendTo="body"
                     [forceSelection]="true"
-                    [dropdown]="true"
+                    minQueryLength="2"
+                    placeholder="Digite para buscar..."
                     [suggestions]="grupoList()"
                     (completeMethod)="findGrupos($event)"
                     styleClass="flex-1"
                     inputStyleClass="w-full">
                   </p-autoComplete>
                   @if (formGroup.get('grupo')?.value?.id) {
-                    <app-cadastroRapido
+                    <app-cadastro-rapido
                       href="/grupo/form"
                       [id]="formGroup.get('grupo')?.value?.id">
-                    </app-cadastroRapido>
+                    </app-cadastro-rapido>
                   }
                 </div>
               </app-form-field>
@@ -233,7 +235,7 @@
                   name="anexos[]"
                   #fileUpload
                   [url]="getUrlUploadImages()"
-                  (onUpload)="onUpload($event)"
+                  (onUpload)="onUpload()"
                   multiple="multiple"
                   [showUploadButton]="false"
                   chooseLabel="Inserir Imagens"
@@ -259,7 +261,7 @@
           <!-- Action Buttons -->
           @if (!isAlunoOrProfessor()) {
             <div class="flex justify-end gap-2 mt-4">
-              <app-cancelar (onClick)="back()"></app-cancelar>
+              <app-cancelar (cancelClick)="back()"></app-cancelar>
               <app-salvar [typeButton]="'submit'" [disabled]="isLoading()"></app-salvar>
             </div>
           }
@@ -274,8 +276,8 @@
   header="Imagens do Item"
   [modal]="true"
   [(visible)]="dialogImagens"
-  [style]="{ minWidth: '400px', maxWidth: '80%' }"
-  [baseZIndex]="10000"
+  [baseZIndex]="Z_INDEX.DIALOG"
+  class="dialog-xl"
   [focusOnShow]="false">
   <p-carousel
     [value]="images()"
@@ -288,8 +290,7 @@
       <div class="flex flex-col items-center gap-2">
         <img
           ngSrc="minioUrl() + image.nameImage"
-          class="max-w-full"
-          style="width: 300px"
+          class="max-w-full w-300px"
           [alt]="'Item'" fill/>
         @if (!isAlunoOrProfessor()) {
           <button

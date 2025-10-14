@@ -1,9 +1,9 @@
-<div class="container-fluid my-3">
+<div class="w-full px-4 my-3">
   <p-card>
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
-          <app-voltar (onClick)="back()"></app-voltar>
+          <app-voltar (backClick)="back()"></app-voltar>
           <h2 class="text-xl font-semibold m-0">Cadastro de Saída</h2>
         </div>
       </div>
@@ -56,6 +56,8 @@
                   dataType="string"
                   dateFormat="dd/mm/yy"
                   [maxDate]="maxDate()"
+                  [touchUI]="breakpointService.isMobile()"
+                  [readonlyInput]="breakpointService.isMobile()"
                   styleClass="w-full">
                 </p-datePicker>
               </app-form-field>
@@ -68,11 +70,13 @@
               <!-- Item AutoComplete -->
               <div class="col-span-12 md:col-span-7">
                 <label for="item" class="block mb-2 font-medium">Item</label>
+                <small class="block mb-2 text-gray-600">Digite pelo menos 2 caracteres para
+                  buscar</small>
                 <div class="flex items-center gap-2">
-                  <app-cadastroRapido
+                  <app-cadastro-rapido
                     [href]="'/item/form'"
                     [id]="tempItem()?.id">
-                  </app-cadastroRapido>
+                  </app-cadastro-rapido>
                   <p-autoComplete
                     inputId="item"
                     [(ngModel)]="tempItem"
@@ -82,9 +86,10 @@
                     (onSelect)="setQtdeDefaultItem()"
                     optionLabel="nome"
                     dataKey="id"
-                    [dropdown]="true"
+                    minQueryLength="2"
                     appendTo="body"
                     styleClass="w-full"
+                    placeholder="Digite para buscar..."
                     [forceSelection]="true">
                     <ng-template let-item pTemplate="item">
                       <div class="flex items-center gap-2">
@@ -118,11 +123,12 @@
 
               <!-- Add Button -->
               <div class="col-span-12 md:col-span-1">
-                <label class="block mb-2 font-medium invisible">Action</label>
+                <div class="block mb-2 font-medium invisible" aria-hidden="true">Action</div>
                 <p-button
                   icon="pi pi-check"
                   (onClick)="insertItem()"
                   severity="success"
+                  [attr.aria-label]="'Adicionar item à saída'"
                   styleClass="w-full"
                   pTooltip="Adicionar Item">
                 </p-button>
@@ -136,9 +142,9 @@
               <p-table [value]="saidaItems()" styleClass="p-datatable-sm">
                 <ng-template pTemplate="header">
                   <tr>
-                    <th>Item</th>
-                    <th class="text-center" style="width: 150px">Qtde</th>
-                    <th class="text-center" style="width: 100px">Opções</th>
+                    <th scope="col">Item</th>
+                    <th scope="col" class="text-center" style="width: 150px">Qtde</th>
+                    <th class="text-center w-100px" scope="col">Opções</th>
                   </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-saidaItem>
@@ -198,7 +204,7 @@
           <!-- Action Buttons (only if not from emprestimo) -->
           @if (!isFromEmprestimo()) {
             <div class="flex justify-end gap-2 mt-4">
-              <app-cancelar (onClick)="back()"></app-cancelar>
+              <app-cancelar (cancelClick)="back()"></app-cancelar>
               <app-salvar [typeButton]="'submit'" [disabled]="isLoading()"></app-salvar>
             </div>
           }
