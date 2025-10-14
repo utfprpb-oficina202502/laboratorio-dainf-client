@@ -1,23 +1,55 @@
 import {Injectable} from '@angular/core';
 
 /**
- * Service responsible for managing keyboard shortcuts for table components.
+ * Serviço responsável pelo gerenciamento de atalhos de teclado para componentes de tabela.
  *
- * Features:
- * - Configurable keyboard shortcuts
- * - Smart input field detection (don't trigger shortcuts when typing)
- * - Event prevention and propagation control
- * - Reusable across different table components
+ * Funcionalidades:
+ * - Atalhos de teclado configuráveis
+ * - Detecção inteligente de campos de entrada (não dispara atalhos ao digitar)
+ * - Controle de prevenção de evento padrão e propagação
+ * - Reutilizável em diferentes componentes de tabela
+ *
+ * Atalhos padrão incluídos:
+ * - Ctrl+Alt+F: Foca o filtro global
+ * - Ctrl+Alt+N: Abre formulário para novo item
+ * - Ctrl+Alt+E: Exporta para Excel
+ * - Ctrl+Alt+C: Abre painel de toggle de colunas
+ * - Ctrl+Alt+L: Limpa o filtro global
+ * - Delete: Deleta itens selecionados
+ *
+ * Uso em componentes:
+ * ```typescript
+ * export class MyListComponent {
+ *   private keyboardService = inject(TableKeyboardService);
+ *   private shortcuts: KeyboardShortcut[] = [];
+ *
+ *   ngOnInit(): void {
+ *     this.shortcuts = this.keyboardService.buildDefaultShortcuts({
+ *       focusGlobalFilter: () => this.focusFilter(),
+ *       openForm: () => this.openNewForm(),
+ *       exportExcel: () => this.export(),
+ *       openColumnToggle: () => this.openColumns(),
+ *       clearGlobalFilter: () => this.clearFilter(),
+ *       deleteSelected: () => this.deleteItems()
+ *     });
+ *   }
+ *
+ *   @HostListener('document:keydown', ['$event'])
+ *   onKeyDown(event: KeyboardEvent): void {
+ *     this.keyboardService.handleKeyboardEvent(event, this.shortcuts);
+ *   }
+ * }
+ * ```
  */
 @Injectable({
   providedIn: 'root'
 })
 export class TableKeyboardService {
   /**
-   * Build default keyboard shortcuts for table operations
+   * Constrói atalhos de teclado padrão para operações de tabela
    *
-   * @param callbacks Object containing callback functions for each shortcut
-   * @returns Array of keyboard shortcut configurations
+   * @param callbacks Objeto contendo funções callback para cada atalho
+   * @returns Array de configurações de atalhos de teclado
    */
   buildDefaultShortcuts(callbacks: KeyboardShortcutCallbacks): KeyboardShortcut[] {
     return [
@@ -55,20 +87,20 @@ export class TableKeyboardService {
   }
 
   /**
-   * Handle keyboard event and execute matching shortcut
+   * Processa evento de teclado e executa atalho correspondente
    *
-   * @param event Keyboard event from document
-   * @param shortcuts Array of configured shortcuts
-   * @returns true if a shortcut was triggered, false otherwise
+   * @param event Evento de teclado do documento
+   * @param shortcuts Array de atalhos configurados
+   * @returns true se um atalho foi disparado, false caso contrário
    */
   handleKeyboardEvent(event: KeyboardEvent, shortcuts: KeyboardShortcut[]): boolean {
-    // Don't trigger shortcuts when user is typing in input/textarea
-    // unless using modifier keys (Ctrl/Alt)
+    // Não dispara atalhos quando usuário está digitando em input/textarea
+    // a menos que esteja usando teclas modificadoras (Ctrl/Alt)
     if (this.isTypingInInputField(event)) {
       return false;
     }
 
-    // Find and execute matching shortcut
+    // Encontra e executa atalho correspondente
     for (const shortcut of shortcuts) {
       if (shortcut.predicate(event)) {
         if (shortcut.preventDefault) {
@@ -84,52 +116,52 @@ export class TableKeyboardService {
   }
 
   /**
-   * Check if user is typing in an input field
-   * Shortcuts with modifier keys (Ctrl/Alt) still work in input fields
+   * Verifica se o usuário está digitando em um campo de entrada
+   * Atalhos com teclas modificadoras (Ctrl/Alt) ainda funcionam em campos de entrada
    *
-   * @param event Keyboard event
-   * @returns true if typing in input field without modifiers
+   * @param event Evento de teclado
+   * @returns true se estiver digitando em campo de entrada sem modificadores
    */
   private isTypingInInputField(event: KeyboardEvent): boolean {
     const target = event.target as HTMLElement | null;
     const tagName = (target?.tagName || '').toLowerCase();
 
-    // Allow shortcuts with Ctrl or Alt even in input fields
+    // Permite atalhos com Ctrl ou Alt mesmo em campos de entrada
     if (event.ctrlKey || event.altKey) {
       return false;
     }
 
-    // Block shortcuts when typing in input/textarea
+    // Bloqueia atalhos quando digitando em input/textarea
     return ['input', 'textarea'].includes(tagName);
   }
 }
 
 /**
- * Interface for keyboard shortcut configuration
+ * Interface para configuração de atalho de teclado
  */
 export interface KeyboardShortcut {
-  /** Function to test if this shortcut matches the event */
+  /** Função para testar se este atalho corresponde ao evento */
   predicate: (event: KeyboardEvent) => boolean;
-  /** Function to execute when shortcut is triggered */
+  /** Função a executar quando o atalho é disparado */
   action: () => void;
-  /** Whether to prevent default behavior and stop propagation */
+  /** Se deve prevenir comportamento padrão e parar propagação */
   preventDefault: boolean;
 }
 
 /**
- * Interface for callback functions used by default shortcuts
+ * Interface para funções callback usadas pelos atalhos padrão
  */
 export interface KeyboardShortcutCallbacks {
-  /** Ctrl+Alt+F: Focus global filter input */
+  /** Ctrl+Alt+F: Foca o campo de filtro global */
   focusGlobalFilter: () => void;
-  /** Ctrl+Alt+N: Open form to create new item */
+  /** Ctrl+Alt+N: Abre formulário para criar novo item */
   openForm: () => void;
-  /** Ctrl+Alt+E: Export to Excel */
+  /** Ctrl+Alt+E: Exporta para Excel */
   exportExcel: () => void;
-  /** Ctrl+Alt+C: Open column toggle panel */
+  /** Ctrl+Alt+C: Abre painel de toggle de colunas */
   openColumnToggle: () => void;
-  /** Ctrl+Alt+L: Clear global filter */
+  /** Ctrl+Alt+L: Limpa o filtro global */
   clearGlobalFilter: () => void;
-  /** Delete: Delete selected items */
+  /** Delete: Deleta itens selecionados */
   deleteSelected: () => void;
 }

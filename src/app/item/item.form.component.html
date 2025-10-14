@@ -180,7 +180,8 @@
                 [control]="formGroup.get('grupo')"
                 label="Grupo"
                 [required]="true"
-                fieldId="grupo">
+                fieldId="grupo"
+                hint="Digite pelo menos 2 caracteres para buscar">
                 <div class="flex items-center gap-2">
                   <p-autoComplete
                     inputId="grupo"
@@ -189,7 +190,8 @@
                     dataKey="id"
                     appendTo="body"
                     [forceSelection]="true"
-                    [dropdown]="true"
+                    minQueryLength="2"
+                    placeholder="Digite para buscar..."
                     [suggestions]="grupoList()"
                     (completeMethod)="findGrupos($event)"
                     styleClass="flex-1"
@@ -288,8 +290,7 @@
       <div class="flex flex-col items-center gap-2">
         <img
           ngSrc="minioUrl() + image.nameImage"
-          class="max-w-full"
-          class="w-300px"
+          class="max-w-full w-300px"
           [alt]="'Item'" fill/>
         @if (!isAlunoOrProfessor()) {
           <button

@@ -38,7 +38,8 @@
                 [control]="formGroup.get('usuarioEmprestimo')"
                 label="Aluno/Professor"
                 [required]="true"
-                fieldId="usuarioEmprestimo">
+                fieldId="usuarioEmprestimo"
+                hint="Digite pelo menos 2 caracteres para buscar">
                 <p-autoComplete
                   inputId="usuarioEmprestimo"
                   formControlName="usuarioEmprestimo"
@@ -48,9 +49,9 @@
                   (completeMethod)="findUsuarios($event)"
                   (onSelect)="onUsuarioEmprestimoChange($event)"
                   [forceSelection]="true"
-                  [dropdown]="true"
                   [disabled]="disableForm()"
-                  placeholder="Selecione o aluno/professor"
+                  minQueryLength="2"
+                  placeholder="Digite para buscar..."
                   styleClass="w-full"
                   [inputStyle]="{ width: '100%' }">
                 </p-autoComplete>
@@ -152,7 +153,10 @@
               </div>
 
               <div class="col-span-12 md:col-span-6">
-                <app-form-field label="Item" fieldId="item">
+                <app-form-field
+                  fieldId="item"
+                  hint="Digite pelo menos 2 caracteres para buscar"
+                  label="Item">
                   <div class="flex flex-col gap-1">
                     <div class="flex items-center gap-2">
                       <p-autoComplete
@@ -164,8 +168,8 @@
                         [suggestions]="itemList()"
                         (completeMethod)="findProdutos($event)"
                         (onSelect)="setDevolucaoItem()"
-                        [dropdown]="true"
-                        placeholder="Selecione o item"
+                        minQueryLength="2"
+                        placeholder="Digite para buscar..."
                         class="w-full"
                         [inputStyle]="{ width: '100%' }">
                         <ng-template let-item pTemplate="item">

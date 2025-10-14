@@ -16,6 +16,8 @@ DAINF/UTFPR lab management system
 - Auth: JWT interceptor, permission pre-fetch during login
 - Routing: Lazy load via `loadComponent()` for lists
 - Framework: `src/app/framework/` (charts, components, services, utils)
+  - **Services**: Table services (5), Form services (3), Logger, Loader
+  - **Components**: Base classes for CRUD lists/forms, wrappers, utilities
 - State: OnPush + `cdr.markForCheck()` after async, signals for local state
 - Loading: `LoaderComponent` z-index 9999
 
@@ -26,12 +28,17 @@ DAINF/UTFPR lab management system
 **Charts (amCharts5):** ALWAYS `disposeAllCharts()` before rebuild | `ngOnDestroy()` disposal | Update: change `chart.data` only
 **PrimeNG:** `[focusOnShow]="false"` for dialogs | `[lazy]="true"` + `[totalRecords]` for server pagination | `PrimeCrudListComponent` + `PrimeCrudToolbarComponent` base classes
 **Forms:** Extend `PrimeReactiveCrudFormComponent` | Use `FormFieldComponent` wrapper | `LoaderService`: `show()`, `hide()`, `showWithCancel()`
+**Form Services:** `inject(FormValidationService)` for validation/errors | `inject(FormStateManagerService)` for state ops | `inject(FormBusinessRulesService)` for domain logic | All services in `framework/services/` with JSDoc pt-BR
+**Optimized Search:** Use `minQueryLength="2"` on `p-autoComplete` for database searches | Add hint text: "Digite pelo menos 2 caracteres para buscar" | Prevents empty/single-char queries reducing backend load | Example: `src/app/compra/compra.form.component.html:109-130` | Pattern: `<p-autoComplete minQueryLength="2" placeholder="Digite para buscar...">` with `hint="Digite pelo menos 2 caracteres para buscar"`
 **Route Params:** Use `extractRouteParam()` from `framework/utils/route-params.operators` | Converters: `parseNumericId`, `parseStringParam`, `parseCodeParam`, `parsePositiveId`, `parseBooleanParam` | Auto-unsubscribe with `take(1)` | Type-safe with generics | Error callbacks: `onError: (value) => logger.warn()` | Example: `this.route.params.pipe(extractRouteParam({paramName: 'id', converter: parseNumericId})).subscribe(id => {...})`
 **Examples:** `src/app/grupo/grupo.{list,form}.component.ts`
 
 ## Code Rules
 
-**Quality:** Complexity ≤15 | `?.` not `&&` chains | `Object.hasOwn()` | `??=` | `replaceAll()` | `substring()` not `substr()` | `<button>` not `role="button"` | **Comments in pt-BR**
+**Quality:** Complexity ≤15 | `?.` not `&&` chains | `Object.hasOwn()` | `??=` | `replaceAll()` | `substring()` not `substr()` | `<button>` not `role="button"`
+**Documentation:** JSDoc pt-BR for services/public methods | Include `@param`, `@returns`, `@example` | Usage examples in class-level docs | Comments in pt-BR
+**Testing:** Jest for unit tests | 50+ tests per service expected | Test edge cases (null, undefined, empty arrays) | Integration tests for complex flows | Run `npm test -- service-name.spec.ts`
+**Simplification:** Prefer truthy/falsy checks over explicit comparisons | `i.id` not `i.id !== null && i.id !== 0` | Leverage TS operators: `??` `?.` `??=` | Remove redundant conditions
 **Loops:** `for...of` when need `break`/`continue` or type narrowing | `forEach` OK for simple side-effects
 **Style:** Single quotes | 140 chars max | Semicolons | 'app-' prefix
 **Angular:** `input()`/`output()` not decorators | `@if`/`@for` not `*ngIf`/`*ngFor` | NO `ngClass`/`ngStyle` | `inject()` not constructor DI
@@ -45,3 +52,21 @@ DAINF/UTFPR lab management system
 - Chart disposal mandatory to prevent memory leaks
 - Locale pt-BR throughout (forms, errors, pagination)
 - See ARCHITECTURE_REPORT.md for detailed patterns
+
+## Framework Services
+
+**Table Services** (`framework/services/`):
+
+- `TableFilterService`: Filter operations, search, multi-column filtering
+- `TableSortService`: Sort operations, multi-column sorting
+- `TablePaginationService`: Pagination state, page calculations
+- `TableSelectionService`: Row selection, bulk operations
+- `TableExportService`: CSV/Excel export with encoding handling
+
+**Form Services** (`framework/services/`):
+
+- `FormValidationService`: Validation, error messages (pt-BR), touched state
+- `FormStateManagerService`: State operations (patch, merge, reset, clone, changes detection)
+- `FormBusinessRulesService`: Domain logic (user assignment, totals, saldo validation, item management)
+
+All services: `@Injectable({providedIn: 'root'})` | Use `inject()` | JSDoc pt-BR | 40-50+ tests per service

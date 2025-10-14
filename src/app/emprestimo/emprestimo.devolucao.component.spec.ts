@@ -12,7 +12,7 @@ import {LoggerService} from '../framework/services/logger.service';
 
 describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
   let component: EmprestimoDevolucaoComponent;
-  let cdrSpy: jest.SpyInstance;
+  let emprestimo: Emprestimo;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -30,13 +30,11 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
     const fixture = TestBed.createComponent(EmprestimoDevolucaoComponent);
     component = fixture.componentInstance;
 
-    // Mock do ChangeDetectorRef
-    cdrSpy = jest.spyOn(component['cdr'], 'markForCheck');
-
     // Inicializa objeto de empréstimo vazio
-    component.object = {
+    emprestimo = {
       emprestimoDevolucaoItem: []
     } as unknown as Emprestimo;
+    component.emprestimo.set(emprestimo);
   });
 
   // Helper para criar item de teste
@@ -56,7 +54,7 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
     qtde: qtde,
     statusDevolucao: status,
     item: createItem(itemId, `Item ${itemId}`),
-    emprestimo: component.object
+    emprestimo: emprestimo
   } as EmprestimoDevolucaoItem);
 
   describe('Consolidação de quantidades', () => {
@@ -66,18 +64,18 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
       const duplicata1 = createDevolucaoItem(0, 100, 2, StatusDevolucao.D);
       const duplicata2 = createDevolucaoItem(null, 100, 3, StatusDevolucao.S);
 
-      component.object.emprestimoDevolucaoItem = [itemOriginal, duplicata1, duplicata2];
-      component.itensPendentes = [itemOriginal];
-      component.itensDevolvidos = [duplicata1];
-      component.itensSaida = [duplicata2];
+      emprestimo.emprestimoDevolucaoItem = [itemOriginal, duplicata1, duplicata2];
+      component.itensPendentes.set([itemOriginal]);
+      component.itensDevolvidos.set([duplicata1]);
+      component.itensSaida.set([duplicata2]);
 
       // Act
       component.removeItensDuplicadosByItem(itemOriginal);
 
       // Assert: Quantidade total = 5 + 2 + 3 = 10
       expect(itemOriginal.qtde).toBe(10);
-      expect(component.object.emprestimoDevolucaoItem).toHaveLength(1);
-      expect(component.object.emprestimoDevolucaoItem[0]).toBe(itemOriginal);
+      expect(emprestimo.emprestimoDevolucaoItem).toHaveLength(1);
+      expect(emprestimo.emprestimoDevolucaoItem[0]).toBe(itemOriginal);
     });
 
     it('deve consolidar quantidades quando há múltiplas duplicatas na mesma coluna', () => {
@@ -87,16 +85,16 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
       const dup2 = createDevolucaoItem(0, 100, 3);
       const dup3 = createDevolucaoItem(null, 100, 5);
 
-      component.object.emprestimoDevolucaoItem = [itemOriginal, dup1, dup2, dup3];
-      component.itensPendentes = [itemOriginal, dup1, dup2, dup3];
+      emprestimo.emprestimoDevolucaoItem = [itemOriginal, dup1, dup2, dup3];
+      component.itensPendentes.set([itemOriginal, dup1, dup2, dup3]);
 
       // Act
       component.removeItensDuplicadosByItem(itemOriginal);
 
       // Assert: 10 + 2 + 3 + 5 = 20
       expect(itemOriginal.qtde).toBe(20);
-      expect(component.itensPendentes).toHaveLength(1);
-      expect(component.itensPendentes[0]).toBe(itemOriginal);
+      expect(component.itensPendentes()).toHaveLength(1);
+      expect(component.itensPendentes()[0]).toBe(itemOriginal);
     });
   });
 
@@ -107,16 +105,16 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
       const duplicata1 = createDevolucaoItem(0, 100, 3);
       const duplicata2 = createDevolucaoItem(null, 100, 2);
 
-      component.object.emprestimoDevolucaoItem = [duplicata1, itemOriginal, duplicata2];
-      component.itensPendentes = [duplicata1, itemOriginal, duplicata2];
+      emprestimo.emprestimoDevolucaoItem = [duplicata1, itemOriginal, duplicata2];
+      component.itensPendentes.set([duplicata1, itemOriginal, duplicata2]);
 
       // Act
       component.removeItensDuplicadosByItem(itemOriginal);
 
       // Assert: Item canônico (id=5) deve ser mantido
-      expect(component.object.emprestimoDevolucaoItem).toHaveLength(1);
-      expect(component.object.emprestimoDevolucaoItem[0].id).toBe(5);
-      expect(component.object.emprestimoDevolucaoItem[0].qtde).toBe(12); // 7 + 3 + 2
+      expect(emprestimo.emprestimoDevolucaoItem).toHaveLength(1);
+      expect(emprestimo.emprestimoDevolucaoItem[0].id).toBe(5);
+      expect(emprestimo.emprestimoDevolucaoItem[0].qtde).toBe(12); // 7 + 3 + 2
     });
 
     it('deve usar primeira duplicata como canônico quando não há item original', () => {
@@ -125,15 +123,15 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
       const dup2 = createDevolucaoItem(0, 100, 3);
       const dup3 = createDevolucaoItem(null, 100, 2);
 
-      component.object.emprestimoDevolucaoItem = [dup1, dup2, dup3];
-      component.itensPendentes = [dup1, dup2, dup3];
+      emprestimo.emprestimoDevolucaoItem = [dup1, dup2, dup3];
+      component.itensPendentes.set([dup1, dup2, dup3]);
 
       // Act
       component.removeItensDuplicadosByItem(dup1);
 
       // Assert: Primeira duplicata (dup1) deve ser mantida como canônica
-      expect(component.object.emprestimoDevolucaoItem).toHaveLength(1);
-      expect(component.object.emprestimoDevolucaoItem[0]).toBe(dup1);
+      expect(emprestimo.emprestimoDevolucaoItem).toHaveLength(1);
+      expect(emprestimo.emprestimoDevolucaoItem[0]).toBe(dup1);
       expect(dup1.qtde).toBe(9); // 4 + 3 + 2
     });
   });
@@ -146,23 +144,23 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
       const dup2 = createDevolucaoItem(0, 100, 3, StatusDevolucao.D);
       const dup3 = createDevolucaoItem(null, 100, 4, StatusDevolucao.S);
 
-      component.object.emprestimoDevolucaoItem = [itemOriginal, dup1, dup2, dup3];
-      component.itensPendentes = [itemOriginal, dup1];
-      component.itensDevolvidos = [dup2];
-      component.itensSaida = [dup3];
+      emprestimo.emprestimoDevolucaoItem = [itemOriginal, dup1, dup2, dup3];
+      component.itensPendentes.set([itemOriginal, dup1]);
+      component.itensDevolvidos.set([dup2]);
+      component.itensSaida.set([dup3]);
 
       // Act
       component.removeItensDuplicadosByItem(itemOriginal);
 
       // Assert: Todas as listas devem conter apenas o item original
-      expect(component.object.emprestimoDevolucaoItem).toHaveLength(1);
-      expect(component.object.emprestimoDevolucaoItem[0]).toBe(itemOriginal);
+      expect(emprestimo.emprestimoDevolucaoItem).toHaveLength(1);
+      expect(emprestimo.emprestimoDevolucaoItem[0]).toBe(itemOriginal);
 
-      expect(component.itensPendentes).toHaveLength(1);
-      expect(component.itensPendentes[0]).toBe(itemOriginal);
+      expect(component.itensPendentes()).toHaveLength(1);
+      expect(component.itensPendentes()[0]).toBe(itemOriginal);
 
-      expect(component.itensDevolvidos).toHaveLength(0);
-      expect(component.itensSaida).toHaveLength(0);
+      expect(component.itensDevolvidos()).toHaveLength(0);
+      expect(component.itensSaida()).toHaveLength(0);
     });
 
     it('deve remover apenas duplicatas do item específico, mantendo outros itens', () => {
@@ -171,17 +169,17 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
       const item100Dup = createDevolucaoItem(0, 100, 3);
       const item200 = createDevolucaoItem(2, 200, 7);
 
-      component.object.emprestimoDevolucaoItem = [item100Original, item100Dup, item200];
-      component.itensPendentes = [item100Original, item100Dup, item200];
+      emprestimo.emprestimoDevolucaoItem = [item100Original, item100Dup, item200];
+      component.itensPendentes.set([item100Original, item100Dup, item200]);
 
       // Act
       component.removeItensDuplicadosByItem(item100Original);
 
       // Assert: Item 200 deve ser mantido intacto
-      expect(component.object.emprestimoDevolucaoItem).toHaveLength(2);
-      expect(component.object.emprestimoDevolucaoItem).toContain(item100Original);
-      expect(component.object.emprestimoDevolucaoItem).toContain(item200);
-      expect(component.object.emprestimoDevolucaoItem).not.toContain(item100Dup);
+      expect(emprestimo.emprestimoDevolucaoItem).toHaveLength(2);
+      expect(emprestimo.emprestimoDevolucaoItem).toContain(item100Original);
+      expect(emprestimo.emprestimoDevolucaoItem).toContain(item200);
+      expect(emprestimo.emprestimoDevolucaoItem).not.toContain(item100Dup);
 
       expect(item200.qtde).toBe(7); // Quantidade do item 200 inalterada
     });
@@ -192,8 +190,8 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
       // Arrange: Apenas item original sem duplicatas
       const itemOriginal = createDevolucaoItem(1, 100, 5);
 
-      component.object.emprestimoDevolucaoItem = [itemOriginal];
-      component.itensPendentes = [itemOriginal];
+      emprestimo.emprestimoDevolucaoItem = [itemOriginal];
+      component.itensPendentes.set([itemOriginal]);
 
       const qtdeOriginal = itemOriginal.qtde;
 
@@ -202,8 +200,7 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
 
       // Assert: Nada deve mudar
       expect(itemOriginal.qtde).toBe(qtdeOriginal);
-      expect(component.object.emprestimoDevolucaoItem).toHaveLength(1);
-      expect(cdrSpy).not.toHaveBeenCalled();
+      expect(emprestimo.emprestimoDevolucaoItem).toHaveLength(1);
     });
 
     it('deve lidar com lista vazia', () => {
@@ -214,23 +211,22 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
       component.removeItensDuplicadosByItem(itemTest);
 
       // Assert: Não deve gerar erro
-      expect(component.object.emprestimoDevolucaoItem).toHaveLength(0);
-      expect(cdrSpy).not.toHaveBeenCalled();
+      expect(emprestimo.emprestimoDevolucaoItem).toHaveLength(0);
     });
 
     it('deve lidar com único item duplicado', () => {
       // Arrange: Apenas uma duplicata, sem original
       const duplicata = createDevolucaoItem(0, 100, 5);
 
-      component.object.emprestimoDevolucaoItem = [duplicata];
-      component.itensPendentes = [duplicata];
+      emprestimo.emprestimoDevolucaoItem = [duplicata];
+      component.itensPendentes.set([duplicata]);
 
       // Act
       component.removeItensDuplicadosByItem(duplicata);
 
       // Assert: Duplicata deve se tornar canônica e permanecer
-      expect(component.object.emprestimoDevolucaoItem).toHaveLength(1);
-      expect(component.object.emprestimoDevolucaoItem[0]).toBe(duplicata);
+      expect(emprestimo.emprestimoDevolucaoItem).toHaveLength(1);
+      expect(emprestimo.emprestimoDevolucaoItem[0]).toBe(duplicata);
       expect(duplicata.qtde).toBe(5);
     });
 
@@ -241,50 +237,19 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
       const dupDevolvido = createDevolucaoItem(0, 100, 3, StatusDevolucao.D);
       const dupSaida = createDevolucaoItem(null, 100, 2, StatusDevolucao.S);
 
-      component.object.emprestimoDevolucaoItem = [original, dupPendente, dupDevolvido, dupSaida];
-      component.itensPendentes = [original, dupPendente];
-      component.itensDevolvidos = [dupDevolvido];
-      component.itensSaida = [dupSaida];
+      emprestimo.emprestimoDevolucaoItem = [original, dupPendente, dupDevolvido, dupSaida];
+      component.itensPendentes.set([original, dupPendente]);
+      component.itensDevolvidos.set([dupDevolvido]);
+      component.itensSaida.set([dupSaida]);
 
       // Act
       component.removeItensDuplicadosByItem(original);
 
       // Assert: Original consolidado, outras colunas limpas
       expect(original.qtde).toBe(20); // 10 + 5 + 3 + 2
-      expect(component.itensPendentes).toEqual([original]);
-      expect(component.itensDevolvidos).toEqual([]);
-      expect(component.itensSaida).toEqual([]);
-    });
-  });
-
-  describe('Verificação de change detection', () => {
-    it('deve chamar markForCheck() após remover duplicatas', () => {
-      // Arrange
-      const itemOriginal = createDevolucaoItem(1, 100, 5);
-      const duplicata = createDevolucaoItem(0, 100, 3);
-
-      component.object.emprestimoDevolucaoItem = [itemOriginal, duplicata];
-      component.itensPendentes = [itemOriginal, duplicata];
-
-      // Act
-      component.removeItensDuplicadosByItem(itemOriginal);
-
-      // Assert
-      expect(cdrSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('não deve chamar markForCheck() quando não há duplicatas', () => {
-      // Arrange
-      const itemOriginal = createDevolucaoItem(1, 100, 5);
-
-      component.object.emprestimoDevolucaoItem = [itemOriginal];
-      component.itensPendentes = [itemOriginal];
-
-      // Act
-      component.removeItensDuplicadosByItem(itemOriginal);
-
-      // Assert
-      expect(cdrSpy).not.toHaveBeenCalled();
+      expect(component.itensPendentes()).toEqual([original]);
+      expect(component.itensDevolvidos()).toEqual([]);
+      expect(component.itensSaida()).toEqual([]);
     });
   });
 
@@ -295,8 +260,8 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
       const dup1 = createDevolucaoItem(0, 100, 2);
       const dup2 = createDevolucaoItem(0, 100, 3);
 
-      component.object.emprestimoDevolucaoItem = [original, dup1, dup2];
-      component.itensPendentes = [original, dup1, dup2];
+      emprestimo.emprestimoDevolucaoItem = [original, dup1, dup2];
+      component.itensPendentes.set([original, dup1, dup2]);
 
       // Captura referência antes da remoção
       const originalRef = original;
@@ -305,8 +270,8 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
       component.removeItensDuplicadosByItem(original);
 
       // Assert: Mesma referência do objeto deve ser mantida
-      expect(component.object.emprestimoDevolucaoItem[0]).toBe(originalRef);
-      expect(component.itensPendentes[0]).toBe(originalRef);
+      expect(emprestimo.emprestimoDevolucaoItem[0]).toBe(originalRef);
+      expect(component.itensPendentes()[0]).toBe(originalRef);
     });
 
     it('deve somar quantidades corretamente com valores decimais', () => {
@@ -315,8 +280,8 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
       const dup1 = createDevolucaoItem(0, 100, 2.3);
       const dup2 = createDevolucaoItem(0, 100, 1.2);
 
-      component.object.emprestimoDevolucaoItem = [original, dup1, dup2];
-      component.itensPendentes = [original, dup1, dup2];
+      emprestimo.emprestimoDevolucaoItem = [original, dup1, dup2];
+      component.itensPendentes.set([original, dup1, dup2]);
 
       // Act
       component.removeItensDuplicadosByItem(original);
@@ -330,9 +295,9 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
       const original = createDevolucaoItem(1, 100, 5, StatusDevolucao.D);
       const dup = createDevolucaoItem(0, 100, 3, StatusDevolucao.P);
 
-      component.object.emprestimoDevolucaoItem = [original, dup];
-      component.itensPendentes = [dup];
-      component.itensDevolvidos = [original];
+      emprestimo.emprestimoDevolucaoItem = [original, dup];
+      component.itensPendentes.set([dup]);
+      component.itensDevolvidos.set([original]);
 
       // Act
       component.removeItensDuplicadosByItem(original);
@@ -347,29 +312,23 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
   describe('Cenários complexos de negócio', () => {
     it('deve consolidar após usuário arrastar duplicata entre colunas', () => {
       // Arrange: Simula fluxo do usuário
-      // 1. Item original criado (id=1, qtde=10)
-      const original = createDevolucaoItem(1, 100, 10, StatusDevolucao.P);
+      // 1. Item original criado (id=1, qtde=10) → ajustado para 5 após duplicação
+      const original = createDevolucaoItem(1, 100, 5, StatusDevolucao.P);
 
-      // 2. Usuário duplica item (id=0, qtde=5)
-      const duplicata = createDevolucaoItem(0, 100, 5, StatusDevolucao.P);
+      // 2. Usuário duplica item (id=0, qtde=5) → arrastado para "Devolvidos"
+      const duplicata = createDevolucaoItem(0, 100, 5, StatusDevolucao.D);
 
-      // 3. Usuário ajusta quantidade original para 5 (10 - 5)
-      original.qtde = 5;
-
-      // 4. Usuário arrasta duplicata para "Devolvidos"
-      duplicata.statusDevolucao = StatusDevolucao.D;
-
-      component.object.emprestimoDevolucaoItem = [original, duplicata];
-      component.itensPendentes = [original];
-      component.itensDevolvidos = [duplicata];
+      emprestimo.emprestimoDevolucaoItem = [original, duplicata];
+      component.itensPendentes.set([original]);
+      component.itensDevolvidos.set([duplicata]);
 
       // Act: Usuário remove duplicatas
       component.removeItensDuplicadosByItem(original);
 
       // Assert: Quantidade total restaurada no original
       expect(original.qtde).toBe(10); // 5 + 5 = 10
-      expect(component.itensPendentes).toEqual([original]);
-      expect(component.itensDevolvidos).toEqual([]);
+      expect(component.itensPendentes()).toEqual([original]);
+      expect(component.itensDevolvidos()).toEqual([]);
     });
 
     it('deve lidar com múltiplas duplicações sucessivas', () => {
@@ -379,15 +338,15 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
       const dup2 = createDevolucaoItem(0, 100, 3);
       const dup3 = createDevolucaoItem(0, 100, 1);
 
-      component.object.emprestimoDevolucaoItem = [original, dup1, dup2, dup3];
-      component.itensPendentes = [original, dup1, dup2, dup3];
+      emprestimo.emprestimoDevolucaoItem = [original, dup1, dup2, dup3];
+      component.itensPendentes.set([original, dup1, dup2, dup3]);
 
       // Act
       component.removeItensDuplicadosByItem(original);
 
       // Assert: 4 + 2 + 3 + 1 = 10
       expect(original.qtde).toBe(10);
-      expect(component.object.emprestimoDevolucaoItem).toHaveLength(1);
+      expect(emprestimo.emprestimoDevolucaoItem).toHaveLength(1);
     });
   });
 });

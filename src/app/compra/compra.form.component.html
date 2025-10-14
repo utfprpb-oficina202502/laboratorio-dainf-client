@@ -34,7 +34,8 @@
                 [control]="formGroup.get('fornecedor')"
                 label="Fornecedor"
                 [required]="true"
-                fieldId="fornecedor">
+                fieldId="fornecedor"
+                hint="Digite pelo menos 2 caracteres para buscar">
                 <div class="flex items-center gap-2">
                   <p-autoComplete
                     inputId="fornecedor"
@@ -44,8 +45,8 @@
                     [suggestions]="fornecedorList()"
                     (completeMethod)="findFornecedores($event)"
                     [forceSelection]="true"
-                    [dropdown]="true"
-                    placeholder="Selecione o fornecedor"
+                    minQueryLength="2"
+                    placeholder="Digite para buscar..."
                     styleClass="w-full"
                     [inputStyle]="{ width: '100%' }">
                   </p-autoComplete>
@@ -115,7 +116,7 @@
                     [suggestions]="itemList()"
                     (completeMethod)="findProdutos($event)"
                     (onSelect)="setPrecoProduto()"
-                    [minLength]="2"
+                    minQueryLength="2"
                     placeholder="Digite para buscar itens..."
                     styleClass="w-full"
                     [inputStyle]="{ width: '100%' }">

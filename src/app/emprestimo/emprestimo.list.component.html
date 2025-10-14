@@ -47,7 +47,7 @@
         (onSort)="onSort($event)"
         [first]="first"
         [lazy]="tableConfig.lazy !== false"
-        [lazyLoadOnInit]="tableConfig.lazyLoadOnInit !== false"
+        [lazyLoadOnInit]="tableConfig.lazyLoadOnInit === true"
         [selection]="selectedItems()"
         (selectionChange)="onSelectionChange($event)"
         [dataKey]="tableConfig.rowExpansionKey || 'id'"

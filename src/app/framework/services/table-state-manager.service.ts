@@ -3,14 +3,58 @@ import {TableColumn} from '../model/table-config.interface';
 import {LoggerService} from './logger.service';
 
 /**
- * Service responsible for managing table state persistence (localStorage/sessionStorage).
+ * Serviço responsável pelo gerenciamento de persistência de estado de tabela (localStorage/sessionStorage).
  *
- * Features:
- * - Save/restore table state (filters, sorting, pagination, columns, selection, expanded rows)
- * - Configurable storage type (localStorage vs sessionStorage)
- * - Automatic state serialization/deserialization
- * - Error handling for storage operations
- * - Selection state restoration after data loads
+ * Funcionalidades:
+ * - Salvar/restaurar estado da tabela (filtros, ordenação, paginação, colunas, seleção, linhas expandidas)
+ * - Tipo de armazenamento configurável (localStorage vs sessionStorage)
+ * - Serialização/deserialização automática de estado
+ * - Tratamento de erros para operações de armazenamento
+ * - Restauração de seleção após carregamento de dados
+ * - Controle granular sobre quais propriedades de estado persistir
+ * - Suporte a diferentes campos de rastreamento para seleção (padrão: 'id')
+ *
+ * Uso em componentes:
+ * ```typescript
+ * export class MyListComponent {
+ *   private stateManager = inject(TableStateManagerService);
+ *   private storage?: Storage;
+ *   private stateKey = 'my-table-state';
+ *
+ *   ngOnInit(): void {
+ *     // Inicializar armazenamento
+ *     this.storage = this.stateManager.initializeStorage(true, 'local');
+ *
+ *     // Restaurar estado salvo
+ *     const restored = this.stateManager.restoreState(
+ *       this.storage,
+ *       this.stateKey,
+ *       this.columns
+ *     );
+ *
+ *     if (restored) {
+ *       this.filterValue = restored.filterValue ?? '';
+ *       this.selectedItems = this.stateManager.restoreSelectionFromKeys(
+ *         this.items,
+ *         restored.selectedKeys ?? []
+ *       );
+ *     }
+ *   }
+ *
+ *   saveCurrentState(): void {
+ *     this.stateManager.saveState(
+ *       this.storage,
+ *       this.stateKey,
+ *       {
+ *         filterValue: this.filterValue,
+ *         sortField: this.sortField,
+ *         columns: this.columns,
+ *         selectedItems: this.selectedItems
+ *       }
+ *     );
+ *   }
+ * }
+ * ```
  */
 @Injectable({
   providedIn: 'root'
@@ -19,11 +63,23 @@ export class TableStateManagerService {
   private readonly logger = inject(LoggerService);
 
   /**
-   * Initialize storage reference for state persistence
+   * Inicializa referência de armazenamento para persistência de estado
    *
-   * @param stateful Whether state persistence is enabled
-   * @param stateStorage Storage type ('local' or 'session')
-   * @returns Storage reference or undefined if unavailable
+   * @param stateful Se a persistência de estado está habilitada
+   * @param stateStorage Tipo de armazenamento ('local' para localStorage ou 'session' para sessionStorage)
+   * @returns Referência de armazenamento ou undefined se indisponível (ex: SSR, acesso negado)
+   *
+   * @example
+   * ```typescript
+   * // localStorage (padrão - persiste entre sessões do navegador)
+   * const storage = this.stateManager.initializeStorage(true, 'local');
+   *
+   * // sessionStorage (limpa ao fechar aba)
+   * const storage = this.stateManager.initializeStorage(true, 'session');
+   *
+   * // Desabilitado
+   * const storage = this.stateManager.initializeStorage(false); // retorna undefined
+   * ```
    */
   initializeStorage(stateful: boolean, stateStorage: 'local' | 'session' = 'local'): Storage | undefined {
     if (!stateful) {
@@ -43,12 +99,49 @@ export class TableStateManagerService {
   }
 
   /**
-   * Save table state to storage
+   * Salva estado da tabela no armazenamento
    *
-   * @param storage Storage reference (localStorage or sessionStorage)
-   * @param stateKey Unique key for this table's state
-   * @param state State object containing table configuration
-   * @param stateProps Configuration for which properties to save
+   * @param storage Referência de armazenamento (localStorage ou sessionStorage)
+   * @param stateKey Chave única para o estado desta tabela (ex: 'table-state-ItemListComponent')
+   * @param state Objeto de estado contendo configuração da tabela
+   * @param stateProps Configuração para quais propriedades salvar (padrão: todas habilitadas)
+   * @param trackByField Campo usado como chave única para itens selecionados (padrão: 'id')
+   *
+   * @example
+   * ```typescript
+   * // Salvar estado completo
+   * this.stateManager.saveState(
+   *   this.storage,
+   *   'table-state-items',
+   *   {
+   *     filterValue: this.globalFilter,
+   *     sortField: this.sortField,
+   *     sortOrder: this.sortOrder,
+   *     pageSize: this.pageSize,
+   *     pageIndex: this.currentPage,
+   *     columns: this.columns,
+   *     expandedRows: this.expandedRows,
+   *     selectedItems: this.selectedItems
+   *   }
+   * );
+   *
+   * // Salvar apenas filtros e ordenação
+   * this.stateManager.saveState(
+   *   this.storage,
+   *   'table-state-items',
+   *   {filterValue: this.globalFilter, sortField: this.sortField},
+   *   {filters: true, sort: true, pagination: false, selection: false}
+   * );
+   *
+   * // Usar campo diferente para rastreamento de seleção
+   * this.stateManager.saveState(
+   *   this.storage,
+   *   'table-state-items',
+   *   {selectedItems: this.selectedItems},
+   *   undefined,
+   *   'codigo' // usar campo 'codigo' ao invés de 'id'
+   * );
+   * ```
    */
   saveState(
     storage: Storage | undefined,
@@ -100,13 +193,52 @@ export class TableStateManagerService {
   }
 
   /**
-   * Restore table state from storage
+   * Restaura estado da tabela do armazenamento
    *
-   * @param storage Storage reference (localStorage or sessionStorage)
-   * @param stateKey Unique key for this table's state
-   * @param columns Current column configuration (will be modified with restored visibility)
-   * @param stateProps Configuration for which properties to restore
-   * @returns Restored state object
+   * @param storage Referência de armazenamento (localStorage ou sessionStorage)
+   * @param stateKey Chave única para o estado desta tabela
+   * @param columns Configuração atual de colunas (será modificada com visibilidade restaurada)
+   * @param stateProps Configuração para quais propriedades restaurar (padrão: todas habilitadas)
+   * @returns Objeto de estado restaurado ou null se não houver estado salvo ou erro
+   *
+   * @example
+   * ```typescript
+   * // Restaurar estado completo
+   * const restored = this.stateManager.restoreState(
+   *   this.storage,
+   *   'table-state-items',
+   *   this.columns
+   * );
+   *
+   * if (restored) {
+   *   // Aplicar filtros restaurados
+   *   this.globalFilter = restored.filterValue ?? '';
+   *
+   *   // Aplicar ordenação restaurada
+   *   this.sortField = restored.sortField;
+   *   this.sortOrder = restored.sortOrder ?? 1;
+   *
+   *   // Aplicar paginação restaurada
+   *   this.pageSize = restored.pageSize ?? 10;
+   *   this.currentPage = restored.pageIndex ?? 0;
+   *
+   *   // Restaurar seleção (após carregar dados)
+   *   this.loadData().then(() => {
+   *     this.selectedItems = this.stateManager.restoreSelectionFromKeys(
+   *       this.items,
+   *       restored.selectedKeys ?? []
+   *     );
+   *   });
+   * }
+   *
+   * // Restaurar apenas filtros
+   * const restored = this.stateManager.restoreState(
+   *   this.storage,
+   *   'table-state-items',
+   *   this.columns,
+   *   {filters: true, sort: false, pagination: false}
+   * );
+   * ```
    */
   restoreState(
     storage: Storage | undefined,
@@ -151,10 +283,20 @@ export class TableStateManagerService {
   }
 
   /**
-   * Clear table state from storage
+   * Limpa estado da tabela do armazenamento
    *
-   * @param storage Storage reference
-   * @param stateKey Unique key for this table's state
+   * @param storage Referência de armazenamento
+   * @param stateKey Chave única para o estado desta tabela
+   *
+   * @example
+   * ```typescript
+   * // Limpar estado salvo (ex: ao fazer logout ou reset)
+   * this.stateManager.clearState(this.storage, 'table-state-items');
+   *
+   * // Limpar e restaurar valores padrão
+   * this.stateManager.clearState(this.storage, this.stateKey);
+   * this.resetToDefaults();
+   * ```
    */
   clearState(storage: Storage | undefined, stateKey: string): void {
     if (!storage) {
@@ -169,12 +311,37 @@ export class TableStateManagerService {
   }
 
   /**
-   * Restore selected items from saved keys
+   * Restaura itens selecionados a partir de chaves salvas
    *
-   * @param items All available items
-   * @param selectedKeys Previously saved selection keys
-   * @param trackByField Field name to use as unique key (default: 'id')
-   * @returns Array of selected items matching the saved keys
+   * @param items Todos os itens disponíveis
+   * @param selectedKeys Chaves de seleção previamente salvas
+   * @param trackByField Nome do campo a usar como chave única (padrão: 'id')
+   * @returns Array de itens selecionados correspondentes às chaves salvas
+   *
+   * @example
+   * ```typescript
+   * // Após carregar dados, restaurar seleção salva
+   * this.loadData().then(() => {
+   *   const restored = this.stateManager.restoreState(this.storage, this.stateKey);
+   *   if (restored?.selectedKeys) {
+   *     this.selectedItems = this.stateManager.restoreSelectionFromKeys(
+   *       this.items,
+   *       restored.selectedKeys
+   *     );
+   *   }
+   * });
+   *
+   * // Usar campo diferente como chave
+   * this.selectedItems = this.stateManager.restoreSelectionFromKeys(
+   *   this.items,
+   *   restored.selectedKeys,
+   *   'codigo' // usar 'codigo' ao invés de 'id'
+   * );
+   *
+   * // Retorna array vazio se não houver chaves ou itens
+   * const selected = this.stateManager.restoreSelectionFromKeys([], [1, 2, 3]); // []
+   * const selected = this.stateManager.restoreSelectionFromKeys(items, []); // []
+   * ```
    */
   restoreSelectionFromKeys(items: unknown[], selectedKeys: unknown[], trackByField = 'id'): unknown[] {
     if (!selectedKeys?.length || !items?.length) {
@@ -185,17 +352,34 @@ export class TableStateManagerService {
   }
 
   /**
-   * Build default state key from component constructor name
+   * Constrói chave de estado padrão a partir do nome do componente
    *
-   * @param componentName Name of the component
-   * @returns State key string
+   * @param componentName Nome do componente
+   * @returns String de chave de estado no formato 'table-state-{componentName}'
+   *
+   * @example
+   * ```typescript
+   * // Gerar chave automática a partir do constructor
+   * this.stateKey = this.stateManager.buildDefaultStateKey(this.constructor.name);
+   * // Resultado: 'table-state-ItemListComponent'
+   *
+   * // Ou usar chave customizada diretamente
+   * this.stateKey = 'my-custom-table-state';
+   *
+   * // Diferentes componentes terão chaves diferentes
+   * const key1 = this.stateManager.buildDefaultStateKey('ItemListComponent');
+   * // 'table-state-ItemListComponent'
+   * const key2 = this.stateManager.buildDefaultStateKey('UserListComponent');
+   * // 'table-state-UserListComponent'
+   * ```
    */
   buildDefaultStateKey(componentName: string): string {
     return `table-state-${componentName}`;
   }
 
   /**
-   * Merge default state props with provided overrides
+   * Mescla propriedades de estado padrão com substituições fornecidas
+   * Todas as propriedades são habilitadas por padrão (columns, filters, sort, pagination, selection, expandedRows)
    */
   private mergeStateProps(stateProps?: Record<string, boolean>): Record<string, boolean> {
     const defaults = {
@@ -210,7 +394,7 @@ export class TableStateManagerService {
   }
 
   /**
-   * Save filter state if enabled
+   * Salva estado de filtro se habilitado
    */
   private saveFilterState(
     stateToSave: Record<string, unknown>,
@@ -223,7 +407,7 @@ export class TableStateManagerService {
   }
 
   /**
-   * Save sort state if enabled
+   * Salva estado de ordenação se habilitado
    */
   private saveSortState(
     stateToSave: Record<string, unknown>,
@@ -243,7 +427,7 @@ export class TableStateManagerService {
   }
 
   /**
-   * Save pagination state if enabled
+   * Salva estado de paginação se habilitado
    */
   private savePaginationState(
     stateToSave: Record<string, unknown>,
@@ -263,7 +447,8 @@ export class TableStateManagerService {
   }
 
   /**
-   * Save columns state if enabled
+   * Salva estado de colunas se habilitado
+   * Armazena apenas field e visible para cada coluna
    */
   private saveColumnsState(
     stateToSave: Record<string, unknown>,
@@ -285,7 +470,8 @@ export class TableStateManagerService {
   }
 
   /**
-   * Save expanded rows state if enabled
+   * Salva estado de linhas expandidas se habilitado
+   * Armazena apenas as chaves das linhas expandidas (não as colapsadas)
    */
   private saveExpandedRowsState(
     stateToSave: Record<string, unknown>,
@@ -301,7 +487,8 @@ export class TableStateManagerService {
   }
 
   /**
-   * Save selection state if enabled
+   * Salva estado de seleção se habilitado
+   * Armazena apenas as chaves dos itens selecionados (usando trackByField)
    */
   private saveSelectionState(
     stateToSave: Record<string, unknown>,
@@ -317,7 +504,8 @@ export class TableStateManagerService {
   }
 
   /**
-   * Restore columns state from saved state
+   * Restaura estado de colunas do estado salvo
+   * Atualiza visibilidade das colunas fornecidas e restaura columnToggleModel
    */
   private restoreColumnsState(
     restored: RestoredTableState,
@@ -342,7 +530,7 @@ export class TableStateManagerService {
   }
 
   /**
-   * Restore filter state from saved state
+   * Restaura estado de filtro do estado salvo
    */
   private restoreFilterState(
     restored: RestoredTableState,
@@ -355,7 +543,7 @@ export class TableStateManagerService {
   }
 
   /**
-   * Restore sort state from saved state
+   * Restaura estado de ordenação do estado salvo
    */
   private restoreSortState(
     restored: RestoredTableState,
@@ -375,7 +563,7 @@ export class TableStateManagerService {
   }
 
   /**
-   * Restore pagination state from saved state
+   * Restaura estado de paginação do estado salvo
    */
   private restorePaginationState(
     restored: RestoredTableState,
@@ -395,7 +583,8 @@ export class TableStateManagerService {
   }
 
   /**
-   * Restore expanded rows state from saved state
+   * Restaura estado de linhas expandidas do estado salvo
+   * Converte array de chaves em objeto Record<string, boolean>
    */
   private restoreExpandedRowsState(
     restored: RestoredTableState,
@@ -416,7 +605,8 @@ export class TableStateManagerService {
   }
 
   /**
-   * Restore selection state from saved state
+   * Restaura estado de seleção do estado salvo
+   * Retorna apenas as chaves - use restoreSelectionFromKeys() para obter os itens completos
    */
   private restoreSelectionState(
     restored: RestoredTableState,
@@ -429,11 +619,11 @@ export class TableStateManagerService {
   }
 
   /**
-   * Extract selection keys from selected items
+   * Extrai chaves de seleção dos itens selecionados
    *
-   * @param selectedItems Array of selected items
-   * @param trackByField Field name to use as a unique key (default: 'id')
-   * @returns Array of selection keys
+   * @param selectedItems Array de itens selecionados
+   * @param trackByField Nome do campo a usar como chave única (padrão: 'id')
+   * @returns Array de chaves de seleção (filtra undefined e null)
    */
   private getSelectionKeys(selectedItems: unknown[], trackByField = 'id'): unknown[] {
     if (!selectedItems?.length) {
@@ -446,7 +636,17 @@ export class TableStateManagerService {
 }
 
 /**
- * Interface for restored table state
+ * Interface para estado de tabela restaurado
+ *
+ * Propriedades:
+ * - filterValue: Valor do filtro global
+ * - sortField: Campo de ordenação
+ * - sortOrder: Ordem de ordenação (1 = ASC, -1 = DESC)
+ * - pageSize: Tamanho da página
+ * - pageIndex: Índice da página atual
+ * - columnToggleModel: Modelo de toggle de colunas
+ * - expandedRowKeys: Chaves de linhas expandidas
+ * - selectedKeys: Chaves de itens selecionados (usar com restoreSelectionFromKeys para obter itens completos)
  */
 export interface RestoredTableState {
   filterValue?: string;

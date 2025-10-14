@@ -159,7 +159,7 @@
                 label="Estado"
                 [required]="true"
                 fieldId="estado"
-                hint="Selecione o estado">
+                hint="Digite pelo menos 2 caracteres para buscar">
                 <p-autoComplete
                   inputId="estado"
                   formControlName="estado"
@@ -167,13 +167,13 @@
                   dataKey="id"
                   appendTo="body"
                   [forceSelection]="true"
-                  [dropdown]="true"
+                  [minQueryLength]="2"
                   [suggestions]="estadoList()"
                   (completeMethod)="findEstados($event)"
                   (onChange)="onEstadoChange()"
                   styleClass="w-full"
                   [inputStyleClass]="'w-full'"
-                  placeholder="Digite ou selecione o estado">
+                  placeholder="Digite para buscar...">
                 </p-autoComplete>
               </app-form-field>
             </div>
@@ -184,7 +184,7 @@
                 label="Cidade"
                 [required]="true"
                 fieldId="cidade"
-                hint="Selecione primeiro o estado">
+                hint="Digite pelo menos 2 caracteres para buscar">
                 <p-autoComplete
                   inputId="cidade"
                   formControlName="cidade"
@@ -192,12 +192,12 @@
                   dataKey="id"
                   [forceSelection]="true"
                   [disabled]="!formGroup.get('estado')?.value"
-                  [dropdown]="true"
+                  minQueryLength="2"
                   [suggestions]="cidadeList()"
                   (completeMethod)="findCidadesByEstado($event)"
                   styleClass="w-full"
                   [inputStyleClass]="'w-full'"
-                  placeholder="Digite ou selecione a cidade">
+                  placeholder="Digite para buscar...">
                 </p-autoComplete>
               </app-form-field>
             </div>

@@ -9,6 +9,9 @@ import {Subject} from 'rxjs';
 import {takeUntil} from 'rxjs/operators';
 import {LoggerService} from '../services/logger.service';
 import {extractRouteParam, parseNumericId} from '../utils/route-params.operators';
+import {FormValidationService} from '../services/form-validation.service';
+import {FormStateManagerService} from '../services/form-state-manager.service';
+import {FormBusinessRulesService} from '../services/form-business-rules.service';
 
 @Directive()
 export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, OnDestroy {
@@ -25,6 +28,9 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
   protected readonly loginService: LoginService;
   protected readonly logger: LoggerService;
   protected readonly injector: Injector;
+  protected readonly formValidation: FormValidationService;
+  protected readonly formStateManager: FormStateManagerService;
+  protected readonly formBusinessRules: FormBusinessRulesService;
 
   // Signals for state management
   protected readonly isEditing = signal(false);
@@ -46,6 +52,9 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
     this.loaderService = inject(LoaderService);
     this.loginService = inject(LoginService);
     this.logger = inject(LoggerService);
+    this.formValidation = inject(FormValidationService);
+    this.formStateManager = inject(FormStateManagerService);
+    this.formBusinessRules = inject(FormBusinessRulesService);
   }
 
   protected abstract buildForm(): FormGroup;
@@ -71,10 +80,10 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
       })
     ).subscribe({
       next: (id) => {
-        if (id !== null) {
-          this.edit(id as ID);
-        } else {
+        if (id === null) {
           this.initializeValues();
+        } else {
+          this.edit(id as ID);
         }
       }
     });
@@ -175,21 +184,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
     if (!formGroup) return '';
 
     const control = formGroup.get(controlName);
-    if (!control?.errors || !control?.touched) return '';
-
-    const errors = control.errors;
-
-    if (errors['required']) return 'Este campo é obrigatório';
-    if (errors['minlength'])
-      return `Mínimo de ${errors['minlength'].requiredLength} caracteres`;
-    if (errors['maxlength'])
-      return `Máximo de ${errors['maxlength'].requiredLength} caracteres`;
-    if (errors['email']) return 'E-mail inválido';
-    if (errors['pattern']) return 'Formato inválido';
-    if (errors['min']) return `Valor mínimo: ${errors['min'].min}`;
-    if (errors['max']) return `Valor máximo: ${errors['max'].max}`;
-
-    return 'Campo inválido';
+    return this.formValidation.getErrorMessage(control);
   }
 
   hasError(controlName: string): boolean {
@@ -197,7 +192,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
     if (!formGroup) return false;
 
     const control = formGroup.get(controlName);
-    return !!(control && control.invalid && control.touched);
+    return this.formValidation.hasError(control);
   }
 
   isValidField(controlName: string): boolean {
@@ -205,34 +200,25 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
     if (!formGroup) return false;
 
     const control = formGroup.get(controlName);
-    return !!(control && control.valid && control.touched);
+    return this.formValidation.isValidField(control);
   }
 
   protected markFormAsTouched(formGroup: FormGroup): void {
-    for (const key of Object.keys(formGroup.controls)) {
-      const control = formGroup.get(key);
-      control?.markAsTouched();
-
-      if (control instanceof FormGroup) {
-        this.markFormAsTouched(control);
-      }
-    }
+    this.formValidation.markFormAsTouched(formGroup);
   }
 
   protected patchFormWithObject(object: T): void {
     const formGroup = this.form();
-    if (formGroup) {
-      formGroup.patchValue(object as Partial<T>);
-    }
+    this.formStateManager.patchFormWithObject(formGroup, object);
   }
 
   protected prepareFormValue(formValue: Partial<T>): Partial<T> {
-    return formValue;
+    return this.formStateManager.prepareFormValue(formValue, false);
   }
 
   protected mergeWithObject(formValue: Partial<T>): T {
     const currentObject = this.object();
-    return { ...currentObject, ...formValue } as T;
+    return this.formStateManager.mergeWithObject(formValue, currentObject);
   }
 
   protected newInstance(): void {
@@ -264,12 +250,10 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
    * Common pattern used across multiple forms
    */
   protected setCurrentUserAsResponsible(fieldName = 'usuario'): void {
-    this.loginService.getCurrentUser().pipe(takeUntil(this.destroy$)).subscribe((user) => {
-      const formGroup = this.form();
-      if (formGroup) {
-        formGroup.patchValue({ [fieldName]: user });
-      }
-    });
+    const formGroup = this.form();
+    this.formBusinessRules.setCurrentUserAsResponsible(formGroup, fieldName)
+    .pipe(takeUntil(this.destroy$))
+    .subscribe();
   }
 
   /**
@@ -277,9 +261,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
    * @param items Array of items with qtde property
    */
   protected calculateTotalQuantity<K extends { qtde: number }>(items: K[]): number {
-    return items.length > 0
-      ? items.map(t => t.qtde).reduce((acc, value) => Number(acc) + Number(value), 0)
-      : 0;
+    return this.formBusinessRules.calculateTotalQuantity(items);
   }
 
   /**
@@ -291,17 +273,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
     item: K | null,
     qtdeInserir: number
   ): boolean {
-    if (!item) return false;
-
-    const isValid = item.saldo > 0 && qtdeInserir <= item.saldo;
-    if (!isValid) {
-      this.messageService.add({
-        severity: 'info',
-        detail: 'A quantidade informada é maior do que o saldo atual do item.'
-      });
-      return false;
-    }
-    return true;
+    return this.formBusinessRules.validateItemSaldo(item, qtdeInserir);
   }
 
   /**
@@ -315,45 +287,21 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
     itemId: unknown,
     idField = 'id'
   ): K[] {
-    return items.filter((item: K) => {
-      const itemRecord = item as Record<string, unknown>;
-
-      // Para campos aninhados (ex: 'item.id'), percorrer o caminho e extrair o valor final
-      if (idField.includes('.')) {
-        const keys = idField.split('.');
-        let current: unknown = itemRecord;
-
-        for (const key of keys) {
-          current = (current as Record<string, unknown>)?.[key];
-        }
-
-        return current !== itemId;
-      }
-
-      // Para campos simples, comparação direta
-      return itemRecord[idField] !== itemId;
-    });
+    return this.formBusinessRules.removeItemById(items, itemId, idField);
   }
 
   /**
    * Show info message for missing item or quantity
    */
   protected showItemRequiredMessage(): void {
-    this.messageService.add({
-      severity: 'info',
-      detail: 'Necessário informar o item e a quantidade.'
-    });
+    this.formBusinessRules.showItemRequiredMessage();
   }
 
   /**
    * Show info message for missing items in list
    */
   protected showMinimumItemsMessage(customMessage?: string): void {
-    this.messageService.add({
-      severity: 'info',
-      summary: 'Atenção',
-      detail: customMessage || 'Necessário adicionar ao menos um item!'
-    });
+    this.formBusinessRules.showMinimumItemsMessage(customMessage);
   }
 
   /**
@@ -363,14 +311,6 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
    */
   protected setTodayAsDefaultDate(fieldName: string): void {
     const formGroup = this.form();
-    if (formGroup) {
-      const hoje = new Date();
-      const dia = String(hoje.getDate()).padStart(2, '0');
-      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-      const ano = hoje.getFullYear();
-      formGroup.patchValue({
-        [fieldName]: `${dia}/${mes}/${ano}`
-      });
-    }
+    this.formBusinessRules.setTodayAsDefaultDate(formGroup, fieldName);
   }
 }

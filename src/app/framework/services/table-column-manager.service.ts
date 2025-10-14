@@ -2,15 +2,32 @@ import {Injectable, TemplateRef} from '@angular/core';
 import {TableColumn} from '../model/table-config.interface';
 
 /**
- * Service responsible for managing table column operations.
+ * Serviço responsável pelo gerenciamento de operações de colunas de tabela.
  *
- * Features:
- * - Column visibility management
- * - Column template registration and retrieval
- * - Column filtering (visible, sortable, filterable, exportable)
- * - Permission-based column updates
- * - Column width calculations
- * - Responsive column display
+ * Funcionalidades:
+ * - Gerenciamento de visibilidade de colunas
+ * - Registro e recuperação de templates de colunas
+ * - Filtragem de colunas (visíveis, ordenáveis, filtráveis, exportáveis)
+ * - Atualização de colunas baseada em permissões
+ * - Cálculo de largura de colunas
+ * - Exibição responsiva de colunas
+ *
+ * Uso em componentes:
+ * ```typescript
+ * export class MyListComponent {
+ *   private columnManager = inject(TableColumnManagerService);
+ *
+ *   ngOnInit(): void {
+ *     // Inicializar toggle de colunas
+ *     const toggleData = this.columnManager.initializeColumnToggle(this.columns);
+ *     this.columnToggleOptions = toggleData.columnToggleOptions;
+ *     this.columnToggleModel = toggleData.columnToggleModel;
+ *
+ *     // Atualizar colunas baseado em permissões
+ *     this.columnManager.updateColumnsForPermissions(this.columns, this.isReadOnly);
+ *   }
+ * }
+ * ```
  */
 @Injectable({
   providedIn: 'root'
@@ -20,10 +37,10 @@ export class TableColumnManagerService {
   private readonly columnTemplates = new Map<string, TemplateRef<any>>();
 
   /**
-   * Initialize column toggle options and model
+   * Inicializa opções e modelo de toggle de colunas
    *
-   * @param columns All table columns
-   * @returns Object with columnToggleOptions and columnToggleModel arrays
+   * @param columns Todas as colunas da tabela
+   * @returns Objeto com arrays columnToggleOptions e columnToggleModel
    */
   initializeColumnToggle(columns: TableColumn[]): {
     columnToggleOptions: { label: string; value: string }[];
@@ -41,18 +58,18 @@ export class TableColumnManagerService {
   }
 
   /**
-   * Handle column toggle change event
+   * Processa evento de mudança de toggle de colunas
    *
-   * @param columns All table columns (will be modified)
-   * @param selectedFields Array of selected column field names
-   * @returns Updated columnToggleModel
+   * @param columns Todas as colunas da tabela (serão modificadas)
+   * @param selectedFields Array com nomes dos campos de colunas selecionadas
+   * @returns columnToggleModel atualizado
    */
   handleColumnToggleChange(columns: TableColumn[], selectedFields: string[]): string[] {
     if (!columns) {
       return selectedFields;
     }
 
-    // Ensure at least one column is visible
+    // Garante que pelo menos uma coluna esteja visível
     if (!selectedFields || selectedFields.length === 0) {
       const fallback = columns.find(col => col.toggleable !== false && col.field !== 'actions');
       if (fallback) {
@@ -60,7 +77,7 @@ export class TableColumnManagerService {
       }
     }
 
-    // Update column visibility
+    // Atualiza visibilidade das colunas
     const selectedSet = new Set(selectedFields);
     for (const column of columns) {
       if (column.toggleable === false || column.field === 'actions') {
@@ -73,10 +90,10 @@ export class TableColumnManagerService {
   }
 
   /**
-   * Update columns based on user permissions
+   * Atualiza colunas baseado nas permissões do usuário
    *
-   * @param columns All table columns (will be modified)
-   * @param isReadOnly Whether the table is in read-only mode
+   * @param columns Todas as colunas da tabela (serão modificadas)
+   * @param isReadOnly Se a tabela está em modo somente leitura
    */
   updateColumnsForPermissions(columns: TableColumn[], isReadOnly: boolean): void {
     if (!columns) {
@@ -85,20 +102,20 @@ export class TableColumnManagerService {
 
     const actionsColumn = columns.find(col => col.field === 'actions');
     if (actionsColumn) {
-      // Force visibility based on permissions, overriding any restored state
-      // Admin and Laboratorista should always see actions column
+      // Força visibilidade baseada em permissões, sobrescrevendo qualquer estado restaurado
+      // Admin e Laboratorista devem sempre ver a coluna de ações
       actionsColumn.visible = !isReadOnly;
     }
   }
 
   /**
-   * Build displayed columns array for responsive behavior
+   * Constrói array de colunas exibidas para comportamento responsivo
    *
-   * @param columnsTable Base columns to display
-   * @param enableResponsive Whether responsive behavior is enabled
-   * @param windowWidth Current window width
-   * @param breakpoint Width breakpoint for hiding actions column (default: 1024px)
-   * @returns Array of column field names to display
+   * @param columnsTable Colunas base para exibir
+   * @param enableResponsive Se o comportamento responsivo está habilitado
+   * @param windowWidth Largura atual da janela
+   * @param breakpoint Breakpoint de largura para ocultar coluna de ações (padrão: 1024px)
+   * @returns Array com nomes dos campos das colunas a exibir
    */
   buildDisplayedColumns(
     columnsTable: string[],
@@ -113,10 +130,10 @@ export class TableColumnManagerService {
     let responsiveColumns = [...columnsTable];
 
     if (windowWidth <= breakpoint) {
-      // Hide actions column on small screens
+      // Oculta coluna de ações em telas pequenas
       responsiveColumns = responsiveColumns.filter(column => column !== 'actions');
     } else if (!responsiveColumns.includes('actions') && columnsTable.includes('actions')) {
-      // Show actions column on large screens
+      // Mostra coluna de ações em telas grandes
       responsiveColumns = [...responsiveColumns, 'actions'];
     }
 
@@ -124,10 +141,10 @@ export class TableColumnManagerService {
   }
 
   /**
-   * Update displayed columns based on visible columns
+   * Atualiza colunas exibidas baseado nas colunas visíveis
    *
-   * @param columns All table columns
-   * @returns Array of visible column field names
+   * @param columns Todas as colunas da tabela
+   * @returns Array com nomes dos campos das colunas visíveis
    */
   getDisplayedColumnsFromConfig(columns: TableColumn[]): string[] {
     if (!columns) {
@@ -139,10 +156,10 @@ export class TableColumnManagerService {
   }
 
   /**
-   * Initialize global filter fields from columns
+   * Inicializa campos de filtro global a partir das colunas
    *
-   * @param columns All table columns
-   * @returns Array of field names that should be globally filterable
+   * @param columns Todas as colunas da tabela
+   * @returns Array com nomes dos campos que devem ser filtráveis globalmente
    */
   initializeGlobalFilterFields(columns: TableColumn[]): string[] {
     if (!columns) {
@@ -155,10 +172,10 @@ export class TableColumnManagerService {
   }
 
   /**
-   * Register a template for a specific column
+   * Registra um template para uma coluna específica
    *
-   * @param field Column field name
-   * @param template Template reference to register
+   * @param field Nome do campo da coluna
+   * @param template Referência do template a registrar
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   registerColumnTemplate(field: string, template: TemplateRef<any>): void {
@@ -166,10 +183,10 @@ export class TableColumnManagerService {
   }
 
   /**
-   * Get registered template for a column
+   * Obtém o template registrado para uma coluna
    *
-   * @param field Column field name
-   * @returns Template reference or undefined
+   * @param field Nome do campo da coluna
+   * @returns Referência do template ou undefined
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getColumnTemplate(field: string): TemplateRef<any> | undefined {
@@ -177,60 +194,60 @@ export class TableColumnManagerService {
   }
 
   /**
-   * Clear all registered column templates
+   * Limpa todos os templates de colunas registrados
    */
   clearColumnTemplates(): void {
     this.columnTemplates.clear();
   }
 
   /**
-   * Get visible columns
+   * Obtém as colunas visíveis
    *
-   * @param columns All table columns
-   * @returns Array of visible columns
+   * @param columns Todas as colunas da tabela
+   * @returns Array com as colunas visíveis
    */
   getVisibleColumns(columns: TableColumn[]): TableColumn[] {
     return columns.filter(col => col.visible !== false);
   }
 
   /**
-   * Get sortable columns
+   * Obtém as colunas ordenáveis
    *
-   * @param columns All table columns
-   * @returns Array of sortable columns
+   * @param columns Todas as colunas da tabela
+   * @returns Array com as colunas ordenáveis
    */
   getSortableColumns(columns: TableColumn[]): TableColumn[] {
     return columns.filter(col => col.sortable !== false);
   }
 
   /**
-   * Get filterable columns
+   * Obtém as colunas filtráveis
    *
-   * @param columns All table columns
-   * @returns Array of filterable columns
+   * @param columns Todas as colunas da tabela
+   * @returns Array com as colunas filtráveis
    */
   getFilterableColumns(columns: TableColumn[]): TableColumn[] {
     return columns.filter(col => col.filterable === true);
   }
 
   /**
-   * Get exportable columns
+   * Obtém as colunas exportáveis
    *
-   * @param columns All table columns
-   * @returns Array of exportable columns
+   * @param columns Todas as colunas da tabela
+   * @returns Array com as colunas exportáveis
    */
   getExportableColumns(columns: TableColumn[]): TableColumn[] {
     return columns.filter(col => col.exportable !== false);
   }
 
   /**
-   * Calculate total column count including special columns
+   * Calcula o total de colunas incluindo colunas especiais
    *
-   * @param visibleColumnsCount Number of visible data columns
-   * @param expandable Whether table has expandable rows
-   * @param selectable Whether table has selection column
-   * @param isReadOnly Whether table is in read-only mode
-   * @returns Total column count
+   * @param visibleColumnsCount Número de colunas de dados visíveis
+   * @param expandable Se a tabela tem linhas expansíveis
+   * @param selectable Se a tabela tem coluna de seleção
+   * @param isReadOnly Se a tabela está em modo somente leitura
+   * @returns Contagem total de colunas
    */
   getColumnCount(
     visibleColumnsCount: number,
@@ -252,17 +269,17 @@ export class TableColumnManagerService {
   }
 
   /**
-   * Get column width with auto-sizing based on type
+   * Obtém a largura da coluna com dimensionamento automático baseado no tipo
    *
-   * @param column Column configuration
-   * @returns Column width as CSS string or undefined
+   * @param column Configuração da coluna
+   * @returns Largura da coluna como string CSS ou undefined
    */
   getColumnWidth(column: TableColumn): string | undefined {
     if (column.width) {
       return column.width;
     }
 
-    // Auto-size based on column type
+    // Dimensionamento automático baseado no tipo da coluna
     switch (column.type) {
       case 'boolean':
         return '80px';
@@ -276,11 +293,11 @@ export class TableColumnManagerService {
   }
 
   /**
-   * Check if actions column should be shown
+   * Verifica se a coluna de ações deve ser exibida
    *
-   * @param displayedColumns Array of currently displayed column fields
-   * @param isReadOnly Whether table is in read-only mode
-   * @returns true if actions column should be shown
+   * @param displayedColumns Array com campos de colunas atualmente exibidas
+   * @param isReadOnly Se a tabela está em modo somente leitura
+   * @returns true se a coluna de ações deve ser exibida
    */
   shouldShowActionsColumn(displayedColumns: string[], isReadOnly: boolean): boolean {
     return displayedColumns.includes('actions') && !isReadOnly;

@@ -70,6 +70,8 @@
               <!-- Item AutoComplete -->
               <div class="col-span-12 md:col-span-7">
                 <label for="item" class="block mb-2 font-medium">Item</label>
+                <small class="block mb-2 text-gray-600">Digite pelo menos 2 caracteres para
+                  buscar</small>
                 <div class="flex items-center gap-2">
                   <app-cadastro-rapido
                     [href]="'/item/form'"
@@ -84,9 +86,10 @@
                     (onSelect)="setQtdeDefaultItem()"
                     optionLabel="nome"
                     dataKey="id"
-                    [dropdown]="true"
+                    minQueryLength="2"
                     appendTo="body"
                     styleClass="w-full"
+                    placeholder="Digite para buscar..."
                     [forceSelection]="true">
                     <ng-template let-item pTemplate="item">
                       <div class="flex items-center gap-2">
@@ -141,7 +144,7 @@
                   <tr>
                     <th scope="col">Item</th>
                     <th scope="col" class="text-center" style="width: 150px">Qtde</th>
-                    <th scope="col" class="text-center" class="w-100px">Opções</th>
+                    <th class="text-center w-100px" scope="col">Opções</th>
                   </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-saidaItem>

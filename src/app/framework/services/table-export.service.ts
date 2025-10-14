@@ -5,14 +5,29 @@ import {LoggerService} from './logger.service';
 import {TableColumn} from '../model/table-config.interface';
 
 /**
- * Service responsible for exporting table data to Excel and CSV formats.
+ * Serviço responsável pela exportação de dados de tabela para formatos Excel e CSV.
  *
- * Features:
- * - Lazy-loads ExcelJS only when Excel export is triggered (saves ~947KB from initial bundle)
- * - Handles nested object field access (e.g., 'grupo.descricao')
- * - Auto-fits Excel column widths
- * - Supports custom column types with smart display value extraction
- * - Provides user feedback via MessageService
+ * Funcionalidades:
+ * - Carregamento lazy do ExcelJS apenas quando exportação Excel é disparada (economiza ~947KB do bundle inicial)
+ * - Manipula acesso a campos de objetos aninhados (ex: 'grupo.descricao')
+ * - Ajusta automaticamente larguras das colunas no Excel
+ * - Suporta tipos de coluna personalizados com extração inteligente de valores de exibição
+ * - Fornece feedback ao usuário via MessageService
+ *
+ * Uso em componentes:
+ * ```typescript
+ * export class MyListComponent {
+ *   private exportService = inject(TableExportService);
+ *
+ *   exportExcel(): void {
+ *     this.exportService.exportToExcel(this.items, this.columns, 'meus-dados');
+ *   }
+ *
+ *   exportCSV(): void {
+ *     this.exportService.exportToCSV(this.dataTable, this.items, this.columns);
+ *   }
+ * }
+ * ```
  */
 @Injectable({
   providedIn: 'root'
@@ -22,12 +37,12 @@ export class TableExportService {
   private readonly logger = inject(LoggerService);
 
   /**
-   * Export data to Excel format (.xlsx)
-   * ExcelJS is lazy-loaded to avoid bloating initial bundle
+   * Exporta dados para formato Excel (.xlsx)
+   * ExcelJS é carregado de forma lazy para evitar aumentar bundle inicial
    *
-   * @param data Array of objects to export
-   * @param columns Table columns configuration
-   * @param fileName Base file name (without extension)
+   * @param data Array de objetos a exportar
+   * @param columns Configuração das colunas da tabela
+   * @param fileName Nome base do arquivo (sem extensão)
    */
   exportToExcel<T>(data: T[], columns: TableColumn[], fileName = 'dados'): void {
     if (!data || data.length === 0) {
@@ -39,30 +54,30 @@ export class TableExportService {
       return;
     }
 
-    // Show info message that export is being prepared
+    // Exibe mensagem informativa que exportação está sendo preparada
     this.messageService.add({
       severity: 'info',
       summary: 'Preparando exportação',
       detail: 'O arquivo Excel será baixado em breve...'
     });
 
-    // Lazy-load ExcelJS only when export is triggered
+    // Carrega ExcelJS de forma lazy apenas quando exportação é disparada
     import('exceljs').then(async (ExcelJS) => {
       const exportData = this.prepareExportData(data, columns);
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Dados');
 
-      // Add headers from first data object
+      // Adiciona cabeçalhos do primeiro objeto de dados
       if (exportData.length > 0) {
         const headers = Object.keys(exportData[0]);
         worksheet.addRow(headers);
 
-        // Add data rows
+        // Adiciona linhas de dados
         exportData.forEach((row: Record<string, unknown>) => {
           worksheet.addRow(Object.values(row));
         });
 
-        // Auto-fit columns
+        // Ajusta largura das colunas automaticamente
         worksheet.columns.forEach((column: unknown) => {
           let maxLength = 0;
           (column as {
@@ -73,13 +88,13 @@ export class TableExportService {
           })
           .eachCell({includeEmpty: true}, (cell: unknown) => {
             const cellValue = (cell as { value?: unknown }).value;
-            // Handle different cell value types for proper length calculation
-            let columnLength = 10; // Default length
+            // Manipula diferentes tipos de valores de célula para cálculo correto de comprimento
+            let columnLength = 10; // Comprimento padrão
             if (cellValue !== null && cellValue !== undefined) {
               if (typeof cellValue === 'string' || typeof cellValue === 'number' || typeof cellValue === 'boolean') {
                 columnLength = String(cellValue).length;
               } else if (typeof cellValue === 'object') {
-                // For objects, use JSON stringification length (they shouldn't appear in export data)
+                // Para objetos, usa comprimento da string JSON (não deveriam aparecer nos dados de exportação)
                 columnLength = JSON.stringify(cellValue).length;
               }
             }
@@ -91,7 +106,7 @@ export class TableExportService {
         });
       }
 
-      // Generate buffer and download
+      // Gera buffer e faz download
       const buffer = await workbook.xlsx.writeBuffer();
       this.saveAsExcelFile(buffer, fileName);
     }).catch(error => {
@@ -105,11 +120,11 @@ export class TableExportService {
   }
 
   /**
-   * Export data to CSV format using PrimeNG's native CSV export
+   * Exporta dados para formato CSV usando exportação CSV nativa do PrimeNG
    *
-   * @param table PrimeNG Table instance
-   * @param data Array of objects to export
-   * @param columns Table columns configuration
+   * @param table Instância da Table do PrimeNG
+   * @param data Array de objetos a exportar
+   * @param columns Configuração das colunas da tabela
    */
   exportToCSV<T>(
     table: Table | null | undefined,
@@ -146,20 +161,20 @@ export class TableExportService {
         return;
       }
 
-      // Set the columns property that PrimeNG exportCSV expects
+      // Define propriedade columns que exportCSV do PrimeNG espera
       (table as unknown as { columns: unknown[] }).columns = exportableColumns.map(column => ({
         field: column.field,
         header: column.header
       }));
 
-      // Show info message that export is being prepared
+      // Exibe mensagem informativa que exportação está sendo preparada
       this.messageService.add({
         severity: 'info',
         summary: 'Preparando exportação',
         detail: 'O arquivo CSV será baixado em breve...'
       });
 
-      // Call the native PrimeNG exportCSV method
+      // Chama método nativo exportCSV do PrimeNG
       table.exportCSV();
 
     } catch (error) {
@@ -173,12 +188,12 @@ export class TableExportService {
   }
 
   /**
-   * Prepare data for export by extracting values from nested objects
-   * and handling custom column types
+   * Prepara dados para exportação extraindo valores de objetos aninhados
+   * e manipulando tipos de coluna personalizados
    *
-   * @param data Array of objects to export
-   * @param columns Table columns configuration
-   * @returns Array of flattened objects ready for export
+   * @param data Array de objetos a exportar
+   * @param columns Configuração das colunas da tabela
+   * @returns Array de objetos achatados prontos para exportação
    */
   private prepareExportData<T>(data: T[], columns: TableColumn[]): Record<string, unknown>[] {
     const exportableColumns = this.getExportableColumns(columns);
@@ -190,9 +205,9 @@ export class TableExportService {
         const header = column.header || column.field;
         const value = this.getFieldValue(item, column.field);
 
-        // Handle different column types for export
+        // Manipula diferentes tipos de coluna para exportação
         if (column.type === 'custom' && value && typeof value === 'object') {
-          // For custom columns with objects, try to get a display value
+          // Para colunas personalizadas com objetos, tenta obter um valor de exibição
           if (Object.hasOwn(value, 'descricao')) {
             exportItem[header] = (value as Record<string, unknown>).descricao;
           } else if (Object.hasOwn(value, 'nome')) {
@@ -212,16 +227,16 @@ export class TableExportService {
   }
 
   /**
-   * Get nested field value from object using dot notation
+   * Obtém valor de campo aninhado de objeto usando notação de ponto
    *
-   * @param obj Object to extract value from
-   * @param field Field path (e.g., 'grupo.descricao')
-   * @returns Field value or undefined if not found
+   * @param obj Objeto para extrair valor
+   * @param field Caminho do campo (ex: 'grupo.descricao')
+   * @returns Valor do campo ou undefined se não encontrado
    */
   private getFieldValue(obj: unknown, field: string): unknown {
     if (!obj || !field) return undefined;
 
-    // Handle nested properties (e.g., 'grupo.descricao')
+    // Manipula propriedades aninhadas (ex: 'grupo.descricao')
     const parts = field.split('.');
     let value: unknown = obj;
 
@@ -237,10 +252,10 @@ export class TableExportService {
   }
 
   /**
-   * Filter columns to get only exportable ones
+   * Filtra colunas para obter apenas as exportáveis
    *
-   * @param columns All table columns
-   * @returns Columns that should be included in export
+   * @param columns Todas as colunas da tabela
+   * @returns Colunas que devem ser incluídas na exportação
    */
   private getExportableColumns(columns: TableColumn[]): TableColumn[] {
     return columns.filter(col =>
@@ -250,14 +265,14 @@ export class TableExportService {
   }
 
   /**
-   * Save Excel buffer as downloadable file
+   * Salva buffer Excel como arquivo para download
    *
-   * @param buffer Excel file buffer
-   * @param fileName Base file name (without extension)
+   * @param buffer Buffer do arquivo Excel
+   * @param fileName Nome base do arquivo (sem extensão)
    */
   private saveAsExcelFile(buffer: ArrayBuffer, fileName: string): void {
     try {
-      // Use modern File System Access API with fallback
+      // Usa API moderna de File System Access com fallback
       const blob = new Blob([buffer], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       });

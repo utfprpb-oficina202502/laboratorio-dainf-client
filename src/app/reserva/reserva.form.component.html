@@ -108,6 +108,8 @@
                   <span class="float-right text-sm text-gray-600">(Saldo: {{tempItem()?.saldo}})</span>
                 }
               </label>
+              <small class="block mb-2 text-gray-600">Digite pelo menos 2 caracteres para
+                buscar</small>
               <div class="flex items-center gap-2">
                 <app-cadastro-rapido
                   [href]="'/item/form'"
@@ -131,9 +133,10 @@
                   (onSelect)="setQtdeDefaultItem()"
                   optionLabel="nome"
                   dataKey="id"
-                  [dropdown]="true"
+                  minQueryLength="2"
                   appendTo="body"
                   styleClass="flex-1"
+                  placeholder="Digite para buscar..."
                   [forceSelection]="true">
                   <ng-template let-item pTemplate="item">
                     <div class="flex items-center gap-2">
@@ -191,7 +194,7 @@
                   <tr>
                     <th scope="col">Item</th>
                     <th scope="col" class="text-center" style="width: 150px">Qtde</th>
-                    <th scope="col" class="text-center" class="w-100px">Opções</th>
+                    <th class="text-center w-100px" scope="col">Opções</th>
                   </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-reservaItem>
@@ -276,8 +279,8 @@
         <img
           ngSrc="minioUrl() + image.nameImage"
           alt="Item"
-          class="max-w-full rounded shadow-md"
-          class="w-300px" fill/>
+          class="max-w-full rounded shadow-md w-300px"
+          fill/>
       </div>
     </ng-template>
   </p-carousel>

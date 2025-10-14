@@ -73,8 +73,8 @@ export class EmprestimoDevolucaoComponent implements OnInit {
   readonly frm = viewChild.required<NgForm>('form');
   // State signals
   readonly emprestimo = signal<Emprestimo | null>(null);
-  readonly itensPendentes = signal<EmprestimoDevolucaoItem[]>([]);
-  readonly itensDevolvidos = signal<EmprestimoDevolucaoItem[]>([]);
+  itensPendentes = signal<EmprestimoDevolucaoItem[]>([]);
+  itensDevolvidos = signal<EmprestimoDevolucaoItem[]>([]);
   readonly itensSaida = signal<EmprestimoDevolucaoItem[]>([]);
   readonly documentoUsuario = signal<string>('');
   // Dialog state
@@ -251,7 +251,10 @@ export class EmprestimoDevolucaoComponent implements OnInit {
       return;
     }
 
-    // Se não encontrou item canônico (não-duplicado), usa o primeiro encontrado
+    // Procura item canônico (id válido, não duplicata) entre os itens correspondentes
+    canonicalItem = matchingItems.find(i => i.id);
+
+    // Se não encontrou item canônico, usa o primeiro encontrado
     canonicalItem ??= matchingItems[0];
 
     // Calcula quantidade total somando todos os itens correspondentes únicos

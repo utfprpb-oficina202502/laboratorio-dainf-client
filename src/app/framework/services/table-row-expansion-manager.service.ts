@@ -1,25 +1,48 @@
 import {Injectable} from '@angular/core';
 
 /**
- * Service responsible for managing table row expansion state.
+ * Serviço responsável pelo gerenciamento de estado de expansão de linhas de tabela.
  *
- * Features:
- * - Track expanded rows by key
- * - Expand/collapse individual rows
- * - Expand/collapse all rows
- * - Support for single and multiple expansion modes
- * - Key-based row identification
+ * Funcionalidades:
+ * - Rastreamento de linhas expandidas por chave única
+ * - Expandir/recolher linhas individuais
+ * - Expandir/recolher todas as linhas
+ * - Suporte para modos de expansão única e múltipla
+ * - Identificação de linhas baseada em chave
+ *
+ * Uso em componentes:
+ * ```typescript
+ * export class MyListComponent {
+ *   private expansionManager = inject(TableRowExpansionManagerService);
+ *   expandedRows: Record<string, boolean> = {};
+ *
+ *   toggleRow(item: T): void {
+ *     this.expandedRows = this.expansionManager.toggleRowExpansion(
+ *       this.expandedRows,
+ *       item.id,
+ *       'multiple' // ou 'single'
+ *     );
+ *   }
+ *
+ *   expandAll(): void {
+ *     this.expandedRows = this.expansionManager.expandAllRows(
+ *       this.items,
+ *       (row) => row.id
+ *     );
+ *   }
+ * }
+ * ```
  */
 @Injectable({
   providedIn: 'root'
 })
 export class TableRowExpansionManagerService {
   /**
-   * Check if a row is currently expanded
+   * Verifica se uma linha está atualmente expandida
    *
-   * @param expandedRows Current expanded rows state
-   * @param rowKey Unique key for the row
-   * @returns true if row is expanded
+   * @param expandedRows Estado atual de linhas expandidas
+   * @param rowKey Chave única da linha
+   * @returns true se a linha estiver expandida
    */
   isRowExpanded(expandedRows: Record<string, boolean> | undefined, rowKey: string | null): boolean {
     if (!rowKey) {
@@ -29,12 +52,12 @@ export class TableRowExpansionManagerService {
   }
 
   /**
-   * Toggle row expansion state
+   * Alterna o estado de expansão de uma linha
    *
-   * @param expandedRows Current expanded rows state
-   * @param rowKey Unique key for the row
-   * @param expandMode Expansion mode ('single' or 'multiple')
-   * @returns Updated expanded rows state
+   * @param expandedRows Estado atual de linhas expandidas
+   * @param rowKey Chave única da linha
+   * @param expandMode Modo de expansão ('single' para única ou 'multiple' para múltiplas)
+   * @returns Estado atualizado de linhas expandidas
    */
   toggleRowExpansion(
     expandedRows: Record<string, boolean> | undefined,
@@ -48,10 +71,10 @@ export class TableRowExpansionManagerService {
     const isCurrentlyExpanded = this.isRowExpanded(expandedRows, rowKey);
 
     if (expandMode === 'single') {
-      // Single mode: only one row can be expanded at a time
+      // Modo único: apenas uma linha pode estar expandida por vez
       return isCurrentlyExpanded ? {} : {[rowKey]: true};
     } else {
-      // Multiple mode: toggle this row while keeping others
+      // Modo múltiplo: alterna esta linha mantendo as outras
       const updated = {...(expandedRows)};
       if (updated[rowKey]) {
         delete updated[rowKey];
@@ -63,12 +86,12 @@ export class TableRowExpansionManagerService {
   }
 
   /**
-   * Expand a single row
+   * Expande uma única linha
    *
-   * @param expandedRows Current expanded rows state
-   * @param rowKey Unique key for the row
-   * @param expandMode Expansion mode ('single' or 'multiple')
-   * @returns Updated expanded rows state
+   * @param expandedRows Estado atual de linhas expandidas
+   * @param rowKey Chave única da linha
+   * @param expandMode Modo de expansão ('single' para única ou 'multiple' para múltiplas)
+   * @returns Estado atualizado de linhas expandidas
    */
   expandRow(
     expandedRows: Record<string, boolean> | undefined,
@@ -80,20 +103,20 @@ export class TableRowExpansionManagerService {
     }
 
     if (expandMode === 'single') {
-      // Single mode: clear others and expand this one
+      // Modo único: limpa outras e expande apenas esta
       return {[rowKey]: true};
     } else {
-      // Multiple mode: add to existing
+      // Modo múltiplo: adiciona às existentes
       return {...(expandedRows), [rowKey]: true};
     }
   }
 
   /**
-   * Collapse a single row
+   * Recolhe uma única linha
    *
-   * @param expandedRows Current expanded rows state
-   * @param rowKey Unique key for the row
-   * @returns Updated expanded rows state
+   * @param expandedRows Estado atual de linhas expandidas
+   * @param rowKey Chave única da linha
+   * @returns Estado atualizado de linhas expandidas
    */
   collapseRow(
     expandedRows: Record<string, boolean> | undefined,
@@ -109,11 +132,11 @@ export class TableRowExpansionManagerService {
   }
 
   /**
-   * Expand all rows
+   * Expande todas as linhas
    *
-   * @param rows Array of all rows
-   * @param getRowKey Function to extract unique key from row
-   * @returns Expanded rows state with all rows expanded
+   * @param rows Array com todas as linhas
+   * @param getRowKey Função para extrair chave única da linha
+   * @returns Estado de linhas expandidas com todas as linhas expandidas
    */
   expandAllRows<T>(rows: T[], getRowKey: (row: T) => string | null): Record<string, boolean> {
     if (!rows?.length) {
@@ -131,19 +154,19 @@ export class TableRowExpansionManagerService {
   }
 
   /**
-   * Collapse all rows
+   * Recolhe todas as linhas
    *
-   * @returns Empty expanded rows state
+   * @returns Estado vazio de linhas expandidas
    */
   collapseAllRows(): Record<string, boolean> {
     return {};
   }
 
   /**
-   * Get count of currently expanded rows
+   * Obtém a contagem de linhas atualmente expandidas
    *
-   * @param expandedRows Current expanded rows state
-   * @returns Number of expanded rows
+   * @param expandedRows Estado atual de linhas expandidas
+   * @returns Número de linhas expandidas
    */
   getExpandedCount(expandedRows: Record<string, boolean> | undefined): number {
     if (!expandedRows) {
@@ -153,20 +176,20 @@ export class TableRowExpansionManagerService {
   }
 
   /**
-   * Check if any rows are expanded
+   * Verifica se há linhas expandidas
    *
-   * @param expandedRows Current expanded rows state
-   * @returns true if at least one row is expanded
+   * @param expandedRows Estado atual de linhas expandidas
+   * @returns true se pelo menos uma linha estiver expandida
    */
   hasExpandedRows(expandedRows: Record<string, boolean> | undefined): boolean {
     return this.getExpandedCount(expandedRows) > 0;
   }
 
   /**
-   * Get array of expanded row keys
+   * Obtém array com as chaves das linhas expandidas
    *
-   * @param expandedRows Current expanded rows state
-   * @returns Array of keys for expanded rows
+   * @param expandedRows Estado atual de linhas expandidas
+   * @returns Array com as chaves das linhas expandidas
    */
   getExpandedKeys(expandedRows: Record<string, boolean> | undefined): string[] {
     if (!expandedRows) {
