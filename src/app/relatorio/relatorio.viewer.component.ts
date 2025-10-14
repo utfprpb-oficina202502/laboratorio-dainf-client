@@ -5,7 +5,6 @@ import {FormsModule} from '@angular/forms';
 import {ActivatedRoute, Router} from '@angular/router';
 import {RelatorioService} from './relatorio.service';
 import {LoaderService} from '../framework/loader/loader.service';
-import {DomSanitizer} from '@angular/platform-browser';
 import {Relatorio} from './relatorio';
 import {pt} from '../framework/constantes/calendarPt';
 import {RelatorioParamsValue} from './relatorioParamsValue';
@@ -41,16 +40,16 @@ import {VoltarComponent} from '../geral/voltar/voltar.component';
   ]
 })
 export class RelatorioViewerComponent implements OnInit {
-  reportHTML: unknown;
+  reportURL: string | null = null;
+  reportBlob: Blob | null = null;
 
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly loaderService = inject(LoaderService);
-  private readonly sanitizer = inject(DomSanitizer);
   private readonly relatorioService = inject(RelatorioService);
   protected readonly breakpointService = inject(BreakpointService);
   localePt: unknown;
-  relatorioCurrent!: Relatorio;
+  relatorioCurrent: Relatorio | null = null;
   dialogFiltroRelatorio = false;
   // Constants for template
   protected readonly Z_INDEX = Z_INDEX;
@@ -84,7 +83,7 @@ export class RelatorioViewerComponent implements OnInit {
     this.relatorioService.findOne(id)
       .subscribe(e => {
         this.relatorioCurrent = e;
-        if (this.relatorioCurrent.paramsList.length > 0) {
+        if (this.relatorioCurrent?.paramsList && this.relatorioCurrent.paramsList.length > 0) {
           this.openFiltro();
         } else {
           this.generateReport(id, []);
@@ -110,15 +109,19 @@ export class RelatorioViewerComponent implements OnInit {
 
     this.relatorioService.generateReport(convMap)
       .subscribe(e => {
-        const file = new Blob([e], {type: 'application/pdf'});
-        const fileURL = URL.createObjectURL(file);
-        this.reportHTML = this.getSafeUrl(fileURL);
+        this.reportBlob = new Blob([e], {type: 'application/pdf'});
+        this.reportURL = URL.createObjectURL(this.reportBlob);
         this.loaderService.hide();
       });
   }
 
-  getSafeUrl(url: string) {
-    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  downloadReport() {
+    if (this.reportURL && this.relatorioCurrent) {
+      const link = document.createElement('a');
+      link.href = this.reportURL;
+      link.download = `${this.relatorioCurrent.nome}.pdf`;
+      link.click();
+    }
   }
 
   filtroIsValid() {
@@ -161,7 +164,7 @@ export class RelatorioViewerComponent implements OnInit {
 
   initValueDefaultFiltro() {
     this.relatorioParamValue = [];
-    this.relatorioCurrent.paramsList.forEach(param => {
+    this.relatorioCurrent?.paramsList?.forEach(param => {
       const valueParamFiltro = new RelatorioParamsValue();
       valueParamFiltro.nameParam = param.nameParam;
       this.relatorioParamValue.push(valueParamFiltro);
@@ -169,7 +172,9 @@ export class RelatorioViewerComponent implements OnInit {
   }
 
   filtrar() {
-    this.generateReport(this.relatorioCurrent.id, this.relatorioParamValue);
-    this.dialogFiltroRelatorio = false;
+    if (this.relatorioCurrent?.id) {
+      this.generateReport(this.relatorioCurrent.id, this.relatorioParamValue);
+      this.dialogFiltroRelatorio = false;
+    }
   }
 }

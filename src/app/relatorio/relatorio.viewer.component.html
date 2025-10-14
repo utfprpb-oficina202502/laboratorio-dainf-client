@@ -4,32 +4,60 @@
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
           <app-voltar (backClick)="back()"></app-voltar>
-          <h2 class="text-xl font-semibold m-0">{{ relatorioCurrent.nome }}</h2>
+          <h2 class="text-xl font-semibold m-0">{{ relatorioCurrent?.nome }}</h2>
         </div>
-        @if (relatorioCurrent.paramsList.length > 0) {
-          <button
-            type="button"
-            pButton
-            icon="pi pi-filter"
-            pTooltip="Filtro"
-            tooltipPosition="left"
-            class="p-button-rounded p-button-text"
-            (click)="dialogFiltroRelatorio = true">
-          </button>
-        }
+        <div class="flex items-center gap-2">
+          @if (reportURL) {
+            <button
+              (click)="downloadReport()"
+              class="p-button-rounded p-button-text"
+              icon="pi pi-download"
+              pButton
+              pTooltip="Download PDF"
+              tooltipPosition="left"
+              type="button">
+            </button>
+          }
+          @if ((relatorioCurrent?.paramsList?.length ?? 0) > 0) {
+            <button
+              (click)="dialogFiltroRelatorio = true"
+              class="p-button-rounded p-button-text"
+              icon="pi pi-filter"
+              pButton
+              pTooltip="Filtro"
+              tooltipPosition="left"
+              type="button">
+            </button>
+          }
+        </div>
       </div>
     </ng-template>
 
     <ng-template pTemplate="content">
       <div style="height: calc(100vh - 200px);">
-        <iframe [src]="reportHTML" class="border-0" class="rounded" height="100%" title="report"
-                width="100%"></iframe>
+        @if (reportURL) {
+          <object [data]="reportURL" class="w-full h-full rounded border-0" type="application/pdf">
+            <div class="flex flex-col items-center justify-center h-full gap-4">
+              <i class="pi pi-file-pdf text-6xl text-gray-400"></i>
+              <p class="text-gray-600">Não é possível exibir o PDF no navegador.</p>
+              <p-button
+                (onClick)="downloadReport()"
+                icon="pi pi-download"
+                label="Download PDF">
+              </p-button>
+            </div>
+          </object>
+        } @else {
+          <div class="flex items-center justify-center h-full">
+            <p class="text-gray-500">Gerando relatório...</p>
+          </div>
+        }
       </div>
     </ng-template>
   </p-card>
 </div>
 
-@if (relatorioCurrent.paramsList.length > 0) {
+@if ((relatorioCurrent?.paramsList?.length ?? 0) > 0) {
   <p-dialog header="Filtro"
     [(visible)]="dialogFiltroRelatorio"
             class="dialog-sm"
@@ -37,7 +65,7 @@
             [baseZIndex]="Z_INDEX.DIALOG"
     [focusOnShow]="false">
     <form #formFiltro="ngForm">
-      @for (param of relatorioCurrent.paramsList; track param) {
+      @for (param of relatorioCurrent!.paramsList; track param) {
         <div class="grid grid-cols-12 gap-4 mb-4">
           <div class="col-span-12">
             <div class="form-group">

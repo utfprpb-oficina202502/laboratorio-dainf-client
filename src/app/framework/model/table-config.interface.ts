@@ -175,11 +175,23 @@ export interface TableConfiguration {
   resizableColumns?: boolean;
   columnResizeMode?: 'fit' | 'expand';
 
-  /** Lazy loading hooks */
+  /**
+   * Enable server-side pagination mode (default: true)
+   * When true, table expects totalRecords and handles pagination via service calls
+   */
   lazy?: boolean;
+
+  /**
+   * @deprecated Not used - framework calls service directly instead of using PrimeNG's onLazyLoad event
+   * This flag has no effect and should not be set in component configurations
+   */
   lazyLoadOnInit?: boolean;
 
-  /** Skip the automatic initial load when false */
+  /**
+   * Automatically load data in base class ngOnInit (default: true)
+   * When true, base class will call findAll() on initialization
+   * Set to false only if you need custom initialization logic
+   */
   preloadData?: boolean;
 
   /** Toggle built-in keyboard shortcuts */

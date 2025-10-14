@@ -10,7 +10,8 @@
     </ng-template>
 
     <ng-template pTemplate="content">
-      <form #form="ngForm" (submit)="preSave()" enctype="multipart/form-data">
+      @if (form(); as formGroup) {
+        <form (ngSubmit)="save()" [formGroup]="formGroup" enctype="multipart/form-data">
         <div class="grid grid-cols-12 gap-4">
           <div class="col-span-12 md:col-span-2">
             <div class="form-group">
@@ -19,16 +20,14 @@
                 pInputText
                 type="text"
                 id="id"
-                name="id"
-                disabled
-                [(ngModel)]="object.id"
+                formControlName="id"
                 class="w-full">
             </div>
           </div>
 
           <div class="col-span-12 md:col-span-10">
             <div class="form-group">
-              <label for="descricao">Nome</label>
+              <label for="nome">Nome</label>
               <span class="field-required">*</span>
               <i class="pi pi-question-circle float-right"
                 pTooltip="Campo responsável pelo nome que irá aparecer na parte superior da tela de geração do relatório">
@@ -36,12 +35,14 @@
               <input
                 pInputText
                 type="text"
-                id="descricao"
-                name="descricao"
-                required
-                validation
-                [(ngModel)]="object.nome"
+                [class.ng-dirty]="hasError('nome')"
+                [class.ng-invalid]="hasError('nome')"
+                formControlName="nome"
+                id="nome"
                 class="w-full">
+              @if (hasError('nome')) {
+                <small class="p-error">{{ getErrorMessage('nome') }}</small>
+              }
             </div>
           </div>
         </div>
@@ -87,7 +88,8 @@
                       id="nameParam"
                       name="nameParam"
                       #nomeParam
-                      [(ngModel)]="relatorioParams.nameParam"
+                      (ngModelChange)="updateParamName($event)"
+                      [ngModel]="currentParam().nameParam"
                       class="w-full">
                   </div>
                 </div>
@@ -103,7 +105,8 @@
                       type="text"
                       id="aliasParam"
                       name="aliasParam"
-                      [(ngModel)]="relatorioParams.aliasParam"
+                      (ngModelChange)="updateParamAlias($event)"
+                      [ngModel]="currentParam().aliasParam"
                       class="w-full">
                   </div>
                 </div>
@@ -113,7 +116,8 @@
                     <label for="tipoParam">Tipo do Parâmetro</label>
                     <p-select
                       [options]="tipoParamDropdown"
-                      [(ngModel)]="relatorioParams.tipoParam"
+                      (ngModelChange)="updateParamType($event)"
+                      [ngModel]="currentParam().tipoParam"
                       inputId="tipoParam"
                       name="tipoParam"
                       styleClass="w-full">
@@ -137,9 +141,9 @@
               </div>
             </form>
 
-            @if (object.paramsList && object.paramsList.length > 0) {
+            @if (paramsList().length > 0) {
               <div class="mt-4">
-                <p-table #table [value]="object.paramsList" styleClass="p-datatable-sm">
+                <p-table #table [value]="paramsList()" styleClass="p-datatable-sm">
                   <ng-template pTemplate="header">
                     <tr>
                       <th scope="col">Nome Parâmetro</th>
@@ -187,6 +191,7 @@
           <app-salvar [typeButton]="'submit'"></app-salvar>
         </div>
       </form>
+      }
     </ng-template>
   </p-card>
 </div>

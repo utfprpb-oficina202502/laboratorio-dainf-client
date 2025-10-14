@@ -121,7 +121,6 @@ export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number
       resizableColumns: true,
       columnResizeMode: 'fit',
       lazy: true,
-      lazyLoadOnInit: true,
       preloadData: true,
       keyboardShortcuts: true
     };

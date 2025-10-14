@@ -197,7 +197,6 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
       resizableColumns: true,
       columnResizeMode: 'fit',
       lazy: true,
-      lazyLoadOnInit: true,
       preloadData: true,
       keyboardShortcuts: true
     };

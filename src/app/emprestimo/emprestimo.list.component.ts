@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  forwardRef,
-  inject,
-  OnInit,
-  viewChild
-} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, viewChild} from '@angular/core';
 import {Z_INDEX} from '../framework/constants';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
@@ -47,7 +40,7 @@ import {
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => EmprestimoListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, number> implements OnInit{
+export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, number> {
   readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
   readonly novaData = viewChild.required<DatePicker>('novaData');
   contextMenuItems: MenuItem[] = [];
@@ -181,18 +174,6 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
 
   protected override getExportFileName(): string {
     return 'emprestimos';
-  }
-
-  ngOnInit(): void {
-    super.ngOnInit();
-
-    // isAlunoOrProfessor is now a computed signal from base class
-    // Check permission and load appropriate data
-    if (this.isAlunoOrProfessor()) {
-      this.findAllByUsername();
-    } else {
-      this.findAll();
-    }
   }
 
   findUsuarioResponsavel($event: { query: string }) {
@@ -359,7 +340,6 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       resizableColumns: true,
       columnResizeMode: 'fit',
       lazy: true,
-      lazyLoadOnInit: false,
       preloadData: true,
       keyboardShortcuts: true
     };

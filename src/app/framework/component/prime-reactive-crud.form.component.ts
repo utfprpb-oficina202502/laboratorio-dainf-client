@@ -1,6 +1,6 @@
 import {ActivatedRoute, Router} from '@angular/router';
 import {CrudService} from '../service/crud.service';
-import {computed, Directive, inject, Injector, OnDestroy, OnInit, signal} from '@angular/core';
+import {Directive, inject, Injector, OnDestroy, OnInit, signal} from '@angular/core';
 import {FormGroup} from '@angular/forms';
 import {MessageService} from 'primeng/api';
 import {LoaderService} from '../loader/loader.service';
@@ -31,10 +31,6 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
   protected readonly isAlunoOrProfessor = signal(false);
   protected readonly isLoading = signal(false);
   protected readonly object = signal<T | null>(null);
-
-  protected readonly isFormValid = computed(() => this.form()?.valid ?? false);
-  protected readonly isFormDirty = computed(() => this.form()?.dirty ?? false);
-  protected readonly isFormTouched = computed(() => this.form()?.touched ?? false);
 
   protected readonly form = signal<FormGroup | null>(null);
   protected validExtra = true;
@@ -75,7 +71,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
       })
     ).subscribe({
       next: (id) => {
-        if (null !== id) {
+        if (id !== null) {
           this.edit(id as ID);
         } else {
           this.initializeValues();

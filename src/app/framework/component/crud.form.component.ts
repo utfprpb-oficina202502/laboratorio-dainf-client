@@ -29,7 +29,7 @@ export abstract class CrudFormComponent<T, ID> extends BaseFormComponent impleme
   public isAlunosOrProfessor = false;
   public object!: T;
 
-  constructor() {
+  protected constructor() {
     super();
     this.router = inject(Router);
     this.route = inject(ActivatedRoute);

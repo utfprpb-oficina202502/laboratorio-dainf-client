@@ -1,16 +1,13 @@
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  inject,
-  viewChild
-} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, OnInit, signal, viewChild} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule, NgForm} from '@angular/forms';
+import {ActivatedRoute, Router} from '@angular/router';
+import {MenuItem, MessageService} from 'primeng/api';
 import {Z_INDEX} from '../framework/constants';
-import {CrudFormComponent} from '../framework/component/crud.form.component';
 import {Emprestimo} from './emprestimo';
 import {EmprestimoService} from './emprestimo.service';
+import {LoaderService} from '../framework/loader/loader.service';
+import {extractRouteParam, parseNumericId} from '../framework/utils/route-params.operators';
 import {
   CdkDragDrop,
   DragDropModule,
@@ -18,7 +15,6 @@ import {
   transferArrayItem
 } from '@angular/cdk/drag-drop';
 import {EmprestimoDevolucaoItem, StatusDevolucao} from './emprestimoDevolucaoItem';
-import {MenuItem} from 'primeng/api';
 import {Menu, MenuModule} from 'primeng/menu';
 
 // PrimeNG
@@ -72,67 +68,64 @@ import {BreakpointService} from '../framework/services/breakpoint.service';
 
   ]
 })
-export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, number> {
-  protected override service = inject(EmprestimoService);
-  protected override urlList = '/emprestimo';
-  protected override type = undefined;
-  protected readonly breakpointService = inject(BreakpointService);
-  private readonly cdr = inject(ChangeDetectorRef);
-
+export class EmprestimoDevolucaoComponent implements OnInit {
+  // View children
   readonly frm = viewChild.required<NgForm>('form');
-  readonly contextMenu = viewChild<Menu>('contextMenu');
-
-  itensPendentes: EmprestimoDevolucaoItem[] = [];
-  itensDevolvidos: EmprestimoDevolucaoItem[] = [];
-  itensSaida: EmprestimoDevolucaoItem[] = [];
+  // State signals
+  readonly emprestimo = signal<Emprestimo | null>(null);
+  readonly itensPendentes = signal<EmprestimoDevolucaoItem[]>([]);
+  readonly itensDevolvidos = signal<EmprestimoDevolucaoItem[]>([]);
+  readonly itensSaida = signal<EmprestimoDevolucaoItem[]>([]);
+  readonly documentoUsuario = signal<string>('');
+  // Dialog state
   qtdeItemDuplicado: number | undefined;
+  readonly contextMenu = viewChild<Menu>('contextMenu');
+  // Context menu
+  contextMenuPosition = {x: 0, y: 0};
+  protected readonly breakpointService = inject(BreakpointService);
+  // Service injections
+  private readonly emprestimoService = inject(EmprestimoService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly messageService = inject(MessageService);
   itemIsEditing!: EmprestimoDevolucaoItem;
   dialogDuplicaItem = false;
-
-  contextMenuPosition = {x: 0, y: 0};
+  private readonly loaderService = inject(LoaderService);
   contextMenuItems: MenuItem[] = [];
-  documentoUsuario!: string;
 
   // Constants for template
   protected readonly Z_INDEX = Z_INDEX;
 
-  constructor() {
-    super();
-  }
-
-  // Getter for backwards compatibility
-  protected get emprestimoService(): EmprestimoService {
-    return this.service;
-  }
-
-  postEdit(): void {
-    this.documentoUsuario = this.object.usuarioEmprestimo.documento;
-    this.buildItensKanban();
-    this.cdr.markForCheck();
-  }
-
-  buildItensKanban() {
-    for (const empDevItem of this.object.emprestimoDevolucaoItem) {
-      switch (empDevItem.statusDevolucao) {
-        case StatusDevolucao.P: {
-          this.itensPendentes.push(empDevItem);
-          break;
+  ngOnInit(): void {
+    this.route.params.pipe(
+      extractRouteParam({
+        paramName: 'id',
+        converter: parseNumericId,
+        onError: () => {
+          this.back();
         }
-        case StatusDevolucao.D: {
-          this.itensDevolvidos.push(empDevItem);
-          break;
+      })
+    ).subscribe({
+      next: (id) => {
+        if (id !== null) {
+          this.loadEmprestimo(id);
         }
-        case StatusDevolucao.S:
-          this.itensSaida.push(empDevItem);
-          break;
       }
-    }
+    });
   }
 
-  saveDevolucao() {
+  back(): void {
+    this.router.navigate(['/emprestimo']);
+  }
+
+  saveDevolucao(): void {
+    const emp = this.emprestimo();
+    if (!emp) return;
+
     this.loaderService.show();
     this.atualizarStatusItens();
-    this.emprestimoService.saveDevolucao(this.object)
+
+    this.emprestimoService.saveDevolucao(emp)
     .subscribe({
       next: () => {
         this.loaderService.hide();
@@ -142,7 +135,6 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
           detail: 'Devolução efetuada com sucesso!',
           life: 3000
         });
-        this.cdr.markForCheck();
         this.back();
       },
       error: () => {
@@ -153,26 +145,36 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
           detail: 'Ocorreu um erro ao salvar a devolução!',
           life: 5000
         });
-        this.cdr.markForCheck();
       }
     });
   }
 
-  duplicarItem() {
-    if (!this.disableBtnSaveDuplicar() && this.qtdeItemDuplicado !== null && this.qtdeItemDuplicado !== undefined) {
-      const itemDuplicado = structuredClone(this.itemIsEditing);
-      itemDuplicado.qtde = this.qtdeItemDuplicado;
-      itemDuplicado.id = 0;
-      this.itensPendentes.push(itemDuplicado);
-      this.object.emprestimoDevolucaoItem.push(itemDuplicado);
-      this.itemIsEditing.qtde = this.itemIsEditing.qtde - this.qtdeItemDuplicado;
-      this.qtdeItemDuplicado = undefined;
-      this.dialogDuplicaItem = false;
-      this.cdr.markForCheck();
+  duplicarItem(): void {
+    const emp = this.emprestimo();
+    if (!emp || this.disableBtnSaveDuplicar() || this.qtdeItemDuplicado === null || this.qtdeItemDuplicado === undefined) {
+      return;
     }
+
+    const itemDuplicado = structuredClone(this.itemIsEditing);
+    itemDuplicado.qtde = this.qtdeItemDuplicado;
+    itemDuplicado.id = 0;
+
+    // Atualiza a lista de pendentes
+    this.itensPendentes.update(list => [...list, itemDuplicado]);
+
+    // Atualiza o empréstimo
+    emp.emprestimoDevolucaoItem.push(itemDuplicado);
+    this.emprestimo.set({...emp});
+
+    // Atualiza o item original
+    this.itemIsEditing.qtde = this.itemIsEditing.qtde - this.qtdeItemDuplicado;
+
+    // Reset dialog state
+    this.qtdeItemDuplicado = undefined;
+    this.dialogDuplicaItem = false;
   }
 
-  onContextMenu(event: MouseEvent, item: EmprestimoDevolucaoItem) {
+  onContextMenu(event: MouseEvent, item: EmprestimoDevolucaoItem): void {
     event.preventDefault();
     this.contextMenuPosition.x = event.clientX;
     this.contextMenuPosition.y = event.clientY;
@@ -196,29 +198,30 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
     ];
 
     this.contextMenu()?.show(event);
-    this.cdr.markForCheck();
   }
 
-  drop(event: CdkDragDrop<EmprestimoDevolucaoItem[]>) {
+  drop(event: CdkDragDrop<EmprestimoDevolucaoItem[]>): void {
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
-      transferArrayItem(event.previousContainer.data,
+      transferArrayItem(
+        event.previousContainer.data,
         event.container.data,
         event.previousIndex,
-        event.currentIndex);
+        event.currentIndex
+      );
     }
-    this.cdr.markForCheck();
   }
 
-  removeItensDuplicadosByItem(item: EmprestimoDevolucaoItem) {
+  removeItensDuplicadosByItem(item: EmprestimoDevolucaoItem): void {
+    const emp = this.emprestimo();
+    if (!emp) return;
+
     // Coleta todas as listas do Kanban para processamento
-    const allLists = [
-      this.object.emprestimoDevolucaoItem,
-      this.itensPendentes,
-      this.itensDevolvidos,
-      this.itensSaida
-    ];
+    const pendentes = [...this.itensPendentes()];
+    const devolvidos = [...this.itensDevolvidos()];
+    const saida = [...this.itensSaida()];
+    const allLists = [emp.emprestimoDevolucaoItem, pendentes, devolvidos, saida];
 
     // Usa Set para garantir referências únicas (mesmo item pode estar em múltiplas listas)
     const uniqueMatchingItems = new Set<EmprestimoDevolucaoItem>();
@@ -236,8 +239,7 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
             if (!duplicates.includes(empDevItem)) {
               duplicates.push(empDevItem);
             }
-          } else // Preferência: primeiro item não-duplicado encontrado
-            canonicalItem ??= empDevItem;
+          }
         }
       }
     }
@@ -268,23 +270,47 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
         continue;
       }
 
-      for (const list of allLists) {
-        const index = list.indexOf(duplicate);
-        if (index >= 0) {
-          list.splice(index, 1);
-        }
+      // Remove do empréstimo
+      const empIndex = emp.emprestimoDevolucaoItem.indexOf(duplicate);
+      if (empIndex >= 0) {
+        emp.emprestimoDevolucaoItem.splice(empIndex, 1);
+      }
+
+      // Remove das listas locais
+      const pendIndex = pendentes.indexOf(duplicate);
+      if (pendIndex >= 0) {
+        pendentes.splice(pendIndex, 1);
+      }
+
+      const devIndex = devolvidos.indexOf(duplicate);
+      if (devIndex >= 0) {
+        devolvidos.splice(devIndex, 1);
+      }
+
+      const saidaIndex = saida.indexOf(duplicate);
+      if (saidaIndex >= 0) {
+        saida.splice(saidaIndex, 1);
       }
     }
 
-    this.cdr.markForCheck();
+    // Atualiza os signals
+    this.emprestimo.set({...emp});
+    this.itensPendentes.set(pendentes);
+    this.itensDevolvidos.set(devolvidos);
+    this.itensSaida.set(saida);
   }
 
   verificaOptionsEnabled(item: EmprestimoDevolucaoItem): {
-    canDuplicate: boolean,
-    canRemoveDuplicates: boolean
+    canDuplicate: boolean;
+    canRemoveDuplicates: boolean;
   } {
+    const emp = this.emprestimo();
+    if (!emp) {
+      return {canDuplicate: false, canRemoveDuplicates: false};
+    }
+
     let count = 0;
-    for (const empDevItem of this.object.emprestimoDevolucaoItem) {
+    for (const empDevItem of emp.emprestimoDevolucaoItem) {
       if (empDevItem.item.id === item.item.id) {
         count++;
         // Early exit: se já tem 2+, não precisa continuar contando
@@ -299,33 +325,90 @@ export class EmprestimoDevolucaoComponent extends CrudFormComponent<Emprestimo, 
     };
   }
 
-  openDialogDuplicarItem(item: EmprestimoDevolucaoItem) {
+  openDialogDuplicarItem(item: EmprestimoDevolucaoItem): void {
     this.dialogDuplicaItem = true;
     this.itemIsEditing = item;
   }
 
-  disableBtnSaveDuplicar() {
+  disableBtnSaveDuplicar(): boolean {
     return this.qtdeItemDuplicado === null || this.qtdeItemDuplicado === undefined
       || this.qtdeItemDuplicado.toString() === ''
       || this.qtdeItemDuplicado >= this.itemIsEditing.qtde;
   }
 
-  onClickMenuDuplicateItem(item: EmprestimoDevolucaoItem) {
+  onClickMenuDuplicateItem(item: EmprestimoDevolucaoItem): void {
     this.openDialogDuplicarItem(item);
   }
 
-  onClickMenuRemoveDuplicates(item: EmprestimoDevolucaoItem) {
+  onClickMenuRemoveDuplicates(item: EmprestimoDevolucaoItem): void {
     this.removeItensDuplicadosByItem(item);
+  }
+
+  private loadEmprestimo(id: number): void {
+    this.loaderService.show();
+    this.emprestimoService.findOne(id)
+    .subscribe({
+      next: (emprestimo) => {
+        this.emprestimo.set(emprestimo);
+        this.documentoUsuario.set(emprestimo.usuarioEmprestimo.documento);
+        this.buildItensKanban();
+        this.loaderService.hide();
+      },
+      error: () => {
+        this.loaderService.hide();
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Atenção!',
+          detail: 'Ocorreu um erro ao buscar o empréstimo!',
+          life: 5000
+        });
+        this.back();
+      }
+    });
+  }
+
+  private buildItensKanban(): void {
+    const emp = this.emprestimo();
+    if (!emp) return;
+
+    const pendentes: EmprestimoDevolucaoItem[] = [];
+    const devolvidos: EmprestimoDevolucaoItem[] = [];
+    const saida: EmprestimoDevolucaoItem[] = [];
+
+    for (const empDevItem of emp.emprestimoDevolucaoItem) {
+      switch (empDevItem.statusDevolucao) {
+        case StatusDevolucao.P:
+          pendentes.push(empDevItem);
+          break;
+        case StatusDevolucao.D:
+          devolvidos.push(empDevItem);
+          break;
+        case StatusDevolucao.S:
+          saida.push(empDevItem);
+          break;
+      }
+    }
+
+    this.itensPendentes.set(pendentes);
+    this.itensDevolvidos.set(devolvidos);
+    this.itensSaida.set(saida);
   }
 
   /**
    * Atualiza o status de devolução dos itens com base nas listas de kanban
    */
   private atualizarStatusItens(): void {
-    for (const empDevItem of this.object.emprestimoDevolucaoItem) {
-      this.atualizarStatusSePresente(empDevItem, this.itensPendentes, StatusDevolucao.P);
-      this.atualizarStatusSePresente(empDevItem, this.itensDevolvidos, StatusDevolucao.D);
-      this.atualizarStatusSePresente(empDevItem, this.itensSaida, StatusDevolucao.S);
+    const emp = this.emprestimo();
+    if (!emp) return;
+
+    const pendentes = this.itensPendentes();
+    const devolvidos = this.itensDevolvidos();
+    const saida = this.itensSaida();
+
+    for (const empDevItem of emp.emprestimoDevolucaoItem) {
+      this.atualizarStatusSePresente(empDevItem, pendentes, StatusDevolucao.P);
+      this.atualizarStatusSePresente(empDevItem, devolvidos, StatusDevolucao.D);
+      this.atualizarStatusSePresente(empDevItem, saida, StatusDevolucao.S);
     }
   }
 

@@ -11,7 +11,6 @@ import {TooltipModule} from 'primeng/tooltip';
   selector: 'app-action-buttons',
   imports: [CommonModule, ButtonModule, TooltipModule],
   templateUrl: './action-buttons.component.html',
-  styleUrl: './action-buttons.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActionButtonsComponent {

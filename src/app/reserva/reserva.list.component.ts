@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  forwardRef,
-  inject,
-  OnInit,
-  viewChild
-} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, viewChild} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Reserva} from './reserva';
@@ -31,7 +24,7 @@ import {
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => ReservaListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number> implements OnInit{
+export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number> {
   protected override service = inject(ReservaService);
   protected override columnsTable = ['id', 'descricao', 'dataReserva', 'dataRetirada', 'usuario', 'actions'];
   protected override urlForm = 'reserva/form';
@@ -116,18 +109,6 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
     return 'reservas';
   }
 
-  ngOnInit(): void {
-    super.ngOnInit();
-
-    // isAlunoOrProfessor is now a computed signal from base class
-    // Check permission and load appropriate data
-    if (this.isAlunoOrProfessor()) {
-      this.findAllByUsername();
-    } else {
-      this.findAll();
-    }
-  }
-
   openOptions(event: Event, reserva: Reserva): void {
     this.selectedReserva = reserva;
     const isAlunoOrProfessor = this.isAlunoOrProfessor();
@@ -189,7 +170,6 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
       resizableColumns: true,
       columnResizeMode: 'fit',
       lazy: true,
-      lazyLoadOnInit: true,
       preloadData: true,
       keyboardShortcuts: true
     };
