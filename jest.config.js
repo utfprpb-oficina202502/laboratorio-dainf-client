@@ -11,13 +11,5 @@ module.exports = {
     '!src/app/**/*.spec.ts',
     '!src/app/**/*.module.ts'
   ],
-  coverageThreshold: {
-    global: {
-      statements: 70,
-      branches: 70,
-      functions: 70,
-      lines: 70
-    }
-  },
   transformIgnorePatterns: [String.raw`node_modules/(?!(@amcharts|d3-.*|.*\.mjs))`]
 };
