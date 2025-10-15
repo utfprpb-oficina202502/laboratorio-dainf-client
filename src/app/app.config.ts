@@ -13,7 +13,7 @@ import {LoginService} from './login/login.service';
 import {LoaderService} from './framework/loader/loader.service';
 import {ptBR} from '../locale/pt-BR';
 import PrimeUTFPRPreset from './theme/prime-utfpr-theme-preset';
-import {CadastrarUsuarioService} from "./cadastrarUsuario/cadastrarUsuario.service";
+import {CadastrarUsuarioService} from './cadastrarUsuario/cadastrarUsuario.service';
 
 // Feature Services
 import {UsuarioService} from './usuario/usuario.service';
@@ -59,6 +59,7 @@ export const appConfig: ApplicationConfig = {
     DatePipe,
 
     // Feature Services
+    CadastrarUsuarioService,
     UsuarioService,
     CidadeService,
     CompraService,
@@ -76,7 +77,7 @@ export const appConfig: ApplicationConfig = {
     SidenavService,
 
     //Serviços de Login
-    CadastrarUsuarioService,
+
 
     // HTTP Interceptor
     {
