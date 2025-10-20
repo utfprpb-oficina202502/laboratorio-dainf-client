@@ -2,6 +2,7 @@ import {ChangeDetectionStrategy, Component, inject, OnInit, signal, viewChild} f
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {ActivatedRoute, Router} from '@angular/router';
+import {take} from 'rxjs';
 import {MenuItem, MessageService} from 'primeng/api';
 import {Z_INDEX} from '../framework/constants';
 import {Emprestimo} from './emprestimo';
@@ -95,7 +96,8 @@ export class EmprestimoDevolucaoComponent implements OnInit {
         onError: () => {
           this.back();
         }
-      })
+      }),
+      take(1)
     ).subscribe({
       next: (id) => {
         if (id !== null) {
@@ -490,7 +492,7 @@ export class EmprestimoDevolucaoComponent implements OnInit {
     lista: EmprestimoDevolucaoItem[],
     status: StatusDevolucao
   ): void {
-    if (lista.some(item => item.id === empDevItem.id)) {
+    if (lista.includes(empDevItem)) {
       empDevItem.statusDevolucao = status;
     }
   }
