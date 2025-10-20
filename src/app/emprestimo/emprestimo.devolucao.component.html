@@ -13,151 +13,164 @@
     </ng-template>
 
     <ng-template pTemplate="content">
-      <form #form="ngForm">
+      <form #form="ngForm" class="flex flex-col gap-4">
+        <!-- Row 1: Código, Aluno/Professor, RA/SIAPE -->
         <div class="grid grid-cols-12 gap-4">
           <div class="col-span-12 md:col-span-2">
-            <div class="form-group">
-              <label for="id">Código</label>
-              <input type="text"
+            <app-form-field
+              fieldId="id"
+              label="Código">
+              <input
+                [ngModel]="emprestimo()?.id"
+                class="w-full"
                 id="id"
                 name="id"
                 disabled
-                class="form-control"
-                     [ngModel]="emprestimo()?.id"
-                pInputText>
-            </div>
+                pInputText
+                type="text"/>
+            </app-form-field>
           </div>
 
           <div class="col-span-12 md:col-span-8">
-            <div class="form-group">
-              <label for="usuarioEmprestimo">Aluno/Professor</label>
-              <span class="field-required">*</span>
-              <input type="text"
+            <app-form-field
+              [required]="true"
+              fieldId="usuarioEmprestimo"
+              label="Aluno/Professor">
+              <input
+                [ngModel]="emprestimo()?.usuarioEmprestimo?.nome"
+                class="w-full"
                 id="usuarioEmprestimo"
                 name="usuarioEmprestimo"
+                pInputText
                 disabled
-                class="form-control"
-                     [ngModel]="emprestimo()?.usuarioEmprestimo?.nome"
-                pInputText>
-            </div>
+                type="text"/>
+            </app-form-field>
           </div>
 
           <div class="col-span-12 md:col-span-2">
-            <div class="form-group">
-              <label for="documento">RA/SIAPE</label>
-              <input type="text"
+            <app-form-field
+              fieldId="documento"
+              label="RA/SIAPE">
+              <input
+                [ngModel]="documentoUsuario()"
+                class="w-full"
                 id="documento"
                 name="documento"
-                class="form-control"
-                     [ngModel]="documentoUsuario()"
+                pInputText
                 disabled
-                pInputText>
-            </div>
+                type="text"/>
+            </app-form-field>
           </div>
         </div>
 
-        <div class="grid grid-cols-12 gap-4 mt-4">
+        <!-- Row 2: Usuário Responsável, Datas -->
+        <div class="grid grid-cols-12 gap-4">
           <div class="col-span-12 md:col-span-6">
-            <div class="form-group">
-              <label for="usuarioResponsavel">Usuário Responsável</label>
-              <input type="text"
+            <app-form-field
+              fieldId="usuarioResponsavel"
+              label="Usuário Responsável">
+              <input
+                [ngModel]="emprestimo()?.usuarioResponsavel?.nome"
+                class="w-full"
                 id="usuarioResponsavel"
                 name="usuarioResponsavel"
-                class="form-control"
-                     [ngModel]="emprestimo()?.usuarioResponsavel?.nome"
+                disabled
                 pInputText
-                disabled>
-            </div>
+                type="text"/>
+            </app-form-field>
           </div>
 
           <div class="col-span-12 md:col-span-2">
-            <div class="form-group">
-              <label for="dataCompra">Data do Empréstimo</label>
-              <span class="field-required">*</span>
-              <p-datePicker name="dataCompra"
-                id="dataCompra"
-                required
-                validation
-                dataType="string"
+            <app-form-field
+              [required]="true"
+              fieldId="dataCompra"
+              label="Data do Empréstimo">
+              <p-datePicker
+                [inputStyle]="{ width: '100%' }"
+                [ngModel]="emprestimo()?.dataEmprestimo"
                 dateFormat="dd/mm/yy"
-                inputStyleClass="form-control"
-                            [readonlyInput]="breakpointService.isMobile()"
-                            [touchUI]="breakpointService.isMobile()"
+                [readonlyInput]="breakpointService.isMobile()"
+                [touchUI]="breakpointService.isMobile()"
+                dataType="string"
+                inputId="dataCompra"
                 disabled
-                            class="w-full"
-                            [ngModel]="emprestimo()?.dataEmprestimo">
+                name="dataCompra"
+                styleClass="w-full">
               </p-datePicker>
-            </div>
+            </app-form-field>
           </div>
 
           <div class="col-span-12 md:col-span-2">
-            <div class="form-group">
-              <label for="prazoDevolucao">Prazo de Devolução</label>
-              <span class="field-required">*</span>
-              <p-datePicker name="prazoDevolucao"
-                id="prazoDevolucao"
-                required
-                validation
-                dataType="string"
+            <app-form-field
+              [required]="true"
+              fieldId="prazoDevolucao"
+              label="Prazo de Devolução">
+              <p-datePicker
+                [inputStyle]="{ width: '100%' }"
+                [ngModel]="emprestimo()?.prazoDevolucao"
                 dateFormat="dd/mm/yy"
-                inputStyleClass="form-control"
-                            [readonlyInput]="breakpointService.isMobile()"
-                            [touchUI]="breakpointService.isMobile()"
+                [readonlyInput]="breakpointService.isMobile()"
+                [touchUI]="breakpointService.isMobile()"
+                dataType="string"
+                inputId="prazoDevolucao"
                 disabled
-                            class="w-full"
-                            [ngModel]="emprestimo()?.prazoDevolucao">
+                name="prazoDevolucao"
+                styleClass="w-full">
               </p-datePicker>
-            </div>
+            </app-form-field>
           </div>
 
           <div class="col-span-12 md:col-span-2">
-            <div class="form-group">
-              <label for="dataDevolucao">Data de Devolução</label>
-              <span class="field-required">*</span>
-              <p-datePicker name="dataDevolucao"
-                id="dataDevolucao"
-                required
-                validation
-                dataType="string"
+            <app-form-field
+              [required]="true"
+              fieldId="dataDevolucao"
+              label="Data de Devolução">
+              <p-datePicker
+                [inputStyle]="{ width: '100%' }"
+                [ngModel]="emprestimo()?.dataDevolucao"
                 dateFormat="dd/mm/yy"
-                inputStyleClass="form-control"
-                            [readonlyInput]="breakpointService.isMobile()"
-                            [touchUI]="breakpointService.isMobile()"
+                [readonlyInput]="breakpointService.isMobile()"
+                [touchUI]="breakpointService.isMobile()"
+                dataType="string"
+                inputId="dataDevolucao"
                 disabled
-                            class="w-full"
-                            [ngModel]="emprestimo()?.dataDevolucao">
+                name="dataDevolucao"
+                styleClass="w-full">
               </p-datePicker>
-            </div>
+            </app-form-field>
           </div>
         </div>
 
-        <div class="grid grid-cols-12 gap-4 mt-4">
+        <!-- Kanban Board -->
+        <div class="grid grid-cols-12 gap-4">
           <div class="col-span-12 md:col-span-4">
             <div cdkDropList
               #pendentesList="cdkDropList"
-              class="container-kanban border-primary"
+                 [cdkDropListAutoScrollDisabled]="false"
                  [cdkDropListData]="itensPendentes()"
               [cdkDropListConnectedTo]="[devolvidosList, saidasList]"
+                 class="container-kanban border-t-blue-500 rounded-lg"
               (cdkDropListDropped)="drop($event)">
 
               <div class="flex justify-between container-title-kanban">
-                <h4 class="m-0">Pendentes</h4>
+                <h4 class="m-0 text-surface-900 dark:text-surface-0">Pendentes</h4>
                 <p-tag [value]="(itensPendentes().length || 0).toString()" severity="info"></p-tag>
               </div>
 
-              <p-scrollPanel [style]="{width: '100%', height: '450px'}">
-                @for (item of itensPendentes(); track item) {
-                  <div class="card-item-kanban border-primary shadow-md"
+              <p-scrollPanel styleClass="w-full h-[450px]">
+                @for (item of itensPendentes(); track item.id + '-' + item.item.id) {
+                  <div
+                    class="card-item-kanban shadow-md surface-card flex flex-row items-center justify-between rounded-md text-sm"
                     (contextmenu)="onContextMenu($event, item)"
                     cdkDrag>
-                    <span>{{item?.item?.nome}}</span>
+                    <span class="text-color">{{ item?.item?.nome }}</span>
                     <p-tag [value]="item.qtde.toString()" severity="secondary"></p-tag>
                   </div>
                 }
 
                 @if (itensPendentes().length === 0) {
                   <div class="flex items-center justify-center h-full">
-                    <span class="font-semibold text-gray-600">Não há nenhum item pendente para devolução.</span>
+                    <span class="text-surface-500 dark:text-surface-400">Não há nenhum item pendente para devolução.</span>
                   </div>
                 }
               </p-scrollPanel>
@@ -173,30 +186,32 @@
           <div class="col-span-12 md:col-span-4">
             <div cdkDropList
               #devolvidosList="cdkDropList"
-              class="container-kanban border-success"
+                 [cdkDropListAutoScrollDisabled]="false"
                  [cdkDropListData]="itensDevolvidos()"
               [cdkDropListConnectedTo]="[pendentesList, saidasList]"
+                 class="container-kanban border-t-green-500 rounded-lg"
               (cdkDropListDropped)="drop($event)">
 
               <div class="flex justify-between container-title-kanban items-center">
-                <h4 class="m-0">Devolvidos</h4>
+                <h4 class="m-0 text-surface-900 dark:text-surface-0">Devolvidos</h4>
                 <p-tag [value]="(itensDevolvidos().length || 0).toString()"
                        severity="success"></p-tag>
               </div>
 
-              <p-scrollPanel [style]="{width: '100%', height: '450px'}">
-                @for (item of itensDevolvidos(); track item) {
-                  <div class="card-item-kanban border-success shadow-md"
+              <p-scrollPanel styleClass="w-full h-[450px]">
+                @for (item of itensDevolvidos(); track item.id + '-' + item.item.id) {
+                  <div
+                    class="card-item-kanban shadow-md surface-card flex flex-row items-center justify-between rounded-md text-sm"
                        [cdkDragDisabled]="emprestimo()?.dataDevolucao"
                     cdkDrag>
-                    <span>{{item.item.nome}}</span>
+                    <span class="text-color">{{ item.item.nome }}</span>
                     <p-tag [value]="item.qtde.toString()" severity="secondary"></p-tag>
                   </div>
                 }
 
                 @if (itensDevolvidos().length === 0) {
                   <div class="flex items-center justify-center h-full">
-                    <span class="font-semibold text-gray-600">Arraste até aqui os itens que serão devolvidos.</span>
+                    <span class="text-surface-500 dark:text-surface-400">Arraste até aqui os itens que serão devolvidos.</span>
                   </div>
                 }
               </p-scrollPanel>
@@ -208,27 +223,28 @@
               #saidasList="cdkDropList"
                  [cdkDropListData]="itensSaida()"
               [cdkDropListConnectedTo]="[pendentesList, devolvidosList]"
-              class="container-kanban border-danger"
+                 [cdkDropListAutoScrollDisabled]="false"
+                 class="container-kanban border-t-red-500 rounded-lg"
               (cdkDropListDropped)="drop($event)">
 
               <div class="flex justify-between container-title-kanban">
-                <h4 class="m-0">Saída</h4>
+                <h4 class="m-0 text-surface-900 dark:text-surface-0">Saída</h4>
                 <p-tag [value]="(itensSaida().length || 0).toString()" severity="danger"></p-tag>
               </div>
 
-              <p-scrollPanel [style]="{width: '100%', height: '450px'}">
-                @for (item of itensSaida(); track item) {
+              <p-scrollPanel styleClass="w-full h-[450px]">
+                @for (item of itensSaida(); track item.id + '-' + item.item.id) {
                   <div
-                    class="card-item-kanban border-danger shadow-md"
+                    class="card-item-kanban shadow-md surface-card flex flex-row items-center justify-between rounded-md text-sm"
                     [cdkDragDisabled]="emprestimo()?.dataDevolucao"
                     cdkDrag>
-                    <span>{{item.item.nome}}</span>
+                    <span class="text-color">{{ item.item.nome }}</span>
                     <p-tag [value]="item.qtde.toString()" severity="secondary"></p-tag>
                   </div>
                 }
                 @if (itensSaida().length === 0) {
                   <div class="flex items-center justify-center h-full">
-                    <span class="font-semibold text-gray-600">Arraste até aqui os itens que terão saídas permanentes.</span>
+                    <span class="text-surface-500 dark:text-surface-400">Arraste até aqui os itens que terão saídas permanentes.</span>
                   </div>
                 }
               </p-scrollPanel>
@@ -236,27 +252,34 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-12 gap-4 mt-4">
+        <!-- Observação -->
+        <div class="grid grid-cols-12 gap-4">
           <div class="col-span-12">
-            <div class="form-group">
-              <label for="observacao">Observação</label>
-              <textarea id="observacao"
+            <app-form-field
+              fieldId="observacao"
+              label="Observação">
+              <textarea
+                [autoResize]="true"
+                [ngModel]="emprestimo()?.observacao"
                 name="observacao"
-                rows="1"
-                class="form-control"
+                class="w-full"
                 disabled
-                pInputTextarea
-                        [ngModel]="emprestimo()?.observacao"
-                autoResize="autoResize">
+                id="observacao"
+                pTextarea
+                rows="3">
               </textarea>
-            </div>
+            </app-form-field>
           </div>
         </div>
 
-        <div class="flex justify-end gap-2 mt-4">
+        <!-- Action Buttons -->
+        <div class="flex justify-end gap-2">
           <app-cancelar (cancelClick)="back()"></app-cancelar>
-          <app-salvar (saveClick)="saveDevolucao()" [disabled]="!!emprestimo()?.dataDevolucao"
-                      [typeButton]="'button'"></app-salvar>
+          <app-salvar
+            (saveClick)="saveDevolucao()"
+            [disabled]="!!emprestimo()?.dataDevolucao"
+            [typeButton]="'button'">
+          </app-salvar>
         </div>
       </form>
     </ng-template>
@@ -270,34 +293,41 @@
           class="dialog-sm"
   [focusOnShow]="false">
 
-  <form (submit)="duplicarItem()">
+  <form (submit)="duplicarItem()" class="flex flex-col gap-4">
     <div class="grid grid-cols-12 gap-4">
       <div class="col-span-12">
-        <div class="form-group">
-          <label for="dtIni">Informe a nova quantidade</label>
-          <span class="float-right font-semibold">Max.: {{ itemIsEditing.qtde - 1 }}</span>
-          <input name="dtIni"
-            id="dtIni"
-            onlyNumber
+        <app-form-field
+          [hint]="'Máximo: ' + ((itemIsEditing()?.qtde ?? 1) - 1)"
+          fieldId="dtIni"
+          label="Informe a nova quantidade">
+          <input
             (keyup.enter)="duplicarItem()"
+            class="w-full"
+            id="dtIni"
+            name="dtIni"
             [(ngModel)]="qtdeItemDuplicado"
-            class="form-control"
-            pInputText/>
-        </div>
+            [max]="(itemIsEditing()?.qtde ?? 1) - 1"
+            [min]="1"
+            required
+            step="1"
+            onlyNumber
+            pInputText
+            type="number"/>
+        </app-form-field>
       </div>
     </div>
 
-    <div class="flex justify-end gap-2 mt-4">
+    <div class="flex justify-end gap-2">
       <p-button
         label="Cancelar"
         severity="secondary"
-        (onClick)="dialogDuplicaItem = false"
-      ></p-button>
+        (onClick)="dialogDuplicaItem = false">
+      </p-button>
       <p-button
         label="Ok"
         type="submit"
-        [disabled]="disableBtnSaveDuplicar()"
-      ></p-button>
+        [disabled]="disableBtnSaveDuplicar()">
+      </p-button>
     </div>
   </form>
 </p-dialog>
