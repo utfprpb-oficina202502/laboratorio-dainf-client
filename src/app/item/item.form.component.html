@@ -161,12 +161,29 @@
             <div class="col-span-12 md:col-span-3">
               <app-form-field
                 [control]="formGroup.get('saldo')"
-                label="Saldo"
+                label="Estoque Total"
                 [required]="true"
                 fieldId="saldo">
                 <p-inputNumber
                   inputId="saldo"
                   formControlName="saldo"
+                  class="w-full"
+                  [useGrouping]="false"
+                  [min]="0"
+                  styleClass="w-full">
+                </p-inputNumber>
+              </app-form-field>
+            </div>
+
+            <div class="col-span-12 md:col-span-3">
+              <app-form-field
+                [control]="formGroup.get('disponivelParaEmprestimo')"
+                label="Estoque Disponivel"
+                [required]="true"
+                fieldId="disponivelParaEmprestimo">
+                <p-inputNumber
+                  inputId="disponivelParaEmprestimo"
+                  formControlName="disponivelParaEmprestimo"
                   class="w-full"
                   [useGrouping]="false"
                   [min]="0"

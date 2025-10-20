@@ -40,7 +40,7 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
 
   protected override service = inject(ItemService);
-  protected override columnsTable = ["id", "imagem", "nome", "localizacao", "grupo", "saldo", "actions"];
+  protected override columnsTable = ["id", "imagem", "nome", "localizacao", "grupo", "Estoque Total", "Disponível para Empréstimo","actions"];
 
   private readonly reservaService = inject(ReservaService);
   protected readonly breakpointService = inject(BreakpointService);
@@ -102,12 +102,21 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
     },
     {
       field: 'saldo',
-      header: 'Saldo',
+      header: 'Estoque Total',
       type: 'number',
       sortable: true,
       filterable: true,
       width: '8rem',
       align: 'center'
+    },
+    {
+      field: 'disponivelEmprestimoCalculado',
+      header: 'Disponível para Empréstimo',
+      type: 'number',
+      sortable: true,
+      filterable: true,
+      width: '8rem',
+      align: 'center',
     },
     {
       field: 'actions',
@@ -171,7 +180,7 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
     this.tableConfig = {
       ...this.tableConfig,
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'nome', 'localizacao', 'saldo'],
+      globalFilterFields: ['id', 'nome', 'localizacao', 'Estoque Total'],
       defaultSortField: 'nome',
       defaultSortOrder: 1,
       caption: 'Lista de Itens',
@@ -205,10 +214,7 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
     this.displayedColumns = [...this.columnsTable];
   }
 
-  postFindAll(): void {
-    // No longer needed - isAlunoOrProfessor is now a computed signal from base class
-    // that automatically updates when user changes
-  }
+
 
   openOptions(event: Event, item: Item): void {
     this.selectedItem = item;
@@ -288,4 +294,5 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   copyItem(id: number): void {
     this.router.navigate(["item/form/copy", id]);
   }
+
 }

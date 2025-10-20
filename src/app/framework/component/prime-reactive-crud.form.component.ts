@@ -269,7 +269,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
    * @param item Item with saldo property
    * @param qtdeInserir Quantity to insert
    */
-  protected validateItemSaldo<K extends { saldo: number }>(
+  protected validateItemSaldo<K extends { saldo: number,disponivelParaEmprestimo:number }>(
     item: K | null,
     qtdeInserir: number
   ): boolean {

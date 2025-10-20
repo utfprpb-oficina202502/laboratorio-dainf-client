@@ -103,9 +103,12 @@
             <!-- Item AutoComplete -->
             <div class="col-span-12 md:col-span-7">
               <label for="item" class="block mb-2 font-medium">
-                Item
                 @if (tempItem()) {
-                  <span class="float-right text-sm text-gray-600">(Saldo: {{tempItem()?.saldo}})</span>
+                  @if(tempItem()?.disponivelParaEmprestimo){
+                  <span class="float-right text-sm text-gray-600">(Quantidade Disponivel: {{tempItem()?.disponivelParaEmprestimo}})</span>
+                }@else if(tempItem()?.saldo){
+                  <span class="float-right text-sm text-gray-600">(Quantidade Disponivel: {{tempItem()?.saldo}})</span>
+                }
                 }
               </label>
               <small class="block mb-2 text-gray-600">Digite pelo menos 2 caracteres para
