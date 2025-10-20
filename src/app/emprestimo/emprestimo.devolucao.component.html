@@ -306,6 +306,10 @@
             id="dtIni"
             name="dtIni"
             [(ngModel)]="qtdeItemDuplicado"
+            [max]="(itemIsEditing()?.qtde ?? 1) - 1"
+            [min]="1"
+            required
+            step="1"
             onlyNumber
             pInputText
             type="number"/>

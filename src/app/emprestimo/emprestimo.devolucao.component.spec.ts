@@ -9,6 +9,20 @@ import {Item} from '../item/item';
 import {LoaderService} from '../framework/loader/loader.service';
 import {LoginService} from '../login/login.service';
 import {LoggerService} from '../framework/services/logger.service';
+import {CdkDragDrop} from '@angular/cdk/drag-drop';
+
+// Polyfill para structuredClone no ambiente de testes Node.js
+// Implementação simplificada que evita referências circulares
+if (typeof global.structuredClone === 'undefined') {
+  global.structuredClone = (obj: any) => {
+    // Para testes, simplesmente clona sem o emprestimo para evitar circular ref
+    const {emprestimo, ...rest} = obj;
+    return {
+      ...rest,
+      emprestimo: emprestimo // Mantém referência original (não clona)
+    };
+  };
+}
 
 describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
   let component: EmprestimoDevolucaoComponent;
@@ -348,5 +362,655 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
       expect(original.qtde).toBe(10);
       expect(emprestimo.emprestimoDevolucaoItem).toHaveLength(1);
     });
+  });
+});
+
+describe('EmprestimoDevolucaoComponent - verificaOptionsEnabled', () => {
+  let component: EmprestimoDevolucaoComponent;
+  let emprestimo: Emprestimo;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [RouterTestingModule, EmprestimoDevolucaoComponent],
+      providers: [
+        MessageService,
+        ConfirmationService,
+        {provide: EmprestimoService, useValue: {}},
+        {provide: LoaderService, useValue: {}},
+        {provide: LoginService, useValue: {}},
+        {provide: LoggerService, useValue: {}},
+      ],
+    });
+
+    const fixture = TestBed.createComponent(EmprestimoDevolucaoComponent);
+    component = fixture.componentInstance;
+
+    emprestimo = {
+      emprestimoDevolucaoItem: []
+    } as unknown as Emprestimo;
+    component.emprestimo.set(emprestimo);
+  });
+
+  const createItem = (itemId: number, itemDesc: string): Item => ({
+    id: itemId,
+    descricao: itemDesc
+  } as Item);
+
+  const createDevolucaoItem = (
+    id: number | null,
+    itemId: number,
+    qtde: number,
+    status: StatusDevolucao = StatusDevolucao.P
+  ): EmprestimoDevolucaoItem => ({
+    id: id,
+    qtde: qtde,
+    statusDevolucao: status,
+    item: createItem(itemId, `Item ${itemId}`),
+    emprestimo: emprestimo
+  } as EmprestimoDevolucaoItem);
+
+  it('deve permitir duplicar quando há apenas 1 item do tipo', () => {
+    const item = createDevolucaoItem(1, 100, 5);
+    emprestimo.emprestimoDevolucaoItem = [item];
+
+    const result = component.verificaOptionsEnabled(item);
+
+    expect(result.canDuplicate).toBe(true);
+    expect(result.canRemoveDuplicates).toBe(false);
+  });
+
+  it('deve permitir remover duplicatas quando há 2+ itens do mesmo tipo', () => {
+    const item1 = createDevolucaoItem(1, 100, 5);
+    const item2 = createDevolucaoItem(0, 100, 3);
+    emprestimo.emprestimoDevolucaoItem = [item1, item2];
+
+    const result = component.verificaOptionsEnabled(item1);
+
+    expect(result.canDuplicate).toBe(false);
+    expect(result.canRemoveDuplicates).toBe(true);
+  });
+
+  it('deve usar early exit quando detecta 2+ itens', () => {
+    // Arrange: 5 itens do mesmo tipo (deve parar ao detectar o 2º)
+    const items = Array.from({length: 5}, (_, i) =>
+      createDevolucaoItem(i, 100, 5)
+    );
+    emprestimo.emprestimoDevolucaoItem = items;
+
+    const result = component.verificaOptionsEnabled(items[0]);
+
+    expect(result.canRemoveDuplicates).toBe(true);
+  });
+
+  it('deve retornar false para ambas opções quando emprestimo é null', () => {
+    component.emprestimo.set(null);
+    const item = createDevolucaoItem(1, 100, 5);
+
+    const result = component.verificaOptionsEnabled(item);
+
+    expect(result.canDuplicate).toBe(false);
+    expect(result.canRemoveDuplicates).toBe(false);
+  });
+
+  it('deve contar apenas itens com mesmo item.id', () => {
+    const item100 = createDevolucaoItem(1, 100, 5);
+    const item200 = createDevolucaoItem(2, 200, 3);
+    const item300 = createDevolucaoItem(3, 300, 7);
+    emprestimo.emprestimoDevolucaoItem = [item100, item200, item300];
+
+    const result = component.verificaOptionsEnabled(item100);
+
+    expect(result.canDuplicate).toBe(true);
+    expect(result.canRemoveDuplicates).toBe(false);
+  });
+});
+
+describe('EmprestimoDevolucaoComponent - duplicarItem', () => {
+  let component: EmprestimoDevolucaoComponent;
+  let emprestimo: Emprestimo;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [RouterTestingModule, EmprestimoDevolucaoComponent],
+      providers: [
+        MessageService,
+        ConfirmationService,
+        {provide: EmprestimoService, useValue: {}},
+        {provide: LoaderService, useValue: {}},
+        {provide: LoginService, useValue: {}},
+        {provide: LoggerService, useValue: {}},
+      ],
+    });
+
+    const fixture = TestBed.createComponent(EmprestimoDevolucaoComponent);
+    component = fixture.componentInstance;
+
+    emprestimo = {
+      emprestimoDevolucaoItem: []
+    } as unknown as Emprestimo;
+    component.emprestimo.set(emprestimo);
+  });
+
+  const createItem = (itemId: number, itemDesc: string): Item => ({
+    id: itemId,
+    descricao: itemDesc
+  } as Item);
+
+  const createDevolucaoItem = (
+    id: number | null,
+    itemId: number,
+    qtde: number,
+    status: StatusDevolucao = StatusDevolucao.P
+  ): EmprestimoDevolucaoItem => ({
+    id: id,
+    qtde: qtde,
+    statusDevolucao: status,
+    item: createItem(itemId, `Item ${itemId}`),
+    emprestimo: emprestimo
+  } as EmprestimoDevolucaoItem);
+
+  it('deve criar duplicata com quantidade especificada', () => {
+    const original = createDevolucaoItem(1, 100, 10);
+    emprestimo.emprestimoDevolucaoItem = [original];
+    component.itensPendentes.set([original]);
+    component.itemIsEditing.set(original);
+    component.qtdeItemDuplicado = 3;
+
+    component.duplicarItem();
+
+    expect(emprestimo.emprestimoDevolucaoItem).toHaveLength(2);
+    const duplicata = emprestimo.emprestimoDevolucaoItem[1];
+    expect(duplicata.qtde).toBe(3);
+    expect(duplicata.id).toBe(0);
+  });
+
+  it('deve reduzir quantidade do item original', () => {
+    const original = createDevolucaoItem(1, 100, 10);
+    emprestimo.emprestimoDevolucaoItem = [original];
+    component.itensPendentes.set([original]);
+    component.itemIsEditing.set(original);
+    component.qtdeItemDuplicado = 4;
+
+    component.duplicarItem();
+
+    expect(original.qtde).toBe(6); // 10 - 4 = 6
+  });
+
+  it('deve adicionar duplicata à lista de pendentes', () => {
+    const original = createDevolucaoItem(1, 100, 10);
+    emprestimo.emprestimoDevolucaoItem = [original];
+    component.itensPendentes.set([original]);
+    component.itemIsEditing.set(original);
+    component.qtdeItemDuplicado = 5;
+
+    component.duplicarItem();
+
+    expect(component.itensPendentes()).toHaveLength(2);
+    expect(component.itensPendentes()[1].qtde).toBe(5);
+  });
+
+  it('deve resetar estado do dialog após duplicação', () => {
+    const original = createDevolucaoItem(1, 100, 10);
+    emprestimo.emprestimoDevolucaoItem = [original];
+    component.itensPendentes.set([original]);
+    component.itemIsEditing.set(original);
+    component.qtdeItemDuplicado = 2;
+    component.dialogDuplicaItem = true;
+
+    component.duplicarItem();
+
+    expect(component.qtdeItemDuplicado).toBeUndefined();
+    expect(component.dialogDuplicaItem).toBe(false);
+  });
+
+  it('deve retornar early se emprestimo é null', () => {
+    component.emprestimo.set(null);
+    const original = createDevolucaoItem(1, 100, 10);
+    component.itemIsEditing.set(original);
+    component.qtdeItemDuplicado = 3;
+
+    component.duplicarItem();
+
+    expect(component.itensPendentes()).toHaveLength(0);
+  });
+
+  it('deve retornar early se itemIsEditing é null', () => {
+    emprestimo.emprestimoDevolucaoItem = [];
+    component.itemIsEditing.set(null);
+    component.qtdeItemDuplicado = 3;
+
+    component.duplicarItem();
+
+    expect(emprestimo.emprestimoDevolucaoItem).toHaveLength(0);
+  });
+
+  it('deve retornar early se botão save está disabled', () => {
+    const original = createDevolucaoItem(1, 100, 10);
+    emprestimo.emprestimoDevolucaoItem = [original];
+    component.itemIsEditing.set(original);
+    component.qtdeItemDuplicado = undefined; // Isso torna disableBtnSaveDuplicar() = true
+
+    const initialLength = emprestimo.emprestimoDevolucaoItem.length;
+    component.duplicarItem();
+
+    expect(emprestimo.emprestimoDevolucaoItem).toHaveLength(initialLength);
+  });
+
+  it('deve criar structuredClone do item original', () => {
+    const original = createDevolucaoItem(1, 100, 10);
+    original.item.descricao = 'Item Teste';
+    emprestimo.emprestimoDevolucaoItem = [original];
+    component.itensPendentes.set([original]);
+    component.itemIsEditing.set(original);
+    component.qtdeItemDuplicado = 3;
+
+    component.duplicarItem();
+
+    const duplicata = emprestimo.emprestimoDevolucaoItem[1];
+    expect(duplicata).not.toBe(original);
+    expect(duplicata.item.id).toBe(original.item.id);
+    expect(duplicata.item.descricao).toBe(original.item.descricao);
+  });
+});
+
+describe('EmprestimoDevolucaoComponent - disableBtnSaveDuplicar', () => {
+  let component: EmprestimoDevolucaoComponent;
+  let emprestimo: Emprestimo;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [RouterTestingModule, EmprestimoDevolucaoComponent],
+      providers: [
+        MessageService,
+        ConfirmationService,
+        {provide: EmprestimoService, useValue: {}},
+        {provide: LoaderService, useValue: {}},
+        {provide: LoginService, useValue: {}},
+        {provide: LoggerService, useValue: {}},
+      ],
+    });
+
+    const fixture = TestBed.createComponent(EmprestimoDevolucaoComponent);
+    component = fixture.componentInstance;
+
+    emprestimo = {
+      emprestimoDevolucaoItem: []
+    } as unknown as Emprestimo;
+    component.emprestimo.set(emprestimo);
+  });
+
+  const createItem = (itemId: number): Item => ({
+    id: itemId,
+    descricao: `Item ${itemId}`
+  } as Item);
+
+  const createDevolucaoItem = (
+    id: number | null,
+    itemId: number,
+    qtde: number
+  ): EmprestimoDevolucaoItem => ({
+    id: id,
+    qtde: qtde,
+    statusDevolucao: StatusDevolucao.P,
+    item: createItem(itemId),
+    emprestimo: emprestimo
+  } as EmprestimoDevolucaoItem);
+
+  it('deve desabilitar quando qtdeItemDuplicado é zero', () => {
+    const item = createDevolucaoItem(1, 100, 10);
+    component.itemIsEditing.set(item);
+    component.qtdeItemDuplicado = 0;
+
+    expect(component.disableBtnSaveDuplicar()).toBe(true);
+  });
+
+  it('deve desabilitar quando qtdeItemDuplicado é negativo', () => {
+    const item = createDevolucaoItem(1, 100, 10);
+    component.itemIsEditing.set(item);
+    component.qtdeItemDuplicado = -1;
+
+    expect(component.disableBtnSaveDuplicar()).toBe(true);
+  });
+
+  it('deve desabilitar quando qtdeItemDuplicado é NaN', () => {
+    const item = createDevolucaoItem(1, 100, 10);
+    component.itemIsEditing.set(item);
+    component.qtdeItemDuplicado = NaN;
+
+    expect(component.disableBtnSaveDuplicar()).toBe(true);
+  });
+
+  it('deve desabilitar quando qtdeItemDuplicado é undefined', () => {
+    const item = createDevolucaoItem(1, 100, 10);
+    component.itemIsEditing.set(item);
+    component.qtdeItemDuplicado = undefined;
+
+    expect(component.disableBtnSaveDuplicar()).toBe(true);
+  });
+
+  it('deve desabilitar quando qtdeItemDuplicado é string vazia', () => {
+    const item = createDevolucaoItem(1, 100, 10);
+    component.itemIsEditing.set(item);
+    component.qtdeItemDuplicado = '' as any;
+
+    expect(component.disableBtnSaveDuplicar()).toBe(true);
+  });
+
+  it('deve desabilitar quando itemIsEditing é null', () => {
+    component.itemIsEditing.set(null);
+    component.qtdeItemDuplicado = 5;
+
+    expect(component.disableBtnSaveDuplicar()).toBe(true);
+  });
+
+  it('deve desabilitar quando qtdeItemDuplicado >= qtde do item', () => {
+    const item = createDevolucaoItem(1, 100, 10);
+    component.itemIsEditing.set(item);
+    component.qtdeItemDuplicado = 10;
+
+    expect(component.disableBtnSaveDuplicar()).toBe(true);
+  });
+
+  it('deve desabilitar quando qtdeItemDuplicado > qtde do item', () => {
+    const item = createDevolucaoItem(1, 100, 10);
+    component.itemIsEditing.set(item);
+    component.qtdeItemDuplicado = 15;
+
+    expect(component.disableBtnSaveDuplicar()).toBe(true);
+  });
+
+  it('deve habilitar quando todos os critérios são válidos', () => {
+    const item = createDevolucaoItem(1, 100, 10);
+    component.itemIsEditing.set(item);
+    component.qtdeItemDuplicado = 5;
+
+    expect(component.disableBtnSaveDuplicar()).toBe(false);
+  });
+
+  it('deve habilitar com quantidade mínima válida (1)', () => {
+    const item = createDevolucaoItem(1, 100, 10);
+    component.itemIsEditing.set(item);
+    component.qtdeItemDuplicado = 1;
+
+    expect(component.disableBtnSaveDuplicar()).toBe(false);
+  });
+
+  it('deve habilitar com quantidade máxima válida (qtde - 1)', () => {
+    const item = createDevolucaoItem(1, 100, 10);
+    component.itemIsEditing.set(item);
+    component.qtdeItemDuplicado = 9;
+
+    expect(component.disableBtnSaveDuplicar()).toBe(false);
+  });
+});
+
+describe('EmprestimoDevolucaoComponent - drop (drag-and-drop)', () => {
+  let component: EmprestimoDevolucaoComponent;
+  let emprestimo: Emprestimo;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [RouterTestingModule, EmprestimoDevolucaoComponent],
+      providers: [
+        MessageService,
+        ConfirmationService,
+        {provide: EmprestimoService, useValue: {}},
+        {provide: LoaderService, useValue: {}},
+        {provide: LoginService, useValue: {}},
+        {provide: LoggerService, useValue: {}},
+      ],
+    });
+
+    const fixture = TestBed.createComponent(EmprestimoDevolucaoComponent);
+    component = fixture.componentInstance;
+
+    emprestimo = {
+      emprestimoDevolucaoItem: []
+    } as unknown as Emprestimo;
+    component.emprestimo.set(emprestimo);
+  });
+
+  const createItem = (itemId: number): Item => ({
+    id: itemId,
+    descricao: `Item ${itemId}`
+  } as Item);
+
+  const createDevolucaoItem = (
+    id: number | null,
+    itemId: number,
+    qtde: number
+  ): EmprestimoDevolucaoItem => ({
+    id: id,
+    qtde: qtde,
+    statusDevolucao: StatusDevolucao.P,
+    item: createItem(itemId),
+    emprestimo: emprestimo
+  } as EmprestimoDevolucaoItem);
+
+  // Nota: Testes de reordenação dentro da mesma lista (moveItemInArray)
+  // requerem mock completo do CDK drag-drop e são melhor testados com testes de integração
+
+  describe('Transferência entre listas diferentes', () => {
+    it('deve transferir item de pendentes para devolvidos', () => {
+      const item1 = createDevolucaoItem(1, 100, 5);
+      const item2 = createDevolucaoItem(2, 200, 3);
+      const item3 = createDevolucaoItem(3, 300, 7);
+
+      const pendentes = [item1, item2];
+      const devolvidos = [item3];
+
+      component.itensPendentes.set(pendentes);
+      component.itensDevolvidos.set(devolvidos);
+
+      const event = {
+        previousContainer: {data: pendentes},
+        container: {data: devolvidos},
+        previousIndex: 0,
+        currentIndex: 1
+      } as CdkDragDrop<EmprestimoDevolucaoItem[]>;
+
+      component.drop(event);
+
+      expect(component.itensPendentes()).toEqual([item2]);
+      expect(component.itensDevolvidos()).toEqual([item3, item1]);
+    });
+
+    it('deve transferir item de devolvidos para saída', () => {
+      const item1 = createDevolucaoItem(1, 100, 5);
+      const item2 = createDevolucaoItem(2, 200, 3);
+
+      const devolvidos = [item1];
+      const saida = [item2];
+
+      component.itensDevolvidos.set(devolvidos);
+      component.itensSaida.set(saida);
+
+      const event = {
+        previousContainer: {data: devolvidos},
+        container: {data: saida},
+        previousIndex: 0,
+        currentIndex: 0
+      } as CdkDragDrop<EmprestimoDevolucaoItem[]>;
+
+      component.drop(event);
+
+      expect(component.itensDevolvidos()).toEqual([]);
+      expect(component.itensSaida()).toEqual([item1, item2]);
+    });
+
+    it('deve transferir item de saída para pendentes', () => {
+      const item1 = createDevolucaoItem(1, 100, 5);
+      const item2 = createDevolucaoItem(2, 200, 3);
+
+      const saida = [item1];
+      const pendentes = [item2];
+
+      component.itensSaida.set(saida);
+      component.itensPendentes.set(pendentes);
+
+      const event = {
+        previousContainer: {data: saida},
+        container: {data: pendentes},
+        previousIndex: 0,
+        currentIndex: 1
+      } as CdkDragDrop<EmprestimoDevolucaoItem[]>;
+
+      component.drop(event);
+
+      expect(component.itensSaida()).toEqual([]);
+      expect(component.itensPendentes()).toEqual([item2, item1]);
+    });
+  });
+
+  describe('Atualização de signals', () => {
+    it('deve atualizar ambos signals após transferência entre listas', () => {
+      const item1 = createDevolucaoItem(1, 100, 5);
+      const item2 = createDevolucaoItem(2, 200, 3);
+
+      const pendentes = [item1];
+      const devolvidos = [item2];
+
+      component.itensPendentes.set(pendentes);
+      component.itensDevolvidos.set(devolvidos);
+
+      const event = {
+        previousContainer: {data: pendentes},
+        container: {data: devolvidos},
+        previousIndex: 0,
+        currentIndex: 0
+      } as CdkDragDrop<EmprestimoDevolucaoItem[]>;
+
+      component.drop(event);
+
+      // Ambos signals devem ter novas referências
+      expect(component.itensPendentes()).not.toBe(pendentes);
+      expect(component.itensDevolvidos()).not.toBe(devolvidos);
+    });
+  });
+});
+
+describe('EmprestimoDevolucaoComponent - onContextMenu', () => {
+  let component: EmprestimoDevolucaoComponent;
+  let emprestimo: Emprestimo;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [RouterTestingModule, EmprestimoDevolucaoComponent],
+      providers: [
+        MessageService,
+        ConfirmationService,
+        {provide: EmprestimoService, useValue: {}},
+        {provide: LoaderService, useValue: {}},
+        {provide: LoginService, useValue: {}},
+        {provide: LoggerService, useValue: {}},
+      ],
+    });
+
+    const fixture = TestBed.createComponent(EmprestimoDevolucaoComponent);
+    component = fixture.componentInstance;
+
+    emprestimo = {
+      emprestimoDevolucaoItem: []
+    } as unknown as Emprestimo;
+    component.emprestimo.set(emprestimo);
+  });
+
+  const createItem = (itemId: number): Item => ({
+    id: itemId,
+    descricao: `Item ${itemId}`
+  } as Item);
+
+  const createDevolucaoItem = (
+    id: number | null,
+    itemId: number,
+    qtde: number
+  ): EmprestimoDevolucaoItem => ({
+    id: id,
+    qtde: qtde,
+    statusDevolucao: StatusDevolucao.P,
+    item: createItem(itemId),
+    emprestimo: emprestimo
+  } as EmprestimoDevolucaoItem);
+
+  it('deve prevenir comportamento padrão do navegador', () => {
+    const item = createDevolucaoItem(1, 100, 5);
+    emprestimo.emprestimoDevolucaoItem = [item];
+
+    const event = {
+      preventDefault: jest.fn(),
+      clientX: 100,
+      clientY: 200
+    } as unknown as MouseEvent;
+
+    component.onContextMenu(event, item);
+
+    expect(event.preventDefault).toHaveBeenCalled();
+  });
+
+  it('deve atualizar posição do context menu', () => {
+    const item = createDevolucaoItem(1, 100, 5);
+    emprestimo.emprestimoDevolucaoItem = [item];
+
+    const event = {
+      preventDefault: jest.fn(),
+      clientX: 150,
+      clientY: 250
+    } as unknown as MouseEvent;
+
+    component.onContextMenu(event, item);
+
+    expect(component.contextMenuPosition.x).toBe(150);
+    expect(component.contextMenuPosition.y).toBe(250);
+  });
+
+  it('deve setar itemIsEditing com o item clicado', () => {
+    const item = createDevolucaoItem(1, 100, 5);
+    emprestimo.emprestimoDevolucaoItem = [item];
+
+    const event = {
+      preventDefault: jest.fn(),
+      clientX: 100,
+      clientY: 200
+    } as unknown as MouseEvent;
+
+    component.onContextMenu(event, item);
+
+    expect(component.itemIsEditing()).toBe(item);
+  });
+
+  it('deve criar menu com duplicar habilitado quando há apenas 1 item', () => {
+    const item = createDevolucaoItem(1, 100, 5);
+    emprestimo.emprestimoDevolucaoItem = [item];
+
+    const event = {
+      preventDefault: jest.fn(),
+      clientX: 100,
+      clientY: 200
+    } as unknown as MouseEvent;
+
+    component.onContextMenu(event, item);
+
+    expect(component.contextMenuItems).toHaveLength(2);
+    expect(component.contextMenuItems[0].label).toBe('Duplicar Item');
+    expect(component.contextMenuItems[0].disabled).toBe(false);
+    expect(component.contextMenuItems[1].label).toBe('Remover Itens Duplicados');
+    expect(component.contextMenuItems[1].disabled).toBe(true);
+  });
+
+  it('deve criar menu com remover duplicatas habilitado quando há 2+ itens', () => {
+    const item1 = createDevolucaoItem(1, 100, 5);
+    const item2 = createDevolucaoItem(0, 100, 3);
+    emprestimo.emprestimoDevolucaoItem = [item1, item2];
+
+    const event = {
+      preventDefault: jest.fn(),
+      clientX: 100,
+      clientY: 200
+    } as unknown as MouseEvent;
+
+    component.onContextMenu(event, item1);
+
+    expect(component.contextMenuItems[0].disabled).toBe(true);
+    expect(component.contextMenuItems[1].disabled).toBe(false);
   });
 });

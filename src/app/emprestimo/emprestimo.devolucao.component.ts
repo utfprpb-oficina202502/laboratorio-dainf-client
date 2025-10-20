@@ -389,10 +389,14 @@ export class EmprestimoDevolucaoComponent implements OnInit {
 
   disableBtnSaveDuplicar(): boolean {
     const editingItem = this.itemIsEditing();
+    const qtde = Number(this.qtdeItemDuplicado);
+
     return this.qtdeItemDuplicado === null || this.qtdeItemDuplicado === undefined
       || this.qtdeItemDuplicado.toString() === ''
       || !editingItem
-      || this.qtdeItemDuplicado >= editingItem.qtde;
+      || Number.isNaN(qtde)
+      || qtde <= 0
+      || qtde >= editingItem.qtde;
   }
 
   /**
