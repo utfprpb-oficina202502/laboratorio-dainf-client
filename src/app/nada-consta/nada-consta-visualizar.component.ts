@@ -1,14 +1,13 @@
-import {Component, inject, OnDestroy} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
-import {Router} from '@angular/router';
-import {NadaConsta, NadaConstaService} from './nada-consta.service';
-import {Subject, takeUntil} from 'rxjs';
+import { Component, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { NadaConstaService, NadaConsta } from './nada-consta.service';
+import { Subject, takeUntil } from 'rxjs';
 // PrimeNG modules
-import {CardModule} from 'primeng/card';
-import {InputTextModule} from 'primeng/inputtext';
-import {ButtonModule} from 'primeng/button';
-import {ProgressBarModule} from 'primeng/progressbar';
+import { CardModule } from 'primeng/card';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { ProgressBarModule } from 'primeng/progressbar';
 
 @Component({
   selector: 'app-nada-consta-visualizar',
@@ -25,40 +24,35 @@ import {ProgressBarModule} from 'primeng/progressbar';
   ]
 })
 export class NadaConstaVisualizarComponent implements OnDestroy {
-  private readonly nadaConstaService = inject(NadaConstaService);
-  private readonly router = inject(Router);
-
-  alunoId: number | null = null;
+  id: number | null = null;
   resultado: NadaConsta | null = null;
   erro: string | null = null;
   carregando = false;
-  private readonly destroyed$ = new Subject<void>();
+  private destroyed$ = new Subject<void>();
+
+  constructor(private nadaConstaService: NadaConstaService) {}
 
   consultar() {
-    if (!this.alunoId) {
-      this.erro = 'Informe o ID do aluno.';
+    if (!this.id) {
+      this.erro = 'Informe o ID do registro.';
       this.resultado = null;
       return;
     }
     this.carregando = true;
     this.erro = null;
-    this.resultado = null;
-    this.nadaConstaService.consultarNadaConsta(this.alunoId)
+    this.nadaConstaService.consultarNadaConsta(this.id)
       .pipe(takeUntil(this.destroyed$))
       .subscribe({
         next: (res) => {
           this.resultado = res;
           this.carregando = false;
         },
-        error: () => {
-          this.erro = 'Erro ao consultar Nada Consta.';
+        error: (err) => {
+          this.erro = 'Registro não encontrado ou erro na consulta.';
+          this.resultado = null;
           this.carregando = false;
         }
       });
-  }
-
-  voltar() {
-    this.router.navigate(['/nada-consta']);
   }
 
   ngOnDestroy() {

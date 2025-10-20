@@ -1,30 +1,48 @@
-﻿<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
   <h2>Listagem de Nada Consta</h2>
-  <p-button
-    (onClick)="adicionar()"
-    icon="pi pi-search"
-    label="Consultar"
-    severity="primary">
-  </p-button>
+  <button pButton type="button" label="Adicionar" class="p-button-outlined" (click)="adicionar()"></button>
 </div>
 
-<p-table [loading]="carregando" [value]="dataSource">
-  <ng-template pTemplate="header">
-    <tr>
-      <th id="alunoId-header" scope="col">ID do Aluno</th>
-      <th id="nome-header" scope="col">Nome</th>
-      <th id="status-header" scope="col">Status</th>
-      <th id="acoes-header" scope="col">Ações</th>
-    </tr>
-  </ng-template>
-  <ng-template let-element pTemplate="body">
-    <tr>
-      <td>{{ element.alunoId }}</td>
-      <td>{{ element.nome }}</td>
-      <td>{{ element.nadaConsta ? 'OK' : 'Com Pendências' }}</td>
-      <td>
-        <!-- Botões de ação futuros -->
-      </td>
-    </tr>
-  </ng-template>
-</p-table>
+@if (!carregando) {
+  <p-table
+    [value]="dataSource"
+    [paginator]="true"
+    [rows]="size"
+    [totalRecords]="totalElements"
+    [rowsPerPageOptions]="pageSizeOptions"
+    [first]="page * size"
+    (onPage)="onPageChange($event)">
+    <ng-template pTemplate="header">
+      <tr>
+        <th id="id-header" scope="col">ID</th>
+        <th id="usuarioUsername-header" scope="col">Usuário</th>
+        <th id="status-header" scope="col">Status</th>
+        <th id="sendAt-header" scope="col">Enviado em</th>
+        <th id="createdAt-header" scope="col">Criado em</th>
+        <th id="updatedAt-header" scope="col">Atualizado em</th>
+        <th id="createdBy-header" scope="col">Criado por</th>
+        <th id="updatedBy-header" scope="col">Atualizado por</th>
+        <th id="acoes-header" scope="col">Ações</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-element>
+      <tr>
+        <td>{{element.id}}</td>
+        <td>{{element.usuarioUsername}}</td>
+        <td>{{element.status}}</td>
+        <td>{{element.sendAt}}</td>
+        <td>{{element.createdAt}}</td>
+        <td>{{element.updatedAt}}</td>
+        <td>{{element.createdBy}}</td>
+        <td>{{element.updatedBy}}</td>
+        <td>
+          <!-- Botões de ação futuros -->
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+}
+
+@if (carregando) {
+  <p-progressBar mode="indeterminate" style="height: 6px;"></p-progressBar>
+}

@@ -8,10 +8,22 @@ export interface Pendencia {
 }
 
 export interface NadaConsta {
-  alunoId: number;
-  nome: string;
-  nadaConsta: boolean;
-  pendencias: Pendencia[];
+  id: number;
+  usuarioUsername: string;
+  status: string;
+  sendAt: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  updatedBy: string;
+}
+
+export interface PageableResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -19,11 +31,15 @@ export class NadaConstaService {
   private readonly http = inject(HttpClient);
 
 
-  consultarNadaConsta(alunoId: number): Observable<NadaConsta> {
-    return this.http.get<NadaConsta>(`/api/alunos/${alunoId}/nada-consta`);
+  consultarNadaConsta(id: number): Observable<NadaConsta> {
+    return this.http.get<NadaConsta>(`/nadaconsta/${id}`);
   }
 
   listarTodos(): Observable<NadaConsta[]> {
-    return this.http.get<NadaConsta[]>(`/api/nada-consta`);
+    return this.http.get<NadaConsta[]>(`/nadaconsta`);
+  }
+
+  listarTodosPageable(page: number = 0, size: number = 10, sort: string = 'id,desc'): Observable<PageableResponse<NadaConsta>> {
+    return this.http.get<PageableResponse<NadaConsta>>(`/nadaconsta?page=${page}&size=${size}&sort=${sort}`);
   }
 }
