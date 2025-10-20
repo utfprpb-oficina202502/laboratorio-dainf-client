@@ -221,86 +221,142 @@ export class EmprestimoDevolucaoComponent implements OnInit {
     const emp = this.emprestimo();
     if (!emp) return;
 
-    // Coleta todas as listas do Kanban para processamento
     const pendentes = [...this.itensPendentes()];
     const devolvidos = [...this.itensDevolvidos()];
     const saida = [...this.itensSaida()];
+
+    const {
+      matchingItems,
+      duplicates
+    } = this.collectMatchingItems(item, emp, pendentes, devolvidos, saida);
+
+    if (duplicates.length === 0) return;
+
+    const canonicalItem = this.findCanonicalItem(matchingItems);
+    const totalQtde = this.calculateTotalQuantity(matchingItems);
+    canonicalItem.qtde = totalQtde;
+
+    this.removeDuplicatesFromAllLists(duplicates, canonicalItem, emp, pendentes, devolvidos, saida);
+
+    this.updateAllSignals(emp, pendentes, devolvidos, saida);
+  }
+
+  /**
+   * Coleta todos os itens correspondentes e duplicatas de todas as listas
+   * @param item - Item de referência para busca
+   * @param emp - Empréstimo atual
+   * @param pendentes - Lista de itens pendentes
+   * @param devolvidos - Lista de itens devolvidos
+   * @param saida - Lista de itens de saída
+   * @returns Objeto contendo itens correspondentes únicos e duplicatas identificadas
+   */
+  private collectMatchingItems(
+    item: EmprestimoDevolucaoItem,
+    emp: Emprestimo,
+    pendentes: EmprestimoDevolucaoItem[],
+    devolvidos: EmprestimoDevolucaoItem[],
+    saida: EmprestimoDevolucaoItem[]
+  ): { matchingItems: EmprestimoDevolucaoItem[]; duplicates: EmprestimoDevolucaoItem[] } {
     const allLists = [emp.emprestimoDevolucaoItem, pendentes, devolvidos, saida];
-
-    // Usa Set para garantir referências únicas (mesmo item pode estar em múltiplas listas)
     const uniqueMatchingItems = new Set<EmprestimoDevolucaoItem>();
-    const duplicates: EmprestimoDevolucaoItem[] = [];
-    let canonicalItem: EmprestimoDevolucaoItem | undefined;
+    const duplicatesSet = new Set<EmprestimoDevolucaoItem>();
 
-    // Escaneia todas as listas procurando itens correspondentes
-    for (const list of allLists) {
-      for (const empDevItem of list) {
+    allLists.forEach(list => {
+      list.forEach(empDevItem => {
         if (empDevItem.item.id === item.item.id) {
           uniqueMatchingItems.add(empDevItem);
-
-          // Identifica duplicatas (id === null ou id === 0)
-          if (empDevItem.id === null || empDevItem.id === 0) {
-            if (!duplicates.includes(empDevItem)) {
-              duplicates.push(empDevItem);
-            }
+          if (this.isDuplicate(empDevItem)) {
+            duplicatesSet.add(empDevItem);
           }
         }
-      }
+      });
+    });
+
+    return {
+      matchingItems: Array.from(uniqueMatchingItems),
+      duplicates: Array.from(duplicatesSet)
+    };
+  }
+
+  /**
+   * Verifica se um item é uma duplicata (id nulo ou zero)
+   * @param item - Item a ser verificado
+   * @returns true se o item for uma duplicata
+   */
+  private isDuplicate(item: EmprestimoDevolucaoItem): boolean {
+    return item.id === null || item.id === 0;
+  }
+
+  /**
+   * Encontra o item canônico (com id válido) ou retorna o primeiro disponível
+   * @param matchingItems - Lista de itens correspondentes
+   * @returns Item canônico selecionado
+   */
+  private findCanonicalItem(matchingItems: EmprestimoDevolucaoItem[]): EmprestimoDevolucaoItem {
+    return matchingItems.find(i => i.id) ?? matchingItems[0];
+  }
+
+  /**
+   * Calcula a quantidade total somando todos os itens correspondentes
+   * @param matchingItems - Lista de itens para somar
+   * @returns Quantidade total calculada
+   */
+  private calculateTotalQuantity(matchingItems: EmprestimoDevolucaoItem[]): number {
+    return matchingItems.reduce((total, item) => total + Number(item.qtde), 0);
+  }
+
+  /**
+   * Remove duplicatas de todas as listas exceto o item canônico
+   * @param duplicates - Lista de duplicatas a remover
+   * @param canonicalItem - Item canônico que deve ser preservado
+   * @param emp - Empréstimo atual
+   * @param pendentes - Lista de itens pendentes
+   * @param devolvidos - Lista de itens devolvidos
+   * @param saida - Lista de itens de saída
+   */
+  private removeDuplicatesFromAllLists(
+    duplicates: EmprestimoDevolucaoItem[],
+    canonicalItem: EmprestimoDevolucaoItem,
+    emp: Emprestimo,
+    pendentes: EmprestimoDevolucaoItem[],
+    devolvidos: EmprestimoDevolucaoItem[],
+    saida: EmprestimoDevolucaoItem[]
+  ): void {
+    const duplicatesToRemove = duplicates.filter(dup => dup !== canonicalItem);
+
+    duplicatesToRemove.forEach(duplicate => {
+      this.removeFromList(emp.emprestimoDevolucaoItem, duplicate);
+      this.removeFromList(pendentes, duplicate);
+      this.removeFromList(devolvidos, duplicate);
+      this.removeFromList(saida, duplicate);
+    });
+  }
+
+  /**
+   * Remove um item de uma lista se ele estiver presente
+   * @param list - Lista de onde remover o item
+   * @param item - Item a ser removido
+   */
+  private removeFromList(list: EmprestimoDevolucaoItem[], item: EmprestimoDevolucaoItem): void {
+    const index = list.indexOf(item);
+    if (index >= 0) {
+      list.splice(index, 1);
     }
+  }
 
-    const matchingItems = Array.from(uniqueMatchingItems);
-
-    // Se não há duplicatas, não há nada a fazer
-    if (duplicates.length === 0) {
-      return;
-    }
-
-    // Procura item canônico (id válido, não duplicata) entre os itens correspondentes
-    canonicalItem = matchingItems.find(i => i.id);
-
-    // Se não encontrou item canônico, usa o primeiro encontrado
-    canonicalItem ??= matchingItems[0];
-
-    // Calcula quantidade total somando todos os itens correspondentes únicos
-    let qtdeTotal = 0;
-    for (const matchingItem of matchingItems) {
-      qtdeTotal += Number(matchingItem.qtde);
-    }
-
-    // Atualiza quantidade do item canônico
-    canonicalItem.qtde = qtdeTotal;
-
-    // Remove todas as duplicatas de todas as listas
-    for (const duplicate of duplicates) {
-      // Pula o item canônico se ele for uma duplicata
-      if (duplicate === canonicalItem) {
-        continue;
-      }
-
-      // Remove do empréstimo
-      const empIndex = emp.emprestimoDevolucaoItem.indexOf(duplicate);
-      if (empIndex >= 0) {
-        emp.emprestimoDevolucaoItem.splice(empIndex, 1);
-      }
-
-      // Remove das listas locais
-      const pendIndex = pendentes.indexOf(duplicate);
-      if (pendIndex >= 0) {
-        pendentes.splice(pendIndex, 1);
-      }
-
-      const devIndex = devolvidos.indexOf(duplicate);
-      if (devIndex >= 0) {
-        devolvidos.splice(devIndex, 1);
-      }
-
-      const saidaIndex = saida.indexOf(duplicate);
-      if (saidaIndex >= 0) {
-        saida.splice(saidaIndex, 1);
-      }
-    }
-
-    // Atualiza os signals
+  /**
+   * Atualiza todos os signals com os valores atualizados
+   * @param emp - Empréstimo atualizado
+   * @param pendentes - Lista de pendentes atualizada
+   * @param devolvidos - Lista de devolvidos atualizada
+   * @param saida - Lista de saída atualizada
+   */
+  private updateAllSignals(
+    emp: Emprestimo,
+    pendentes: EmprestimoDevolucaoItem[],
+    devolvidos: EmprestimoDevolucaoItem[],
+    saida: EmprestimoDevolucaoItem[]
+  ): void {
     this.emprestimo.set({...emp});
     this.itensPendentes.set(pendentes);
     this.itensDevolvidos.set(devolvidos);
