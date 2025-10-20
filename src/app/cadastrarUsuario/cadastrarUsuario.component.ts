@@ -43,7 +43,7 @@ export class CadastrarUsuarioComponent implements OnInit {
 
   buildForm() {
     this.form = this.fb.group({
-      nome: ['', [Validators.required, Validators.minLength(3)]],
+      nome: ['', [Validators.required, Validators.minLength(3), this.fullNameValidator]],
       email: ['', [Validators.required, Validators.email, this.utfprEmailValidator]],
       documento: ['', [Validators.required, Validators.minLength(3)]],
       telefone: ['', [Validators.required, Validators.minLength(8)]],
@@ -65,6 +65,17 @@ export class CadastrarUsuarioComponent implements OnInit {
     const password = group.get('password')?.value;
     const confirmPassword = group.get('confirmPassword')?.value;
     return password === confirmPassword ? null : { passwordMismatch: true };
+  }
+
+  fullNameValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) return null;
+    
+    const nome = control.value.trim();
+    const palavras = nome.split(/\s+/).filter((palavra: string | any[]) => palavra.length > 0);
+    const palavrasInvalidas = nome.split(/\s+/).filter((palavra: string | any[]) => palavra.length < 2);
+    const isValid = palavras.length < 2 || palavrasInvalidas.length > 0;
+    
+    return isValid ? { fullName: true } : null;
   }
 
   submit() {
@@ -137,6 +148,9 @@ export class CadastrarUsuarioComponent implements OnInit {
     }
     if (control.errors['utfprEmail']) {
       return 'Digite um email válido da UTFPR (@utfpr.edu.br ou @alunos.utfpr.edu.br)';
+    }
+    if (control.errors['fullName']) {
+      return 'Digite seu nome completo';
     }
     return '';
   }
