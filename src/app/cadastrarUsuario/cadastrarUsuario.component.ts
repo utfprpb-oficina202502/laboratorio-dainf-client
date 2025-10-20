@@ -43,7 +43,7 @@ export class CadastrarUsuarioComponent implements OnInit {
 
   buildForm() {
     this.form = this.fb.group({
-      nome: ['', [Validators.required, Validators.minLength(3), this.fullNameValidator]],
+      nome: ['', [Validators.required, Validators.minLength(3), this.fullNameValidator.bind(this)]],
       email: ['', [Validators.required, Validators.email, this.utfprEmailValidator]],
       documento: ['', [Validators.required, Validators.minLength(3)]],
       telefone: ['', [Validators.required, Validators.minLength(8)]],
@@ -68,14 +68,16 @@ export class CadastrarUsuarioComponent implements OnInit {
   }
 
   fullNameValidator(control: AbstractControl): ValidationErrors | null {
-    if (!control.value) return null;
+    if (!control.value) {
+      return null;
+    }
     
     const nome = control.value.trim();
-    const palavras = nome.split(/\s+/).filter((palavra: string | any[]) => palavra.length > 0);
-    const palavrasInvalidas = nome.split(/\s+/).filter((palavra: string | any[]) => palavra.length < 2);
-    const isValid = palavras.length < 2 || palavrasInvalidas.length > 0;
+    const palavras = nome.split(/\s+/).filter((palavra: string) => palavra.length > 0);
+    const temPalavrasCurtas = palavras.some((palavra: string) => palavra.length < 2);
+    const isInvalid = palavras.length < 2 || temPalavrasCurtas;
     
-    return isValid ? { fullName: true } : null;
+    return isInvalid ? { fullName: true } : null;
   }
 
   submit() {
