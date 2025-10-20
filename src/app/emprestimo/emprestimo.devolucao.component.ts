@@ -233,8 +233,7 @@ export class EmprestimoDevolucaoComponent implements OnInit {
     if (duplicates.length === 0) return;
 
     const canonicalItem = this.findCanonicalItem(matchingItems);
-    const totalQtde = this.calculateTotalQuantity(matchingItems);
-    canonicalItem.qtde = totalQtde;
+    canonicalItem.qtde = this.calculateTotalQuantity(matchingItems);
 
     this.removeDuplicatesFromAllLists(duplicates, canonicalItem, emp, pendentes, devolvidos, saida);
 
