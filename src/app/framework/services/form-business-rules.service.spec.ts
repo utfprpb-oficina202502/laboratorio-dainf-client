@@ -179,7 +179,7 @@ describe('FormBusinessRulesService', () => {
     });
 
     it('deve retornar true quando quantidade é menor que saldo', () => {
-      const item = {id: 1, nome: 'Laptop', saldo: 10};
+      const item = {id: 1, nome: 'Laptop', saldo: 10, disponivelEmprestimoCalculado:10};
 
       const result = service.validateItemSaldo(item, 5);
 
@@ -188,7 +188,7 @@ describe('FormBusinessRulesService', () => {
     });
 
     it('deve retornar true quando quantidade é igual ao saldo', () => {
-      const item = {id: 1, nome: 'Laptop', saldo: 10};
+      const item = {id: 1, nome: 'Laptop', saldo: 10, disponivelEmprestimoCalculado:10};
 
       const result = service.validateItemSaldo(item, 10);
 
@@ -197,7 +197,7 @@ describe('FormBusinessRulesService', () => {
     });
 
     it('deve retornar false e exibir mensagem quando quantidade excede saldo', () => {
-      const item = {id: 1, nome: 'Laptop', saldo: 5};
+      const item = {id: 1, nome: 'Laptop', saldo: 5, disponivelEmprestimoCalculado:5};
 
       const result = service.validateItemSaldo(item, 10);
 
@@ -209,7 +209,7 @@ describe('FormBusinessRulesService', () => {
     });
 
     it('deve retornar false e exibir mensagem quando saldo é 0', () => {
-      const item = {id: 1, nome: 'Laptop', saldo: 0};
+      const item = {id: 1, nome: 'Laptop', saldo: 0, disponivelEmprestimoCalculado:0};
 
       const result = service.validateItemSaldo(item, 1);
 
@@ -218,7 +218,7 @@ describe('FormBusinessRulesService', () => {
     });
 
     it('deve retornar false e exibir mensagem quando saldo é negativo', () => {
-      const item = {id: 1, nome: 'Laptop', saldo: -5};
+      const item = {id: 1, nome: 'Laptop', saldo: -5, disponivelEmprestimoCalculado:-5};
 
       const result = service.validateItemSaldo(item, 1);
 
@@ -544,9 +544,9 @@ describe('FormBusinessRulesService', () => {
         // 3. Gerenciar itens do empréstimo
         let items: { item: { id: number; nome: string; saldo: number }; qtde: number }[] = [];
 
-        const item1 = {id: 1, nome: 'Laptop', saldo: 10};
-        const item2 = {id: 2, nome: 'Mouse', saldo: 5};
-        const item3 = {id: 3, nome: 'Teclado', saldo: 3};
+        const item1 = {id: 1, nome: 'Laptop', saldo: 10, disponivelEmprestimoCalculado:10};
+        const item2 = {id: 2, nome: 'Mouse', saldo: 5, disponivelEmprestimoCalculado:5};
+        const item3 = {id: 3, nome: 'Teclado', saldo: 3, disponivelEmprestimoCalculado:3};
 
         // Tentar adicionar com quantidade inválida
         if (!service.validateItemSaldo(item3, 5)) {
@@ -602,7 +602,7 @@ describe('FormBusinessRulesService', () => {
       jest.clearAllMocks();
 
       // Adicionar item válido
-      const validItem = {id: 1, nome: 'Laptop', saldo: 10};
+      const validItem = {id: 1, nome: 'Laptop', saldo: 10, disponivelEmprestimoCalculado:10};
       if (service.validateItemSaldo(validItem, 5)) {
         items.push({item: validItem, qtde: 5});
       }
