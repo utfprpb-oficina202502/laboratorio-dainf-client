@@ -367,4 +367,122 @@ describe('LoginService - Token Validation', () => {
       }});
     });
   });
+
+  describe('redirectIfProfileIncomplete', () => {
+    it('deve redirecionar para edição de perfil se documento estiver vazio e rota não for de usuário', () => {
+      const usuario: Usuario = { ...mockUser, documento: '' };
+      service.setAuthenticated(usuario);
+      const route = { url: [{ path: 'home' }] } as any;
+      const routerSpy = jest.spyOn(router, 'navigate');
+      // @ts-ignore
+      service['redirectIfProfileIncomplete'](route);
+      expect(routerSpy).toHaveBeenCalledWith([`/usuario/edit/${usuario.id}`]);
+    });
+    it('não deve redirecionar se documento não estiver vazio', () => {
+      const usuario: Usuario = { ...mockUser, documento: '123' };
+      service.setAuthenticated(usuario);
+      const route = { url: [{ path: 'home' }] } as any;
+      const routerSpy = jest.spyOn(router, 'navigate');
+      // @ts-ignore
+      service['redirectIfProfileIncomplete'](route);
+      expect(routerSpy).not.toHaveBeenCalled();
+    });
+    it('não deve redirecionar se rota for de usuário', () => {
+      const usuario: Usuario = { ...mockUser, documento: '' };
+      service.setAuthenticated(usuario);
+      const route = { url: [{ path: 'usuario' }] } as any;
+      const routerSpy = jest.spyOn(router, 'navigate');
+      // @ts-ignore
+      service['redirectIfProfileIncomplete'](route);
+      expect(routerSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('canActivate - nada-consta', () => {
+    it('deve bloquear acesso e redirecionar se não tiver role necessária', (done) => {
+      const usuario: Usuario = { ...mockUser, authorities: [{ id: 1, nome: 'ROLE_ALUNO' }] };
+      service.setAuthenticated(usuario);
+      const route = { pathFromRoot: [{ routeConfig: { path: 'nada-consta' } }] } as any;
+      const state = {} as any;
+      const result = service.canActivate(route, state);
+      if (typeof result === 'object' && 'subscribe' in result) {
+        result.subscribe({
+          next: (value: boolean | import('@angular/router').UrlTree) => {
+            // Aceita tanto boolean false quanto objeto UrlTree
+            expect(value === false || (typeof value === 'object' && value !== null)).toBe(true);
+            done();
+          }
+        });
+      } else {
+        expect(result === false || (typeof result === 'object' && result !== null)).toBe(true);
+        done();
+      }
+    });
+    it('deve permitir acesso se tiver role necessária', async () => {
+      const usuario: Usuario = { ...mockUser, authorities: [{ id: 2, nome: 'ROLE_LABORATORISTA' }] };
+      service.setAuthenticated(usuario);
+      storageService.setItem('userLogged', JSON.stringify(usuario));
+      storageService.setItem('token', validToken);
+      await Promise.resolve();
+      const route = { pathFromRoot: [{ routeConfig: { path: 'nada-consta' } }] } as any;
+      const state = {} as any;
+      const result = service.canActivate(route, state);
+      if (typeof result === 'object' && 'subscribe' in result) {
+        await new Promise<void>((resolve, reject) => {
+          result.subscribe({
+            next: (value: boolean | import('@angular/router').UrlTree) => {
+              try {
+                expect(value).toBe(true);
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            error: reject
+          });
+        });
+      } else {
+        expect(result).toBe(true);
+      }
+    }, 10000);
+  });
+
+  describe('getPermissoesUser', () => {
+    it('deve retornar as permissões do usuário', (done) => {
+      const usuario: Usuario = { ...mockUser, permissoes: [{ id: 3, nome: 'ROLE_TESTE' }] };
+      service.setAuthenticated(usuario);
+      service.getPermissoesUser().subscribe(permissoes => {
+        expect(permissoes).toEqual([{ id: 3, nome: 'ROLE_TESTE' }]);
+        done();
+      });
+    });
+  });
+
+  describe('userLoggedIsAlunoOrProfessor', () => {
+    it('deve retornar true para aluno', async () => {
+      const usuario: Usuario = { ...mockUser, authorities: [{ id: 4, nome: 'ROLE_ALUNO' }] };
+      service.setAuthenticated(usuario);
+      const result = await service.userLoggedIsAlunoOrProfessor();
+      expect(result).toBe(true);
+    });
+    it('deve retornar false para administrador', async () => {
+      const usuario: Usuario = { ...mockUser, authorities: [{ id: 5, nome: 'ROLE_ADMINISTRADOR' }] };
+      service.setAuthenticated(usuario);
+      const result = await service.userLoggedIsAlunoOrProfessor();
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('login', () => {
+    it('deve fazer requisição HTTP de login', () => {
+      const usuario: Usuario = { ...mockUser };
+      const http = TestBed.inject(HttpTestingController);
+      let response: string | undefined;
+      service.login(usuario).subscribe(res => response = res);
+      const req = http.expectOne(`${environment.api_url}login`);
+      expect(req.request.method).toBe('POST');
+      req.flush('token-mock');
+      expect(response).toBe('token-mock');
+    });
+  });
 });
