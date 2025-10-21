@@ -173,7 +173,7 @@
                           <div class="flex items-center gap-2">
                             @if (item.imageItem && item.imageItem.length > 0) {
                               <img
-                                ngSrc="work minioUrl() + item.imageItem[0].nameImage"
+                                ngSrc="minioUrl() + item.imageItem[0].nameImage"
                                 class="w-16 h-16 object-cover rounded"
                                 alt="Item" fill/>
                             }
