@@ -189,7 +189,7 @@ export class FormBusinessRulesService {
 
     // Validar se a quantidade não excede o saldo disponível
     let isValid = item.saldo > 0 && qtdeInserir <= item.saldo;
-    if(item.disponivelEmprestimoCalculado){
+    if (item.disponivelEmprestimoCalculado != null) {
        isValid = item.saldo > 0 && qtdeInserir <= item.disponivelEmprestimoCalculado;
     }
 
