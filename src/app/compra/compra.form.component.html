@@ -135,7 +135,7 @@
             </div>
 
             <!-- Valor Field -->
-            <div class="col-span-12 md:col-span-3">
+            <div class="col-span-12 md:col-span-2">
               <app-form-field label="Valor" fieldId="valor">
                 <input
                   pInputText
@@ -167,14 +167,14 @@
             </div>
 
             <!-- Add Button -->
-            <div class="col-span-12 md:col-span-1 pt-7">
+            <div class="col-span-12 md:col-span-2 pt-7">
               <p-button
+                icon="pi pi-plus"
+                label="Adicionar"
                 type="button"
-                severity="success"
                 (onClick)="insertItem()"
                 styleClass="w-full"
                 [attr.aria-label]="'Adicionar item'">
-                <span pButtonIcon class="pi pi-plus"></span>
               </p-button>
             </div>
           </div>
