@@ -57,7 +57,7 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
     'acoes'
   ];
 
-  private readonly tableColumns: TableColumn[] = [
+  public tableColumns: TableColumn[] = [
     { field: 'id', header: 'ID', type: 'number', sortable: true, filterable: true, width: '8rem', align: 'center' },
     { field: 'usuarioUsername', header: 'Usuário', type: 'text', sortable: true, filterable: true, minWidth: '16rem' },
     { field: 'status', header: 'Status', type: 'text', sortable: true, filterable: true, width: '8rem', align: 'center' },
@@ -107,7 +107,8 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
       stateKey: 'nada-consta-list',
     });
     this.columnsTable = this.tableConfig.columns.map(column => column.field);
-    this.displayedColumns = [...this.columnsTable];
+    // Exibe por padrão apenas os campos principais
+    this.displayedColumns = ['id', 'usuarioUsername', 'status', 'sendAt', 'acoes'];
   }
 
   // Sinal para controlar exibição do modal
