@@ -1,4 +1,4 @@
-import { Component, OnDestroy, inject } from '@angular/core';
+import { Component, OnDestroy, inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NadaConstaService, NadaConsta } from './nada-consta.service';
@@ -14,6 +14,7 @@ import { ProgressBarModule } from 'primeng/progressbar';
   templateUrl: './nada-consta-visualizar.component.html',
   styleUrls: ['./nada-consta-visualizar.component.css'],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     FormsModule,
@@ -31,12 +32,18 @@ export class NadaConstaVisualizarComponent implements OnDestroy {
   liveRegionText = '';
   private destroyed$ = new Subject<void>();
   private nadaConstaService = inject(NadaConstaService);
+  private cdr: ChangeDetectorRef;
+
+  constructor(cdr: ChangeDetectorRef) {
+    this.cdr = cdr;
+  }
 
   consultar() {
     if (!this.id) {
       this.erro = 'Informe o ID do registro.';
       this.resultado = null;
       this.liveRegionText = this.erro;
+      this.cdr.markForCheck();
       return;
     }
     this.carregando = true;
@@ -49,12 +56,14 @@ export class NadaConstaVisualizarComponent implements OnDestroy {
           this.erro = null;
           this.carregando = false;
           this.liveRegionText = `Consulta concluída. Registro ID ${res.id}, usuário ${res.usuario?.nome || ''}, status ${res.status}.`;
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.resultado = null;
           this.erro = err?.error?.message || 'Erro ao consultar registro.';
           this.carregando = false;
           this.liveRegionText = this.erro ?? '';
+          this.cdr.markForCheck();
         }
       });
   }

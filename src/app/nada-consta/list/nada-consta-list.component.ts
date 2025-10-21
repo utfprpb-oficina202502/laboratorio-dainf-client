@@ -1,5 +1,11 @@
-import { Component, forwardRef, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, forwardRef, signal, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { TableFilterCaptionComponent } from '../../framework/component/table-filter-caption.component';
 import { PrimeCrudListComponent } from '../../framework/component/prime-crud.list.component';
 import { TableColumn } from '../../framework/model/table-config.interface';
 import { NadaConstaService, NadaConsta } from '../nada-consta.service';
@@ -11,12 +17,6 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { PrimeCrudToolbarComponent } from '../../framework/component/prime-crud-toolbar.component';
 import { finalize } from 'rxjs';
-import { DialogModule } from 'primeng/dialog';
-import { FormsModule } from '@angular/forms';
-import { InputTextModule } from 'primeng/inputtext';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-import { TableFilterCaptionComponent } from '../../framework/component/table-filter-caption.component';
 
 @Component({
   selector: 'app-nada-consta-list',
@@ -69,8 +69,11 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
 
   protected readonly service = inject(NadaConstaService);
 
-  constructor() {
+  protected cdr: ChangeDetectorRef;
+
+  constructor(cdr: ChangeDetectorRef) {
     super();
+    this.cdr = cdr;
     this.configureTable();
   }
 
@@ -134,12 +137,10 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
   public filterValue = '';
 
   adicionar(): void {
-    console.log('Abrindo modal de adicionar Nada Consta');
     this.showAdicionarModal.set(true);
   }
 
   cancelarAdicionar(): void {
-    console.log('Modal cancelado (fechando)'); // debug: confirma disparo ao clicar fora
     this.showAdicionarModal.set(false);
     this.registroAcademico.set('');
     this.solicitando.set(false);
@@ -154,7 +155,10 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
     this.solicitacaoErro.set(null);
     this.solicitacaoSucesso.set(false);
     this.service.solicitar(documento)
-      .pipe(finalize(() => this.solicitando.set(false)))
+      .pipe(finalize(() => {
+        this.solicitando.set(false);
+        this.cdr.markForCheck();
+      }))
       .subscribe({
         next: () => {
           this.solicitacaoSucesso.set(true);
@@ -162,9 +166,11 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
           this.registroAcademico.set('');
           // Atualiza a lista conforme padrão de empréstimos
           this.findAll();
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.solicitacaoErro.set(err?.error?.message || 'Erro ao solicitar Nada Consta.');
+          this.cdr.markForCheck();
         }
       });
   }
@@ -199,33 +205,49 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
   }
 
   getStatusLabel(status: string): string {
+    if (!status) return '';
     switch (status) {
-      case 'PENDING': return 'COM PENDÊNCIA';
-      case 'COMPLETED': return 'EMITIDO';
-      case 'FAILED': return 'FALHA';
-      default: return status;
+      case 'PENDENTE':
+      case 'PENDING':
+        return 'COM PENDÊNCIA';
+      case 'COMPLETED':
+      case 'CONCLUIDO':
+      case 'CONCLUÍDO':
+        return 'EMITIDO';
+      case 'FAILED':
+      case 'FALHA':
+        return 'FALHA';
+      default:
+        return status;
     }
   }
 
   getStatusSeverity(status: string): 'warn' | 'success' | 'danger' {
+    if (!status) return 'warn';
     switch (status) {
-      case 'PENDING': return 'warn';
-      case 'COMPLETED': return 'success';
-      case 'FAILED': return 'danger';
-      default: return 'warn';
+      case 'PENDENTE':
+      case 'PENDING':
+        return 'warn';
+      case 'COMPLETED':
+      case 'CONCLUIDO':
+      case 'CONCLUÍDO':
+        return 'success';
+      case 'FAILED':
+      case 'FALHA':
+        return 'danger';
+      default:
+        return 'warn';
     }
   }
 
   reenviarNadaConsta(element: NadaConsta): void {
-    // Implemente aqui a lógica para reenviar o Nada Consta
-    // Exemplo: this.service.reenviar(element.id).subscribe(...)
-    alert(`Reenviar Nada Consta para registro ID ${element.id}`);
+    // Use console.log instead of alert to be test-friendly and avoid JSDOM/windows issues
+    console.log(`Reenviar Nada Consta para registro ID ${element.id}`);
   }
 
   atualizarStatus(element: NadaConsta): void {
-    // Implemente aqui a lógica para atualizar o status
-    // Exemplo: this.service.atualizarStatus(element.id).subscribe(...)
-    alert(`Atualizar status do registro ID ${element.id}`);
+    // Use console.log instead of alert to be test-friendly
+    console.log(`Atualizar status do registro ID ${element.id}`);
   }
 
   protected override urlForm = '';

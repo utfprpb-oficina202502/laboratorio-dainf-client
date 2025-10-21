@@ -49,11 +49,10 @@ export class LoginService {
   }
 
   /**
-   * Valida se o usuário está autenticado e se o token está válido
-   * @param route Rota atual para redirecionamento
-   * @returns Observable<boolean>
+   * Unifies authentication logic for canActivate and validateAuthentication
    */
-  validateAuthentication(route?: any): Observable<boolean> {
+  private performAuthenticationCheck(route?: ActivatedRouteSnapshot): Observable<boolean> {
+    // Early check: if token is expired, logout immediately
     if (this.isTokenExpired()) {
       this.logout();
       return of(false);
@@ -62,24 +61,40 @@ export class LoginService {
     const hasCachedUser = !!(this._currentUser() || this.loadUserFromStorage());
     const hasToken = this.hasValidToken();
 
+    // If we have both cached user and valid token, allow access
     if (hasCachedUser && hasToken) {
-      this.redirectIfProfileIncomplete(route);
+      if (route) {
+        this.redirectIfProfileIncomplete(route);
+      }
       return of(true);
     }
 
+    // If there's already a pending validation request, reuse it
     if (this.authValidation$) {
       return this.authValidation$;
     }
 
+    // If we don't have a valid token at this point, we shouldn't attempt to fetch user
+    // This can happen if token exists but is invalid, or other edge cases
+    if (!hasToken) {
+      this.logout();
+      return of(false);
+    }
+
+    // At this point: we have a valid token but no cached user
+    // Attempt to fetch user from backend
+    this.isRunningRequest = true;
     const request$ = this.getCurrentUser({ forceRefresh: true }).pipe(
       tap(() => {
         this._isAuthenticated.set(true);
-        this.redirectIfProfileIncomplete(route);
+        if (route) {
+          this.redirectIfProfileIncomplete(route);
+        }
       }),
       map(() => true),
       catchError(() => {
         this.logout();
-        return throwError(() => new Error('O usuario nao esta autenticado!'));
+        return of(false);
       }),
       finalize(() => {
         this.isRunningRequest = false;
@@ -87,9 +102,17 @@ export class LoginService {
       }),
       shareReplay({bufferSize: 1, refCount: true})
     );
-
     this.authValidation$ = request$;
     return request$;
+  }
+
+  /**
+   * Valida se o usuário está autenticado e se o token está válido
+   * @param route Rota atual para redirecionamento
+   * @returns Observable<boolean>
+   */
+  validateAuthentication(route?: ActivatedRouteSnapshot): Observable<boolean> {
+    return this.performAuthenticationCheck(route);
   }
 
   getCurrentUser(options: { forceRefresh?: boolean } = {}): Observable<Usuario> {
@@ -238,15 +261,6 @@ export class LoginService {
     route: ActivatedRouteSnapshot,
     _state: RouterStateSnapshot
   ): Observable<boolean | UrlTree> {
-    // Verifica proativamente se o token está expirado
-    if (this.isTokenExpired()) {
-      this.logout();
-      return of(false);
-    }
-
-    const hasCachedUser = !!(this._currentUser() || this.loadUserFromStorage());
-    const hasToken = this.hasValidToken();
-
     // Restrição de acesso por role para NadaConsta
     const nadaConstaPaths = ['nada-consta', 'nada-consta/consultar'];
     if (nadaConstaPaths.includes(route.routeConfig?.path || '')) {
@@ -255,41 +269,6 @@ export class LoginService {
         return of(false);
       }
     }
-
-    if (hasCachedUser && hasToken) {
-      this.redirectIfProfileIncomplete(route);
-      return of(true);
-    }
-
-    if (this.authValidation$) {
-      return this.authValidation$;
-    }
-
-    const url = `${environment.api_url}usuario/user-info`;
-    this.isRunningRequest = true;
-
-    const request$ = this.http.get<Usuario>(url).pipe(
-      tap((user) => {
-        if (user) {
-          this.persistUser(user);
-          this._currentUser.set(user);
-        }
-        this._isAuthenticated.set(true);
-        this.redirectIfProfileIncomplete(route);
-      }),
-      map(() => true),
-      catchError(() => {
-        this.logout();
-        return of(false);
-      }),
-      finalize(() => {
-        this.isRunningRequest = false;
-        this.authValidation$ = null;
-      }),
-      shareReplay({bufferSize: 1, refCount: true})
-    );
-
-    this.authValidation$ = request$;
-    return request$;
+    return this.performAuthenticationCheck(route);
   }
 }

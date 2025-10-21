@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, signal, inject } from '@angular/core';
-import { OnInit } from '@angular/core';
+import { OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -23,6 +23,11 @@ export class ConfiguracoesComponent implements OnInit {
 
   protected readonly configuracoesService = inject(ConfiguracoesService);
   protected readonly router = inject(Router);
+  private cdr: ChangeDetectorRef;
+
+  constructor(cdr: ChangeDetectorRef) {
+    this.cdr = cdr;
+  }
 
   ngOnInit(): void {
     this.carregarConfiguracoes();
@@ -34,9 +39,11 @@ export class ConfiguracoesComponent implements OnInit {
       next: (config: Configuracoes) => {
         this.nadaConstaEmail.set(config.nadaConstaEmail || '');
         this.isLoading.set(false);
+        this.cdr.markForCheck();
       },
       error: () => {
         this.isLoading.set(false);
+        this.cdr.markForCheck();
       }
     });
   }
@@ -49,11 +56,13 @@ export class ConfiguracoesComponent implements OnInit {
       next: () => {
         this.success.set(true);
         this.isLoading.set(false);
+        this.cdr.markForCheck();
         this.router.navigate(['/']);
       },
       error: (err) => {
         this.error.set('Erro ao salvar: ' + (err?.error?.message || ''));
         this.isLoading.set(false);
+        this.cdr.markForCheck();
       }
     });
   }
@@ -62,5 +71,6 @@ export class ConfiguracoesComponent implements OnInit {
     this.carregarConfiguracoes();
     this.success.set(false);
     this.error.set('');
+    this.cdr.markForCheck();
   }
 }
