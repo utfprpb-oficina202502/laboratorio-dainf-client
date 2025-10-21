@@ -97,8 +97,8 @@ export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, 
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'nome', 'cnpj'],
-      defaultSortField: 'nome',
+      globalFilterFields: ['id', 'razaoSocial', 'nomeFantasia', 'cnpj'],
+      defaultSortField: 'razaoSocial',
       caption: 'Fornecedores',
       stateKey: 'fornecedor-list',
       // ...outras propriedades específicas...

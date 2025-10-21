@@ -314,7 +314,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'descricao', 'dataEmprestimo'],
+      globalFilterFields: ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status'],
       defaultSortField: 'id',
       caption: 'Empréstimos',
       stateKey: 'emprestimo-list',

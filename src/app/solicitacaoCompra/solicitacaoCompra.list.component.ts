@@ -107,7 +107,7 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'descricao', 'status'],
+      globalFilterFields: ['id', 'descricao', 'dataSolicitacao', 'usuario'],
       defaultSortField: 'id',
       caption: 'Solicitações de Compra',
       stateKey: 'solicitacao-compra-list',

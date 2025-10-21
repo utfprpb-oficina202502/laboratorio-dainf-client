@@ -171,7 +171,7 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'nome', 'codigo'],
+      globalFilterFields: ['id', 'nome', 'localizacao', 'grupo', 'saldo'],
       defaultSortField: 'nome',
       caption: 'Itens',
       stateKey: 'item-list',

@@ -81,7 +81,7 @@ export class RelatorioListComponent extends PrimeCrudListComponent<Relatorio, nu
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'descricao', 'tipo'],
+      globalFilterFields: ['id', 'nome'],
       defaultSortField: 'id',
       caption: 'Relatórios',
       stateKey: 'relatorio-list',

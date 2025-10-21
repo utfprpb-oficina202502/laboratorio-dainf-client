@@ -276,7 +276,7 @@ describe('LoginService - Token Validation', () => {
     });
     it('deve funcionar mesmo sem parâmetro (usuário do storage)', () => {
       storageService.setItem('userLogged', JSON.stringify(mockUser));
-      service.setAuthenticated(mockUser);
+      service.setAuthenticated();
       expect(service.isAuthenticated()).toBe(true);
       expect(service.currentUser()).toEqual(mockUser);
     });

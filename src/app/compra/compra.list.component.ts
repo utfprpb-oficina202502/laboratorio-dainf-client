@@ -87,7 +87,7 @@ export class CompraListComponent extends PrimeCrudListComponent<Compra, number> 
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'descricao', 'dataCompra'],
+      globalFilterFields: ['id', 'fornecedor', 'dataCompra'],
       defaultSortField: 'id',
       caption: 'Compras',
       stateKey: 'compra-list',

@@ -78,8 +78,8 @@ export class GrupoListComponent extends PrimeCrudListComponent<Grupo, number> {
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'nome'],
-      defaultSortField: 'nome',
+      globalFilterFields: ['id', 'descricao'],
+      defaultSortField: 'descricao',
       caption: 'Grupos',
       stateKey: 'grupo-list',
       // ...outras propriedades específicas...

@@ -78,7 +78,7 @@ export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number
 
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'nome', 'email'],
+      globalFilterFields: ['id', 'nome', 'username'],
       defaultSortField: 'nome',
       caption: 'Usuários',
       stateKey: 'usuario-list',
