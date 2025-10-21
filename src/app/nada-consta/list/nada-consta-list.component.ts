@@ -17,6 +17,8 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { PrimeCrudToolbarComponent } from '../../framework/component/prime-crud-toolbar.component';
 import { finalize } from 'rxjs';
+import { getNadaConstaStatusLabel, getNadaConstaStatusSeverity } from '../../framework/utils/status-label.util';
+import { createTableConfig } from '../../framework/utils/table-config.factory';
 
 @Component({
   selector: 'app-nada-consta-list',
@@ -92,8 +94,7 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
   }
 
   private configureTable(): void {
-    this.tableConfig = {
-      ...this.tableConfig,
+    this.tableConfig = createTableConfig({
       columns: this.tableColumns,
       globalFilterFields: ['id', 'usuarioUsername', 'status'],
       defaultSortField: 'id',
@@ -103,27 +104,8 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
       emptyMessage: 'Nenhum registro encontrado.',
       loadingMessage: 'Carregando registros...',
       globalFilterPlaceholder: 'Buscar Nada Consta...',
-      columnToggle: true,
-      expandable: false,
-      expandMode: 'single',
-      rowExpansionKey: 'id',
-      stateful: true,
       stateKey: 'nada-consta-list',
-      stateStorage: 'local',
-      stateProps: {
-        columns: true,
-        filters: true,
-        sort: true,
-        pagination: true,
-        selection: true,
-        expandedRows: true
-      },
-      resizableColumns: true,
-      columnResizeMode: 'fit',
-      lazy: true,
-      preloadData: true,
-      keyboardShortcuts: true
-    };
+    });
     this.columnsTable = this.tableConfig.columns.map(column => column.field);
     this.displayedColumns = [...this.columnsTable];
   }
@@ -255,39 +237,11 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
   }
 
   getStatusLabel(status: string): string {
-    if (!status) return '';
-    switch (status) {
-      case 'PENDENTE':
-      case 'PENDING':
-        return 'COM PENDÊNCIA';
-      case 'COMPLETED':
-      case 'CONCLUIDO':
-      case 'CONCLUÍDO':
-        return 'EMITIDO';
-      case 'FAILED':
-      case 'FALHA':
-        return 'FALHA';
-      default:
-        return status;
-    }
+    return getNadaConstaStatusLabel(status);
   }
 
   getStatusSeverity(status: string): 'warn' | 'success' | 'danger' {
-    if (!status) return 'warn';
-    switch (status) {
-      case 'PENDENTE':
-      case 'PENDING':
-        return 'warn';
-      case 'COMPLETED':
-      case 'CONCLUIDO':
-      case 'CONCLUÍDO':
-        return 'success';
-      case 'FAILED':
-      case 'FALHA':
-        return 'danger';
-      default:
-        return 'warn';
-    }
+    return getNadaConstaStatusSeverity(status);
   }
 
   reenviarNadaConsta(element: NadaConsta): void {
