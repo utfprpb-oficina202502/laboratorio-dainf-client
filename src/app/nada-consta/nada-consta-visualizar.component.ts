@@ -39,15 +39,16 @@ export class NadaConstaVisualizarComponent implements OnDestroy {
   }
 
   consultar() {
-    if (!this.id) {
+    if (this.id == null) {
       this.erro = 'Informe o ID do registro.';
       this.resultado = null;
-      this.liveRegionText = this.erro;
+      this.liveRegionText = this.erro ?? '';
       this.cdr.markForCheck();
       return;
     }
     this.carregando = true;
     this.liveRegionText = 'Consultando registro...';
+    // id is narrowed, safe to use
     this.nadaConstaService.consultarNadaConsta(this.id)
       .pipe(takeUntil(this.destroyed$))
       .subscribe({

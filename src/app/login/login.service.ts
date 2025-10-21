@@ -252,7 +252,7 @@ export class LoginService {
    * Verifica se o usuário atual possui pelo menos um dos papéis permitidos
    */
   private hasRequiredRole(roles: string[]): boolean {
-    const user = this._currentUser();
+    const user = this._currentUser() || this.loadUserFromStorage();
     const userRoles = user?.authorities || user?.permissoes || [];
     return Array.isArray(userRoles) && userRoles.some((p: Permissao) => roles.includes(p.nome));
   }
@@ -261,14 +261,21 @@ export class LoginService {
     route: ActivatedRouteSnapshot,
     _state: RouterStateSnapshot
   ): Observable<boolean | UrlTree> {
-    // Restrição de acesso por role para NadaConsta
-    const nadaConstaPaths = ['nada-consta', 'nada-consta/consultar'];
-    if (nadaConstaPaths.includes(route.routeConfig?.path || '')) {
-      if (!this.hasRequiredRole(['ROLE_LABORATORISTA', 'ROLE_ADMINISTRADOR'])) {
-        this.router.navigate(['/notAuthorized']);
-        return of(false);
-      }
-    }
-    return this.performAuthenticationCheck(route);
+    // First, check authentication
+    return this.performAuthenticationCheck(route).pipe(
+      map(authenticated => {
+        if (!authenticated) {
+          return false;
+        }
+        // Detect nested nada-consta routes
+        const isNadaConstaRoute = route.pathFromRoot.some(r => r.routeConfig?.path?.includes('nada-consta'));
+        if (isNadaConstaRoute) {
+          if (!this.hasRequiredRole(['ROLE_LABORATORISTA', 'ROLE_ADMINISTRADOR'])) {
+            return this.router.parseUrl('/notAuthorized');
+          }
+        }
+        return true;
+      })
+    );
   }
 }

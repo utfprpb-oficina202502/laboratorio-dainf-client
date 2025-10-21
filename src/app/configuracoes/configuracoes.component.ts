@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, signal, inject } from '@angular/core';
-import { OnInit, ChangeDetectorRef } from '@angular/core';
+import { OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -15,7 +15,7 @@ import { Router } from '@angular/router';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, ButtonModule, InputTextModule, CardModule]
 })
-export class ConfiguracoesComponent implements OnInit {
+export class ConfiguracoesComponent implements OnInit, OnDestroy {
   protected readonly nadaConstaEmail = signal('');
   protected readonly isLoading = signal(false);
   protected readonly success = signal(false);
@@ -23,14 +23,20 @@ export class ConfiguracoesComponent implements OnInit {
 
   protected readonly configuracoesService = inject(ConfiguracoesService);
   protected readonly router = inject(Router);
-  private cdr: ChangeDetectorRef;
+  private readonly cdr = inject(ChangeDetectorRef);
 
-  constructor(cdr: ChangeDetectorRef) {
-    this.cdr = cdr;
+  private destroyed = false;
+
+  constructor() {
+    // No dependency injection here; use inject() for all dependencies
   }
 
   ngOnInit(): void {
     this.carregarConfiguracoes();
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed = true;
   }
 
   carregarConfiguracoes() {
@@ -57,7 +63,12 @@ export class ConfiguracoesComponent implements OnInit {
         this.success.set(true);
         this.isLoading.set(false);
         this.cdr.markForCheck();
-        this.router.navigate(['/']);
+        setTimeout(() => {
+          if (!this.destroyed) {
+            this.cdr.markForCheck();
+            this.router.navigate(['/']);
+          }
+        }, 1200); // 1.2s delay for feedback
       },
       error: (err) => {
         this.error.set('Erro ao salvar: ' + (err?.error?.message || ''));
