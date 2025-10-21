@@ -69,11 +69,13 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
 
   protected readonly service = inject(NadaConstaService);
 
-  protected cdr: ChangeDetectorRef;
+  protected cdr = inject(ChangeDetectorRef);
 
-  constructor(cdr: ChangeDetectorRef) {
+  // Getter público para facilitar testes
+  getCdr() { return this.cdr; }
+
+  constructor() {
     super();
-    this.cdr = cdr;
     this.configureTable();
   }
 
@@ -135,6 +137,54 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
   protected readonly solicitacaoSucesso = signal(false);
   // Sinal para o valor do filtro global (deve ser público para uso no template)
   public filterValue = '';
+
+  /**
+   * Getter público para o sinal showAdicionarModal
+   * @returns boolean
+   */
+  public getShowAdicionarModal() {
+    return this.showAdicionarModal();
+  }
+
+  /**
+   * Getter público para o sinal registroAcademico
+   * @returns string
+   */
+  public getRegistroAcademico() {
+    return this.registroAcademico();
+  }
+
+  /**
+   * Setter público para o sinal registroAcademico
+   * @param valor Novo valor do registro acadêmico
+   */
+  public setRegistroAcademico(valor: string) {
+    this.registroAcademico.set(valor);
+  }
+
+  /**
+   * Getter público para o sinal solicitando
+   * @returns boolean
+   */
+  public getSolicitando() {
+    return this.solicitando();
+  }
+
+  /**
+   * Getter público para o sinal solicitacaoErro
+   * @returns string | null
+   */
+  public getSolicitacaoErro() {
+    return this.solicitacaoErro();
+  }
+
+  /**
+   * Getter público para o sinal solicitacaoSucesso
+   * @returns boolean
+   */
+  public getSolicitacaoSucesso() {
+    return this.solicitacaoSucesso();
+  }
 
   adicionar(): void {
     this.showAdicionarModal.set(true);

@@ -23,7 +23,7 @@ export class LoginService {
   private readonly _isAuthenticated = signal<boolean>(this.hasStoredAuth());
   // Public readonly signals para consumo externo
   readonly isAuthenticated = this._isAuthenticated.asReadonly();
-  private readonly _currentUser = signal<Usuario | null>(this.loadUserFromStorage());
+  private readonly _currentUser = signal<Usuario | undefined>(this.loadUserFromStorage());
   readonly currentUser = this._currentUser.asReadonly();
 
   // Computed signals para valores derivados
@@ -151,22 +151,22 @@ export class LoginService {
     this.storageService.removeItem("token");
     this.storageService.removeItem("username");
     this.persistUser(null);
-    this._currentUser.set(null);
+    this._currentUser.set(undefined);
     this.currentUserRequest$ = null;
     this.authValidation$ = null;
     this._isAuthenticated.set(false);
     this.router.navigate(["/login"]);
   }
 
-  private loadUserFromStorage(): Usuario | null {
+  private loadUserFromStorage(): Usuario | undefined {
     const stored = this.storageService.getItem("userLogged");
     if (!stored) {
-      return null;
+      return undefined;
     }
     try {
       return JSON.parse(stored);
     } catch {
-      return null;
+      return undefined;
     }
   }
 
@@ -223,7 +223,22 @@ export class LoginService {
     return this.isAlunoOrProfessor();
   }
 
-  setAuthenticated() {
+  /**
+   * Atualiza o estado de autenticação e armazena o usuário autenticado.
+   * @param usuario Usuário autenticado (opcional). Se não informado, carrega do storage.
+   * @example
+   *   service.setAuthenticated(usuario)
+   *   service.setAuthenticated() // carrega do storage
+   */
+  setAuthenticated(usuario?: Usuario) {
+    let user = usuario;
+    if (!user) {
+      user = this.loadUserFromStorage();
+    }
+    if (user) {
+      this._currentUser.set(user);
+      this.persistUser(user);
+    }
     this._isAuthenticated.set(true);
   }
 
@@ -268,7 +283,7 @@ export class LoginService {
           return false;
         }
         // Detect nested nada-consta routes
-        const isNadaConstaRoute = route.pathFromRoot.some(r => r.routeConfig?.path?.includes('nada-consta'));
+        const isNadaConstaRoute = (route.pathFromRoot ?? []).some(r => r.routeConfig?.path?.includes('nada-consta'));
         if (isNadaConstaRoute) {
           if (!this.hasRequiredRole(['ROLE_LABORATORISTA', 'ROLE_ADMINISTRADOR'])) {
             return this.router.parseUrl('/notAuthorized');

@@ -21,6 +21,15 @@ export class ConfiguracoesComponent implements OnInit, OnDestroy {
   protected readonly success = signal(false);
   protected readonly error = signal('');
 
+  // Getters públicos para testes e template
+  getNadaConstaEmail() { return this.nadaConstaEmail(); }
+  setNadaConstaEmail(val: string) { this.nadaConstaEmail.set(val); }
+  getIsLoading() { return this.isLoading(); }
+  getSuccess() { return this.success(); }
+  getError() { return this.error(); }
+  // Getter público para facilitar testes
+  getCdr() { return this.cdr; }
+
   protected readonly configuracoesService = inject(ConfiguracoesService);
   protected readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);

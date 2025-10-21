@@ -32,14 +32,14 @@ export class NadaConstaVisualizarComponent implements OnDestroy {
   liveRegionText = '';
   private destroyed$ = new Subject<void>();
   private nadaConstaService = inject(NadaConstaService);
-  private cdr: ChangeDetectorRef;
+  private cdr = inject(ChangeDetectorRef);
 
-  constructor(cdr: ChangeDetectorRef) {
-    this.cdr = cdr;
-  }
+  // Getter público para facilitar testes
+  getCdr() { return this.cdr; }
 
   consultar() {
-    if (this.id == null) {
+    const id = this.id;
+    if (id === null || id === undefined) {
       this.erro = 'Informe o ID do registro.';
       this.resultado = null;
       this.liveRegionText = this.erro ?? '';
@@ -49,7 +49,7 @@ export class NadaConstaVisualizarComponent implements OnDestroy {
     this.carregando = true;
     this.liveRegionText = 'Consultando registro...';
     // id is narrowed, safe to use
-    this.nadaConstaService.consultarNadaConsta(this.id)
+    this.nadaConstaService.consultarNadaConsta(id)
       .pipe(takeUntil(this.destroyed$))
       .subscribe({
         next: (res: NadaConsta) => {
