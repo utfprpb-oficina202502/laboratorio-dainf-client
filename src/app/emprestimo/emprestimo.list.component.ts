@@ -166,8 +166,8 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   findUsuarios($event: { query: string }) {
     this.usuarioService.completeCustom($event.query)
     .subscribe({
-      next: (e) => {
-        this.usuarioEmprestimoList = e;
+      next: (usuarios) => {
+        this.usuarioEmprestimoList = usuarios;
       }
     });
   }
@@ -179,8 +179,8 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   findUsuarioResponsavel($event: { query: string }) {
     this.usuarioService.completeCustomUsersLab($event.query)
     .subscribe({
-      next: (e) => {
-        this.usuarioResponsavel = e;
+      next: (usuarios) => {
+        this.usuarioResponsavel = usuarios;
       }
     });
   }
