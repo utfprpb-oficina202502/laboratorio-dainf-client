@@ -160,8 +160,8 @@
                     (keyup.enter)="insertItem()"
                     class="w-full" />
                   @if (tempItem()) {
-                    @if(tempItem()?.disponivelParaEmprestimo){
-                      <span class="float-right text-sm text-gray-600">(Quantidade Disponivel: {{tempItem()?.disponivelParaEmprestimo}})</span>
+                    @if(tempItem()?.disponivelEmprestimoCalculado){
+                      <span class="float-right text-sm text-gray-600">(Quantidade Disponivel: {{tempItem()?.disponivelEmprestimoCalculado}})</span>
                     }@else if(tempItem()?.saldo){
                       <span class="float-right text-sm text-gray-600">(Quantidade Disponivel: {{tempItem()?.saldo}})</span>
                     }

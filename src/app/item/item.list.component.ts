@@ -110,15 +110,6 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
       align: 'center'
     },
     {
-      field: 'disponivelEmprestimoCalculado',
-      header: 'Disponível para Empréstimo',
-      type: 'number',
-      sortable: true,
-      filterable: true,
-      width: '8rem',
-      align: 'center',
-    },
-    {
       field: 'actions',
       header: 'Opções',
       type: 'custom',

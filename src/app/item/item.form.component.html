@@ -177,13 +177,13 @@
 
             <div class="col-span-12 md:col-span-3">
               <app-form-field
-                [control]="formGroup.get('disponivelParaEmprestimo')"
+                [control]="formGroup.get('disponivelEmprestimoCalculado')"
                 label="Estoque Disponivel"
                 [required]="true"
-                fieldId="disponivelParaEmprestimo">
+                fieldId="disponivelEmprestimoCalculado">
                 <p-inputNumber
-                  inputId="disponivelParaEmprestimo"
-                  formControlName="disponivelParaEmprestimo"
+                  inputId="disponivelEmprestimoCalculado"
+                  formControlName="disponivelEmprestimoCalculado"
                   class="w-full"
                   [useGrouping]="false"
                   [min]="0"
