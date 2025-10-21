@@ -169,8 +169,9 @@
                 }
 
                 @if (itensPendentes().length === 0) {
-                  <div class="flex items-center justify-center h-full">
-                    <span class="text-surface-500 dark:text-surface-400">Não há nenhum item pendente para devolução.</span>
+                  <div class="flex items-center justify-center h-full px-2">
+                    <span
+                      class="text-surface-500 dark:text-surface-400 text-xs md:text-sm lg:text-base text-center">Não há nenhum item pendente para devolução.</span>
                   </div>
                 }
               </p-scrollPanel>
@@ -210,8 +211,9 @@
                 }
 
                 @if (itensDevolvidos().length === 0) {
-                  <div class="flex items-center justify-center h-full">
-                    <span class="text-surface-500 dark:text-surface-400">Arraste até aqui os itens que serão devolvidos.</span>
+                  <div class="flex items-center justify-center h-full px-2">
+                    <span
+                      class="text-surface-500 dark:text-surface-400 text-xs md:text-sm lg:text-base text-center">Arraste até aqui os itens que serão devolvidos.</span>
                   </div>
                 }
               </p-scrollPanel>
@@ -243,8 +245,9 @@
                   </div>
                 }
                 @if (itensSaida().length === 0) {
-                  <div class="flex items-center justify-center h-full">
-                    <span class="text-surface-500 dark:text-surface-400">Arraste até aqui os itens que terão saídas permanentes.</span>
+                  <div class="flex items-center justify-center h-full px-2">
+                    <span
+                      class="text-surface-500 dark:text-surface-400 text-xs md:text-sm lg:text-base text-center">Arraste até aqui os itens que terão saídas permanentes.</span>
                   </div>
                 }
               </p-scrollPanel>
