@@ -31,7 +31,6 @@ import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 @Component({
     selector: 'app-form-relatorio',
     templateUrl: './relatorio.form.component.html',
-    styleUrls: ['./relatorio.form.component.css'],
   imports: [
     CommonModule,
     ReactiveFormsModule,

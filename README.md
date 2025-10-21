@@ -14,6 +14,7 @@ A aplicação foi desenvolvida com Angular e se comunica com o backend via uma A
 - **Tailwind CSS** (Framework CSS Utilitário)
 - **RxJS** para programação reativa
 - **Signals** para gerenciamento de estado
+- **Amcharts** (Biblioteca de gráficos)
 
 ---
 

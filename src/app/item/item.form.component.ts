@@ -54,7 +54,6 @@ interface TipoItemOption {
 @Component({
   selector: 'app-form-item',
   templateUrl: './item.form.component.html',
-  styleUrls: ['./item.form.component.css'],
   imports: [
     CadastroRapidoComponent,
     CommonModule,

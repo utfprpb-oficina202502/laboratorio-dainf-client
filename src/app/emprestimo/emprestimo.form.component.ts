@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, effect, inject, signal} from '@angular/core';
 import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Emprestimo} from './emprestimo';
@@ -114,6 +114,25 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
 
   constructor() {
     super();
+
+    effect(() => {
+      const formGroup = this.form();
+      const shouldDisable = this.disableForm();
+
+      if (formGroup) {
+        const controls = ['usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'observacao'];
+        controls.forEach(controlName => {
+          const control = formGroup.get(controlName);
+          if (control) {
+            if (shouldDisable) {
+              control.disable({emitEvent: false});
+            } else {
+              control.enable({emitEvent: false});
+            }
+          }
+        });
+      }
+    });
   }
 
   /**
@@ -158,15 +177,19 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
    */
   findUsuarios(event: AutoCompleteCompleteEvent): void {
     this.usuarioService.completeCustom(event.query).subscribe({
-      next: (e) => {
-        this.usuarioList.set(e);
-        if (e !== null && e.length === 1) {
+      next: (usuarios) => {
+        this.usuarioList.set(usuarios);
+        if (usuarios.length === 1) {
           const formGroup = this.form();
           if (formGroup) {
-            formGroup.patchValue({usuarioEmprestimo: e[0]});
-            this.documentoUsuario.set(e[0].documento);
+            formGroup.patchValue({usuarioEmprestimo: usuarios[0]});
+            this.documentoUsuario.set(usuarios[0].documento);
           }
         }
+      },
+      error: (error) => {
+        this.logger.error('Erro ao buscar usuários', error);
+        this.usuarioList.set([]);
       }
     });
   }
@@ -340,12 +363,21 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
    * Verify if form should be disabled
    */
   verifyFormDisable(): void {
-    const isAluno = this.isAlunoOrProfessor();
     const obj = this.object();
     const hasDevolucao = obj && 'dataDevolucao' in obj && !!obj.dataDevolucao;
 
-    if (isAluno || hasDevolucao) {
+    if (hasDevolucao) {
       this.disableForm.set(true);
+      return;
+    }
+
+    const isEditMode = obj && !!obj.id;
+    const isAluno = this.isAlunoOrProfessor();
+
+    if (isEditMode && isAluno) {
+      this.disableForm.set(true);
+    } else {
+      this.disableForm.set(false);
     }
   }
 

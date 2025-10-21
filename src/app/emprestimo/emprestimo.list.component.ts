@@ -166,8 +166,8 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   findUsuarios($event: { query: string }) {
     this.usuarioService.completeCustom($event.query)
     .subscribe({
-      next: (e) => {
-        this.usuarioEmprestimoList = e;
+      next: (usuarios) => {
+        this.usuarioEmprestimoList = usuarios;
       }
     });
   }
@@ -179,8 +179,8 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   findUsuarioResponsavel($event: { query: string }) {
     this.usuarioService.completeCustomUsersLab($event.query)
     .subscribe({
-      next: (e) => {
-        this.usuarioResponsavel = e;
+      next: (usuarios) => {
+        this.usuarioResponsavel = usuarios;
       }
     });
   }
@@ -223,12 +223,17 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   }
 
   getStatusEmprestimo(emprestimo: Emprestimo) {
-    if (DateUtil.dtIsBeforeToday(emprestimo.prazoDevolucao) && emprestimo.dataDevolucao === null) {
+    // Handle null/undefined prazoDevolucao gracefully
+    if (!emprestimo.prazoDevolucao) {
+      return 'P'; // Default to pending if no due date
+    }
+
+    if (DateUtil.dtIsBeforeToday(emprestimo.prazoDevolucao) && !emprestimo.dataDevolucao) {
       return 'A';
-    } else if (emprestimo.dataDevolucao === null) {
-      return 'P';
-    } else {
+    } else if (emprestimo.dataDevolucao) {
       return 'F';
+    } else {
+      return 'P';
     }
   }
 

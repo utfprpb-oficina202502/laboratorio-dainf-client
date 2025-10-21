@@ -1,0 +1,701 @@
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {EmprestimoListComponent} from './emprestimo.list.component';
+import {EmprestimoService} from './emprestimo.service';
+import {UsuarioService} from '../usuario/usuario.service';
+import {ConfirmationService, MessageService} from 'primeng/api';
+import {RouterTestingModule} from '@angular/router/testing';
+import {of, throwError} from 'rxjs';
+import {Emprestimo} from './emprestimo';
+import {Usuario} from '../usuario/usuario';
+import {LoginService} from '../login/login.service';
+import {EmprestimoTestFactory, UsuarioTestFactory} from './emprestimo.test-factory';
+import {createServiceMock} from '../framework/testing/test-helpers';
+
+/**
+ * Testes abrangentes para EmprestimoListComponent
+ * Cobre lógica de negócio, permissões, filtros e integração com serviços
+ */
+describe('EmprestimoListComponent', () => {
+  let component: EmprestimoListComponent;
+  let fixture: ComponentFixture<EmprestimoListComponent>;
+  let emprestimoService: jest.Mocked<EmprestimoService>;
+  let usuarioService: jest.Mocked<UsuarioService>;
+  let confirmationService: jest.Mocked<ConfirmationService>;
+  let messageService: jest.Mocked<MessageService>;
+  let loginService: jest.Mocked<LoginService>;
+
+  // Dados de teste usando factories
+  const mockEmprestimos: Emprestimo[] = [
+    EmprestimoTestFactory.createPendente({id: 1}),
+    EmprestimoTestFactory.createFinalizado({id: 2}),
+    EmprestimoTestFactory.createAtrasado({id: 3})
+  ];
+
+  const mockUsuarios: Usuario[] = UsuarioTestFactory.createList(2);
+
+  beforeEach(async () => {
+    const emprestimoServiceSpy = createServiceMock<EmprestimoService>([
+      'findAll',
+      'findAllPaged',
+      'filter',
+      'changePrazoDevolucao',
+      'delete'
+    ]);
+
+    const usuarioServiceSpy = createServiceMock<UsuarioService>([
+      'completeCustom',
+      'completeCustomUsersLab'
+    ]);
+
+    const confirmationServiceSpy = createServiceMock<ConfirmationService>(['confirm']);
+    const messageServiceSpy = createServiceMock<MessageService>(['add']);
+    const loginServiceSpy = createServiceMock<LoginService>(['isAlunoOrProfessor']);
+
+    await TestBed.configureTestingModule({
+      imports: [RouterTestingModule, EmprestimoListComponent],
+      providers: [
+        {provide: EmprestimoService, useValue: emprestimoServiceSpy},
+        {provide: UsuarioService, useValue: usuarioServiceSpy},
+        {provide: ConfirmationService, useValue: confirmationServiceSpy},
+        {provide: MessageService, useValue: messageServiceSpy},
+        {provide: LoginService, useValue: loginServiceSpy}
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(EmprestimoListComponent);
+    component = fixture.componentInstance;
+    emprestimoService = TestBed.inject(EmprestimoService) as jest.Mocked<EmprestimoService>;
+    usuarioService = TestBed.inject(UsuarioService) as jest.Mocked<UsuarioService>;
+    confirmationService = TestBed.inject(ConfirmationService) as jest.Mocked<ConfirmationService>;
+    messageService = TestBed.inject(MessageService) as jest.Mocked<MessageService>;
+    loginService = TestBed.inject(LoginService) as jest.Mocked<LoginService>;
+
+    // Setup default return values
+    emprestimoService.findAll.mockReturnValue(of(mockEmprestimos));
+    emprestimoService.findAllPaged.mockReturnValue(of({
+      content: mockEmprestimos,
+      totalElements: mockEmprestimos.length,
+      totalPages: 1,
+      size: mockEmprestimos.length,
+      number: 0
+    }));
+    emprestimoService.filter.mockReturnValue(of(mockEmprestimos));
+    usuarioService.completeCustom.mockReturnValue(of(mockUsuarios));
+    usuarioService.completeCustomUsersLab.mockReturnValue(of(mockUsuarios));
+
+    // Mock currentUser signal for permission checks
+    (loginService as any).currentUser = jest.fn().mockReturnValue({
+      id: 1,
+      username: 'admin',
+      perfil: {tipo: 'ADMIN'}
+    });
+  });
+
+  // ============================================================================
+  // Component Setup (5 tests)
+  // ============================================================================
+  describe('Component Setup', () => {
+    it('deve criar o componente', () => {
+      expect(component).toBeTruthy();
+    });
+
+    it('deve injetar serviços corretamente', () => {
+      expect(component['service']).toBe(emprestimoService);
+      expect(component['usuarioService']).toBe(usuarioService);
+    });
+
+    it('deve configurar tabela com colunas corretas', () => {
+      expect(component['columnsTable']).toEqual([
+        'id',
+        'usuarioEmprestimo',
+        'dataEmprestimo',
+        'prazoDevolucao',
+        'status'
+      ]);
+    });
+
+    it('deve definir estado inicial do filtro', () => {
+      expect(component.emprestimoFilter).toBeTruthy();
+      expect(component.emprestimoFilter.status).toBe('T');
+    });
+
+    it('deve construir dropdown de status', () => {
+      expect(component.statusDropdown.length).toBe(4);
+      expect(component.statusDropdown[0]).toEqual({label: 'Todos', value: 'T'});
+      expect(component.statusDropdown[1]).toEqual({label: 'Em andamento', value: 'P'});
+      expect(component.statusDropdown[2]).toEqual({label: 'Em atraso', value: 'A'});
+      expect(component.statusDropdown[3]).toEqual({label: 'Finalizado', value: 'F'});
+    });
+  });
+
+  // ============================================================================
+  // getStatusEmprestimo() (8 tests)
+  // ============================================================================
+  describe('getStatusEmprestimo()', () => {
+    it('deve retornar "A" (atrasado) quando vencido e não devolvido', () => {
+      const emprestimo = EmprestimoTestFactory.createAtrasado();
+
+      const status = component.getStatusEmprestimo(emprestimo);
+
+      expect(status).toBe('A');
+    });
+
+    it('deve retornar "P" (pendente) quando data futura e não devolvido', () => {
+      const emprestimo = EmprestimoTestFactory.createPendente();
+
+      const status = component.getStatusEmprestimo(emprestimo);
+
+      expect(status).toBe('P');
+    });
+
+    it('deve retornar "F" (finalizado) quando dataDevolucao existe', () => {
+      const emprestimo = EmprestimoTestFactory.createFinalizado();
+
+      const status = component.getStatusEmprestimo(emprestimo);
+
+      expect(status).toBe('F');
+    });
+
+    it('deve lidar com prazoDevolucao null', () => {
+      const emprestimo: Emprestimo = {
+        prazoDevolucao: null as any,
+        dataDevolucao: undefined
+      } as unknown as Emprestimo;
+
+      // Não deve lançar erro
+      expect(() => component.getStatusEmprestimo(emprestimo)).not.toThrow();
+    });
+
+    it('deve lidar com ambas as datas null', () => {
+      const emprestimo: Emprestimo = {
+        prazoDevolucao: null as any,
+        dataDevolucao: undefined
+      } as unknown as Emprestimo;
+
+      expect(() => component.getStatusEmprestimo(emprestimo)).not.toThrow();
+    });
+
+    it('deve lidar com edge case: devolvido antes do prazo', () => {
+      const emprestimo = EmprestimoTestFactory.createFinalizado({
+        prazoDevolucao: '20/01/2024',
+        dataDevolucao: '15/01/2024'
+      });
+
+      const status = component.getStatusEmprestimo(emprestimo);
+
+      expect(status).toBe('F');
+    });
+
+    it('deve considerar atrasado quando passou de um dia', () => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const day = String(yesterday.getDate()).padStart(2, '0');
+      const month = String(yesterday.getMonth() + 1).padStart(2, '0');
+      const year = yesterday.getFullYear();
+      const emprestimo = EmprestimoTestFactory.createAtrasado({
+        prazoDevolucao: `${day}/${month}/${year}`
+      });
+
+      const status = component.getStatusEmprestimo(emprestimo);
+
+      expect(status).toBe('A');
+    });
+  });
+
+  // ============================================================================
+  // openOptions() - Permission Logic (10 tests)
+  // ============================================================================
+  describe('openOptions() - Permission Logic', () => {
+    let mockEvent: Event;
+
+    beforeEach(() => {
+      mockEvent = new Event('click');
+      // Mock do viewChild actionsMenu usando Object.defineProperty
+      const mockActionsMenu = {
+        toggle: jest.fn()
+      };
+      Object.defineProperty(component, 'actionsMenu', {
+        value: jest.fn().mockReturnValue(mockActionsMenu),
+        writable: true,
+        configurable: true
+      });
+    });
+
+    it('deve mostrar todas as opções para admin/funcionário', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+
+      component.openOptions(mockEvent, 1);
+
+      expect(component.contextMenuItems.length).toBe(4);
+      expect(component.contextMenuItems[0].label).toBe('Devolução');
+      expect(component.contextMenuItems[1].label).toBe('Novo Prazo');
+      expect(component.contextMenuItems[2].label).toBe('Editar');
+      expect(component.contextMenuItems[3].label).toBe('Remover');
+    });
+
+    it('deve mostrar apenas visualizar para aluno/professor', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(true);
+
+      component.openOptions(mockEvent, 1);
+
+      expect(component.contextMenuItems.length).toBe(1);
+      expect(component.contextMenuItems[0].label).toBe('Visualizar');
+    });
+
+    it('deve incluir "Devolução" para não-aluno/professor', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+
+      component.openOptions(mockEvent, 1);
+
+      const devolucaoItem = component.contextMenuItems.find(item => item.label === 'Devolução');
+      expect(devolucaoItem).toBeTruthy();
+      expect(devolucaoItem?.icon).toBe('pi pi-undo');
+    });
+
+    it('deve incluir "Novo Prazo" para não-aluno/professor', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+
+      component.openOptions(mockEvent, 1);
+
+      const novoPrazoItem = component.contextMenuItems.find(item => item.label === 'Novo Prazo');
+      expect(novoPrazoItem).toBeTruthy();
+      expect(novoPrazoItem?.icon).toBe('pi pi-clock');
+    });
+
+    it('deve mostrar ícone "Editar" para admin', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+
+      component.openOptions(mockEvent, 1);
+
+      const editItem = component.contextMenuItems.find(item => item.label === 'Editar');
+      expect(editItem?.icon).toBe('pi pi-pencil');
+    });
+
+    it('deve mostrar ícone "Visualizar" para aluno', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(true);
+
+      component.openOptions(mockEvent, 1);
+
+      const viewItem = component.contextMenuItems.find(item => item.label === 'Visualizar');
+      expect(viewItem?.icon).toBe('pi pi-eye');
+    });
+
+    it('deve incluir "Remover" apenas para admin', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+
+      component.openOptions(mockEvent, 1);
+
+      const removeItem = component.contextMenuItems.find(item => item.label === 'Remover');
+      expect(removeItem).toBeTruthy();
+      expect(removeItem?.icon).toBe('pi pi-trash');
+    });
+
+    it('não deve incluir "Remover" para aluno/professor', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(true);
+
+      component.openOptions(mockEvent, 1);
+
+      const removeItem = component.contextMenuItems.find(item => item.label === 'Remover');
+      expect(removeItem).toBeUndefined();
+    });
+
+    it('deve alternar actionsMenu popover', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+      const toggleSpy = jest.fn();
+      const mockActionsMenu = {
+        toggle: toggleSpy
+      };
+      Object.defineProperty(component, 'actionsMenu', {
+        value: jest.fn().mockReturnValue(mockActionsMenu),
+        writable: true,
+        configurable: true
+      });
+
+      component.openOptions(mockEvent, 1);
+
+      expect(toggleSpy).toHaveBeenCalledWith(mockEvent);
+    });
+
+    it('deve definir selectedEmprestimoId', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+
+      component.openOptions(mockEvent, 123);
+
+      expect(component.selectedEmprestimoId).toBe(123);
+    });
+  });
+
+  // ============================================================================
+  // Filter Operations (8 tests)
+  // ============================================================================
+  describe('Filter Operations', () => {
+    it('deve aplicar filtro com status', () => {
+      component.emprestimoFilter.status = 'P';
+      component.findByFilter();
+
+      expect(emprestimoService.filter).toHaveBeenCalledWith(component.emprestimoFilter);
+    });
+
+    it('deve aplicar filtro com intervalo de datas', () => {
+      component.emprestimoFilter.dtIniEmp = '2024-01-01';
+      component.emprestimoFilter.dtFimEmp = '2024-01-31';
+
+      component.findByFilter();
+
+      expect(emprestimoService.filter).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dtIniEmp: '2024-01-01',
+          dtFimEmp: '2024-01-31'
+        })
+      );
+    });
+
+    it('deve aplicar filtro com usuário', () => {
+      const usuario = new Usuario();
+      usuario.id = 1;
+      component.emprestimoFilter.usuarioEmprestimo = usuario;
+
+      component.findByFilter();
+
+      expect(emprestimoService.filter).toHaveBeenCalledWith(
+        expect.objectContaining({
+          usuarioEmprestimo: usuario
+        })
+      );
+    });
+
+    it('deve definir contexto de usuário para aluno/professor', async () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(true);
+      jest.spyOn(component['storageService'], 'getItem').mockReturnValue('joao');
+
+      await component.setUserLogadoInFilter();
+
+      expect(component.emprestimoFilter.usuarioEmprestimo?.username).toBe('joao');
+    });
+
+    it('deve limpar filtro e recarregar', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+      jest.spyOn(component, 'findAll');
+
+      component.clearFilter();
+
+      expect(component.emprestimoFilter.status).toBe('T');
+      expect(component.findAll).toHaveBeenCalled();
+    });
+
+    it('deve chamar findAllByUsername para aluno após limpar filtro', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(true);
+      jest.spyOn(component, 'findAllByUsername');
+
+      component.clearFilter();
+
+      expect(component.findAllByUsername).toHaveBeenCalled();
+    });
+
+    it('deve fechar diálogo após aplicar filtro', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+      component.dialogFiltroEmprestimo = true;
+
+      component.filter();
+
+      expect(component.dialogFiltroEmprestimo).toBe(false);
+    });
+  });
+
+  // ============================================================================
+  // changePrazoDevolucao() (6 tests)
+  // ============================================================================
+  describe('changePrazoDevolucao()', () => {
+    it('deve mostrar diálogo de confirmação', () => {
+      component.dtNovaData = '2024-01-30';
+
+      component.changePrazoDevolucao();
+
+      expect(confirmationService.confirm).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining('2024-01-30'),
+          header: 'Confirmação'
+        })
+      );
+    });
+
+    it('deve chamar serviço ao aceitar', () => {
+      component.idEmprestimoToChangePrazoDev = 1;
+      component.dtNovaData = '2024-01-30';
+      emprestimoService.changePrazoDevolucao.mockReturnValue(of(undefined));
+
+      confirmationService.confirm.mockImplementation((config: any) => {
+        config.accept();
+        return confirmationService;
+      });
+
+      component.changePrazoDevolucao();
+
+      expect(emprestimoService.changePrazoDevolucao).toHaveBeenCalledWith(1, '2024-01-30');
+    });
+
+    it('deve mostrar mensagem de sucesso ao completar', () => {
+      component.idEmprestimoToChangePrazoDev = 1;
+      component.dtNovaData = '2024-01-30';
+      emprestimoService.changePrazoDevolucao.mockReturnValue(of(undefined));
+      jest.spyOn(component, 'findAll');
+
+      confirmationService.confirm.mockImplementation((config: any) => {
+        config.accept();
+        return confirmationService;
+      });
+
+      component.changePrazoDevolucao();
+
+      expect(messageService.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          severity: 'success',
+          summary: 'Sucesso!'
+        })
+      );
+    });
+
+    it('deve mostrar mensagem de erro em caso de falha', () => {
+      component.idEmprestimoToChangePrazoDev = 1;
+      component.dtNovaData = '2024-01-30';
+      emprestimoService.changePrazoDevolucao.mockReturnValue(throwError(() => new Error('Erro')));
+
+      confirmationService.confirm.mockImplementation((config: any) => {
+        config.accept();
+        return confirmationService;
+      });
+
+      component.changePrazoDevolucao();
+
+      expect(messageService.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          severity: 'error',
+          summary: 'Atenção!'
+        })
+      );
+    });
+
+    it('deve recarregar dados após sucesso', () => {
+      component.idEmprestimoToChangePrazoDev = 1;
+      component.dtNovaData = '2024-01-30';
+      emprestimoService.changePrazoDevolucao.mockReturnValue(of(undefined));
+      jest.spyOn(component, 'findAll');
+
+      confirmationService.confirm.mockImplementation((config: any) => {
+        config.accept();
+        return confirmationService;
+      });
+
+      component.changePrazoDevolucao();
+
+      expect(component.findAll).toHaveBeenCalled();
+    });
+
+    it('deve lidar com estados do loader corretamente', () => {
+      component.idEmprestimoToChangePrazoDev = 1;
+      component.dtNovaData = '2024-01-30';
+      emprestimoService.changePrazoDevolucao.mockReturnValue(of(undefined));
+      jest.spyOn(component['loaderService'], 'show');
+      jest.spyOn(component['loaderService'], 'hide');
+
+      confirmationService.confirm.mockImplementation((config: any) => {
+        config.accept();
+        return confirmationService;
+      });
+
+      component.changePrazoDevolucao();
+
+      expect(component['loaderService'].show).toHaveBeenCalled();
+      expect(component['loaderService'].hide).toHaveBeenCalled();
+    });
+  });
+
+  // ============================================================================
+  // User Autocomplete (4 tests)
+  // ============================================================================
+  describe('User Autocomplete', () => {
+    it('deve buscar usuários com query', () => {
+      component.findUsuarios({query: 'joão'});
+
+      expect(usuarioService.completeCustom).toHaveBeenCalledWith('joão');
+      expect(component.usuarioEmprestimoList).toEqual(mockUsuarios);
+    });
+
+    it('deve buscar usuário responsável', () => {
+      component.findUsuarioResponsavel({query: 'maria'});
+
+      expect(usuarioService.completeCustomUsersLab).toHaveBeenCalledWith('maria');
+      expect(component.usuarioResponsavel).toEqual(mockUsuarios);
+    });
+
+    it('deve lidar com resultados vazios', () => {
+      usuarioService.completeCustom.mockReturnValue(of([]));
+
+      component.findUsuarios({query: 'inexistente'});
+
+      expect(component.usuarioEmprestimoList).toEqual([]);
+    });
+
+    it('deve lidar com erros do serviço', () => {
+      usuarioService.completeCustom.mockReturnValue(throwError(() => new Error('Erro')));
+
+      expect(() => component.findUsuarios({query: 'erro'})).not.toThrow();
+    });
+  });
+
+  // ============================================================================
+  // setUserLogadoInFilter() (5 tests)
+  // ============================================================================
+  describe('setUserLogadoInFilter()', () => {
+    it('deve definir username do storage', async () => {
+      jest.spyOn(component['storageService'], 'getItem').mockReturnValue('joao123');
+
+      await component.setUserLogadoInFilter();
+
+      expect(component.emprestimoFilter.usuarioEmprestimo?.username).toBe('joao123');
+    });
+
+    it('deve resolver promise após definir', async () => {
+      jest.spyOn(component['storageService'], 'getItem').mockReturnValue('maria456');
+
+      const result = await component.setUserLogadoInFilter();
+
+      expect(result).toBeUndefined();
+    });
+
+    it('deve criar objeto Usuario', async () => {
+      jest.spyOn(component['storageService'], 'getItem').mockReturnValue('pedro789');
+
+      await component.setUserLogadoInFilter();
+
+      expect(component.emprestimoFilter.usuarioEmprestimo).toBeInstanceOf(Usuario);
+    });
+
+    it('deve lidar com username null', async () => {
+      jest.spyOn(component['storageService'], 'getItem').mockReturnValue(null);
+
+      await component.setUserLogadoInFilter();
+
+      expect(component.emprestimoFilter.usuarioEmprestimo?.username).toBe('');
+    });
+
+    it('deve lidar com item de storage ausente', async () => {
+      jest.spyOn(component['storageService'], 'getItem').mockReturnValue(null);
+
+      await component.setUserLogadoInFilter();
+
+      expect(component.emprestimoFilter.usuarioEmprestimo?.username).toBe('');
+    });
+  });
+
+  // ============================================================================
+  // Base Class Overrides (6 tests)
+  // ============================================================================
+  describe('Base Class Overrides', () => {
+    it('deve retornar nome de arquivo de exportação correto', () => {
+      const filename = component['getExportFileName']();
+
+      expect(filename).toBe('emprestimos');
+    });
+
+    it('deve retornar nome da entidade correto', () => {
+      const entityName = component['getEntityName']();
+
+      expect(entityName).toBe('Empréstimo');
+    });
+
+    it('deve retornar nome plural da entidade correto', () => {
+      const pluralName = component['getEntityPluralName']();
+
+      expect(pluralName).toBe('Empréstimos');
+    });
+
+    it('deve configurar tabela corretamente', () => {
+      expect(component['tableConfig'].columns).toBeDefined();
+      expect(component['tableConfig'].columns.length).toBe(5);
+      expect(component['tableConfig'].defaultSortField).toBe('dataEmprestimo');
+    });
+
+    it('deve definir urlForm corretamente', () => {
+      expect(component['urlForm']).toBe('emprestimo/form');
+    });
+
+    it('deve lidar com postFindAll (implementação vazia)', () => {
+      expect(() => component['postFindAll']()).not.toThrow();
+    });
+  });
+
+  // ============================================================================
+  // Integration Tests (8 tests)
+  // ============================================================================
+  describe('Integration Tests', () => {
+    it('deve integrar com EmprestimoService.filter()', () => {
+      component.findByFilter();
+
+      expect(emprestimoService.filter).toHaveBeenCalled();
+    });
+
+    it('deve integrar com UsuarioService.completeCustom()', () => {
+      component.findUsuarios({query: 'test'});
+
+      expect(usuarioService.completeCustom).toHaveBeenCalledWith('test');
+    });
+
+    it('deve integrar com ConfirmationService', () => {
+      component.changePrazoDevolucao();
+
+      expect(confirmationService.confirm).toHaveBeenCalled();
+    });
+
+    it('deve integrar com LoaderService', () => {
+      jest.spyOn(component['loaderService'], 'show');
+      jest.spyOn(component['loaderService'], 'hide');
+
+      component.findByFilter();
+
+      expect(component['loaderService'].hide).toHaveBeenCalled();
+    });
+
+    it('deve integrar com MessageService', () => {
+      emprestimoService.changePrazoDevolucao.mockReturnValue(of(undefined));
+
+      confirmationService.confirm.mockImplementation((config: any) => {
+        config.accept();
+        return confirmationService;
+      });
+
+      component.changePrazoDevolucao();
+
+      expect(messageService.add).toHaveBeenCalled();
+    });
+
+    it('deve navegar para rota de devolução', () => {
+      jest.spyOn(component['router'], 'navigate');
+
+      component.openDevolucao(123);
+
+      expect(component['router'].navigate).toHaveBeenCalledWith(['emprestimo/devolucao', 123]);
+    });
+
+    it('deve lidar com overlay de calendário', () => {
+      const mockNovaDataFn = jest.fn().mockReturnValue({
+        overlayVisible: false
+      });
+      Object.defineProperty(component, 'novaData', {
+        value: mockNovaDataFn,
+        writable: true,
+        configurable: true
+      });
+
+      component.openCalendarNewDate();
+
+      expect(mockNovaDataFn).toHaveBeenCalled();
+    });
+
+    it('deve persistir estado da tabela no localStorage', () => {
+      expect(component['tableConfig'].stateful).toBe(true);
+      expect(component['tableConfig'].stateKey).toBe('emprestimo-list-v2');
+      expect(component['tableConfig'].stateStorage).toBe('local');
+    });
+  });
+});

@@ -34,7 +34,6 @@ interface PermissaoSelectItem {
 @Component({
   selector: 'app-form-usuario',
   templateUrl: './usuario.form.component.html',
-  styleUrls: ['./usuario.form.component.css'],
   imports: [
     CommonModule,
     ReactiveFormsModule,

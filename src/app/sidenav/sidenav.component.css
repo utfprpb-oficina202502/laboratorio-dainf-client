@@ -11,11 +11,10 @@
 
   position: fixed;
   left: 0;
-  top: 56px;
+  top: var(--navbar-height);
   width: 260px;
   /* Use dvh (dynamic viewport height) to account for mobile browser chrome */
-  height: calc(100vh - 56px); /* Fallback for older browsers */
-  height: calc(100dvh - 56px); /* Modern browsers with dynamic viewport */
+  height: calc(100dvh - var(--navbar-height));
   z-index: 1000;
   overflow-y: auto;
   overflow-x: hidden;
@@ -37,8 +36,7 @@
     z-index: 1050;
     top: 0;
     /* Use dvh (dynamic viewport height) to account for mobile browser chrome */
-    height: 100vh; /* Fallback for older browsers */
-    height: 100dvh; /* Modern browsers with dynamic viewport */
+    height: 100dvh;
     transform: translateX(-100%);
 
     &.sidebar-visible {
@@ -57,7 +55,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-display), serif;
   padding: 0;
   margin: 0;
   color: var(--sidebar-text);
@@ -70,7 +68,7 @@
   overflow-y: auto;
 
   @media (max-width: 1023px) {
-    padding-top: 66px;
+    padding-top: calc(var(--navbar-height) + 10px);
   }
 
   /* Scrollbar styling */

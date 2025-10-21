@@ -49,10 +49,9 @@
                   (completeMethod)="findUsuarios($event)"
                   (onSelect)="onUsuarioEmprestimoChange($event)"
                   [forceSelection]="true"
-                  [disabled]="disableForm()"
                   minQueryLength="2"
                   placeholder="Digite para buscar..."
-                  styleClass="w-full"
+                  class="w-full"
                   [inputStyle]="{ width: '100%' }">
                 </p-autoComplete>
               </app-form-field>
@@ -99,7 +98,6 @@
                   dateFormat="dd/mm/yy"
                   dataType="string"
                   [maxDate]="maxDateEmprestimo()"
-                  [disabled]="disableForm()"
                   [showIcon]="true"
                   (onSelect)="setDateMinPrazoDevolucao()"
                   styleClass="w-full"
@@ -120,7 +118,6 @@
                   dateFormat="dd/mm/yy"
                   dataType="string"
                   [minDate]="minDatePrazoDevolucao()"
-                  [disabled]="disableForm()"
                   [showIcon]="true"
                   styleClass="w-full"
                   [inputStyle]="{ width: '100%' }">
@@ -319,7 +316,6 @@
                   id="observacao"
                   formControlName="observacao"
                   rows="3"
-                  [disabled]="disableForm()"
                   class="w-full"
                   [autoResize]="true">
                 </textarea>

@@ -4,7 +4,6 @@ import {ButtonModule} from 'primeng/button';
 @Component({
     selector: 'app-novo',
     templateUrl: './novo.component.html',
-    styleUrls: ['./novo.component.css'],
   imports: [ButtonModule]
 })
 export class NovoComponent {

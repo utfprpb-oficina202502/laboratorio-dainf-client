@@ -1,9 +1,9 @@
-import {CrudService} from '../framework/service/crud.service';
+import {CrudService, PageResponse} from '../framework/service/crud.service';
 import {Usuario} from './usuario';
 import {inject, Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {environment} from '../../environments/environment';
-import {Observable} from 'rxjs';
+import {map, Observable} from 'rxjs';
 import {Permissao} from './permissao';
 
 @Injectable()
@@ -28,11 +28,13 @@ export class UsuarioService extends CrudService<Usuario, number> {
   }
 
   completeCustom(query: string): Observable<Usuario[]> {
-    return this.http.get<Usuario[]>(`${this.url}complete-custom?query=${query}`);
+    return this.http.get<PageResponse<Usuario>>(`${this.url}complete-custom?query=${query}`)
+    .pipe(map(response => response?.content || []));
   }
 
   completeCustomUsersLab(query: string): Observable<Usuario[]> {
-    return this.http.get<Usuario[]>(`${this.url}complete-users-lab?query=${query}`);
+    return this.http.get<PageResponse<Usuario>>(`${this.url}complete-users-lab?query=${query}`)
+    .pipe(map(response => response?.content || []));
   }
 
   updateUser(usuario: Usuario): Observable<Usuario> {
