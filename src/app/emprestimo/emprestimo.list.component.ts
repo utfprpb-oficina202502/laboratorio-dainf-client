@@ -223,12 +223,17 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   }
 
   getStatusEmprestimo(emprestimo: Emprestimo) {
-    if (DateUtil.dtIsBeforeToday(emprestimo.prazoDevolucao) && emprestimo.dataDevolucao === null) {
+    // Handle null/undefined prazoDevolucao gracefully
+    if (!emprestimo.prazoDevolucao) {
+      return 'P'; // Default to pending if no due date
+    }
+
+    if (DateUtil.dtIsBeforeToday(emprestimo.prazoDevolucao) && !emprestimo.dataDevolucao) {
       return 'A';
-    } else if (emprestimo.dataDevolucao === null) {
-      return 'P';
-    } else {
+    } else if (emprestimo.dataDevolucao) {
       return 'F';
+    } else {
+      return 'P';
     }
   }
 

@@ -29,7 +29,7 @@
 }
 
 .container {
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-display), serif;
   background-color: var(--color-bg-secondary, #f7f7f7);
   color: var(--color-text-secondary, #9b9b9b);
   position: relative;
@@ -90,7 +90,7 @@
   background-color: var(--color-text-secondary, #9b9b9b);
   position: absolute;
   left: 50%;
-  bottom: 56px;
+  bottom: var(--navbar-height);
   transform: translateX(-50%);
 }
 
