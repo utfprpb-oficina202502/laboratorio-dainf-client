@@ -1,4 +1,4 @@
-import { Component, forwardRef, signal } from '@angular/core';
+import { Component, forwardRef, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PrimeCrudListComponent } from '../../framework/component/prime-crud.list.component';
 import { TableColumn } from '../../framework/model/table-config.interface';
@@ -22,6 +22,8 @@ import { TableFilterCaptionComponent } from '../../framework/component/table-fil
   selector: 'app-nada-consta-list',
   templateUrl: './nada-consta-list.component.html',
   styleUrls: ['./nada-consta-list.component.css'],
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     FormsModule,
@@ -65,9 +67,9 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
     { field: 'acoes', header: 'Ações', type: 'custom', sortable: false, filterable: false, exportable: false, align: 'center', width: '10rem', toggleable: false }
   ];
 
-  constructor(
-    protected override service: NadaConstaService
-  ) {
+  protected readonly service = inject(NadaConstaService);
+
+  constructor() {
     super();
     this.configureTable();
   }
@@ -114,7 +116,6 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
       resizableColumns: true,
       columnResizeMode: 'fit',
       lazy: true,
-      lazyLoadOnInit: true,
       preloadData: true,
       keyboardShortcuts: true
     };
@@ -130,7 +131,7 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
   protected readonly solicitacaoErro = signal<string | null>(null);
   protected readonly solicitacaoSucesso = signal(false);
   // Sinal para o valor do filtro global (deve ser público para uso no template)
-  public filterValue: string = '';
+  public filterValue = '';
 
   adicionar(): void {
     console.log('Abrindo modal de adicionar Nada Consta');
@@ -206,12 +207,12 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
     }
   }
 
-  getStatusSeverity(status: string): 'warning' | 'success' | 'danger' {
+  getStatusSeverity(status: string): 'warn' | 'success' | 'danger' {
     switch (status) {
-      case 'PENDING': return 'warning';
+      case 'PENDING': return 'warn';
       case 'COMPLETED': return 'success';
       case 'FAILED': return 'danger';
-      default: return 'warning';
+      default: return 'warn';
     }
   }
 

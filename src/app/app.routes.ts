@@ -171,6 +171,7 @@ export const routes: Routes = [
   // Configurações
   {
     path: 'configuracoes',
+    canActivate: [LoginService],
     loadComponent: () => import('./configuracoes/configuracoes.component').then(m => m.ConfiguracoesComponent)
   },
 

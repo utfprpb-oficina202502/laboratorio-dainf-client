@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, inject } from '@angular/core';
+import { OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -14,13 +15,16 @@ import { Router } from '@angular/router';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, ButtonModule, InputTextModule, CardModule]
 })
-export class ConfiguracoesComponent {
+export class ConfiguracoesComponent implements OnInit {
   protected readonly nadaConstaEmail = signal('');
   protected readonly isLoading = signal(false);
   protected readonly success = signal(false);
   protected readonly error = signal('');
 
-  constructor(private configuracoesService: ConfiguracoesService, private router: Router) {
+  protected readonly configuracoesService = inject(ConfiguracoesService);
+  protected readonly router = inject(Router);
+
+  ngOnInit(): void {
     this.carregarConfiguracoes();
   }
 

@@ -1,4 +1,4 @@
-<div class="container my-4">
+<div class="container my-4" [attr.aria-busy]="carregando">
   <p-card>
     <ng-template pTemplate="header">
       Consulta Nada Consta
@@ -11,8 +11,12 @@
         </div>
         <button pButton type="submit" label="Consultar" [disabled]="carregando || form.invalid" class="p-button-outlined"></button>
       </form>
+      <!-- Live region for accessibility -->
+      <div class="sr-only" role="status" aria-live="polite">
+        {{ liveRegionText }}
+      </div>
       @if (carregando) {
-        <p-progressBar mode="indeterminate" style="height: 6px;"></p-progressBar>
+        <p-progressBar mode="indeterminate" style="height: 6px;" aria-hidden="true"></p-progressBar>
       }
       @if (erro) {
         <div class="erro">{{ erro }}</div>

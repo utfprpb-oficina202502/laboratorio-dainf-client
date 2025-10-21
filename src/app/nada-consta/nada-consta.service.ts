@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {environment} from '../../environments/environment';
 import {CrudService} from "../framework/service/crud.service";
@@ -35,7 +35,8 @@ export interface NadaConsta {
 
 @Injectable({ providedIn: 'root' })
 export class NadaConstaService extends CrudService<NadaConsta, number> {
-  constructor(http: HttpClient) {
+  constructor() {
+    const http = inject(HttpClient);
     super(`${environment.api_url}nadaconsta/`, http);
   }
 
