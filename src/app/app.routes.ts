@@ -168,6 +168,12 @@ export const routes: Routes = [
   {path: 'relatorio/form/:id', canActivate: [LoginService], component: RelatorioFormComponent},
   {path: 'relatorio/view/:id', canActivate: [LoginService], component: RelatorioViewerComponent},
 
+  // Configurações
+  {
+    path: 'configuracoes',
+    loadComponent: () => import('./configuracoes/configuracoes.component').then(m => m.ConfiguracoesComponent)
+  },
+
   // Error pages
   {path: '403', component: NotAuthorizedComponent},
   {path: '**', component: PageNotFoundComponent}

@@ -48,15 +48,12 @@ export class LoginService {
     this.url = environment.api_url + "login";
   }
 
-  canActivate(
-    route: ActivatedRouteSnapshot,
-    _state: RouterStateSnapshot
-  ):
-    | Observable<boolean | UrlTree>
-    | Promise<boolean | UrlTree>
-    | boolean
-    | UrlTree {
-    // Verifica proativamente se o token está expirado
+  /**
+   * Valida se o usuário está autenticado e se o token está válido
+   * @param route Rota atual para redirecionamento
+   * @returns Observable<boolean>
+   */
+  validateAuthentication(route?: any): Observable<boolean> {
     if (this.isTokenExpired()) {
       this.logout();
       return of(false);
@@ -74,15 +71,8 @@ export class LoginService {
       return this.authValidation$;
     }
 
-    const url = `${environment.api_url}usuario/user-info`;
-    this.isRunningRequest = true;
-
-    const request$ = this.http.get<Usuario>(url).pipe(
-      tap((user) => {
-        if (user) {
-          this.persistUser(user);
-          this._currentUser.set(user);
-        }
+    const request$ = this.getCurrentUser({ forceRefresh: true }).pipe(
+      tap(() => {
         this._isAuthenticated.set(true);
         this.redirectIfProfileIncomplete(route);
       }),
@@ -233,5 +223,73 @@ export class LoginService {
     if (user.documento === '' && firstSegment && !firstSegment.includes('usuario')) {
       this.router.navigate([`/usuario/edit/${user.id}`]);
     }
+  }
+
+  /**
+   * Verifica se o usuário atual possui pelo menos um dos papéis permitidos
+   */
+  private hasRequiredRole(roles: string[]): boolean {
+    const user = this._currentUser();
+    const userRoles = user?.authorities || user?.permissoes || [];
+    return Array.isArray(userRoles) && userRoles.some((p: Permissao) => roles.includes(p.nome));
+  }
+
+  canActivate(
+    route: ActivatedRouteSnapshot,
+    _state: RouterStateSnapshot
+  ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+    // Verifica proativamente se o token está expirado
+    if (this.isTokenExpired()) {
+      this.logout();
+      return false;
+    }
+
+    const hasCachedUser = !!(this._currentUser() || this.loadUserFromStorage());
+    const hasToken = this.hasValidToken();
+
+    // Restrição de acesso por role para NadaConsta
+    const nadaConstaPaths = ['nada-consta', 'nada-consta/consultar'];
+    if (nadaConstaPaths.includes(route.routeConfig?.path || '')) {
+      if (!this.hasRequiredRole(['ROLE_LABORATORISTA', 'ROLE_ADMINISTRADOR'])) {
+        this.router.navigate(['/notAuthorized']);
+        return false;
+      }
+    }
+
+    if (hasCachedUser && hasToken) {
+      this.redirectIfProfileIncomplete(route);
+      return true;
+    }
+
+    if (this.authValidation$) {
+      return this.authValidation$;
+    }
+
+    const url = `${environment.api_url}usuario/user-info`;
+    this.isRunningRequest = true;
+
+    const request$ = this.http.get<Usuario>(url).pipe(
+      tap((user) => {
+        if (user) {
+          this.persistUser(user);
+          this._currentUser.set(user);
+        }
+        this._isAuthenticated.set(true);
+        this.redirectIfProfileIncomplete(route);
+      }),
+      map(() => true),
+      catchError(() => {
+        this.logout();
+        return throwError(() => new Error('O usuario nao esta autenticado!'));
+      }),
+      finalize(() => {
+        this.isRunningRequest = false;
+        this.authValidation$ = null;
+      }),
+      shareReplay({bufferSize: 1, refCount: true})
+    );
+
+    this.authValidation$ = request$;
+    return request$;
   }
 }

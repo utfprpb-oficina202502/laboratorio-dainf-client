@@ -1,0 +1,13 @@
+.container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 2rem;
+}
+.p-success {
+  color: #198754;
+}
+.p-error {
+  color: #dc3545;
+}
+

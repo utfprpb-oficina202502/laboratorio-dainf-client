@@ -1,48 +1,136 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-  <h2>Listagem de Nada Consta</h2>
-  <button pButton type="button" label="Adicionar" class="p-button-outlined" (click)="adicionar()"></button>
-</div>
-
-@if (!carregando) {
-  <p-table
-    [value]="dataSource"
-    [paginator]="true"
-    [rows]="size"
-    [totalRecords]="totalElements"
-    [rowsPerPageOptions]="pageSizeOptions"
-    [first]="page * size"
-    (onPage)="onPageChange($event)">
+<div class="w-full px-4 my-3">
+  <p-card [attr.aria-busy]="loading()">
     <ng-template pTemplate="header">
-      <tr>
-        <th id="id-header" scope="col">ID</th>
-        <th id="usuarioUsername-header" scope="col">Usuário</th>
-        <th id="status-header" scope="col">Status</th>
-        <th id="sendAt-header" scope="col">Enviado em</th>
-        <th id="createdAt-header" scope="col">Criado em</th>
-        <th id="updatedAt-header" scope="col">Atualizado em</th>
-        <th id="createdBy-header" scope="col">Criado por</th>
-        <th id="updatedBy-header" scope="col">Atualizado por</th>
-        <th id="acoes-header" scope="col">Ações</th>
-      </tr>
+      <div class="flex items-center justify-between p-3">
+        <span class="text-xl font-bold">Nada Consta</span>
+      </div>
     </ng-template>
-    <ng-template pTemplate="body" let-element>
-      <tr>
-        <td>{{element.id}}</td>
-        <td>{{element.usuarioUsername}}</td>
-        <td>{{element.status}}</td>
-        <td>{{element.sendAt}}</td>
-        <td>{{element.createdAt}}</td>
-        <td>{{element.updatedAt}}</td>
-        <td>{{element.createdBy}}</td>
-        <td>{{element.updatedBy}}</td>
-        <td>
-          <!-- Botões de ação futuros -->
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
-}
 
-@if (carregando) {
-  <p-progressBar mode="indeterminate" style="height: 6px;"></p-progressBar>
-}
+    <ng-template pTemplate="content">
+      <app-prime-crud-toolbar [list]="self">
+        <ng-template #toolbarStartTemplate>
+          <p-button
+            type="button"
+            severity="secondary"
+            [outlined]="true"
+            pTooltip="Filtro"
+            tooltipPosition="bottom"
+            [attr.aria-label]="'Abrir filtros'">
+            <span pButtonIcon class="pi pi-search"></span>
+          </p-button>
+          <button pButton type="button" label="Adicionar" class="p-button-outlined ml-2" (click)="adicionar()"></button>
+        </ng-template>
+      </app-prime-crud-toolbar>
+
+      <!-- Modal de Adicionar -->
+      <p-dialog
+        header="Solicitar Nada Consta"
+        [visible]="showAdicionarModal()"
+        (onHide)="cancelarAdicionar()"
+        [modal]="true"
+        [closable]="false"
+        [style]="{width: '400px'}"
+        [baseZIndex]="1100"
+        [dismissableMask]="true"
+        [blockScroll]="true"
+        [contentStyle]="{padding: '1.5rem'}">
+        <form (ngSubmit)="continuarAdicionar()" autocomplete="off">
+          <div class="p-fluid">
+            <label for="registroAcademico" class="font-semibold mb-2">Registro Acadêmico</label>
+            <input
+              id="registroAcademico"
+              pInputText
+              type="text"
+              [ngModel]="registroAcademico()"
+              (ngModelChange)="registroAcademico.set($event)"
+              name="registroAcademico"
+              autocomplete="off"
+              required
+              class="w-full" />
+            @if (solicitando()) {
+              <p-progressBar mode="indeterminate" style="height: 4px;"></p-progressBar>
+            }
+            @if (solicitacaoErro()) {
+              <div class="p-error mt-2">{{ solicitacaoErro() }}</div>
+            }
+            @if (solicitacaoSucesso()) {
+              <div class="p-success mt-2">Solicitação enviada com sucesso!</div>
+            }
+            <div class="flex justify-between gap-2 mt-4">
+              <button pButton type="button" label="Cancelar" class="p-button-text" (click)="cancelarAdicionar()" [disabled]="solicitando()"></button>
+              <button pButton type="submit" label="Continuar" [disabled]="!registroAcademico() || solicitando()"></button>
+            </div>
+          </div>
+        </form>
+      </p-dialog>
+
+      @if (loading()) {
+        <p-progressBar mode="indeterminate" style="height: 6px;"></p-progressBar>
+      }
+
+      <p-table
+        [value]="objects"
+        [paginator]="true"
+        [rows]="rows"
+        [totalRecords]="totalElements"
+        [rowsPerPageOptions]="pageSizeOptions"
+        [first]="first"
+        (onPage)="onPageChange($event)"
+        [loading]="loading()"
+        [responsiveLayout]="'scroll'"
+        class="mt-3">
+        <ng-template pTemplate="caption">
+          <app-table-filter-caption
+            (clear)="clearGlobalFilter()"
+            (filter)="onGlobalFilter($event)"
+            [ariaLabel]="'Campo de busca para filtrar Nada Consta'"
+            [filterValue]="filterValue"
+            [placeholder]="getGlobalFilterPlaceholder()">
+          </app-table-filter-caption>
+        </ng-template>
+        <ng-template pTemplate="header">
+          <tr>
+            <th id="id-header" scope="col">ID</th>
+            <th id="usuarioNome-header" scope="col">Nome</th>
+            <th id="sendAt-header" scope="col">Enviado em</th>
+            <th id="status-header" scope="col">Status</th>
+            <th id="acoes-header" scope="col">Ações</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-element>
+          <tr>
+            <td>{{element.id}}</td>
+            <td>{{element.usuario.nome}}</td>
+            <td>{{ formatDateTime(element.sendAt) }}</td>
+            <td>
+              <p-tag [value]="getStatusLabel(element.status)" [severity]="getStatusSeverity(element.status)"></p-tag>
+            </td>
+            <td>
+              <div class="flex justify-between gap-2">
+                @switch (getStatusLabel(element.status)) {
+                  @case ('EMITIDO') {
+                    <p-button icon="pi pi-send" class="p-button-text p-button-rounded" pTooltip="Reenviar Nada Consta" tooltipPosition="top" (onClick)="reenviarNadaConsta(element)"></p-button>
+                  }
+                  @case ('COM PENDÊNCIA') {
+                    <p-button icon="pi pi-refresh" class="p-button-text p-button-rounded" pTooltip="Atualizar Status" tooltipPosition="top" (onClick)="atualizarStatus(element)"></p-button>
+                  }
+                  @default {
+                    <!-- Nenhum botão de ação -->
+                  }
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="9" class="text-center p-4">
+              <i class="pi pi-search" style="font-size: 3rem; color: #dee2e6;"></i>
+              <p class="mt-3 mb-0">Nenhum registro encontrado.</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </ng-template>
+  </p-card>
+</div>

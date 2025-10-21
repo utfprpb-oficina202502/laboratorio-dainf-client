@@ -20,13 +20,9 @@
       @if (resultado) {
         <h3>Resultado</h3>
         <p><strong>ID:</strong> {{ resultado.id }}</p>
-        <p><strong>Usuário:</strong> {{ resultado.usuarioUsername }}</p>
+        <p><strong>Usuário:</strong> {{ resultado.usuario.nome }}</p>
         <p><strong>Status:</strong> {{ resultado.status }}</p>
         <p><strong>Enviado em:</strong> {{ resultado.sendAt }}</p>
-        <p><strong>Criado em:</strong> {{ resultado.createdAt }}</p>
-        <p><strong>Atualizado em:</strong> {{ resultado.updatedAt }}</p>
-        <p><strong>Criado por:</strong> {{ resultado.createdBy }}</p>
-        <p><strong>Atualizado por:</strong> {{ resultado.updatedBy }}</p>
       }
     </ng-template>
   </p-card>

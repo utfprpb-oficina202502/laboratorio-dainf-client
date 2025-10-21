@@ -47,7 +47,7 @@ export class NadaConstaVisualizarComponent implements OnDestroy {
           this.resultado = res;
           this.carregando = false;
         },
-        error: (err) => {
+        error: () => {
           this.erro = 'Registro não encontrado ou erro na consulta.';
           this.resultado = null;
           this.carregando = false;

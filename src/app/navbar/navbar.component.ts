@@ -95,6 +95,11 @@ export class NavbarComponent implements OnInit {
         command: () => this.openEditForm(),
       },
       {
+        label: "Configurações",
+        icon: "pi pi-cog",
+        command: () => this.router.navigate(["/configuracoes"]),
+      },
+      {
         label: "Sair",
         icon: "pi pi-external-link",
         command: () => this.logout(),
