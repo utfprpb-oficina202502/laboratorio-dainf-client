@@ -106,7 +106,7 @@ export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'dataSaida', 'qtde', 'usuarioResponsavel', 'observacao'],
+      globalFilterFields: ['id', 'dataSaida', 'usuarioResponsavel', 'observacao'],
       defaultSortField: 'id',
       caption: 'Saídas',
       stateKey: 'saida-list',
