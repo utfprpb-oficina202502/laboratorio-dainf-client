@@ -90,19 +90,20 @@ export class NavbarComponent implements OnInit {
   optionDropdown() {
     this.items = [
       {
-        label: "Meus dados",
-        icon: "pi pi-user-edit",
-        command: () => this.openEditForm(),
+        label: 'Meus dados',
+        icon: 'pi pi-user-edit',
+        // Corrigido: garante que command não retorna Promise
+        command: () => { this.openEditForm(); },
       },
       {
-        label: "Configurações",
-        icon: "pi pi-cog",
-        command: () => this.router.navigate(["/configuracoes"]),
+        label: 'Configurações',
+        icon: 'pi pi-cog',
+        command: () => { this.router.navigate(['/configuracoes']); },
       },
       {
-        label: "Sair",
-        icon: "pi pi-external-link",
-        command: () => this.logout(),
+        label: 'Sair',
+        icon: 'pi pi-external-link',
+        command: () => { this.logout(); },
       },
     ];
   }
