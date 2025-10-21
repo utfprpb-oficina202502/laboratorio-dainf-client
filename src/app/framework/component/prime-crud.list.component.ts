@@ -275,14 +275,17 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.saveTableState();
   }
 
-  // Setup debounced filtering for better performance
-  private setupDebouncedFiltering(): void {
-    this.filterSubject.pipe(
-      debounceTime(600),
-      distinctUntilChanged(),
-      takeUntil(this.destroy$)
-    ).subscribe(filterValue => {
-      this.applyFilter(filterValue);
+  findAll() {
+    this.loading.set(true);
+
+    // Start an HTTP request immediately without blocking on DOM calculations
+    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue || '')
+    .subscribe({
+      next: (e) => {
+        this.buildColumnsTable();  // Build columns while data is being processed
+        this.handleDataLoadSuccess(e);
+      },
+      error: (error) => this.handleDataLoadError(error)
     });
   }
 
@@ -512,14 +515,14 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.applyFilter('');
   }
 
-  findAll() {
-    this.loading.set(true);
-    this.buildColumnsTable();
-
-    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue || '')
-    .subscribe({
-      next: (e) => this.handleDataLoadSuccess(e),
-      error: (error) => this.handleDataLoadError(error)
+  // Setup debounced filtering for better performance
+  private setupDebouncedFiltering(): void {
+    this.filterSubject.pipe(
+      debounceTime(300),  // Reduced from 600ms for better perceived responsiveness
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(filterValue => {
+      this.applyFilter(filterValue);
     });
   }
 
@@ -647,7 +650,6 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.tableConfig.columnResizeMode = this.tableConfig.columnResizeMode || 'fit';
     // Default to true for proper server-side pagination with totalRecords
     this.tableConfig.lazy ??= true;
-    this.tableConfig.lazyLoadOnInit ??= false;
     this.tableConfig.preloadData = this.tableConfig.preloadData !== false;
     this.tableConfig.columnToggle = this.tableConfig.columnToggle !== false;
     this.tableConfig.keyboardShortcuts = this.tableConfig.keyboardShortcuts !== false;
