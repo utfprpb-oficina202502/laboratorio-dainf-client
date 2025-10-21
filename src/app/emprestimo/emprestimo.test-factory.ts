@@ -91,7 +91,7 @@ export class EmprestimoTestFactory {
    * const emprestimos = EmprestimoTestFactory.createList(5);
    * expect(emprestimos).toHaveLength(5);
    */
-  static createList(count: number = 3): Emprestimo[] {
+  static createList(count = 3): Emprestimo[] {
     return Array.from({length: count}, (_, i) =>
       this.create({
         id: i + 1,
@@ -134,7 +134,7 @@ export class UsuarioTestFactory {
    * @example
    * const usuarios = UsuarioTestFactory.createList(3);
    */
-  static createList(count: number = 2): Usuario[] {
+  static createList(count = 2): Usuario[] {
     return Array.from({length: count}, (_, i) =>
       this.create({
         id: i + 1,

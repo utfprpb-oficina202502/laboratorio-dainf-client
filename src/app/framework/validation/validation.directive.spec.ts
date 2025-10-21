@@ -14,8 +14,9 @@ import {getDirective, queryFormControls, setFormControlInvalid} from '../testing
   template: `
     <form [formGroup]="testForm">
       <div class="form-field">
-        <label>Campo Teste</label>
+        <label for="testField">Campo Teste</label>
         <input
+          id="testField"
           type="text"
           formControlName="testField"
           appValidation
@@ -24,8 +25,9 @@ import {getDirective, queryFormControls, setFormControlInvalid} from '../testing
       </div>
 
       <div class="flex flex-col gap-2">
-        <label>Campo Tailwind</label>
+        <label for="tailwindField">Campo Tailwind</label>
         <input
+          id="tailwindField"
           type="text"
           formControlName="tailwindField"
           appValidation
@@ -388,7 +390,7 @@ describe('ValidationDirective', () => {
 
       // Retorna o primeiro erro encontrado na iteração do objeto
       expect(error).toBeTruthy();
-      expect(['required', 'minlength', 'pattern']).toContain(error!);
+      expect(['required', 'minlength', 'pattern']).toContain(error as string);
     });
   });
 
@@ -426,7 +428,7 @@ describe('ValidationDirective', () => {
     });
 
     it('não deve validar quando pristine', () => {
-      const control = component.testForm.get('testField')!;
+      const control = component.testForm.get('testField') as FormControl;
       control.setValue('');
       // Não marca como dirty
       fixture.detectChanges();
@@ -439,7 +441,7 @@ describe('ValidationDirective', () => {
     });
 
     it('não deve validar quando untouched', () => {
-      const control = component.testForm.get('testField')!;
+      const control = component.testForm.get('testField') as FormControl;
       control.setValue('');
       // Não marca como touched
       fixture.detectChanges();
@@ -452,7 +454,7 @@ describe('ValidationDirective', () => {
     });
 
     it('deve chamar validationService.addValidation()', () => {
-      const control = component.testForm.get('testField')!;
+      const control = component.testForm.get('testField') as FormControl;
       control.markAsDirty();
       control.setValue('');
       fixture.detectChanges();
@@ -469,7 +471,7 @@ describe('ValidationDirective', () => {
     });
 
     it('deve extrair texto do label para campo', () => {
-      const control = component.testForm.get('testField')!;
+      const control = component.testForm.get('testField') as FormControl;
       control.markAsDirty();
       control.setValue('');
       fixture.detectChanges();
@@ -485,7 +487,7 @@ describe('ValidationDirective', () => {
     });
 
     it('deve lidar graciosamente com ausência de label', () => {
-      const control = component.testForm.get('noLabelField')!;
+      const control = component.testForm.get('noLabelField') as FormControl;
       control.markAsDirty();
       control.setValue('');
       fixture.detectChanges();
@@ -501,7 +503,7 @@ describe('ValidationDirective', () => {
     });
 
     it('deve lidar com controle válido (sem exibir erro)', () => {
-      const control = component.testForm.get('testField')!;
+      const control = component.testForm.get('testField') as FormControl;
       control.markAsDirty();
       control.setValue('valor válido');
       fixture.detectChanges();
@@ -521,7 +523,7 @@ describe('ValidationDirective', () => {
   describe('Testes de Integração', () => {
     it('deve responder a formControl.valueChanges', () => {
       // Verifica que a diretiva não quebra ao mudar valores múltiplas vezes
-      const control = component.testForm.get('testField')!;
+      const control = component.testForm.get('testField') as FormControl;
 
       expect(() => {
         control.setValue('valor1');
@@ -537,7 +539,7 @@ describe('ValidationDirective', () => {
     });
 
     it('deve integrar corretamente com ValidationService', () => {
-      const control = component.testForm.get('testField')!;
+      const control = component.testForm.get('testField') as FormControl;
       control.markAsDirty();
       control.setValue('');
       fixture.detectChanges();
@@ -565,13 +567,13 @@ describe('ValidationDirective', () => {
 
       // Após destroy, novas mudanças não devem disparar checkValidation
       const checkSpy = jest.spyOn(directive, 'checkValidation');
-      component.testForm.get('testField')!.setValue('novo valor');
+      (component.testForm.get('testField') as FormControl).setValue('novo valor');
 
       expect(checkSpy).not.toHaveBeenCalled();
     });
 
     it('deve funcionar com reactive forms', () => {
-      const control = component.testForm.get('testField')!;
+      const control = component.testForm.get('testField') as FormControl;
       control.markAsDirty();
       control.setErrors({required: true});
       fixture.detectChanges();
@@ -584,7 +586,7 @@ describe('ValidationDirective', () => {
     });
 
     it('deve lidar com múltiplos erros de validação simultaneamente', () => {
-      const control = component.testForm.get('tailwindField')!;
+      const control = component.testForm.get('tailwindField') as FormControl;
       control.markAsDirty();
       control.setValue('ab'); // Menor que minLength(3)
       fixture.detectChanges();

@@ -2,7 +2,7 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {DebugElement, Provider, Type} from '@angular/core';
 import {FormControl, FormGroup} from '@angular/forms';
 import {By} from '@angular/platform-browser';
-import {ConfirmationService} from 'primeng/api';
+import {Confirmation, ConfirmationService} from 'primeng/api';
 
 /**
  * Utilitários para testes Angular
@@ -13,7 +13,7 @@ import {ConfirmationService} from 'primeng/api';
  * Configuração para setupTestBed
  */
 export interface TestBedConfig {
-  imports?: any[];
+  imports?: unknown[];
   providers?: Provider[];
 }
 
@@ -58,9 +58,9 @@ export async function setupTestBed<T>(
  * mockService.getData.mockReturnValue(of(data));
  */
 export function createServiceMock<T>(methods: (keyof T)[]): jest.Mocked<Partial<T>> {
-  const mock: any = {};
+  const mock: Record<string, jest.Mock> = {};
   methods.forEach(method => {
-    mock[method] = jest.fn();
+    mock[method as string] = jest.fn();
   });
   return mock as jest.Mocked<Partial<T>>;
 }
@@ -76,7 +76,7 @@ export function createServiceMock<T>(methods: (keyof T)[]): jest.Mocked<Partial<
  * expect(elements.email).toBeTruthy();
  */
 export function queryFormControls(
-  fixture: ComponentFixture<any>,
+  fixture: ComponentFixture<unknown>,
   controlNames: string[]
 ): Record<string, DebugElement> {
   const elements: Record<string, DebugElement> = {};
@@ -124,7 +124,7 @@ export interface FormControlStateOptions {
 export function setFormControlInvalid(
   form: FormGroup,
   controlName: string,
-  value: any = '',
+  value: unknown = '',
   options?: FormControlStateOptions
 ): FormControl {
   const control = form.get(controlName) as FormControl;
@@ -154,7 +154,7 @@ export function setFormControlInvalid(
 export function setFormControlValid(
   form: FormGroup,
   controlName: string,
-  value: any
+  value: unknown
 ): FormControl {
   const control = form.get(controlName) as FormControl;
   control.markAsDirty();
@@ -172,7 +172,7 @@ export function setFormControlValid(
  * expect(deleteService.delete).toHaveBeenCalled();
  */
 export function mockConfirmAccept(confirmationService: jest.Mocked<ConfirmationService>): void {
-  confirmationService.confirm.mockImplementation((config: any) => {
+  confirmationService.confirm.mockImplementation((config: Confirmation) => {
     config.accept?.();
     return confirmationService;
   });
@@ -188,7 +188,7 @@ export function mockConfirmAccept(confirmationService: jest.Mocked<ConfirmationS
  * expect(deleteService.delete).not.toHaveBeenCalled();
  */
 export function mockConfirmReject(confirmationService: jest.Mocked<ConfirmationService>): void {
-  confirmationService.confirm.mockImplementation((config: any) => {
+  confirmationService.confirm.mockImplementation((config: Confirmation) => {
     config.reject?.();
     return confirmationService;
   });
