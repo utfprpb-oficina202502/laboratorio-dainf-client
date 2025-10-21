@@ -8,6 +8,7 @@ import {
   TableDefaultTemplatesComponent
 } from '../framework/component/table-default-templates.component';
 import {CpfCnpjPipe} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe";
+import { createTableConfig } from '../framework/utils/table-config.factory';
 
 @Component({
     selector: 'app-list-fornecedor',
@@ -94,39 +95,14 @@ export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, 
   }
 
   private configureTable(): void {
-    this.tableConfig = {
-      ...this.tableConfig,
+    this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'razaoSocial', 'nomeFantasia', 'cnpj'],
-      defaultSortField: 'razaoSocial',
-      defaultSortOrder: 1,
-      caption: 'Lista de Fornecedores',
-      trackByField: 'id',
-      emptyMessage: 'Nenhum fornecedor encontrado.',
-      loadingMessage: 'Carregando fornecedores...',
-      globalFilterPlaceholder: 'Buscar fornecedores...',
-      columnToggle: true,
-      expandable: false,
-      expandMode: 'single',
-      rowExpansionKey: 'id',
-      stateful: true,
-      stateKey: 'fornecedor-list-v2',
-      stateStorage: 'local',
-      stateProps: {
-        columns: true,
-        filters: true,
-        sort: true,
-        pagination: true,
-        selection: true,
-        expandedRows: true
-      },
-      resizableColumns: true,
-      columnResizeMode: 'fit',
-      lazy: true,
-      lazyLoadOnInit: true,
-      preloadData: true,
-      keyboardShortcuts: true
-    };
+      globalFilterFields: ['id', 'nome', 'cnpj'],
+      defaultSortField: 'nome',
+      caption: 'Fornecedores',
+      stateKey: 'fornecedor-list',
+      // ...outras propriedades específicas...
+    });
 
     this.columnsTable = this.tableConfig.columns.map(column => column.field);
     this.displayedColumns = [...this.columnsTable];

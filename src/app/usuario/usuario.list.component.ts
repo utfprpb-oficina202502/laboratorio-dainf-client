@@ -8,6 +8,7 @@ import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.mod
 import {
   TableDefaultTemplatesComponent
 } from '../framework/component/table-default-templates.component';
+import { createTableConfig } from '../framework/utils/table-config.factory';
 
 @Component({
     selector: 'app-list-usuario',
@@ -75,7 +76,14 @@ export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number
   constructor() {
     super();
 
-    this.configureTable();
+    this.tableConfig = createTableConfig({
+      columns: this.tableColumns,
+      globalFilterFields: ['id', 'nome', 'email'],
+      defaultSortField: 'nome',
+      caption: 'Usuários',
+      stateKey: 'usuario-list',
+      // ...outras propriedades específicas...
+    });
   }
 
   protected override getEntityName(): string {
@@ -89,44 +97,6 @@ export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number
   // Override export filename for usuarios
   protected override getExportFileName(): string {
     return 'usuarios';
-  }
-
-  private configureTable(): void {
-    this.tableConfig = {
-      ...this.tableConfig,
-      columns: this.tableColumns,
-      globalFilterFields: ['id', 'nome', 'username'],
-      defaultSortField: 'nome',
-      defaultSortOrder: 1,
-      caption: 'Lista de Usuários',
-      trackByField: 'id',
-      emptyMessage: 'Nenhum usuário encontrado.',
-      loadingMessage: 'Carregando usuários...',
-      globalFilterPlaceholder: 'Buscar usuários...',
-      columnToggle: true,
-      expandable: false,
-      expandMode: 'single',
-      rowExpansionKey: 'id',
-      stateful: true,
-      stateKey: 'usuario-list',
-      stateStorage: 'local',
-      stateProps: {
-        columns: true,
-        filters: true,
-        sort: true,
-        pagination: true,
-        selection: true,
-        expandedRows: true
-      },
-      resizableColumns: true,
-      columnResizeMode: 'fit',
-      lazy: true,
-      preloadData: true,
-      keyboardShortcuts: true
-    };
-
-    this.columnsTable = this.tableConfig.columns.map(column => column.field);
-    this.displayedColumns = [...this.columnsTable];
   }
 
   formatGruposAcesso(permissao: Permissao[]) {
