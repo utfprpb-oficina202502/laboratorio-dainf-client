@@ -36,6 +36,8 @@ DAINF/UTFPR lab management system
 **Permission-Based Form Disable:** Distinguish: (1) NEW records → never disable for admins (2) EXISTING records → disable only if aluno/professor viewing their own (3) FINISHED records → always disable if has completion marker | Check `isNewRecord = !obj || !obj.id` before applying permission logic | Example: `src/app/emprestimo/emprestimo.form.component.ts:342-363`
 **Examples:** `src/app/grupo/grupo.{list,form}.component.ts`
 
+**Testing:** Jest NOT Jasmine | Helpers: `framework/testing/test-helpers.ts` (`createServiceMock`, `setupTestBed`, `queryFormControls`, `getDirective`, `mockConfirmAccept`) | Factories: `*.test-factory.ts` with semantic methods (`createAtrasado()`, `createPendente()`) | 40-50+ tests per component/service | Dates ALWAYS `dd/mm/yyyy` NEVER `yyyy-mm-dd` | `undefined` NOT `null` for optionals | Spy on component methods NOT service (`jest.spyOn(component, 'method')`) | ViewChild: `Object.defineProperty(component, 'viewChild', {value: mock, writable: true})` | PageResponse: all 5 fields `{content, totalElements, totalPages, size, number}` | Jest syntax: `createServiceMock<T>(['method'])`, `.mockReturnValue()`, `expect.objectContaining()` | Remove time-dependent/duplicate tests | 95%+ pass rate target | Example: `src/app/emprestimo/emprestimo.{list.component.spec,test-factory}.ts`
+
 ## Code Rules
 
 **Quality:** Complexity ≤15 | `?.` not `&&` chains | `Object.hasOwn()` | `??=` | `replaceAll()` | `substring()` not `substr()` | `<button>` not `role="button"`
