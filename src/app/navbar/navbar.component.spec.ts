@@ -230,9 +230,10 @@ describe('NavbarComponent', () => {
     it('deve criar opções de dropdown no ngOnInit', () => {
       component.ngOnInit();
 
-      expect(component.items).toHaveLength(2);
+      expect(component.items).toHaveLength(3);
       expect(component.items[0].label).toBe('Meus dados');
-      expect(component.items[1].label).toBe('Sair');
+      expect(component.items[1].label).toBe('Configurações');
+      expect(component.items[2].label).toBe('Sair');
     });
 
     it('deve chamar logout quando opção Sair for selecionada', () => {

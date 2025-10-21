@@ -1,7 +1,7 @@
 import {computed, inject, Injectable, signal} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree,} from "@angular/router";
-import {Observable, of, throwError} from "rxjs";
+import { of, Observable, throwError } from 'rxjs';
 import {Usuario} from "../usuario/usuario";
 import {environment} from "../../environments/environment";
 import {catchError, finalize, map, shareReplay, tap} from "rxjs/operators";
@@ -237,11 +237,11 @@ export class LoginService {
   canActivate(
     route: ActivatedRouteSnapshot,
     _state: RouterStateSnapshot
-  ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+  ): Observable<boolean | UrlTree> {
     // Verifica proativamente se o token está expirado
     if (this.isTokenExpired()) {
       this.logout();
-      return false;
+      return of(false);
     }
 
     const hasCachedUser = !!(this._currentUser() || this.loadUserFromStorage());
@@ -252,13 +252,13 @@ export class LoginService {
     if (nadaConstaPaths.includes(route.routeConfig?.path || '')) {
       if (!this.hasRequiredRole(['ROLE_LABORATORISTA', 'ROLE_ADMINISTRADOR'])) {
         this.router.navigate(['/notAuthorized']);
-        return false;
+        return of(false);
       }
     }
 
     if (hasCachedUser && hasToken) {
       this.redirectIfProfileIncomplete(route);
-      return true;
+      return of(true);
     }
 
     if (this.authValidation$) {
@@ -280,7 +280,7 @@ export class LoginService {
       map(() => true),
       catchError(() => {
         this.logout();
-        return throwError(() => new Error('O usuario nao esta autenticado!'));
+        return of(false);
       }),
       finalize(() => {
         this.isRunningRequest = false;
