@@ -11,7 +11,6 @@ import {
 @Component({
     selector: 'app-list-solicitacao-compra',
     templateUrl: './solicitacaoCompra.list.component.html',
-    styleUrls: ['./solicitacaoCompra.list.component.css'],
   imports: [
     PrimeTableSharedModule,
     TableDefaultTemplatesComponent,

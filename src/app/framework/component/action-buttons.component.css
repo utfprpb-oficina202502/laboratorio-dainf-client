@@ -1,0 +1,21 @@
+/* Action buttons container - ensure proper spacing */
+:host {
+  display: inline-flex;
+}
+
+/* Ensure gap works properly between PrimeNG buttons */
+.action-buttons-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem; /* 4px spacing between buttons */
+}
+
+/* Fallback: explicit margins if gap doesn't work */
+.action-buttons-wrapper > * + * {
+  margin-left: 0.25rem;
+}
+
+/* Override any PrimeNG button margins that might interfere */
+.action-buttons-wrapper ::ng-deep .p-button {
+  margin: 0;
+}

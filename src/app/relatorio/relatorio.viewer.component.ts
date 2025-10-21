@@ -25,7 +25,6 @@ import {VoltarComponent} from '../geral/voltar/voltar.component';
 @Component({
     selector: 'app-viewer-relatorio',
     templateUrl: './relatorio.viewer.component.html',
-    styleUrls: ['./relatorio.viewer.component.css'],
   imports: [
     CommonModule,
     FormsModule,

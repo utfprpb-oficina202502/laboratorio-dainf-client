@@ -11,7 +11,6 @@ import {
 @Component({
     selector: 'app-list-grupo',
     templateUrl: './grupo.list.component.html',
-    styleUrls: ['./grupo.list.component.css'],
   imports: [
     PrimeTableSharedModule,
     TableDefaultTemplatesComponent,

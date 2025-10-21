@@ -14,8 +14,7 @@
   top: 56px;
   width: 260px;
   /* Use dvh (dynamic viewport height) to account for mobile browser chrome */
-  height: calc(100vh - 56px); /* Fallback for older browsers */
-  height: calc(100dvh - 56px); /* Modern browsers with dynamic viewport */
+  height: calc(100dvh - 56px);
   z-index: 1000;
   overflow-y: auto;
   overflow-x: hidden;
@@ -37,8 +36,7 @@
     z-index: 1050;
     top: 0;
     /* Use dvh (dynamic viewport height) to account for mobile browser chrome */
-    height: 100vh; /* Fallback for older browsers */
-    height: 100dvh; /* Modern browsers with dynamic viewport */
+    height: 100dvh;
     transform: translateX(-100%);
 
     &.sidebar-visible {

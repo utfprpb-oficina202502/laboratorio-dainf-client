@@ -13,7 +13,6 @@ import {
 @Component({
     selector: 'app-list-saida',
     templateUrl: './saida.list.component.html',
-    styleUrls: ['./saida.list.component.css'],
   imports: [
     PrimeTableSharedModule,
     ConfirmDialogModule,

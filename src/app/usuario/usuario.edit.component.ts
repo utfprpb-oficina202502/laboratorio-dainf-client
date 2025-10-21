@@ -38,7 +38,6 @@ import {StorageService} from '../framework/services/storage.service';
 @Component({
   selector: 'app-edit-usuario',
   templateUrl: './usuario.edit.component.html',
-  styleUrls: ['./usuario.edit.component.css'],
   imports: [
     CommonModule,
     ReactiveFormsModule,
