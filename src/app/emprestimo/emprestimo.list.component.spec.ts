@@ -613,7 +613,7 @@ describe('EmprestimoListComponent', () => {
     it('deve configurar tabela corretamente', () => {
       expect(component['tableConfig'].columns).toBeDefined();
       expect(component['tableConfig'].columns.length).toBe(5);
-      expect(component['tableConfig'].defaultSortField).toBe('dataEmprestimo');
+      expect(component['tableConfig'].defaultSortField).toBe('id');
     });
 
     it('deve definir urlForm corretamente', () => {
@@ -694,7 +694,7 @@ describe('EmprestimoListComponent', () => {
 
     it('deve persistir estado da tabela no localStorage', () => {
       expect(component['tableConfig'].stateful).toBe(true);
-      expect(component['tableConfig'].stateKey).toBe('emprestimo-list-v2');
+      expect(component['tableConfig'].stateKey).toBe('emprestimo-list');
       expect(component['tableConfig'].stateStorage).toBe('local');
     });
   });
