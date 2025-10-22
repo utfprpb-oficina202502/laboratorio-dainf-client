@@ -7,6 +7,7 @@ import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.mod
 import {
   TableDefaultTemplatesComponent
 } from '../framework/component/table-default-templates.component';
+import { createTableConfig } from '../framework/utils/table-config.factory';
 
 @Component({
     selector: 'app-list-grupo',
@@ -74,42 +75,16 @@ export class GrupoListComponent extends PrimeCrudListComponent<Grupo, number> {
   }
 
   private configureTable(): void {
-    this.tableConfig = {
-      ...this.tableConfig,
+    this.tableConfig = createTableConfig({
       columns: this.tableColumns,
       globalFilterFields: ['id', 'descricao'],
       defaultSortField: 'descricao',
-      defaultSortOrder: 1,
-      caption: 'Lista de Grupos',
-      trackByField: 'id',
-      emptyMessage: 'Nenhum grupo encontrado.',
-      loadingMessage: 'Carregando grupos...',
-      globalFilterPlaceholder: 'Buscar grupos...',
-      columnToggle: true,
-      expandable: false,
-      expandMode: 'single',
-      rowExpansionKey: 'id',
-      stateful: true,
+      caption: 'Grupos',
       stateKey: 'grupo-list',
-      stateStorage: 'local',
-      stateProps: {
-        columns: true,
-        filters: true,
-        sort: true,
-        pagination: true,
-        selection: true,
-        expandedRows: true
-      },
-      resizableColumns: true,
-      columnResizeMode: 'fit',
-      lazy: true,
-      lazyLoadOnInit: false,
-      preloadData: true,
-      keyboardShortcuts: true
-    };
+      // ...outras propriedades específicas...
+    });
 
     this.columnsTable = this.tableConfig.columns.map(column => column.field);
     this.displayedColumns = [...this.columnsTable];
   }
 }
-
