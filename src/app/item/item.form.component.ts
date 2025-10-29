@@ -140,7 +140,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
       const formGroup = this.form();
       if (!formGroup) return;
 
-      const fieldsToToggle = ['nome', 'patrimonio', 'siorg', 'valor', 'localizacao', 'tipoItem', 'descricao', 'grupo','disponivelEmprestimoCalculado'];
+      const fieldsToToggle = ['nome', 'patrimonio', 'siorg', 'valor', 'localizacao', 'tipoItem', 'descricao', 'grupo','disponivelEmprestimoCalculado','quantidadeEmprestada'];
 
       if (this.isAlunoOrProfessor()) {
         for (const field of fieldsToToggle) {
@@ -180,6 +180,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
       tipoItem: ['C', [Validators.required]],
       saldo: [null, [Validators.required, Validators.min(0)]],
       disponivelEmprestimoCalculado: [null, [Validators.required, Validators.min(0)]],
+      quantidadeEmprestada: [null, [Validators.required, Validators.min(0)]],
       descricao: ['', [Validators.maxLength(4000)]],
       grupo: [null, [Validators.required]]
     });
@@ -227,6 +228,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
         tipoItem: object.tipoItem,
         saldo: object.saldo,
         disponivelEmprestimoCalculado: object.disponivelEmprestimoCalculado,
+        quantidadeEmprestada: object.quantidadeEmprestada,
         descricao: object.descricao,
         grupo: object.grupo
       });

@@ -176,21 +176,42 @@
             </div>
 
             <div class="col-span-12 md:col-span-3">
-              <app-form-field
-                [control]="formGroup.get('disponivelEmprestimoCalculado')"
-                label="Estoque Disponível"
-                [required]="true"
-                fieldId="disponivelEmprestimoCalculado">
-                <p-inputNumber
-                  inputId="disponivelEmprestimoCalculado"
-                  formControlName="disponivelEmprestimoCalculado"
-                  class="w-full"
-                  [useGrouping]="false"
-                  [min]="0"
-                  styleClass="w-full">
-                </p-inputNumber>
-              </app-form-field>
-            </div>
+            <app-form-field
+              [control]="formGroup.get('disponivelEmprestimoCalculado')"
+              label="Estoque Disponível"
+              [required]="false"
+              fieldId="disponivelEmprestimoCalculado">
+              <p-inputNumber
+                inputId="disponivelEmprestimoCalculado"
+                formControlName="disponivelEmprestimoCalculado"
+                class="w-full"
+                [useGrouping]="false"
+                [min]="0"
+                styleClass="w-full"
+                [disabled]="true"> 
+              </p-inputNumber>
+            </app-form-field>
+          </div>
+
+
+          <div class="col-span-12 md:col-span-3">
+            <app-form-field
+              [control]="formGroup.get('quantidadeEmprestada')"
+              label="Estoque Emprestada"
+              [required]="false"
+              fieldId="quantidadeEmprestada">
+              <p-inputNumber
+                inputId="quantidadeEmprestada"
+                formControlName="quantidadeEmprestada"
+                class="w-full"
+                [useGrouping]="false"
+                [min]="0"
+                styleClass="w-full"
+                [disabled]="true"> 
+              </p-inputNumber>
+            </app-form-field>
+          </div>
+
 
             <div class="col-span-12 md:col-span-3">
               <app-form-field

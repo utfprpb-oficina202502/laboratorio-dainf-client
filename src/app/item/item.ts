@@ -15,4 +15,5 @@ export class Item {
   grupo!: Grupo;
   imageItem!: ItemImage[];
   disponivelEmprestimoCalculado!: number;
+  quantidadeEmprestada!:number;
 }

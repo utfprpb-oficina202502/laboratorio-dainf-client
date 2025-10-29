@@ -194,7 +194,9 @@
                         [id]="tempItem()?.id">
                       </app-cadastro-rapido>
                     </div>
-                    @if (tempItem()) {
+                    @if (tempItem()?.disponivelEmprestimoCalculado) {
+                      <small class="text-gray-600">Estoque Total: {{ tempItem()?.disponivelEmprestimoCalculado }}</small>
+                    }@else{
                       <small class="text-gray-600">Estoque Total: {{ tempItem()?.saldo }}</small>
                     }
                   </div>
