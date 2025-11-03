@@ -19,6 +19,7 @@ import { PrimeCrudToolbarComponent } from '../../framework/component/prime-crud-
 import { finalize } from 'rxjs';
 import { getNadaConstaStatusLabel, getNadaConstaStatusSeverity } from '../../framework/utils/status-label.util';
 import { createTableConfig } from '../../framework/utils/table-config.factory';
+import { TableEmptyStateComponent } from '../../framework/component/table-empty-state.component';
 
 @Component({
   selector: 'app-nada-consta-list',
@@ -40,7 +41,8 @@ import { createTableConfig } from '../../framework/utils/table-config.factory';
     InputTextModule,
     IconFieldModule,
     InputIconModule,
-    TableFilterCaptionComponent
+    TableFilterCaptionComponent,
+    TableEmptyStateComponent
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => NadaConstaListComponent) }]
 })
