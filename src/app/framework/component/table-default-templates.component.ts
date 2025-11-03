@@ -22,7 +22,6 @@ import {TableLoadingStateComponent} from './table-loading-state.component';
  */
 @Component({
   selector: 'app-table-default-templates',
-  standalone: true,
   imports: [TableEmptyStateComponent, TableLoadingStateComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `

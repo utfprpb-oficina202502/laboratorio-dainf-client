@@ -8,16 +8,18 @@
 
     <ng-template pTemplate="content">
       <app-prime-crud-toolbar [list]="self">
-        <p-button
-          type="button"
-          severity="secondary"
-          [outlined]="true"
-          pTooltip="Filtro"
-          tooltipPosition="bottom"
-          [attr.aria-label]="'Abrir filtros'">
-          <span pButtonIcon class="pi pi-search"></span>
-        </p-button>
-        <button pButton type="button" label="Adicionar" class="p-button-outlined ml-2" (click)="adicionar()"></button>
+        <ng-template #toolbarStartTemplate>
+          <p-button
+            type="button"
+            severity="secondary"
+            [outlined]="true"
+            pTooltip="Filtro"
+            tooltipPosition="bottom"
+            [attr.aria-label]="'Abrir filtros'">
+            <span pButtonIcon class="pi pi-search"></span>
+          </p-button>
+          <button pButton type="button" label="Adicionar" class="p-button-outlined ml-2" (click)="adicionar()"></button>
+        </ng-template>
       </app-prime-crud-toolbar>
 
       <!-- Modal de Adicionar -->
@@ -64,7 +66,7 @@
       </p-dialog>
 
       @if (loading()) {
-        <p-progressBar mode="indeterminate" [style.height]="'6px'"></p-progressBar>
+        <p-progressBar mode="indeterminate" style="height: 6px"></p-progressBar>
       }
 
       <p-table
