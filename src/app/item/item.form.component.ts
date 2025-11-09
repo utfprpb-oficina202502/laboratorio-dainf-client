@@ -182,8 +182,8 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
       localizacao: ['', [Validators.required, Validators.maxLength(255)]],
       tipoItem: ['C', [Validators.required]],
       saldo: [null, [Validators.required, Validators.min(0)]],
-      disponivelEmprestimoCalculado: [null, [Validators.required, Validators.min(0)]],
-      quantidadeEmprestada: [null, [Validators.required, Validators.min(0)]],
+      disponivelEmprestimoCalculado: [null, [Validators.min(0)]],
+      quantidadeEmprestada: [null, [Validators.min(0)]],
       descricao: ['', [Validators.maxLength(4000)]],
       grupo: [null, [Validators.required]]
     });
