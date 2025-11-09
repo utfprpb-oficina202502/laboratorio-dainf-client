@@ -7,11 +7,11 @@ import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.mod
 import {
   TableDefaultTemplatesComponent
 } from '../framework/component/table-default-templates.component';
+import { createTableConfig } from '../framework/utils/table-config.factory';
 
 @Component({
     selector: 'app-list-solicitacao-compra',
     templateUrl: './solicitacaoCompra.list.component.html',
-    styleUrls: ['./solicitacaoCompra.list.component.css'],
   imports: [
     PrimeTableSharedModule,
     TableDefaultTemplatesComponent,
@@ -104,39 +104,14 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
   }
 
   private configureTable(): void {
-    this.tableConfig = {
-      ...this.tableConfig,
+    this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'descricao', 'dataSolicitacao'],
-      defaultSortField: 'dataSolicitacao',
-      defaultSortOrder: -1,
-      caption: 'Lista de Solicitações de Compra',
-      trackByField: 'id',
-      emptyMessage: 'Nenhuma solicitação de compra encontrada.',
-      loadingMessage: 'Carregando solicitações de compra...',
-      globalFilterPlaceholder: 'Buscar solicitações de compra...',
-      columnToggle: true,
-      expandable: false,
-      expandMode: 'single',
-      rowExpansionKey: 'id',
-      stateful: true,
-      stateKey: 'solicitacao-compra-list-v2',
-      stateStorage: 'local',
-      stateProps: {
-        columns: true,
-        filters: true,
-        sort: true,
-        pagination: true,
-        selection: true,
-        expandedRows: true
-      },
-      resizableColumns: true,
-      columnResizeMode: 'fit',
-      lazy: true,
-      lazyLoadOnInit: true,
-      preloadData: false,
-      keyboardShortcuts: true
-    };
+      globalFilterFields: ['id', 'descricao', 'dataSolicitacao', 'usuario'],
+      defaultSortField: 'id',
+      caption: 'Solicitações de Compra',
+      stateKey: 'solicitacao-compra-list',
+      // ...outras propriedades específicas...
+    });
 
     this.columnsTable = this.tableConfig.columns.map(column => column.field);
     this.displayedColumns = [...this.columnsTable];

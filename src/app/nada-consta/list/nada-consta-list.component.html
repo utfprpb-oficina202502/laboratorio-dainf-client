@@ -1,30 +1,173 @@
-﻿<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-  <h2>Listagem de Nada Consta</h2>
-  <p-button
-    (onClick)="adicionar()"
-    icon="pi pi-search"
-    label="Consultar"
-    severity="primary">
-  </p-button>
-</div>
+<div class="w-full px-4 my-3">
+  <p-card [attr.aria-busy]="loading()">
+    <ng-template pTemplate="header">
+      <div class="flex items-center justify-between p-3">
+        <span class="text-xl font-bold">Nada Consta</span>
+      </div>
+    </ng-template>
 
-<p-table [loading]="carregando" [value]="dataSource">
-  <ng-template pTemplate="header">
-    <tr>
-      <th id="alunoId-header" scope="col">ID do Aluno</th>
-      <th id="nome-header" scope="col">Nome</th>
-      <th id="status-header" scope="col">Status</th>
-      <th id="acoes-header" scope="col">Ações</th>
-    </tr>
-  </ng-template>
-  <ng-template let-element pTemplate="body">
-    <tr>
-      <td>{{ element.alunoId }}</td>
-      <td>{{ element.nome }}</td>
-      <td>{{ element.nadaConsta ? 'OK' : 'Com Pendências' }}</td>
-      <td>
-        <!-- Botões de ação futuros -->
-      </td>
-    </tr>
-  </ng-template>
-</p-table>
+    <ng-template pTemplate="content">
+      <app-prime-crud-toolbar [list]="self">
+        <ng-template #toolbarStartTemplate>
+          <p-button
+            type="button"
+            severity="secondary"
+            [outlined]="true"
+            pTooltip="Filtro"
+            tooltipPosition="bottom"
+            [attr.aria-label]="'Abrir filtros'">
+            <span pButtonIcon class="pi pi-search"></span>
+          </p-button>
+          <button pButton type="button" label="Adicionar" class="p-button-outlined ml-2" (click)="adicionar()"></button>
+        </ng-template>
+      </app-prime-crud-toolbar>
+
+      <!-- Modal de Adicionar -->
+      <p-dialog
+        header="Solicitar Nada Consta"
+        [visible]="showAdicionarModal()"
+        (onHide)="cancelarAdicionar()"
+        [modal]="true"
+        [closable]="false"
+        [style]="{width: '400px'}"
+        [baseZIndex]="1100"
+        [dismissableMask]="true"
+        [blockScroll]="true"
+        [contentStyle]="{padding: '1.5rem'}"
+        [focusOnShow]="false">
+        <form (ngSubmit)="continuarAdicionar()" autocomplete="off">
+          <div class="p-fluid">
+            <label for="registroAcademico" class="font-semibold mb-2">Registro Acadêmico</label>
+            <input
+              id="registroAcademico"
+              pInputText
+              type="text"
+              [ngModel]="registroAcademico()"
+              (ngModelChange)="registroAcademico.set($event)"
+              name="registroAcademico"
+              autocomplete="off"
+              required
+              class="w-full" />
+            @if (solicitando()) {
+              <p-progressBar mode="indeterminate" style="height: 4px;"></p-progressBar>
+            }
+            @if (solicitacaoErro()) {
+              <div class="p-error mt-2">{{ solicitacaoErro() }}</div>
+            }
+            @if (solicitacaoSucesso()) {
+              <div class="p-success mt-2">Solicitação enviada com sucesso!</div>
+            }
+            <div class="flex justify-between gap-2 mt-4">
+              <button pButton type="button" label="Cancelar" class="p-button-text" (click)="cancelarAdicionar()" [disabled]="solicitando()"></button>
+              <button pButton type="submit" label="Continuar" [disabled]="!registroAcademico() || solicitando()"></button>
+            </div>
+          </div>
+        </form>
+      </p-dialog>
+
+      @if (loading()) {
+        <p-progressBar mode="indeterminate" style="height: 6px"></p-progressBar>
+      }
+
+      <p-table
+        [value]="objects"
+        [paginator]="true"
+        [rows]="rows"
+        [totalRecords]="totalElements"
+        [rowsPerPageOptions]="pageSizeOptions"
+        [first]="first"
+        (onPage)="onPageChange($event)"
+        [loading]="loading()"
+        [responsiveLayout]="'scroll'"
+        [attr.aria-label]="'Lista de nada consta com ' + totalElements + ' registro(s)'">
+
+        <ng-template pTemplate="caption">
+          <app-table-filter-caption
+            (clear)="clearGlobalFilter()"
+            (filter)="onGlobalFilter($event)"
+            [ariaLabel]="'Campo de busca para filtrar Nada Consta'"
+            [filterValue]="filterValue"
+            [placeholder]="getGlobalFilterPlaceholder()">
+          </app-table-filter-caption>
+        </ng-template>
+
+        <ng-template pTemplate="header">
+          <tr>
+            @for (column of getVisibleColumns(); track column.field) {
+              <th scope="col"
+                [attr.id]="'col-' + column.field"
+                [attr.data-field]="column.field"
+                [pSortableColumn]="column.sortable === false || column.field === 'acoes' ? undefined : column.field"
+                [style.width]="column.width"
+                [style.min-width]="column.minWidth"
+                [class]="column.headerClass"
+                [attr.aria-label]="column.tooltip || column.header">
+                <div class="flex items-center gap-2" [class.justify-center]="column.align === 'center'">
+                  {{ column.header }}
+                  @if (column.sortable !== false && column.field !== 'acoes') {
+                    <p-sortIcon [field]="column.field" aria-hidden="true"></p-sortIcon>
+                  }
+                </div>
+              </th>
+            }
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            @for (column of getVisibleColumns(); track column.field) {
+              <td
+                [style.text-align]="column.align || 'left'"
+                [style.width]="column.width"
+                [style.min-width]="column.minWidth"
+                [attr.headers]="'col-' + column.field">
+                @switch (column.field) {
+                  @case ('status') {
+                    <p-tag [value]="getStatusLabel(row.status)" [severity]="getStatusSeverity(row.status)"></p-tag>
+                  }
+                  @case ('acoes') {
+                    <div class="flex justify-between gap-2">
+                      @switch (getStatusLabel(row.status)) {
+                        @case ('EMITIDO') {
+                          <p-button icon="pi pi-send" class="p-button-text p-button-rounded" pTooltip="Reenviar Nada Consta" tooltipPosition="top" (onClick)="reenviarNadaConsta(row)"></p-button>
+                        }
+                        @case ('COM PENDÊNCIA') {
+                          <p-button icon="pi pi-refresh" class="p-button-text p-button-rounded" pTooltip="Atualizar Status" tooltipPosition="top" (onClick)="atualizarStatus(row)"></p-button>
+                        }
+                      }
+                    </div>
+                  }
+                  @case ('usuarioUsername') {
+                    {{ row.usuario?.nome ?? row.usuarioUsername }}
+                  }
+                  @case ('sendAt') {
+                    {{ formatDateTime(row.sendAt) }}
+                  }
+                  @case ('createdAt') {
+                    {{ formatDateTime(row.createdAt) }}
+                  }
+                  @case ('updatedAt') {
+                    {{ formatDateTime(row.updatedAt) }}
+                  }
+                  @default {
+                    <span [attr.aria-label]="column.header + ': ' + row[column.field]">
+                      {{ row[column.field] }}
+                    </span>
+                  }
+                }
+              </td>
+            }
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <app-table-empty-state
+            [colspan]="getVisibleColumns().length"
+            [message]="'Nenhuma solicitação de nada consta encontrada'"
+            [icon]="'pi-info-circle'">
+          </app-table-empty-state>
+        </ng-template>
+      </p-table>
+    </ng-template>
+  </p-card>
+</div>

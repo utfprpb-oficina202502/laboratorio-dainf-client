@@ -230,9 +230,10 @@ describe('NavbarComponent', () => {
     it('deve criar opções de dropdown no ngOnInit', () => {
       component.ngOnInit();
 
-      expect(component.items).toHaveLength(2);
+      expect(component.items).toHaveLength(3);
       expect(component.items[0].label).toBe('Meus dados');
-      expect(component.items[1].label).toBe('Sair');
+      expect(component.items[1].label).toBe('Configurações');
+      expect(component.items[2].label).toBe('Sair');
     });
 
     it('deve chamar logout quando opção Sair for selecionada', () => {
@@ -355,6 +356,28 @@ describe('NavbarComponent', () => {
       expect(component).toBeTruthy();
       // Verifica que fixture foi criado corretamente com OnPush
       expect(fixture.componentRef.changeDetectorRef).toBeDefined();
+    });
+  });
+
+  describe('Cobertura complementar', () => {
+    it('deve chamar navegação para configurações ao acionar item do dropdown', () => {
+      component.ngOnInit();
+      const configItem = component.items.find(item => item.label === 'Configurações');
+      const routerSpy = jest.spyOn((component as any).router, 'navigate');
+      configItem?.command?.({} as any);
+      expect(routerSpy).toHaveBeenCalledWith(['/configuracoes']);
+    });
+
+    it('getUserLogado deve retornar undefined se não houver username no storage', () => {
+      mockStorageService.getItem = jest.fn().mockReturnValue(undefined);
+      expect(component.getUserLogado()).toBeUndefined();
+    });
+
+    it('deve fazer logout se openEditForm receber objeto vazio', () => {
+      mockStorageService.getItem = jest.fn().mockReturnValue(JSON.stringify({}));
+      component.openEditForm();
+      expect(mockLoggerService.error).toHaveBeenCalledWith('ID do usuário não encontrado');
+      expect(mockLoginService.logout).toHaveBeenCalled();
     });
   });
 });

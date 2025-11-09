@@ -1,8 +1,8 @@
 import {HttpEvent, HttpHandler, HttpInterceptor, HttpRequest,} from "@angular/common/http";
 import {LoginService} from "./login/login.service";
 import {MessageService} from "primeng/api";
-import {Observable} from "rxjs";
-import {tap} from "rxjs/operators";
+import {Observable, throwError, TimeoutError} from "rxjs";
+import {catchError, tap, timeout} from "rxjs/operators";
 import {inject, Injectable} from "@angular/core";
 import {StorageService} from "./framework/services/storage.service";
 import {JwtUtil} from "./framework/utils/jwt.util";
@@ -12,6 +12,9 @@ export class HttpClientInterceptor implements HttpInterceptor {
   private readonly messageService = inject(MessageService);
   private readonly loginService = inject(LoginService);
   private readonly storageService = inject(StorageService);
+
+  // Timeout para requisições HTTP (30 segundos)
+  private readonly REQUEST_TIMEOUT_MS = 30000;
 
   intercept(
     req: HttpRequest<unknown>,
@@ -36,6 +39,17 @@ export class HttpClientInterceptor implements HttpInterceptor {
         headers: authReq.headers.set("Authorization", "Bearer " + token),
       });
       return next.handle(authReqWithBearer).pipe(
+        timeout(this.REQUEST_TIMEOUT_MS),
+        catchError(err => {
+          if (err instanceof TimeoutError) {
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'Timeout',
+              detail: 'Requisição excedeu tempo limite de 30 segundos'
+            });
+          }
+          return throwError(() => err);
+        }),
         tap({
           error: (err: unknown) => {
             const error = err as { status?: number };

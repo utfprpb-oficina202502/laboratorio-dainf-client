@@ -19,6 +19,7 @@ import {BreakpointService} from '../framework/services/breakpoint.service';
 import {
   TableDefaultTemplatesComponent
 } from '../framework/component/table-default-templates.component';
+import { createTableConfig } from '../framework/utils/table-config.factory';
 
 @Component({
     selector: "app-list-item",
@@ -168,38 +169,14 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   }
 
   private configureTable(): void {
-    this.tableConfig = {
-      ...this.tableConfig,
+    this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'nome', 'localizacao', 'Estoque Total'],
+      globalFilterFields: ['id', 'nome', 'localizacao', 'grupo', 'saldo'],
       defaultSortField: 'nome',
-      defaultSortOrder: 1,
-      caption: 'Lista de Itens',
-      trackByField: 'id',
-      emptyMessage: 'Nenhum item encontrado.',
-      loadingMessage: 'Carregando itens...',
-      globalFilterPlaceholder: 'Buscar itens...',
-      columnToggle: true,
-      expandable: false,
-      expandMode: 'single',
-      rowExpansionKey: 'id',
-      stateful: true,
+      caption: 'Itens',
       stateKey: 'item-list',
-      stateStorage: 'local',
-      stateProps: {
-        columns: true,
-        filters: true,
-        sort: true,
-        pagination: true,
-        selection: true,
-        expandedRows: true
-      },
-      resizableColumns: true,
-      columnResizeMode: 'fit',
-      lazy: true,
-      preloadData: true,
-      keyboardShortcuts: true
-    };
+      // ...outras propriedades específicas...
+    });
 
     this.columnsTable = this.tableConfig.columns.map(column => column.field);
     this.displayedColumns = [...this.columnsTable];

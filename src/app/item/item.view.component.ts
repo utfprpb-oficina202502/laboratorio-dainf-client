@@ -15,7 +15,6 @@ import {CardModule} from 'primeng/card';
 @Component({
     selector: 'app-view-item',
     templateUrl: './item.view.component.html',
-    styleUrls: ['./item.view.component.css'],
   imports: [
     CommonModule,
     // PrimeNG

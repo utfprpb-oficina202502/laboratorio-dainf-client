@@ -7,6 +7,7 @@ import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.mod
 import {
   TableDefaultTemplatesComponent
 } from '../framework/component/table-default-templates.component';
+import { createTableConfig } from '../framework/utils/table-config.factory';
 
 @Component({
   selector: 'app-list-relatorio',
@@ -78,39 +79,13 @@ export class RelatorioListComponent extends PrimeCrudListComponent<Relatorio, nu
   }
 
   private configureTable(): void {
-    this.tableConfig = {
-      ...this.tableConfig,
+    this.tableConfig = createTableConfig({
       columns: this.tableColumns,
       globalFilterFields: ['id', 'nome'],
-      defaultSortField: 'nome',
-      defaultSortOrder: 1,
-      caption: 'Lista de Relatórios',
-      trackByField: 'id',
-      emptyMessage: 'Nenhum relatório encontrado.',
-      loadingMessage: 'Carregando relatórios...',
-      globalFilterPlaceholder: 'Buscar relatórios...',
-      columnToggle: true,
-      expandable: false,
-      expandMode: 'single',
-      rowExpansionKey: 'id',
-      stateful: true,
-      stateKey: 'relatorio-list-v2',
-      stateStorage: 'local',
-      stateProps: {
-        columns: true,
-        filters: true,
-        sort: true,
-        pagination: true,
-        selection: true,
-        expandedRows: true
-      },
-      resizableColumns: true,
-      columnResizeMode: 'fit',
-      lazy: true,
-      lazyLoadOnInit: true,
-      preloadData: true,
-      keyboardShortcuts: true
-    };
+      defaultSortField: 'id',
+      caption: 'Relatórios',
+      stateKey: 'relatorio-list',
+    });
 
     this.columnsTable = this.tableConfig.columns.map(column => column.field);
     this.displayedColumns = [...this.columnsTable];

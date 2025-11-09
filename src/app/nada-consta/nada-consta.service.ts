@@ -1,29 +1,50 @@
-import {inject, Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {Observable} from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import {environment} from '../../environments/environment';
+import {CrudService} from "../framework/service/crud.service";
 
-export interface Pendencia {
-  tipo: string;
-  descricao: string;
+export interface Usuario {
+  id: number;
+  nome: string;
+  username: string;
+  documento: string;
+  email: string;
+  telefone: string;
+  permissoes: any[];
+  fotoUrl: string | null;
+  codigoVerificacao: string;
+  ativo: boolean;
+  authorities: any[];
+  accountNonExpired: boolean;
+  accountNonLocked: boolean;
+  credentialsNonExpired: boolean;
+  enabled: boolean;
 }
 
 export interface NadaConsta {
-  alunoId: number;
-  nome: string;
-  nadaConsta: boolean;
-  pendencias: Pendencia[];
+  id: number;
+  usuario: Usuario;
+  status: string;
+  sendAt: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  updatedBy: string;
 }
 
+
 @Injectable({ providedIn: 'root' })
-export class NadaConstaService {
-  private readonly http = inject(HttpClient);
-
-
-  consultarNadaConsta(alunoId: number): Observable<NadaConsta> {
-    return this.http.get<NadaConsta>(`/api/alunos/${alunoId}/nada-consta`);
+export class NadaConstaService extends CrudService<NadaConsta, number> {
+  constructor() {
+    const http = inject(HttpClient);
+    super(`${environment.api_url}nadaconsta/`, http);
   }
 
-  listarTodos(): Observable<NadaConsta[]> {
-    return this.http.get<NadaConsta[]>(`/api/nada-consta`);
+  consultarNadaConsta(id: number) {
+    return this.http.get<NadaConsta>(`${this.url}${id}`);
+  }
+
+  solicitar(documento: string) {
+    return this.http.post(`${this.url}solicitar`, { documento });
   }
 }

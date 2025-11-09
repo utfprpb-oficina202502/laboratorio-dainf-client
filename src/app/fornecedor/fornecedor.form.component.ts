@@ -31,7 +31,6 @@ import {LoggerService} from '../framework/services/logger.service';
 @Component({
   selector: 'app-form-fornecedor',
   templateUrl: './fornecedor.form.component.html',
-  styleUrls: ['./fornecedor.form.component.css'],
   imports: [
     CommonModule,
     ReactiveFormsModule,

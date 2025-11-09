@@ -68,7 +68,7 @@
                   id="usuario"
                   [value]="formGroup.get('usuario')?.value?.nome || ''"
                   class="w-full"
-                  readonly />
+                  [disabled]="true"/>
               </app-form-field>
             </div>
 
@@ -135,7 +135,7 @@
             </div>
 
             <!-- Valor Field -->
-            <div class="col-span-12 md:col-span-3">
+            <div class="col-span-12 md:col-span-2">
               <app-form-field label="Valor" fieldId="valor">
                 <input
                   pInputText
@@ -143,7 +143,7 @@
                   [(ngModel)]="tempValor"
                   [ngModelOptions]="{standalone: true}"
                   class="w-full"
-                  readonly />
+                  [disabled]="true"/>
               </app-form-field>
             </div>
 
@@ -171,14 +171,14 @@
             </div>
 
             <!-- Add Button -->
-            <div class="col-span-12 md:col-span-1 flex items-end">
+            <div class="col-span-12 md:col-span-2 pt-7">
               <p-button
+                icon="pi pi-plus"
+                label="Adicionar"
                 type="button"
-                severity="success"
                 (onClick)="insertItem()"
                 styleClass="w-full"
                 [attr.aria-label]="'Adicionar item'">
-                <span pButtonIcon class="pi pi-plus"></span>
               </p-button>
             </div>
           </div>

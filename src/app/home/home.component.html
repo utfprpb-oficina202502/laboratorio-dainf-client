@@ -77,7 +77,9 @@
       </div>
     }
     @if (loadingCharts()) {
-      <app-skeleton-chart type="line"></app-skeleton-chart>
+      <div class="mt-6">
+        <app-skeleton-chart type="line"></app-skeleton-chart>
+      </div>
       <app-skeleton-chart type="bar"></app-skeleton-chart>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <app-skeleton-chart type="pie"></app-skeleton-chart>
@@ -85,7 +87,7 @@
       </div>
     }
     @if (hasDashboardData() && !loadingCharts()) {
-      <p-panel class="mb-3">
+      <p-panel class="mt-6 mb-3">
         <div id="chart-wrapper-line" class="chart-fullscreen-wrapper">
           <div class="chart-fullscreen-header">
             <h6 class="font-bold m-0">Total de Empréstimos Realizados por Dia</h6>

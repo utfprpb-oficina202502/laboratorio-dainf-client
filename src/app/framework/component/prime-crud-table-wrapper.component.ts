@@ -44,14 +44,16 @@ import {CrudListAriaAnnouncerComponent} from './crud-list-aria-announcer.compone
       [entityPluralName]="entityPluralName()">
     </app-crud-list-aria-announcer>
 
-    <!-- Skeleton vs Content -->
+    <!-- Skeleton vs Content with responsive wrapper -->
     @if (loading()) {
       <app-skeleton-table
         [rows]="skeletonRows()"
         [columns]="skeletonColumns()">
       </app-skeleton-table>
     } @else {
-      <ng-content></ng-content>
+      <div class="overflow-x-auto">
+        <ng-content></ng-content>
+      </div>
     }
   `
 })

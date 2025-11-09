@@ -17,7 +17,7 @@ import {StorageService} from "../framework/services/storage.service";
   imports: [
     FormsModule,
     ProgressBar,
-    NgOptimizedImage
+    NgOptimizedImage,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

@@ -1,0 +1,36 @@
+<div class="w-full px-4 my-3">
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="flex items-center justify-between p-4">
+        <span class="text-xl font-bold">Configurações</span>
+        <div class="flex gap-2 justify-end">
+          <button pButton type="button" label="Cancelar" severity="secondary" [outlined]="true" (click)="cancelar()" [disabled]="isLoading()"></button>
+          <button pButton type="submit" label="Salvar" (click)="enviar()" [disabled]="isLoading() || !nadaConstaEmail()"></button>
+        </div>
+      </div>
+    </ng-template>
+    <ng-template pTemplate="content">
+      <form autocomplete="off" class="p-fluid">
+        <div class="mb-4">
+          <label for="nadaConstaEmail" class="font-semibold mb-2">Email de envio do Nada Consta</label>
+          <input
+            id="nadaConstaEmail"
+            pInputText
+            type="email"
+            [ngModel]="nadaConstaEmail()"
+            (ngModelChange)="nadaConstaEmail.set($event)"
+            name="nadaConstaEmail"
+            required
+            autocomplete="off"
+            class="w-full" />
+        </div>
+        @if (success()) {
+          <div class="p-success mt-3">Configuração salva com sucesso!</div>
+        }
+        @if (error()) {
+          <div class="p-error mt-3">{{ error() }}</div>
+        }
+      </form>
+    </ng-template>
+  </p-card>
+</div>

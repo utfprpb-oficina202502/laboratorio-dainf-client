@@ -9,11 +9,11 @@ import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {
   TableDefaultTemplatesComponent
 } from '../framework/component/table-default-templates.component';
+import { createTableConfig } from '../framework/utils/table-config.factory';
 
 @Component({
     selector: 'app-list-saida',
     templateUrl: './saida.list.component.html',
-    styleUrls: ['./saida.list.component.css'],
   imports: [
     PrimeTableSharedModule,
     ConfirmDialogModule,
@@ -103,39 +103,14 @@ export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
   }
 
   private configureTable(): void {
-    this.tableConfig = {
-      ...this.tableConfig,
+    this.tableConfig = createTableConfig({
       columns: this.tableColumns,
       globalFilterFields: ['id', 'dataSaida', 'usuarioResponsavel', 'observacao'],
-      defaultSortField: 'dataSaida',
-      defaultSortOrder: -1,
-      caption: 'Lista de Saídas',
-      trackByField: 'id',
-      emptyMessage: 'Nenhuma saída encontrada.',
-      loadingMessage: 'Carregando saídas...',
-      globalFilterPlaceholder: 'Buscar saídas...',
-      columnToggle: true,
-      expandable: false,
-      expandMode: 'single',
-      rowExpansionKey: 'id',
-      stateful: true,
-      stateKey: 'saida-list-v2',
-      stateStorage: 'local',
-      stateProps: {
-        columns: true,
-        filters: true,
-        sort: true,
-        pagination: true,
-        selection: true,
-        expandedRows: true
-      },
-      resizableColumns: true,
-      columnResizeMode: 'fit',
-      lazy: true,
-      lazyLoadOnInit: true,
-      preloadData: true,
-      keyboardShortcuts: true
-    };
+      defaultSortField: 'id',
+      caption: 'Saídas',
+      stateKey: 'saida-list',
+      // ...outras propriedades específicas...
+    });
 
     this.columnsTable = this.tableConfig.columns.map(column => column.field);
     this.displayedColumns = [...this.columnsTable];

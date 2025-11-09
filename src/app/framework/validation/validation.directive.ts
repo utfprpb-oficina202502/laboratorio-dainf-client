@@ -36,7 +36,11 @@ export class ValidationDirective implements OnDestroy {
   private findFormGroup(element: HTMLElement): HTMLElement | null {
     let current = element.parentElement;
     while (current) {
-      if (current.classList.contains('form-group')) {
+      // Look for form-field or flex flex-col gap-2 pattern (Tailwind)
+      if (current.classList.contains('form-field') ||
+        (current.classList.contains('flex') &&
+          current.classList.contains('flex-col') &&
+          current.classList.contains('gap-2'))) {
         return current;
       }
       current = current.parentElement;

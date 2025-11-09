@@ -6,7 +6,7 @@
 
 .layout-content {
   position: fixed;
-  top: 56px; /* Below navbar */
+  top: var(--navbar-height); /* Below navbar */
   left: 260px; /* Sidebar width on desktop */
   right: 0;
   bottom: 0;
