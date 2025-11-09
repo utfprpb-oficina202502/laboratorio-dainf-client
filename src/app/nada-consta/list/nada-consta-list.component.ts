@@ -262,4 +262,74 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
   public override openForm(): void {
     this.showAdicionarModal.set(true);
   }
+
+  protected readonly verificandoPendencias = signal<number | null>(null);
+  protected readonly invalidando = signal<number | null>(null);
+  protected readonly acaoErro = signal<string | null>(null);
+  protected readonly acaoSucesso = signal<string | null>(null);
+
+  verificarPendencias(row: NadaConsta): void {
+    this.verificandoPendencias.set(row.id);
+    this.acaoErro.set(null);
+    this.acaoSucesso.set(null);
+    this.service.verificarPendencias(row.id)
+      .pipe(finalize(() => {
+        this.verificandoPendencias.set(null);
+        this.cdr.markForCheck();
+      }))
+      .subscribe({
+        next: () => {
+          this.acaoSucesso.set('Pendências verificadas com sucesso.');
+          this.findAll();
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.acaoErro.set(err?.error?.message || 'Erro ao verificar pendências.');
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  invalidar(row: NadaConsta): void {
+    this.invalidando.set(row.id);
+    this.acaoErro.set(null);
+    this.acaoSucesso.set(null);
+    this.service.invalidar(row.id)
+      .pipe(finalize(() => {
+        this.invalidando.set(null);
+        this.cdr.markForCheck();
+      }))
+      .subscribe({
+        next: () => {
+          this.acaoSucesso.set('Nada Consta invalidado com sucesso.');
+          this.findAll();
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.acaoErro.set(err?.error?.message || 'Erro ao invalidar Nada Consta.');
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  protected readonly showConfirmInvalidar = signal(false);
+  protected readonly registroParaInvalidar = signal<NadaConsta | null>(null);
+
+  abrirDialogConfirmarInvalidar(row: NadaConsta): void {
+    this.registroParaInvalidar.set(row);
+    this.showConfirmInvalidar.set(true);
+  }
+
+  cancelarInvalidar(): void {
+    this.showConfirmInvalidar.set(false);
+    this.registroParaInvalidar.set(null);
+  }
+
+  confirmarInvalidar(): void {
+    const registro = this.registroParaInvalidar();
+    if (!registro) return;
+    this.invalidar(registro);
+    this.showConfirmInvalidar.set(false);
+    this.registroParaInvalidar.set(null);
+  }
 }

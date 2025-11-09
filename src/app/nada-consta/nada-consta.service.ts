@@ -47,4 +47,12 @@ export class NadaConstaService extends CrudService<NadaConsta, number> {
   solicitar(documento: string) {
     return this.http.post(`${this.url}solicitar`, { documento });
   }
+
+  verificarPendencias(id: number) {
+    return this.http.put<NadaConsta>(`${this.url}verificar-pendencias/${id}`, {});
+  }
+
+  invalidar(id: number) {
+    return this.http.put<NadaConsta>(`${this.url}invalidar/${id}`, {});
+  }
 }

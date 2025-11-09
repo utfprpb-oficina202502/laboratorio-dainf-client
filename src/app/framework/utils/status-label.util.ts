@@ -15,7 +15,6 @@
  * @returns Label traduzido
  */
 export function getNadaConstaStatusLabel(status: string): string {
-  if (!status) return '';
   switch (status) {
     case 'PENDENTE':
     case 'PENDING':
@@ -27,6 +26,9 @@ export function getNadaConstaStatusLabel(status: string): string {
     case 'FAILED':
     case 'FALHA':
       return 'FALHA';
+    case 'INVALIDADO':
+    case 'INVALIDATED':
+      return 'INVALIDADO';
     default:
       return status;
   }
@@ -38,7 +40,6 @@ export function getNadaConstaStatusLabel(status: string): string {
  * @returns 'warn' | 'success' | 'danger'
  */
 export function getNadaConstaStatusSeverity(status: string): 'warn' | 'success' | 'danger' {
-  if (!status) return 'warn';
   switch (status) {
     case 'PENDENTE':
     case 'PENDING':
@@ -50,8 +51,10 @@ export function getNadaConstaStatusSeverity(status: string): 'warn' | 'success' 
     case 'FAILED':
     case 'FALHA':
       return 'danger';
+    case 'INVALIDADO':
+    case 'INVALIDATED':
+      return 'danger';
     default:
       return 'warn';
   }
 }
-
