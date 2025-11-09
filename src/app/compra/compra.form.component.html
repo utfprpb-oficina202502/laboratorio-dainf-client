@@ -160,7 +160,11 @@
                     (keyup.enter)="insertItem()"
                     class="w-full" />
                   @if (tempItem()) {
-                    <small class="text-gray-600">Saldo: {{ tempItem()?.saldo }}</small>
+                    @if(tempItem()?.disponivelEmprestimoCalculado){
+                      <span class="float-right text-sm text-gray-600">(Quantidade Disponível: {{tempItem()?.disponivelEmprestimoCalculado}})</span>
+                    }@else if(tempItem()?.saldo){
+                      <span class="float-right text-sm text-gray-600">(Quantidade Disponível: {{tempItem()?.saldo}})</span>
+                    }
                   }
                 </div>
               </app-form-field>
