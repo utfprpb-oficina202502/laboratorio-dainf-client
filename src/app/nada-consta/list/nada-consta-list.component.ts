@@ -171,6 +171,42 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
     return this.solicitacaoSucesso();
   }
 
+  /**
+   * Getter público para o sinal showConfirmInvalidar
+   * @returns boolean
+   */
+  public getShowConfirmInvalidar() { return this.showConfirmInvalidar(); }
+
+  /**
+   * Getter público para o sinal registroParaInvalidar
+   * @returns NadaConsta | null
+   */
+  public getRegistroParaInvalidar() { return this.registroParaInvalidar(); }
+
+  /**
+   * Getter público para o sinal verificandoPendencias
+   * @returns boolean
+   */
+  public getVerificandoPendencias() { return this.verificandoPendencias(); }
+
+  /**
+   * Getter público para o sinal invalidando
+   * @returns boolean
+   */
+  public getInvalidando() { return this.invalidando(); }
+
+  /**
+   * Getter público para o sinal acaoErro
+   * @returns string | null
+   */
+  public getAcaoErro() { return this.acaoErro(); }
+
+  /**
+   * Getter público para o sinal acaoSucesso
+   * @returns string | null
+   */
+  public getAcaoSucesso() { return this.acaoSucesso(); }
+
   adicionar(): void {
     this.showAdicionarModal.set(true);
   }
@@ -332,4 +368,9 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
     this.showConfirmInvalidar.set(false);
     this.registroParaInvalidar.set(null);
   }
+
+  public setVerificandoPendencias(val: number | null) { this.verificandoPendencias.set(val); }
+  public setInvalidando(val: number | null) { this.invalidando.set(val); }
+  public setAcaoErro(val: string | null) { this.acaoErro.set(val); }
+  public setAcaoSucesso(val: string | null) { this.acaoSucesso.set(val); }
 }
