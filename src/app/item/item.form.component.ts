@@ -139,7 +139,11 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
       const formGroup = this.form();
       if (!formGroup) return;
 
-      const fieldsToToggle = ['nome', 'patrimonio', 'siorg', 'valor', 'localizacao', 'tipoItem', 'descricao', 'grupo','disponivelEmprestimoCalculado','quantidadeEmprestada'];
+      const fieldsToToggle = ['nome', 'patrimonio', 'siorg', 'valor', 'localizacao', 'tipoItem', 'descricao', 'grupo'];
+
+      // Always disable calculated fields
+      formGroup.get('disponivelEmprestimoCalculado')?.disable({ emitEvent: false });
+      formGroup.get('quantidadeEmprestada')?.disable({ emitEvent: false });
 
       if (this.isAlunoOrProfessor()) {
         for (const field of fieldsToToggle) {

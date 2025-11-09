@@ -170,7 +170,7 @@ export class FormBusinessRulesService {
    * Valida também se saldo é maior que 0 e se qtdeInserir não excede o saldo.
    * Mensagem de erro é exibida automaticamente via MessageService.
    */
-  validateItemSaldo<K extends { saldo: number, disponivelEmprestimoCalculado:number }  >(
+  validateItemSaldo<K extends { saldo: number; disponivelEmprestimoCalculado?: number | null | undefined }>(
     item: K | null | undefined,
     qtdeInserir: number
   ): boolean {
@@ -188,10 +188,8 @@ export class FormBusinessRulesService {
     }
 
     // Validar se a quantidade não excede o saldo disponível
-    let isValid = item.saldo > 0 && qtdeInserir <= item.saldo;
-    if (item.disponivelEmprestimoCalculado != null) {
-       isValid = item.saldo > 0 && qtdeInserir <= item.disponivelEmprestimoCalculado;
-    }
+    const available = item.disponivelEmprestimoCalculado ?? item.saldo;
+    const isValid = item.saldo > 0 && qtdeInserir <= available;
 
     if (!isValid) {
       this.messageService.add({
