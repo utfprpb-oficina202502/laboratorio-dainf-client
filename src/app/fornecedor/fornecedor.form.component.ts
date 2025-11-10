@@ -18,6 +18,7 @@ import {TextareaModule} from 'primeng/textarea';
 import {AutoCompleteCompleteEvent, AutoCompleteModule} from 'primeng/autocomplete';
 import {ButtonModule} from 'primeng/button';
 import {TooltipModule} from 'primeng/tooltip';
+import {InputMaskModule} from 'primeng/inputmask';
 
 // Custom components
 import {FormFieldComponent} from '../framework/component/form-field.component';
@@ -41,6 +42,7 @@ import {LoggerService} from '../framework/services/logger.service';
     AutoCompleteModule,
     ButtonModule,
     TooltipModule,
+    InputMaskModule,
     // Custom
     FormFieldComponent,
     VoltarComponent,
@@ -78,7 +80,7 @@ export class FornecedorFormComponent extends PrimeReactiveCrudFormComponent<Forn
       ie: ['', [Validators.required, Validators.maxLength(50)]],
       endereco: ['', [Validators.required, Validators.maxLength(500)]],
       observacao: ['', [Validators.maxLength(2000)]],
-      telefone: ['', [Validators.required, Validators.maxLength(15)]],
+      telefone: ['', [Validators.required, Validators.pattern(/^\d{10,11}$/)]],
       email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
       estado: [null, [Validators.required]],
       cidade: [null, [Validators.required]]
