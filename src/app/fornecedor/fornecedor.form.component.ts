@@ -80,7 +80,7 @@ export class FornecedorFormComponent extends PrimeReactiveCrudFormComponent<Forn
       ie: ['', [Validators.required, Validators.maxLength(50)]],
       endereco: ['', [Validators.required, Validators.maxLength(500)]],
       observacao: ['', [Validators.maxLength(2000)]],
-      telefone: ['', [Validators.required, Validators.minLength(11), Validators.maxLength(11)]],
+      telefone: ['', [Validators.required, Validators.pattern(/^\d{10,11}$/)]],
       email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
       estado: [null, [Validators.required]],
       cidade: [null, [Validators.required]]
