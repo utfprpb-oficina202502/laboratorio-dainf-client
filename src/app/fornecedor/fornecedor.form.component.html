@@ -69,11 +69,12 @@
                 label="CNPJ"
                 [required]="true"
                 fieldId="cnpj"
-                hint="Digite apenas números (14 dígitos)">
+                hint="Digite no formato 00.000.000/0000-00">
                 <p-input-mask
                   id="cnpj"
                   formControlName="cnpj"
                   mask="99.999.999/9999-99"
+                  [unmask]="true"
                   class="w-full"
                   placeholder="00.000.000/0000-00"
                   aria-label="CNPJ">
@@ -108,9 +109,10 @@
                 <p-input-mask
                   id="telefone"
                   formControlName="telefone"
-                  mask="(99) 99999-9999"
+                  mask="(99) 9999?9-9999"
+                  [unmask]="true"
                   class="w-full"
-                  placeholder="(00) 00000-0000"
+                  placeholder="(00) 00000-0000 ou (00) 0000-0000"
                   aria-label="Telefone">
                 </p-input-mask>
               </app-form-field>
