@@ -110,7 +110,8 @@ describe('EmprestimoListComponent', () => {
         'usuarioEmprestimo',
         'dataEmprestimo',
         'prazoDevolucao',
-        'status'
+        'status',
+        'actions'
       ]);
     });
 
@@ -612,7 +613,7 @@ describe('EmprestimoListComponent', () => {
 
     it('deve configurar tabela corretamente', () => {
       expect(component['tableConfig'].columns).toBeDefined();
-      expect(component['tableConfig'].columns.length).toBe(5);
+      expect(component['tableConfig'].columns.length).toBe(6);
       expect(component['tableConfig'].defaultSortField).toBe('id');
     });
 

@@ -167,6 +167,18 @@
                         }
                       </div>
                     }
+                    @case ('actions') {
+                      <app-action-buttons
+                        [showEdit]="canEdit()"
+                        [showDelete]="canDelete()"
+                        [editTooltip]="'Editar empréstimo'"
+                        [deleteTooltip]="'Remover empréstimo'"
+                        [editAriaLabel]="'Editar empréstimo ' + row.id"
+                        [deleteAriaLabel]="'Remover empréstimo ' + row.id"
+                        (edit)="edit(row.id)"
+                        (delete)="delete(row.id)">
+                      </app-action-buttons>
+                    }
                     @default {
                       <span [attr.aria-label]="column.header + ': ' + row[column.field]">
                         {{ row[column.field] }}
