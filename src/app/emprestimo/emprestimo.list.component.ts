@@ -323,6 +323,10 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     return 'Empréstimos';
   }
 
+  protected override getExportFileName(): string {
+    return 'emprestimos';
+  }
+
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
