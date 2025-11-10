@@ -18,6 +18,7 @@ import {TextareaModule} from 'primeng/textarea';
 import {AutoCompleteCompleteEvent, AutoCompleteModule} from 'primeng/autocomplete';
 import {ButtonModule} from 'primeng/button';
 import {TooltipModule} from 'primeng/tooltip';
+import {InputMaskModule} from 'primeng/inputmask';
 
 // Custom components
 import {FormFieldComponent} from '../framework/component/form-field.component';
@@ -41,6 +42,7 @@ import {LoggerService} from '../framework/services/logger.service';
     AutoCompleteModule,
     ButtonModule,
     TooltipModule,
+    InputMaskModule,
     // Custom
     FormFieldComponent,
     VoltarComponent,

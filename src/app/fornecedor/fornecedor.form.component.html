@@ -70,15 +70,14 @@
                 [required]="true"
                 fieldId="cnpj"
                 hint="Digite apenas números (14 dígitos)">
-                <input
-                  pInputText
+                <p-input-mask
                   id="cnpj"
                   formControlName="cnpj"
-                  onlyNumber
-                  formatCnpj
-                  maxlength="14"
+                  mask="99.999.999/9999-99"
                   class="w-full"
-                  placeholder="00000000000000" />
+                  placeholder="00.000.000/0000-00"
+                  aria-label="CNPJ">
+                </p-input-mask>
               </app-form-field>
             </div>
 
@@ -106,14 +105,14 @@
                 [required]="true"
                 fieldId="telefone"
                 hint="Digite o telefone com DDD">
-                <input
-                  pInputText
+                <p-input-mask
                   id="telefone"
                   formControlName="telefone"
-                  formatTelefone
-                  maxlength="15"
+                  mask="(99) 99999-9999"
                   class="w-full"
-                  placeholder="(00) 00000-0000" />
+                  placeholder="(00) 00000-0000"
+                  aria-label="Telefone">
+                </p-input-mask>
               </app-form-field>
             </div>
 
