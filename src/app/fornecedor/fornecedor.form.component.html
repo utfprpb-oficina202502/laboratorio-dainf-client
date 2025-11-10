@@ -170,7 +170,7 @@
                   [minQueryLength]="2"
                   [suggestions]="estadoList()"
                   (completeMethod)="findEstados($event)"
-                  (onChange)="onEstadoChange()"
+                  (onSelect)="onEstadoChange()"
                   styleClass="w-full"
                   [inputStyleClass]="'w-full'"
                   placeholder="Digite para buscar...">

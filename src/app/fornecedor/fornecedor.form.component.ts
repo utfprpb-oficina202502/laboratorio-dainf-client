@@ -122,13 +122,20 @@ export class FornecedorFormComponent extends PrimeReactiveCrudFormComponent<Forn
   }
 
   /**
-   * Handle state change - clear city when state changes
+   * Handle state change - clear city when state changes and force required validation
    */
   onEstadoChange(): void {
     const formGroup = this.form();
     if (formGroup) {
+      // Limpa o campo cidade
       formGroup.patchValue({ cidade: null });
+      // Limpa lista de cidades
       this.cidadeList.set([]);
+      // Reaplica o validador required (caso removido por algum fluxo)
+      formGroup.get('cidade')?.setValidators([Validators.required]);
+      formGroup.get('cidade')?.updateValueAndValidity();
+      // Marca como touched para exibir erro imediatamente
+      formGroup.get('cidade')?.markAsTouched();
     }
   }
 
