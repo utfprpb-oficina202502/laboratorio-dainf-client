@@ -47,6 +47,8 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   contextMenuItems: MenuItem[] = [];
   protected override service = inject(EmprestimoService);
   protected readonly breakpointService = inject(BreakpointService);
+  protected override urlForm = 'emprestimo/form';
+  private readonly usuarioService = inject(UsuarioService);
 
   // Constants for template
   protected readonly Z_INDEX = Z_INDEX;
@@ -58,9 +60,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   usuarioResponsavel: Usuario[] = [];
   dtNovaData!: string;
   idEmprestimoToChangePrazoDev!: number;
-  protected override columnsTable = ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status'];
-  protected override urlForm = 'emprestimo/form';
-  private readonly usuarioService = inject(UsuarioService);
+  protected override columnsTable = ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status', 'actions'];
   private readonly tableColumns: TableColumn[] = [
     {
       field: 'id',
@@ -105,6 +105,17 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       filterable: false,
       width: '10rem',
       align: 'center'
+    },
+    {
+      field: 'actions',
+      header: 'Ações',
+      type: 'custom',
+      sortable: false,
+      filterable: false,
+      exportable: false,
+      align: 'center',
+      width: '10rem',
+      toggleable: false
     }
   ];
 
@@ -167,20 +178,16 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   findUsuarios($event: { query: string }) {
     this.usuarioService.completeCustom($event.query)
     .subscribe({
-      next: (usuarios) => {
+      next: (usuarios: Usuario[]) => {
         this.usuarioEmprestimoList = usuarios;
       }
     });
   }
 
-  protected override getExportFileName(): string {
-    return 'emprestimos';
-  }
-
   findUsuarioResponsavel($event: { query: string }) {
     this.usuarioService.completeCustomUsersLab($event.query)
     .subscribe({
-      next: (usuarios) => {
+      next: (usuarios: Usuario[]) => {
         this.usuarioResponsavel = usuarios;
       }
     });
