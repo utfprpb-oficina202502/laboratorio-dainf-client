@@ -22,6 +22,7 @@ import {
   TableDefaultTemplatesComponent
 } from '../framework/component/table-default-templates.component';
 import { createTableConfig } from '../framework/utils/table-config.factory';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
     selector: 'app-list-emprestimo',
@@ -60,6 +61,10 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   usuarioResponsavel: Usuario[] = [];
   dtNovaData!: string;
   idEmprestimoToChangePrazoDev!: number;
+  modalNovoPrazoVisible = false;
+  novaDataPrazo: string | undefined;
+  emprestimoSelecionadoParaPrazo: Emprestimo | undefined;
+
   protected override columnsTable = ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status', 'actions'];
   private readonly tableColumns: TableColumn[] = [
     {
@@ -136,33 +141,29 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   openOptions(event: Event, id: number): void {
     this.selectedEmprestimoId = id;
     const isAlunoOrProfessor = this.isAlunoOrProfessor();
-
     this.contextMenuItems = [];
+    const emprestimo = this.objects.find(e => e.id === id);
+    const status = emprestimo ? this.getStatusEmprestimo(emprestimo) : undefined;
 
     if (!isAlunoOrProfessor) {
-      this.contextMenuItems.push(
-        {
-          label: 'Devolução',
-          icon: 'pi pi-undo',
-          command: () => this.openDevolucao(id)
-        },
-        {
+      this.contextMenuItems.push({
+        label: 'Devolução',
+        icon: 'pi pi-undo',
+        command: () => this.openDevolucao(id)
+      });
+      if (emprestimo && status === 'P') {
+        this.contextMenuItems.push({
           label: 'Novo Prazo',
           icon: 'pi pi-clock',
-          command: () => {
-            this.idEmprestimoToChangePrazoDev = id;
-            this.openCalendarNewDate();
-          }
-        }
-      );
+          command: () => this.abrirModalNovoPrazo(emprestimo)
+        });
+      }
     }
-
     this.contextMenuItems.push({
       label: isAlunoOrProfessor ? 'Visualizar' : 'Editar',
       icon: isAlunoOrProfessor ? 'pi pi-eye' : 'pi pi-pencil',
       command: () => this.edit(id)
     });
-
     if (!isAlunoOrProfessor) {
       this.contextMenuItems.push({
         label: 'Remover',
@@ -170,9 +171,115 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
         command: () => this.delete(id)
       });
     }
-
     this.actionsMenu().toggle(event);
     this.cdr?.markForCheck();
+  }
+
+  abrirModalNovoPrazo(emprestimo: Emprestimo) {
+    this.actionsMenu().hide(); // Fecha o popover antes de abrir o modal
+    this.emprestimoSelecionadoParaPrazo = emprestimo;
+    this.novaDataPrazo = this.calcularNovaDataPrazo(emprestimo.prazoDevolucao);
+    this.modalNovoPrazoVisible = true;
+  }
+
+  calcularNovaDataPrazo(prazoAtual: string | undefined): string | undefined {
+    if (!prazoAtual) return undefined;
+    return DateUtil.addDays(prazoAtual, 7);
+  }
+
+  fecharModalNovoPrazo() {
+    this.modalNovoPrazoVisible = false;
+    this.novaDataPrazo = undefined;
+    this.emprestimoSelecionadoParaPrazo = undefined;
+  }
+
+  async enviarNovoPrazo() {
+    if (!this.emprestimoSelecionadoParaPrazo || !this.novaDataPrazo) return;
+    // Validação robusta da nova data
+    let novaData: Date | undefined;
+    // Aceita formatos dd/MM/yyyy e ISO
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(this.novaDataPrazo)) {
+      const [dia, mes, ano] = this.novaDataPrazo.split('/').map(Number);
+      novaData = new Date(ano, mes - 1, dia);
+    } else {
+      novaData = new Date(this.novaDataPrazo);
+    }
+    if (!novaData || isNaN(novaData.getTime())) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Data inválida',
+        detail: 'Selecione uma data válida para o novo prazo de devolução.',
+        life: 5000
+      });
+      return;
+    }
+    // Normaliza para início do dia
+    novaData.setHours(0, 0, 0, 0);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    // Prazo atual
+    let prazoAtual: Date | undefined;
+    if (this.emprestimoSelecionadoParaPrazo.prazoDevolucao) {
+      const prazoStr = this.emprestimoSelecionadoParaPrazo.prazoDevolucao;
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(prazoStr)) {
+        const [dia, mes, ano] = prazoStr.split('/').map(Number);
+        prazoAtual = new Date(ano, mes - 1, dia);
+      } else {
+        prazoAtual = new Date(prazoStr);
+      }
+      if (prazoAtual && !isNaN(prazoAtual.getTime())) {
+        prazoAtual.setHours(0, 0, 0, 0);
+      } else {
+        prazoAtual = undefined;
+      }
+    }
+    if (novaData <= hoje) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Data inválida',
+        detail: 'A nova data de devolução deve ser futura em relação a hoje.',
+        life: 5000
+      });
+      return;
+    }
+    if (prazoAtual && novaData <= prazoAtual) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Data inválida',
+        detail: 'A nova data deve ser posterior ao prazo de devolução atual.',
+        life: 5000
+      });
+      return;
+    }
+    this.loaderService.show();
+    try {
+      // Buscar o objeto completo do empréstimo
+      const emprestimo = await firstValueFrom(this.emprestimoService.findOne(this.emprestimoSelecionadoParaPrazo.id));
+      if (!emprestimo) {
+        throw new Error('Empréstimo não encontrado!');
+      }
+      // Atualiza apenas o prazoDevolucao
+      emprestimo.prazoDevolucao = this.novaDataPrazo;
+      await firstValueFrom(this.emprestimoService.saveEmprestimo(emprestimo, 0));
+      this.fecharModalNovoPrazo();
+      this.findAll();
+      this.cdr?.markForCheck();
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Sucesso!',
+        detail: 'Prazo de devolução alterado com sucesso!',
+        life: 3000
+      });
+    } catch (error: any) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Atenção!',
+        detail: error?.message || 'Ocorreu um erro ao alterar a data do prazo de devolução!',
+        life: 5000
+      });
+    } finally {
+      this.loaderService.hide();
+    }
   }
 
   findUsuarios($event: { query: string }) {
@@ -339,5 +446,9 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
 
     this.columnsTable = this.tableConfig.columns.map(column => column.field);
     this.displayedColumns = [...this.columnsTable];
+  }
+
+  formatDateString(dateStr: string | undefined): string {
+    return DateUtil.formatDateString(dateStr);
   }
 }

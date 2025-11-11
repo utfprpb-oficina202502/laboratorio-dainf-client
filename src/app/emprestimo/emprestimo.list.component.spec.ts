@@ -39,7 +39,9 @@ describe('EmprestimoListComponent', () => {
       'findAllPaged',
       'filter',
       'changePrazoDevolucao',
-      'delete'
+      'delete',
+      'findOne',
+      'saveEmprestimo'
     ]);
 
     const usuarioServiceSpy = createServiceMock<UsuarioService>([
@@ -224,7 +226,8 @@ describe('EmprestimoListComponent', () => {
 
     it('deve mostrar todas as opções para admin/funcionário', () => {
       jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
-
+      // Garante que o empréstimo de id 1 está pendente
+      component.objects = [EmprestimoTestFactory.createPendente({id: 1})];
       component.openOptions(mockEvent, 1);
 
       expect(component.contextMenuItems.length).toBe(4);
@@ -255,7 +258,8 @@ describe('EmprestimoListComponent', () => {
 
     it('deve incluir "Novo Prazo" para não-aluno/professor', () => {
       jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
-
+      // Garante que o empréstimo de id 1 está pendente
+      component.objects = [EmprestimoTestFactory.createPendente({id: 1})];
       component.openOptions(mockEvent, 1);
 
       const novoPrazoItem = component.contextMenuItems.find(item => item.label === 'Novo Prazo');
@@ -697,6 +701,147 @@ describe('EmprestimoListComponent', () => {
       expect(component['tableConfig'].stateful).toBe(true);
       expect(component['tableConfig'].stateKey).toBe('emprestimo-list');
       expect(component['tableConfig'].stateStorage).toBe('local');
+    });
+  });
+
+  // ==========================================================================
+  // Novo Prazo - Modal e Validação
+  // ==========================================================================
+  describe('Novo Prazo - Modal e Validação', () => {
+    beforeEach(() => {
+      jest.spyOn(component, 'findAll').mockImplementation(() => {});
+      jest.spyOn(messageService, 'add');
+      jest.spyOn(emprestimoService, 'findOne').mockReturnValue(of(EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'})));
+      jest.spyOn(emprestimoService, 'saveEmprestimo').mockReturnValue(of({} as Emprestimo));
+    });
+
+    it('deve abrir o modal e sugerir data 7 dias após o prazo atual', () => {
+      const emprestimo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
+      component.abrirModalNovoPrazo(emprestimo);
+      expect(component.modalNovoPrazoVisible).toBe(true);
+      expect(component.novaDataPrazo).toBe('17/11/2025');
+    });
+
+    it('deve rejeitar data inválida (formato errado)', async () => {
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
+      component.novaDataPrazo = 'invalid-date';
+      await component.enviarNovoPrazo();
+      expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'error',
+        summary: 'Data inválida'
+      }));
+    });
+
+    it('deve rejeitar data igual ou anterior a hoje', async () => {
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
+      component.novaDataPrazo = '10/11/2025'; // igual a hoje
+      await component.enviarNovoPrazo();
+      expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'error',
+        detail: expect.stringContaining('futura')
+      }));
+    });
+
+    it('deve rejeitar data igual ou anterior ao prazo atual', async () => {
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
+      component.novaDataPrazo = '09/11/2025'; // anterior ao prazo e anterior a hoje
+      await component.enviarNovoPrazo();
+      expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'error',
+        detail: expect.stringContaining('futura')
+      }));
+    });
+
+    it('deve aceitar data válida e chamar serviço de atualização', async () => {
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
+      component.novaDataPrazo = '18/11/2025';
+      await component.enviarNovoPrazo();
+      expect(emprestimoService.saveEmprestimo).toHaveBeenCalled();
+      expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'success',
+        summary: 'Sucesso!'
+      }));
+    });
+
+    it('deve exibir mensagem de erro ao falhar no serviço', async () => {
+      (emprestimoService.saveEmprestimo as jest.Mock).mockReturnValueOnce(throwError(() => new Error('Falha')));
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
+      component.novaDataPrazo = '18/11/2025';
+      await component.enviarNovoPrazo();
+      expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'error',
+        detail: expect.stringContaining('Falha')
+      }));
+    });
+  });
+
+  // ============================================================================
+  // Cobertura adicional: abrirModalNovoPrazo, fecharModalNovoPrazo, calcularNovaDataPrazo, enviarNovoPrazo edge cases
+  // ============================================================================
+  describe('Cobertura Adicional', () => {
+    it('deve fechar o modal e resetar variáveis ao chamar fecharModalNovoPrazo', () => {
+      component.modalNovoPrazoVisible = true;
+      component.novaDataPrazo = '10/11/2025';
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1});
+      component.fecharModalNovoPrazo();
+      expect(component.modalNovoPrazoVisible).toBe(false);
+      expect(component.novaDataPrazo).toBeUndefined();
+      expect(component.emprestimoSelecionadoParaPrazo).toBeUndefined();
+    });
+
+    it('deve retornar undefined em calcularNovaDataPrazo se prazoAtual for undefined', () => {
+      expect(component.calcularNovaDataPrazo(undefined)).toBeUndefined();
+    });
+
+    it('deve calcular nova data corretamente em calcularNovaDataPrazo', () => {
+      expect(component.calcularNovaDataPrazo('10/11/2025')).toBe('17/11/2025');
+    });
+
+    it('deve não executar enviarNovoPrazo se não houver emprestimoSelecionadoParaPrazo', async () => {
+      component.novaDataPrazo = '17/11/2025';
+      // Executa e espera não lançar erro
+      await expect(component.enviarNovoPrazo()).resolves.toBeUndefined();
+    });
+
+    it('deve não executar enviarNovoPrazo se não houver novaDataPrazo', async () => {
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1});
+      await expect(component.enviarNovoPrazo()).resolves.toBeUndefined();
+    });
+
+    it('deve mostrar erro se emprestimo não for encontrado ao enviarNovoPrazo', async () => {
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 999, prazoDevolucao: '10/11/2025'});
+      component.novaDataPrazo = '17/11/2025';
+      jest.spyOn(component['service'], 'findOne').mockReturnValueOnce(of(undefined as any));
+      const addSpy = jest.spyOn(component['messageService'], 'add');
+      await component.enviarNovoPrazo();
+      expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'error',
+        detail: expect.stringContaining('não encontrado')
+      }));
+    });
+
+    it('deve mostrar erro se saveEmprestimo lançar exceção', async () => {
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
+      component.novaDataPrazo = '17/11/2025';
+      jest.spyOn(component['service'], 'findOne').mockReturnValueOnce(of(EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'})));
+      jest.spyOn(component['service'], 'saveEmprestimo').mockReturnValueOnce(throwError(() => new Error('Falha de serviço')));
+      const addSpy = jest.spyOn(component['messageService'], 'add');
+      await component.enviarNovoPrazo();
+      expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'error',
+        detail: expect.stringContaining('Falha de serviço')
+      }));
+    });
+
+    it('deve mostrar erro de data inválida para formato não reconhecido', async () => {
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
+      component.novaDataPrazo = 'not-a-date';
+      const addSpy = jest.spyOn(component['messageService'], 'add');
+      await component.enviarNovoPrazo();
+      expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'error',
+        summary: 'Data inválida'
+      }));
     });
   });
 });
