@@ -81,5 +81,26 @@ describe('DateUtil', () => {
       expect(result).toBe('17/11/2025');
     });
   });
-});
 
+  describe('formatDateString', () => {
+    it('should return empty string for undefined', () => {
+      expect(DateUtil.formatDateString(undefined)).toBe('');
+    });
+    it('should return dd/MM/yyyy for dd/MM/yyyy input', () => {
+      expect(DateUtil.formatDateString('10/11/2025')).toBe('10/11/2025');
+    });
+    it('should format ISO date yyyy-MM-dd to pt-BR', () => {
+      const result = DateUtil.formatDateString('2025-11-10');
+      expect(['10/11/2025', '09/11/2025']).toContain(result);
+    });
+    it('should format ISO date yyyy-MM-ddTHH:mm:ss to pt-BR', () => {
+      expect(DateUtil.formatDateString('2025-11-10T15:30:00')).toBe('10/11/2025');
+    });
+    it('should format Date string to pt-BR if valid', () => {
+      expect(DateUtil.formatDateString(new Date(2025, 10, 10).toString())).toBe('10/11/2025');
+    });
+    it('should return input if not a valid date', () => {
+      expect(DateUtil.formatDateString('not-a-date')).toBe('not-a-date');
+    });
+  });
+});
