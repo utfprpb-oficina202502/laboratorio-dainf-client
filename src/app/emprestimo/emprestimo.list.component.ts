@@ -60,6 +60,10 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   usuarioResponsavel: Usuario[] = [];
   dtNovaData!: string;
   idEmprestimoToChangePrazoDev!: number;
+  modalNovoPrazoVisible = false;
+  novaDataPrazo: string | undefined;
+  emprestimoSelecionadoParaPrazo: Emprestimo | undefined;
+
   protected override columnsTable = ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status', 'actions'];
   private readonly tableColumns: TableColumn[] = [
     {
@@ -136,33 +140,29 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   openOptions(event: Event, id: number): void {
     this.selectedEmprestimoId = id;
     const isAlunoOrProfessor = this.isAlunoOrProfessor();
-
     this.contextMenuItems = [];
+    const emprestimo = this.objects.find(e => e.id === id);
+    const status = emprestimo ? this.getStatusEmprestimo(emprestimo) : undefined;
 
     if (!isAlunoOrProfessor) {
-      this.contextMenuItems.push(
-        {
-          label: 'Devolução',
-          icon: 'pi pi-undo',
-          command: () => this.openDevolucao(id)
-        },
-        {
+      this.contextMenuItems.push({
+        label: 'Devolução',
+        icon: 'pi pi-undo',
+        command: () => this.openDevolucao(id)
+      });
+      if (status === 'P') {
+        this.contextMenuItems.push({
           label: 'Novo Prazo',
           icon: 'pi pi-clock',
-          command: () => {
-            this.idEmprestimoToChangePrazoDev = id;
-            this.openCalendarNewDate();
-          }
-        }
-      );
+          command: () => this.abrirModalNovoPrazo(emprestimo!)
+        });
+      }
     }
-
     this.contextMenuItems.push({
       label: isAlunoOrProfessor ? 'Visualizar' : 'Editar',
       icon: isAlunoOrProfessor ? 'pi pi-eye' : 'pi pi-pencil',
       command: () => this.edit(id)
     });
-
     if (!isAlunoOrProfessor) {
       this.contextMenuItems.push({
         label: 'Remover',
@@ -170,9 +170,79 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
         command: () => this.delete(id)
       });
     }
-
     this.actionsMenu().toggle(event);
     this.cdr?.markForCheck();
+  }
+
+  abrirModalNovoPrazo(emprestimo: Emprestimo) {
+    this.actionsMenu().hide(); // Fecha o popover antes de abrir o modal
+    this.emprestimoSelecionadoParaPrazo = emprestimo;
+    this.novaDataPrazo = this.calcularNovaDataPrazo(emprestimo.prazoDevolucao);
+    this.modalNovoPrazoVisible = true;
+  }
+
+  calcularNovaDataPrazo(prazoAtual: string | undefined): string | undefined {
+    if (!prazoAtual) return undefined;
+    return DateUtil.addDays(prazoAtual, 7);
+  }
+
+  fecharModalNovoPrazo() {
+    this.modalNovoPrazoVisible = false;
+    this.novaDataPrazo = undefined;
+    this.emprestimoSelecionadoParaPrazo = undefined;
+  }
+
+  async enviarNovoPrazo() {
+    if (!this.emprestimoSelecionadoParaPrazo || !this.novaDataPrazo) return;
+    this.loaderService.show();
+    try {
+      // Buscar o objeto completo do empréstimo
+      const emprestimo = await (this.emprestimoService as any).findById(this.emprestimoSelecionadoParaPrazo.id).toPromise();
+      if (!emprestimo) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Atenção!',
+          detail: 'Empréstimo não encontrado!',
+          life: 5000
+        });
+        return;
+      }
+      // Atualiza apenas o prazoDevolucao
+      emprestimo.prazoDevolucao = this.novaDataPrazo;
+      // Mantém todos os outros campos do objeto
+      this.emprestimoService.saveEmprestimo(emprestimo, 0).subscribe({
+        next: () => {
+          this.fecharModalNovoPrazo();
+          this.findAll();
+          this.cdr?.markForCheck();
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Sucesso!',
+            detail: 'Prazo de devolução alterado com sucesso!',
+            life: 3000
+          });
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Atenção!',
+            detail: 'Ocorreu um erro ao alterar a data do prazo de devolução!',
+            life: 5000
+          });
+        },
+        complete: () => {
+          this.loaderService.hide();
+        }
+      });
+    } catch (error) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Atenção!',
+        detail: 'Ocorreu um erro ao alterar a data do prazo de devolução!',
+        life: 5000
+      });
+      this.loaderService.hide();
+    }
   }
 
   findUsuarios($event: { query: string }) {
@@ -339,5 +409,29 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
 
     this.columnsTable = this.tableConfig.columns.map(column => column.field);
     this.displayedColumns = [...this.columnsTable];
+  }
+
+  formatDateString(dateStr: string | undefined): string {
+    if (!dateStr) return '';
+    // Se já estiver no formato ISO, converte para Date
+    if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('pt-BR');
+    }
+    // Se estiver no formato dd/MM/yyyy, retorna como está
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+      return dateStr;
+    }
+    // Se estiver no formato yyyy-MM-ddTHH:mm:ss, extrai só a data
+    if (/^\d{4}-\d{2}-\d{2}T/.test(dateStr)) {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('pt-BR');
+    }
+    // Tenta converter para Date
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString('pt-BR');
+    }
+    return dateStr;
   }
 }

@@ -25,4 +25,14 @@ export class DateUtil {
     date.setDate(date.getDate() - days);
     return date;
   }
+
+  static addDays(date: Date | string, days: number): string {
+    const d: Date = typeof date === 'string' ? this.parseStringToDate(date) : new Date(date);
+    d.setDate(d.getDate() + days);
+    // Retorna no formato dd/mm/yyyy
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
 }

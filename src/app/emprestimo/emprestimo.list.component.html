@@ -180,9 +180,15 @@
                       </app-action-buttons>
                     }
                     @default {
-                      <span [attr.aria-label]="column.header + ': ' + row[column.field]">
-                        {{ row[column.field] }}
-                      </span>
+                      @if (column.field === 'prazoDevolucao') {
+                        <span [attr.aria-label]="column.header + ': ' + row.prazoDevolucao">
+                          {{ formatDateString(row.prazoDevolucao) }}
+                        </span>
+                      } @else {
+                        <span [attr.aria-label]="column.header + ': ' + row[column.field]">
+                          {{ row[column.field] }}
+                        </span>
+                      }
                     }
                   }
                 </td>
@@ -379,3 +385,46 @@
 <p-popover #actionsMenu>
   <p-menu [model]="contextMenuItems" [style]="{border: 'none'}"></p-menu>
 </p-popover>
+
+<!-- Modal Novo Prazo -->
+<p-dialog
+  header="Novo prazo de devolução"
+  [(visible)]="modalNovoPrazoVisible"
+  [baseZIndex]="Z_INDEX.DIALOG"
+  [modal]="true"
+  class="dialog-sm-fixed">
+  <form>
+    <div class="space-y-2 mb-4">
+      <label for="novaDataPrazo">Nova data de devolução</label>
+      <p-datePicker
+        id="novaDataPrazo"
+        name="novaDataPrazo"
+        appendTo="body"
+        dataType="string"
+        dateFormat="dd/mm/yy"
+        [style]="{ width: '100%' }"
+        [(ngModel)]="novaDataPrazo"
+        inputStyleClass="w-full"
+        [showIcon]="true"
+        [showOnFocus]="false">
+      </p-datePicker>
+    </div>
+  </form>
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <p-button
+        type="button"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="fecharModalNovoPrazo()"
+        label="Cancelar">
+      </p-button>
+      <p-button
+        type="button"
+        severity="primary"
+        (onClick)="enviarNovoPrazo()"
+        label="Atualizar Prazo">
+      </p-button>
+    </div>
+  </ng-template>
+</p-dialog>
