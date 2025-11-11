@@ -40,7 +40,7 @@ describe('EmprestimoListComponent', () => {
       'filter',
       'changePrazoDevolucao',
       'delete',
-      'findById',
+      'findOne',
       'saveEmprestimo'
     ]);
 
@@ -711,7 +711,7 @@ describe('EmprestimoListComponent', () => {
     beforeEach(() => {
       jest.spyOn(component, 'findAll').mockImplementation(() => {});
       jest.spyOn(messageService, 'add');
-      jest.spyOn(emprestimoService, 'findById').mockReturnValue(of(EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'})));
+      jest.spyOn(emprestimoService, 'findOne').mockReturnValue(of(EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'})));
       jest.spyOn(emprestimoService, 'saveEmprestimo').mockReturnValue(of({} as Emprestimo));
     });
 

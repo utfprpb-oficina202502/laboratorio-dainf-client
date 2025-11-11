@@ -30,19 +30,4 @@ export class EmprestimoService extends CrudService<Emprestimo, number> {
   changePrazoDevolucao(id: number, novaData: string): Observable<void> {
     return this.http.get<void>(this.getUrl() + `change-prazo-devolucao?id=${id}&novaData=${novaData}`);
   }
-
-  /**
-   * Busca um empréstimo pelo seu identificador único.
-   *
-   * @param {number} id - Identificador do empréstimo a ser buscado.
-   * @returns {Observable<Emprestimo>} Observable que emite o empréstimo encontrado.
-   *
-   * @example
-   *   service.findById(1).subscribe(emprestimo => {
-   *     // Lógica para tratar o empréstimo retornado
-   *   });
-   */
-  findById(id: number): Observable<Emprestimo> {
-    return this.http.get<Emprestimo>(this.getUrl() + id);
-  }
 }

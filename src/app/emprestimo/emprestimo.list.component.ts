@@ -254,7 +254,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     this.loaderService.show();
     try {
       // Buscar o objeto completo do empréstimo
-      const emprestimo = await firstValueFrom(this.emprestimoService.findById(this.emprestimoSelecionadoParaPrazo.id));
+      const emprestimo = await firstValueFrom(this.emprestimoService.findOne(this.emprestimoSelecionadoParaPrazo.id));
       if (!emprestimo) {
         throw new Error('Empréstimo não encontrado!');
       }
