@@ -11,34 +11,51 @@ describe('DateUtil', () => {
   });
 
   describe('dtIsBeforeToday', () => {
+    let fixedNow: number;
+    beforeAll(() => {
+      // 10/11/2025 00:00:00
+      fixedNow = new Date(2025, 10, 10).getTime();
+      jest.spyOn(Date, 'now').mockReturnValue(fixedNow);
+    });
+    afterAll(() => {
+      (Date.now as jest.Mock).mockRestore?.();
+    });
     it('should return true for yesterday', () => {
-      const yesterday = new Date();
+      const yesterday = new Date(fixedNow);
       yesterday.setDate(yesterday.getDate() - 1);
       expect(DateUtil.dtIsBeforeToday(yesterday)).toBe(true);
     });
     it('should return false for today', () => {
-      const today = new Date();
+      const today = new Date(fixedNow);
       expect(DateUtil.dtIsBeforeToday(today)).toBe(false);
     });
     it('should return false for future date', () => {
-      const future = new Date();
+      const future = new Date(fixedNow);
       future.setDate(future.getDate() + 1);
       expect(DateUtil.dtIsBeforeToday(future)).toBe(false);
     });
   });
 
   describe('dtIsAfterToday', () => {
+    let fixedNow: number;
+    beforeAll(() => {
+      fixedNow = new Date(2025, 10, 10).getTime();
+      jest.spyOn(Date, 'now').mockReturnValue(fixedNow);
+    });
+    afterAll(() => {
+      (Date.now as jest.Mock).mockRestore?.();
+    });
     it('should return true for tomorrow', () => {
-      const tomorrow = new Date();
+      const tomorrow = new Date(fixedNow);
       tomorrow.setDate(tomorrow.getDate() + 1);
       expect(DateUtil.dtIsAfterToday(tomorrow)).toBe(true);
     });
     it('should return false for today', () => {
-      const today = new Date();
+      const today = new Date(fixedNow);
       expect(DateUtil.dtIsAfterToday(today)).toBe(false);
     });
     it('should return false for past date', () => {
-      const past = new Date();
+      const past = new Date(fixedNow);
       past.setDate(past.getDate() - 1);
       expect(DateUtil.dtIsAfterToday(past)).toBe(false);
     });
