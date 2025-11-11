@@ -224,7 +224,8 @@ describe('EmprestimoListComponent', () => {
 
     it('deve mostrar todas as opções para admin/funcionário', () => {
       jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
-
+      // Garante que o empréstimo de id 1 está pendente
+      component.objects = [EmprestimoTestFactory.createPendente({id: 1})];
       component.openOptions(mockEvent, 1);
 
       expect(component.contextMenuItems.length).toBe(4);
@@ -255,7 +256,8 @@ describe('EmprestimoListComponent', () => {
 
     it('deve incluir "Novo Prazo" para não-aluno/professor', () => {
       jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
-
+      // Garante que o empréstimo de id 1 está pendente
+      component.objects = [EmprestimoTestFactory.createPendente({id: 1})];
       component.openOptions(mockEvent, 1);
 
       const novoPrazoItem = component.contextMenuItems.find(item => item.label === 'Novo Prazo');
