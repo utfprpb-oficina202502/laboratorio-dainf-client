@@ -22,6 +22,7 @@ import {
   TableDefaultTemplatesComponent
 } from '../framework/component/table-default-templates.component';
 import { createTableConfig } from '../framework/utils/table-config.factory';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
     selector: 'app-list-emprestimo',
@@ -150,11 +151,11 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
         icon: 'pi pi-undo',
         command: () => this.openDevolucao(id)
       });
-      if (status === 'P') {
+      if (emprestimo && status === 'P') {
         this.contextMenuItems.push({
           label: 'Novo Prazo',
           icon: 'pi pi-clock',
-          command: () => this.abrirModalNovoPrazo(emprestimo!)
+          command: () => this.abrirModalNovoPrazo(emprestimo)
         });
       }
     }
@@ -194,53 +195,89 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
 
   async enviarNovoPrazo() {
     if (!this.emprestimoSelecionadoParaPrazo || !this.novaDataPrazo) return;
+    // Validação robusta da nova data
+    let novaData: Date | undefined;
+    // Aceita formatos dd/MM/yyyy e ISO
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(this.novaDataPrazo)) {
+      const [dia, mes, ano] = this.novaDataPrazo.split('/').map(Number);
+      novaData = new Date(ano, mes - 1, dia);
+    } else {
+      novaData = new Date(this.novaDataPrazo);
+    }
+    if (!novaData || isNaN(novaData.getTime())) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Data inválida',
+        detail: 'Selecione uma data válida para o novo prazo de devolução.',
+        life: 5000
+      });
+      return;
+    }
+    // Normaliza para início do dia
+    novaData.setHours(0, 0, 0, 0);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    // Prazo atual
+    let prazoAtual: Date | undefined;
+    if (this.emprestimoSelecionadoParaPrazo.prazoDevolucao) {
+      const prazoStr = this.emprestimoSelecionadoParaPrazo.prazoDevolucao;
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(prazoStr)) {
+        const [dia, mes, ano] = prazoStr.split('/').map(Number);
+        prazoAtual = new Date(ano, mes - 1, dia);
+      } else {
+        prazoAtual = new Date(prazoStr);
+      }
+      if (prazoAtual && !isNaN(prazoAtual.getTime())) {
+        prazoAtual.setHours(0, 0, 0, 0);
+      } else {
+        prazoAtual = undefined;
+      }
+    }
+    if (novaData <= hoje) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Data inválida',
+        detail: 'A nova data de devolução deve ser futura em relação a hoje.',
+        life: 5000
+      });
+      return;
+    }
+    if (prazoAtual && novaData <= prazoAtual) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Data inválida',
+        detail: 'A nova data deve ser posterior ao prazo de devolução atual.',
+        life: 5000
+      });
+      return;
+    }
     this.loaderService.show();
     try {
       // Buscar o objeto completo do empréstimo
-      const emprestimo = await (this.emprestimoService as any).findById(this.emprestimoSelecionadoParaPrazo.id).toPromise();
+      const emprestimo = await firstValueFrom(this.emprestimoService.findById(this.emprestimoSelecionadoParaPrazo.id));
       if (!emprestimo) {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Atenção!',
-          detail: 'Empréstimo não encontrado!',
-          life: 5000
-        });
-        return;
+        throw new Error('Empréstimo não encontrado!');
       }
       // Atualiza apenas o prazoDevolucao
       emprestimo.prazoDevolucao = this.novaDataPrazo;
-      // Mantém todos os outros campos do objeto
-      this.emprestimoService.saveEmprestimo(emprestimo, 0).subscribe({
-        next: () => {
-          this.fecharModalNovoPrazo();
-          this.findAll();
-          this.cdr?.markForCheck();
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Sucesso!',
-            detail: 'Prazo de devolução alterado com sucesso!',
-            life: 3000
-          });
-        },
-        error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Atenção!',
-            detail: 'Ocorreu um erro ao alterar a data do prazo de devolução!',
-            life: 5000
-          });
-        },
-        complete: () => {
-          this.loaderService.hide();
-        }
+      await firstValueFrom(this.emprestimoService.saveEmprestimo(emprestimo, 0));
+      this.fecharModalNovoPrazo();
+      this.findAll();
+      this.cdr?.markForCheck();
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Sucesso!',
+        detail: 'Prazo de devolução alterado com sucesso!',
+        life: 3000
       });
-    } catch (error) {
+    } catch (error: any) {
       this.messageService.add({
         severity: 'error',
         summary: 'Atenção!',
-        detail: 'Ocorreu um erro ao alterar a data do prazo de devolução!',
+        detail: error?.message || 'Ocorreu um erro ao alterar a data do prazo de devolução!',
         life: 5000
       });
+    } finally {
       this.loaderService.hide();
     }
   }

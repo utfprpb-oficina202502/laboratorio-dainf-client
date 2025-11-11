@@ -181,7 +181,7 @@
                     }
                     @default {
                       @if (column.field === 'prazoDevolucao') {
-                        <span [attr.aria-label]="column.header + ': ' + row.prazoDevolucao">
+                        <span [attr.aria-label]="column.header + ': ' + formatDateString(row.prazoDevolucao)">
                           {{ formatDateString(row.prazoDevolucao) }}
                         </span>
                       } @else {
@@ -392,7 +392,8 @@
   [(visible)]="modalNovoPrazoVisible"
   [baseZIndex]="Z_INDEX.DIALOG"
   [modal]="true"
-  class="dialog-sm-fixed">
+  class="dialog-sm-fixed"
+  [focusOnShow]="false">
   <form>
     <div class="space-y-2 mb-4">
       <label for="novaDataPrazo">Nova data de devolução</label>

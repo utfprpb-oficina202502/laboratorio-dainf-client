@@ -39,7 +39,9 @@ describe('EmprestimoListComponent', () => {
       'findAllPaged',
       'filter',
       'changePrazoDevolucao',
-      'delete'
+      'delete',
+      'findById',
+      'saveEmprestimo'
     ]);
 
     const usuarioServiceSpy = createServiceMock<UsuarioService>([
@@ -699,6 +701,77 @@ describe('EmprestimoListComponent', () => {
       expect(component['tableConfig'].stateful).toBe(true);
       expect(component['tableConfig'].stateKey).toBe('emprestimo-list');
       expect(component['tableConfig'].stateStorage).toBe('local');
+    });
+  });
+
+  // ==========================================================================
+  // Novo Prazo - Modal e Validação
+  // ==========================================================================
+  describe('Novo Prazo - Modal e Validação', () => {
+    beforeEach(() => {
+      jest.spyOn(component, 'findAll').mockImplementation(() => {});
+      jest.spyOn(messageService, 'add');
+      jest.spyOn(emprestimoService, 'findById').mockReturnValue(of(EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'})));
+      jest.spyOn(emprestimoService, 'saveEmprestimo').mockReturnValue(of({} as Emprestimo));
+    });
+
+    it('deve abrir o modal e sugerir data 7 dias após o prazo atual', () => {
+      const emprestimo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
+      component.abrirModalNovoPrazo(emprestimo);
+      expect(component.modalNovoPrazoVisible).toBe(true);
+      expect(component.novaDataPrazo).toBe('17/11/2025');
+    });
+
+    it('deve rejeitar data inválida (formato errado)', async () => {
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
+      component.novaDataPrazo = 'invalid-date';
+      await component.enviarNovoPrazo();
+      expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'error',
+        summary: 'Data inválida'
+      }));
+    });
+
+    it('deve rejeitar data igual ou anterior a hoje', async () => {
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
+      component.novaDataPrazo = '10/11/2025'; // igual a hoje
+      await component.enviarNovoPrazo();
+      expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'error',
+        detail: expect.stringContaining('futura')
+      }));
+    });
+
+    it('deve rejeitar data igual ou anterior ao prazo atual', async () => {
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
+      component.novaDataPrazo = '09/11/2025'; // anterior ao prazo e anterior a hoje
+      await component.enviarNovoPrazo();
+      expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'error',
+        detail: expect.stringContaining('futura')
+      }));
+    });
+
+    it('deve aceitar data válida e chamar serviço de atualização', async () => {
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
+      component.novaDataPrazo = '18/11/2025';
+      await component.enviarNovoPrazo();
+      expect(emprestimoService.saveEmprestimo).toHaveBeenCalled();
+      expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'success',
+        summary: 'Sucesso!'
+      }));
+    });
+
+    it('deve exibir mensagem de erro ao falhar no serviço', async () => {
+      (emprestimoService.saveEmprestimo as jest.Mock).mockReturnValueOnce(throwError(() => new Error('Falha')));
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
+      component.novaDataPrazo = '18/11/2025';
+      await component.enviarNovoPrazo();
+      expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'error',
+        detail: expect.stringContaining('Falha')
+      }));
     });
   });
 });
