@@ -292,7 +292,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
    */
   protected override postSave(callback: () => void): void {
     const upload = this.fileUpload();
-    if (upload) {
+    if (upload && upload.files && upload.files.length > 0) {
       upload.url = this.getUrlUploadImages();
       upload.upload();
       this.callback = callback;
