@@ -810,7 +810,13 @@ describe('EmprestimoListComponent', () => {
 
     it('deve mostrar erro se emprestimo não for encontrado ao enviarNovoPrazo', async () => {
       component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 999, prazoDevolucao: '10/11/2025'});
-      component.novaDataPrazo = '17/11/2025';
+      // Define uma data futura (30 dias a partir de hoje)
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 30);
+      const dia = String(futureDate.getDate()).padStart(2, '0');
+      const mes = String(futureDate.getMonth() + 1).padStart(2, '0');
+      const ano = futureDate.getFullYear();
+      component.novaDataPrazo = `${dia}/${mes}/${ano}`;
       jest.spyOn(component['service'], 'findOne').mockReturnValueOnce(of(undefined as any));
       const addSpy = jest.spyOn(component['messageService'], 'add');
       await component.enviarNovoPrazo();
@@ -822,7 +828,13 @@ describe('EmprestimoListComponent', () => {
 
     it('deve mostrar erro se saveEmprestimo lançar exceção', async () => {
       component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
-      component.novaDataPrazo = '17/11/2025';
+      // Define uma data futura (30 dias a partir de hoje)
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 30);
+      const dia = String(futureDate.getDate()).padStart(2, '0');
+      const mes = String(futureDate.getMonth() + 1).padStart(2, '0');
+      const ano = futureDate.getFullYear();
+      component.novaDataPrazo = `${dia}/${mes}/${ano}`;
       jest.spyOn(component['service'], 'findOne').mockReturnValueOnce(of(EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'})));
       jest.spyOn(component['service'], 'saveEmprestimo').mockReturnValueOnce(throwError(() => new Error('Falha de serviço')));
       const addSpy = jest.spyOn(component['messageService'], 'add');
