@@ -768,7 +768,7 @@ describe('EmprestimoListComponent', () => {
 
     it('deve aceitar data válida e chamar serviço de atualização', async () => {
       component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
-      component.novaDataPrazo = '18/11/2025';
+      component.novaDataPrazo = getFutureDateString(30);
       await component.enviarNovoPrazo();
       expect(emprestimoService.saveEmprestimo).toHaveBeenCalled();
       expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
@@ -780,7 +780,7 @@ describe('EmprestimoListComponent', () => {
     it('deve exibir mensagem de erro ao falhar no serviço', async () => {
       (emprestimoService.saveEmprestimo as jest.Mock).mockReturnValueOnce(throwError(() => new Error('Falha')));
       component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
-      component.novaDataPrazo = '18/11/2025';
+      component.novaDataPrazo = getFutureDateString(30);
       await component.enviarNovoPrazo();
       expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
         severity: 'error',
