@@ -12,6 +12,20 @@ import {EmprestimoTestFactory, UsuarioTestFactory} from './emprestimo.test-facto
 import {createServiceMock} from '../framework/testing/test-helpers';
 
 /**
+ * Helper function to generate a future date string in DD/MM/YYYY format
+ * @param days Number of days to add to current date
+ * @returns Formatted date string in DD/MM/YYYY format
+ */
+function getFutureDateString(days: number): string {
+  const futureDate = new Date();
+  futureDate.setDate(futureDate.getDate() + days);
+  const dia = String(futureDate.getDate()).padStart(2, '0');
+  const mes = String(futureDate.getMonth() + 1).padStart(2, '0');
+  const ano = futureDate.getFullYear();
+  return `${dia}/${mes}/${ano}`;
+}
+
+/**
  * Testes abrangentes para EmprestimoListComponent
  * Cobre lógica de negócio, permissões, filtros e integração com serviços
  */
@@ -754,7 +768,7 @@ describe('EmprestimoListComponent', () => {
 
     it('deve aceitar data válida e chamar serviço de atualização', async () => {
       component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
-      component.novaDataPrazo = '18/11/2025';
+      component.novaDataPrazo = getFutureDateString(30);
       await component.enviarNovoPrazo();
       expect(emprestimoService.saveEmprestimo).toHaveBeenCalled();
       expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
@@ -766,7 +780,7 @@ describe('EmprestimoListComponent', () => {
     it('deve exibir mensagem de erro ao falhar no serviço', async () => {
       (emprestimoService.saveEmprestimo as jest.Mock).mockReturnValueOnce(throwError(() => new Error('Falha')));
       component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
-      component.novaDataPrazo = '18/11/2025';
+      component.novaDataPrazo = getFutureDateString(30);
       await component.enviarNovoPrazo();
       expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
         severity: 'error',
@@ -810,7 +824,7 @@ describe('EmprestimoListComponent', () => {
 
     it('deve mostrar erro se emprestimo não for encontrado ao enviarNovoPrazo', async () => {
       component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 999, prazoDevolucao: '10/11/2025'});
-      component.novaDataPrazo = '17/11/2025';
+      component.novaDataPrazo = getFutureDateString(30);
       jest.spyOn(component['service'], 'findOne').mockReturnValueOnce(of(undefined as any));
       const addSpy = jest.spyOn(component['messageService'], 'add');
       await component.enviarNovoPrazo();
@@ -822,7 +836,7 @@ describe('EmprestimoListComponent', () => {
 
     it('deve mostrar erro se saveEmprestimo lançar exceção', async () => {
       component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'});
-      component.novaDataPrazo = '17/11/2025';
+      component.novaDataPrazo = getFutureDateString(30);
       jest.spyOn(component['service'], 'findOne').mockReturnValueOnce(of(EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'})));
       jest.spyOn(component['service'], 'saveEmprestimo').mockReturnValueOnce(throwError(() => new Error('Falha de serviço')));
       const addSpy = jest.spyOn(component['messageService'], 'add');
