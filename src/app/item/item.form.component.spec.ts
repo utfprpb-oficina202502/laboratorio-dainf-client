@@ -367,7 +367,7 @@ describe('ItemFormComponent', () => {
 
     it('should call callback immediately if no files to upload', () => {
       const callback = jest.fn();
-      jest.spyOn(component as any, 'fileUpload').mockReturnValue(null);
+      jest.spyOn(component, 'fileUpload' as any).mockReturnValue(null);
 
       component['postSave'](callback);
 
@@ -381,7 +381,7 @@ describe('ItemFormComponent', () => {
         upload: jest.fn(),
         url: ''
       };
-      jest.spyOn(component as any, 'fileUpload').mockReturnValue(mockFileUpload);
+      jest.spyOn(component, 'fileUpload' as any).mockReturnValue(mockFileUpload);
 
       component['postSave'](callback);
 
@@ -397,7 +397,7 @@ describe('ItemFormComponent', () => {
         upload: jest.fn(),
         url: ''
       };
-      jest.spyOn(component as any, 'fileUpload').mockReturnValue(mockFileUpload);
+      jest.spyOn(component, 'fileUpload' as any).mockReturnValue(mockFileUpload);
 
       component['postSave'](callback);
 
