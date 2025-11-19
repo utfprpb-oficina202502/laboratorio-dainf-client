@@ -422,8 +422,8 @@ describe('ItemFormComponent', () => {
       
       await component.ngOnInit();
       
-      // Wait for async operation
-      await new Promise(resolve => setTimeout(resolve, 50));
+      // Wait for all async operations to complete
+      await fixture.whenStable();
       
       expect(loginService.userLoggedIsAlunoOrProfessor).toHaveBeenCalled();
     });
