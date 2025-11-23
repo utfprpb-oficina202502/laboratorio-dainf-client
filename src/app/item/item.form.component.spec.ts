@@ -189,13 +189,13 @@ describe('ItemFormComponent', () => {
       expect(formGroup?.get('qtdeMinima')?.value).toBe(1);
     });
 
-    it('should set saldo to 1 when patrimonio is filled', () => {
+    it('should not automatically set saldo when patrimonio is filled', () => {
       const formGroup = component['form']();
-      formGroup?.patchValue({patrimonio: 'PAT123'});
-      component.onPatrimonioChange();
+      formGroup?.patchValue({patrimonio: 'PAT123', saldo: 5, qtdeMinima: 3});
 
-      expect(formGroup?.get('saldo')?.value).toBe(1);
-      expect(formGroup?.get('qtdeMinima')?.value).toBe(1);
+      // Patrimonio change should not reset saldo/qtdeMinima
+      expect(formGroup?.get('saldo')?.value).toBe(5);
+      expect(formGroup?.get('qtdeMinima')?.value).toBe(3);
     });
   });
 
@@ -419,12 +419,12 @@ describe('ItemFormComponent', () => {
   describe('Form Permissions - Aluno/Professor', () => {
     it('should set isAlunoOrProfessor signal based on login service', async () => {
       loginService.userLoggedIsAlunoOrProfessor.mockResolvedValue(true);
-      
+
       await component.ngOnInit();
-      
+
       // Wait for all async operations to complete
       await fixture.whenStable();
-      
+
       expect(loginService.userLoggedIsAlunoOrProfessor).toHaveBeenCalled();
     });
 
@@ -433,7 +433,7 @@ describe('ItemFormComponent', () => {
       fixture.detectChanges();
 
       const formGroup = component['form']();
-      
+
       // These fields should always be disabled
       expect(formGroup?.get('disponivelEmprestimoCalculado')?.disabled).toBeTruthy();
       expect(formGroup?.get('quantidadeEmprestada')?.disabled).toBeTruthy();
@@ -502,17 +502,8 @@ describe('ItemFormComponent', () => {
     it('should call updatePatrimonioValidators when onTipoItemChange is called', () => {
       component.ngOnInit();
       const spy = jest.spyOn(component as any, 'updatePatrimonioValidators');
-      
+
       component.onTipoItemChange();
-
-      expect(spy).toHaveBeenCalled();
-    });
-
-    it('should call setSaldoDefaultItem when onPatrimonioChange is called', () => {
-      component.ngOnInit();
-      const spy = jest.spyOn(component as any, 'setSaldoDefaultItem');
-      
-      component.onPatrimonioChange();
 
       expect(spy).toHaveBeenCalled();
     });
