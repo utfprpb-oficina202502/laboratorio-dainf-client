@@ -121,7 +121,7 @@
                       class="w-full"
                       [inputStyle]="{ width: '100%' }">
                       <ng-template let-item pTemplate="item">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 relative">
                           @if (item.imageItem && item.imageItem.length > 0) {
                             <img
                               ngSrc="minioUrl() + item.imageItem[0].nameImage"

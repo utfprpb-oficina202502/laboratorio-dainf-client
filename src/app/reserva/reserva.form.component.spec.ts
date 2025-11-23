@@ -327,8 +327,8 @@ describe('ReservaFormComponent', () => {
         id: 1,
         descricao: 'Test Reserva',
         usuario: {id: 1, nome: 'User'} as any,
-        dataReserva: '2024-01-01',
-        dataRetirada: '2024-01-15',
+        dataReserva: '01/01/2024',
+        dataRetirada: '15/01/2024',
         observacao: 'Test observation',
         reservaItem: []
       } as Reserva;
@@ -338,8 +338,8 @@ describe('ReservaFormComponent', () => {
       const formGroup = component.form();
       expect(formGroup?.get('id')?.value).toBe(1);
       expect(formGroup?.get('descricao')?.value).toBe('Test Reserva');
-      expect(formGroup?.get('dataReserva')?.value).toBe('2024-01-01');
-      expect(formGroup?.get('dataRetirada')?.value).toBe('2024-01-15');
+      expect(formGroup?.get('dataReserva')?.value).toBe('01/01/2024');
+      expect(formGroup?.get('dataRetirada')?.value).toBe('15/01/2024');
       expect(formGroup?.get('observacao')?.value).toBe('Test observation');
     });
 
