@@ -446,12 +446,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     this.setSaldoDefaultItem();
   }
 
-  /**
-   * Handle patrimonio change
-   */
-  onPatrimonioChange(): void {
-    this.setSaldoDefaultItem();
-  }
+
 
   /**
    * Update patrimonio validators based on tipoItem
