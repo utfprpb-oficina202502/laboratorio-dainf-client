@@ -80,10 +80,16 @@
                   <span [attr.aria-label]="'Código: ' + rowData.id">{{ rowData.id }}</span>
                 }
                 @case ('fornecedor') {
-                  <span
-                    [attr.aria-label]="'Fornecedor: ' + (rowData.fornecedor?.nomeFantasia || 'N/A')">{{
-                      rowData.fornecedor?.nomeFantasia || 'N/A'
-                    }}</span>
+                  <div class="flex flex-col">
+                    <span class="font-semibold text-base"
+                      [attr.aria-label]="'Nome Fantasia: ' + (rowData.fornecedor?.nomeFantasia || 'N/A')">
+                      {{ rowData.fornecedor?.nomeFantasia || 'N/A' }}
+                    </span>
+                    <span class="text-sm text-gray-600"
+                      [attr.aria-label]="'Razão Social: ' + rowData.fornecedor.razaoSocial">
+                      {{ rowData.fornecedor.razaoSocial }}
+                    </span>
+                  </div>
                 }
                 @case ('dataCompra') {
                   <span
