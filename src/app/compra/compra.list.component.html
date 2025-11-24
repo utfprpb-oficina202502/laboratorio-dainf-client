@@ -85,10 +85,12 @@
                       [attr.aria-label]="'Nome Fantasia: ' + (rowData.fornecedor?.nomeFantasia || 'N/A')">
                       {{ rowData.fornecedor?.nomeFantasia || 'N/A' }}
                     </span>
-                    <span class="text-sm text-gray-600"
-                      [attr.aria-label]="'Razão Social: ' + rowData.fornecedor.razaoSocial">
-                      {{ rowData.fornecedor.razaoSocial }}
-                    </span>
+                    @if (rowData.fornecedor?.razaoSocial) {
+                      <span class="text-sm text-gray-600"
+                        [attr.aria-label]="'Razão Social: ' + (rowData.fornecedor?.razaoSocial || 'N/A')">
+                        {{ rowData.fornecedor?.razaoSocial || 'N/A' }}
+                      </span>
+                    }
                   </div>
                 }
                 @case ('dataCompra') {

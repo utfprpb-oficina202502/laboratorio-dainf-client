@@ -59,7 +59,7 @@ describe('CompraFormComponent', () => {
     id: 1,
     fornecedor: mockFornecedores[0] as Fornecedor,
     usuario: {id: 1, nome: 'Usuário Teste'} as any,
-    dataCompra: '2025-11-24',
+    dataCompra: '24/11/2025',
     compraItem: [
       {id: 1, item: mockItems[0] as Item, qtde: 2, valor: 100.00} as CompraItem,
       {id: 2, item: mockItems[1] as Item, qtde: 1, valor: 100.00} as CompraItem
@@ -187,7 +187,7 @@ describe('CompraFormComponent', () => {
       dataCompraControl?.setValue('');
       expect(dataCompraControl?.hasError('required')).toBe(true);
 
-      dataCompraControl?.setValue('2025-11-24');
+      dataCompraControl?.setValue('24/11/2025');
       expect(dataCompraControl?.hasError('required')).toBe(false);
     });
 
@@ -397,7 +397,7 @@ describe('CompraFormComponent', () => {
       const formGroup = component['form']();
       formGroup?.patchValue({
         fornecedor: mockFornecedores[0],
-        dataCompra: '2025-11-24'
+        dataCompra: '24/11/2025'
       });
     });
 
@@ -438,7 +438,7 @@ describe('CompraFormComponent', () => {
       const prepared = component['prepareFormValue'](formValue);
 
       expect(prepared.fornecedor).toEqual(mockFornecedores[0]);
-      expect(prepared.dataCompra).toBe('2025-11-24');
+      expect(prepared.dataCompra).toBe('24/11/2025');
       expect(prepared.compraItem).toHaveLength(1);
       expect(prepared.compraItem![0].item.id).toBe(mockItems[0].id);
       expect(prepared.compraItem![0].qtde).toBe(2);
