@@ -1,4 +1,4 @@
-import { Component, forwardRef, signal, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, forwardRef, signal, inject, ChangeDetectionStrategy, ChangeDetectorRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -20,6 +20,9 @@ import { finalize } from 'rxjs';
 import { getNadaConstaStatusLabel, getNadaConstaStatusSeverity } from '../../framework/utils/status-label.util';
 import { createTableConfig } from '../../framework/utils/table-config.factory';
 import { TableEmptyStateComponent } from '../../framework/component/table-empty-state.component';
+import { MenuItem } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
+import { Popover, PopoverModule } from 'primeng/popover';
 
 @Component({
   selector: 'app-nada-consta-list',
@@ -42,11 +45,16 @@ import { TableEmptyStateComponent } from '../../framework/component/table-empty-
     IconFieldModule,
     InputIconModule,
     TableFilterCaptionComponent,
-    TableEmptyStateComponent
+    TableEmptyStateComponent,
+    MenuModule,
+    PopoverModule
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => NadaConstaListComponent) }]
 })
 export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, number> {
+  readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
+  contextMenuItems: MenuItem[] = [];
+
   protected override columnsTable: string[] = [
     'id',
     'usuarioUsername',
@@ -373,4 +381,66 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
   public setInvalidando(val: number | null) { this.invalidando.set(val); }
   public setAcaoErro(val: string | null) { this.acaoErro.set(val); }
   public setAcaoSucesso(val: string | null) { this.acaoSucesso.set(val); }
+
+  public menuVisible = signal<number | null>(null); // id da linha com menu aberto
+  public menuLoading = signal(false);
+  public menuMessage = signal<string | null>(null);
+
+  // Chama API para imprimir PDF, abre em nova aba
+  public imprimirNadaConsta(row: NadaConsta) {
+    const url = `/nadaconsta/${row.id}/pdf`;
+    window.open(url, '_blank');
+    this.menuMessage.set('PDF aberto em nova aba.');
+    this.menuLoading.set(false);
+  }
+
+  // Chama API para reenviar email
+  public async reenviarEmailNadaConsta(row: NadaConsta) {
+    this.menuLoading.set(true);
+    this.menuMessage.set(null);
+    try {
+      await this.service.reenviarEmail(row.id).toPromise();
+      this.menuMessage.set('2ª via enviada com sucesso.');
+    } catch (err) {
+      this.menuMessage.set('Erro ao enviar 2ª via.');
+    } finally {
+      this.menuLoading.set(false);
+    }
+  }
+
+  // Abre menu suspenso para linha
+  public openOptions(event: Event, id: number): void {
+    const nadaConsta = this.objects.find(e => e.id === id);
+    this.contextMenuItems = [];
+    if (!nadaConsta) return;
+    if (nadaConsta.status === 'completed') {
+      this.contextMenuItems.push({
+        label: 'Imprimir', icon: 'pi pi-print', command: () => this.imprimirNadaConsta(nadaConsta)
+      });
+      this.contextMenuItems.push({
+        label: '2ª via email', icon: 'pi pi-envelope', command: () => this.reenviarEmailNadaConsta(nadaConsta)
+      });
+      this.contextMenuItems.push({
+        label: 'Invalidar', icon: 'pi pi-ban', command: () => this.abrirDialogConfirmarInvalidar(nadaConsta)
+      });
+      this.contextMenuItems.push({
+        label: 'Cancelar', icon: 'pi pi-times', command: () => this.hideOptions()
+      });
+      this.actionsMenu().toggle(event);
+      this.cdr?.markForCheck();
+    } else if (nadaConsta.status === 'pending') {
+      this.contextMenuItems.push({
+        label: 'Revalidar', icon: 'pi pi-refresh', command: () => this.verificarPendencias(nadaConsta)
+      });
+      this.actionsMenu().toggle(event);
+      this.cdr?.markForCheck();
+    } else {
+      // status invalidated: não mostra popover nem ações
+      this.hideOptions();
+    }
+  }
+
+  hideOptions() {
+    this.actionsMenu().hide();
+  }
 }
