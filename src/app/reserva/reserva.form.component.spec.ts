@@ -19,6 +19,7 @@ describe('ReservaFormComponent', () => {
   let fixture: any;
   let itemService: jest.Mocked<ItemService>;
   let formBusinessRulesService: jest.Mocked<FormBusinessRulesService>;
+  let reservaService: jest.Mocked<ReservaService>;
 
   beforeEach(() => {
     const messageServiceMock = {
@@ -68,6 +69,7 @@ describe('ReservaFormComponent', () => {
 
     itemService = TestBed.inject(ItemService) as jest.Mocked<ItemService>;
     formBusinessRulesService = TestBed.inject(FormBusinessRulesService) as jest.Mocked<FormBusinessRulesService>;
+    reservaService = TestBed.inject(ReservaService) as jest.Mocked<ReservaService>;
     fixture = TestBed.createComponent(ReservaFormComponent);
     component = fixture.componentInstance;
   });
@@ -302,20 +304,17 @@ describe('ReservaFormComponent', () => {
 
       component.reservaItems.set([reservaItem]);
 
-      // Mock super.save to prevent actual save
-      jest.spyOn(component, 'save').mockImplementation(() => {
-        const items = component.reservaItems();
-        if (!items || items.length === 0) {
-          component.validExtra = false;
-          formBusinessRulesService.showMinimumItemsMessage();
-          return;
-        }
-        component.validExtra = true;
-      });
+      // Mock the service save to prevent actual HTTP call
+      reservaService.save.mockReturnValue(of({id: 1} as Reserva));
+      
+      // Spy on the parent save implementation to verify it's called
+      const superSaveSpy = jest.spyOn(Object.getPrototypeOf(Object.getPrototypeOf(component)), 'save');
 
       component.save();
 
       expect(component.validExtra).toBe(true);
+      expect(formBusinessRulesService.showMinimumItemsMessage).not.toHaveBeenCalled();
+      expect(superSaveSpy).toHaveBeenCalled();
     });
   });
 
