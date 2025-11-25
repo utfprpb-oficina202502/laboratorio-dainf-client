@@ -311,22 +311,10 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
       }))
       .subscribe({
         next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Sucesso',
-            detail: 'Pendências verificadas com sucesso.'
-          });
+          this.showSuccessMessage('Sucesso', 'Pendências verificadas com sucesso.');
           this.findAll();
-          this.cdr.markForCheck();
         },
-        error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erro',
-            detail: err?.error?.message || 'Erro ao verificar pendências.'
-          });
-          this.cdr.markForCheck();
-        }
+        error: (err) => this.showErrorMessage(err, 'Erro ao verificar pendências.')
       });
   }
 
@@ -343,22 +331,10 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
       }))
       .subscribe({
         next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Sucesso',
-            detail: 'Nada Consta invalidado com sucesso.'
-          });
+          this.showSuccessMessage('Sucesso', 'Nada Consta invalidado com sucesso.');
           this.findAll();
-          this.cdr.markForCheck();
         },
-        error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erro',
-            detail: err?.error?.message || 'Erro ao invalidar Nada Consta.'
-          });
-          this.cdr.markForCheck();
-        }
+        error: (err) => this.showErrorMessage(err, 'Erro ao invalidar Nada Consta.')
       });
   }
 
@@ -389,6 +365,51 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
   public menuLoading = signal(false);
 
   /**
+   * Exibe mensagem de sucesso usando o MessageService.
+   * @param summary Título da mensagem
+   * @param detail Detalhes da mensagem
+   */
+  private showSuccessMessage(summary: string, detail: string): void {
+    this.messageService.add({ severity: 'success', summary, detail });
+    this.cdr?.markForCheck();
+  }
+
+  /**
+   * Exibe mensagem de erro usando o MessageService.
+   * @param err Objeto de erro da requisição
+   * @param defaultMessage Mensagem padrão caso não haja mensagem no erro
+   */
+  private showErrorMessage(err: any, defaultMessage: string): void {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Erro',
+      detail: err?.error?.message || defaultMessage
+    });
+    this.cdr?.markForCheck();
+  }
+
+  /**
+   * Abre o menu de ações após construir os itens.
+   * @param event Evento do clique
+   */
+  private openActionsMenu(event: Event): void {
+    this.actionsMenu().toggle(event);
+    this.cdr?.markForCheck();
+  }
+
+  /**
+   * Cria o item de menu "Cancelar" padrão.
+   * @returns MenuItem configurado para fechar o menu
+   */
+  private createCancelMenuItem(): MenuItem {
+    return {
+      label: 'Cancelar',
+      icon: 'pi pi-times',
+      command: () => this.actionsMenu().hide()
+    };
+  }
+
+  /**
    * Imprime o PDF do Nada Consta em uma nova aba do navegador.
    * @param row Registro do Nada Consta
    */
@@ -403,29 +424,13 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
       }))
       .subscribe({
         next: (data) => {
-          // Cria um blob a partir do arraybuffer e abre em nova aba
           const blob = new Blob([data], { type: 'application/pdf' });
           const url = window.URL.createObjectURL(blob);
           window.open(url, '_blank');
-
-          // Libera o objeto URL após um pequeno delay
           setTimeout(() => window.URL.revokeObjectURL(url), 100);
-
-          this.messageService.add({
-            severity: 'success',
-            summary: 'PDF Gerado',
-            detail: 'O PDF foi aberto em uma nova aba.'
-          });
-          this.cdr?.markForCheck();
+          this.showSuccessMessage('PDF Gerado', 'O PDF foi aberto em uma nova aba.');
         },
-        error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erro',
-            detail: err?.error?.message || 'Erro ao gerar PDF.'
-          });
-          this.cdr?.markForCheck();
-        }
+        error: (err) => this.showErrorMessage(err, 'Erro ao gerar PDF.')
       });
   }
 
@@ -442,77 +447,91 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
         this.cdr?.markForCheck();
       }))
       .subscribe({
-        next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Email Enviado',
-            detail: '2ª via do Nada Consta enviada com sucesso.'
-          });
-          this.cdr?.markForCheck();
-        },
-        error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erro',
-            detail: err?.error?.message || 'Erro ao enviar 2ª via.'
-          });
-          this.cdr?.markForCheck();
-        }
+        next: () => this.showSuccessMessage('Email Enviado', '2ª via do Nada Consta enviada com sucesso.'),
+        error: (err) => this.showErrorMessage(err, 'Erro ao enviar 2ª via.')
       });
   }
 
-  // Abre menu suspenso para linha
+  /**
+   * Abre menu suspenso para linha com ações baseadas no status.
+   * @param event Evento do clique
+   * @param id ID do registro
+   */
   public openOptions(event: Event, id: number): void {
     const nadaConsta = this.objects.find(e => e.id === id);
-    this.contextMenuItems = [];
     if (!nadaConsta) return;
 
-    // Normaliza o status para uppercase para comparação consistente
+    this.contextMenuItems = this.buildContextMenuItems(nadaConsta);
+
+    if (this.contextMenuItems.length > 0) {
+      this.openActionsMenu(event);
+    }
+  }
+
+  /**
+   * Constrói os itens do menu contextual baseado no status do Nada Consta.
+   * @param nadaConsta Registro do Nada Consta
+   * @returns Array de MenuItems
+   */
+  private buildContextMenuItems(nadaConsta: NadaConsta): MenuItem[] {
     const status = nadaConsta.status?.toUpperCase();
 
     if (status === 'COMPLETED' || status === 'CONCLUIDO' || status === 'CONCLUÍDO') {
-      this.contextMenuItems.push({
+      return this.buildCompletedMenuItems(nadaConsta);
+    }
+
+    if (status === 'PENDING' || status === 'PENDENTE') {
+      return this.buildPendingMenuItems(nadaConsta);
+    }
+
+    return [];
+  }
+
+  /**
+   * Constrói itens do menu para status COMPLETED.
+   * @param nadaConsta Registro do Nada Consta
+   * @returns Array de MenuItems
+   */
+  private buildCompletedMenuItems(nadaConsta: NadaConsta): MenuItem[] {
+    return [
+      {
         label: 'Imprimir',
         icon: 'pi pi-print',
         command: () => this.imprimirNadaConsta(nadaConsta)
-      });
-      this.contextMenuItems.push({
+      },
+      {
         label: '2ª via email',
         icon: 'pi pi-envelope',
         command: () => this.reenviarEmailNadaConsta(nadaConsta)
-      });
-      this.contextMenuItems.push({
+      },
+      {
         label: 'Invalidar',
         icon: 'pi pi-ban',
         command: () => {
           this.actionsMenu().hide();
           this.abrirDialogConfirmarInvalidar(nadaConsta);
         }
-      });
-      this.contextMenuItems.push({
-        label: 'Cancelar',
-        icon: 'pi pi-times',
-        command: () => this.actionsMenu().hide()
-      });
-      this.actionsMenu().toggle(event);
-      this.cdr?.markForCheck();
-    } else if (status === 'PENDING' || status === 'PENDENTE') {
-      this.contextMenuItems.push({
+      },
+      this.createCancelMenuItem()
+    ];
+  }
+
+  /**
+   * Constrói itens do menu para status PENDING.
+   * @param nadaConsta Registro do Nada Consta
+   * @returns Array de MenuItems
+   */
+  private buildPendingMenuItems(nadaConsta: NadaConsta): MenuItem[] {
+    return [
+      {
         label: 'Revalidar',
         icon: 'pi pi-refresh',
         command: () => {
           this.actionsMenu().hide();
           this.verificarPendencias(nadaConsta);
         }
-      });
-      this.contextMenuItems.push({
-        label: 'Cancelar',
-        icon: 'pi pi-times',
-        command: () => this.actionsMenu().hide()
-      });
-      this.actionsMenu().toggle(event);
-      this.cdr?.markForCheck();
-    }
-    // status invalidated: não mostra popover nem ações
+      },
+      this.createCancelMenuItem()
+    ];
   }
 }
