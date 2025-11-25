@@ -40,7 +40,7 @@
                   <p-autoComplete
                     inputId="fornecedor"
                     formControlName="fornecedor"
-                    optionLabel="razaoSocial"
+                    optionLabel="nomeFantasia"
                     dataKey="id"
                     [suggestions]="fornecedorList()"
                     (completeMethod)="findFornecedores($event)"
@@ -48,6 +48,14 @@
                     minQueryLength="2"
                     placeholder="Digite para buscar..."
                     styleClass="w-full">
+                    <ng-template let-fornecedor pTemplate="item">
+                      <div class="flex flex-col py-1">
+                        <span class="font-semibold text-base">{{ fornecedor.nomeFantasia }}</span>
+                        @if (fornecedor.razaoSocial) {
+                          <span class="text-sm text-gray-600">{{ fornecedor.razaoSocial }}</span>
+                        }
+                      </div>
+                    </ng-template>
                   </p-autoComplete>
                   <app-cadastro-rapido
                     [href]="'/fornecedor/form'"
