@@ -226,7 +226,7 @@
       </p-table>
 
       <!-- Popover global, fora do loop -->
-      <p-popover #actionsMenu>
+      <p-popover #actionsMenu [attr.aria-label]="'Menu de ações do Nada Consta'">
         <p-menu [model]="contextMenuItems" [style]="{border: 'none'}"></p-menu>
       </p-popover>
     </ng-template>

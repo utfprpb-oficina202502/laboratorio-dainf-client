@@ -405,6 +405,7 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
     return {
       label: 'Cancelar',
       icon: 'pi pi-times',
+      ariaLabel: 'Fechar menu de ações',
       command: () => this.actionsMenu().hide()
     };
   }
@@ -425,9 +426,9 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
       .subscribe({
         next: (data) => {
           const blob = new Blob([data], { type: 'application/pdf' });
-          const url = window.URL.createObjectURL(blob);
-          window.open(url, '_blank');
-          setTimeout(() => window.URL.revokeObjectURL(url), 100);
+          const url = globalThis.URL.createObjectURL(blob);
+          globalThis.open(url, '_blank');
+          setTimeout(() => globalThis.URL.revokeObjectURL(url), 100);
           this.showSuccessMessage('PDF Gerado', 'O PDF foi aberto em uma nova aba.');
         },
         error: (err) => this.showErrorMessage(err, 'Erro ao gerar PDF.')
@@ -497,16 +498,19 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
       {
         label: 'Imprimir',
         icon: 'pi pi-print',
+        ariaLabel: 'Baixar e imprimir PDF do Nada Consta',
         command: () => this.imprimirNadaConsta(nadaConsta)
       },
       {
         label: '2ª via email',
         icon: 'pi pi-envelope',
+        ariaLabel: 'Reenviar segunda via do Nada Consta por email',
         command: () => this.reenviarEmailNadaConsta(nadaConsta)
       },
       {
         label: 'Invalidar',
         icon: 'pi pi-ban',
+        ariaLabel: 'Invalidar este Nada Consta',
         command: () => {
           this.actionsMenu().hide();
           this.abrirDialogConfirmarInvalidar(nadaConsta);
@@ -526,6 +530,7 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
       {
         label: 'Revalidar',
         icon: 'pi pi-refresh',
+        ariaLabel: 'Verificar pendências e revalidar Nada Consta',
         command: () => {
           this.actionsMenu().hide();
           this.verificarPendencias(nadaConsta);

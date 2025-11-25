@@ -226,22 +226,22 @@ describe('NadaConstaListComponent', () => {
       const mockArrayBuffer = new ArrayBuffer(8);
       (service.downloadPdf as jest.Mock).mockReturnValue(of(mockArrayBuffer));
 
-      // Mock window.URL methods
+      // Mock globalThis.URL methods
       const mockBlobUrl = 'blob:mock-url';
       const urlCreateSpy = jest.fn().mockReturnValue(mockBlobUrl);
       const urlRevokeSpy = jest.fn();
-      Object.defineProperty(window.URL, 'createObjectURL', {
+      Object.defineProperty(globalThis.URL, 'createObjectURL', {
         value: urlCreateSpy,
         writable: true,
         configurable: true
       });
-      Object.defineProperty(window.URL, 'revokeObjectURL', {
+      Object.defineProperty(globalThis.URL, 'revokeObjectURL', {
         value: urlRevokeSpy,
         writable: true,
         configurable: true
       });
 
-      const windowOpenSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+      const globalOpenSpy = jest.spyOn(globalThis, 'open').mockImplementation(() => null);
 
       // Mock do actionsMenu
       const actionsMenuMock = { hide: jest.fn(), toggle: jest.fn() };
@@ -257,7 +257,7 @@ describe('NadaConstaListComponent', () => {
       expect(actionsMenuMock.hide).toHaveBeenCalled();
       expect(service.downloadPdf).toHaveBeenCalledWith(11);
       expect(urlCreateSpy).toHaveBeenCalled();
-      expect(windowOpenSpy).toHaveBeenCalledWith(mockBlobUrl, '_blank');
+      expect(globalOpenSpy).toHaveBeenCalledWith(mockBlobUrl, '_blank');
       expect(messageService.add).toHaveBeenCalledWith({
         severity: 'success',
         summary: 'PDF Gerado',
@@ -267,7 +267,7 @@ describe('NadaConstaListComponent', () => {
       tick(100);
       expect(urlRevokeSpy).toHaveBeenCalledWith(mockBlobUrl);
 
-      windowOpenSpy.mockRestore();
+      globalOpenSpy.mockRestore();
     }));
 
     it('deve tratar erro ao baixar PDF', fakeAsync(() => {
