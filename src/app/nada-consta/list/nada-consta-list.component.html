@@ -147,7 +147,11 @@
                 [style.width]="column.width"
                 [style.min-width]="column.minWidth"
                 [attr.headers]="'col-' + column.field"
+                [attr.role]="column.field !== 'acoes' ? 'button' : null"
+                [attr.tabindex]="column.field !== 'acoes' ? '0' : null"
                 (click)="column.field !== 'acoes' ? openOptions($event, row.id) : null"
+                (keydown.enter)="column.field !== 'acoes' ? openOptions($event, row.id) : null"
+                (keydown.space)="column.field !== 'acoes' && $event.preventDefault(); column.field !== 'acoes' ? openOptions($event, row.id) : null"
                 [class.cursor-pointer]="column.field !== 'acoes'">
                 @switch (column.field) {
                   @case ('status') {
