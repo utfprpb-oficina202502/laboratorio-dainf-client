@@ -147,19 +147,44 @@
                 [style.width]="column.width"
                 [style.min-width]="column.minWidth"
                 [attr.headers]="'col-' + column.field"
-                class="cursor-pointer">
+                (click)="column.field !== 'acoes' ? openOptions($event, row.id) : null"
+                [class.cursor-pointer]="column.field !== 'acoes'">
                 @switch (column.field) {
                   @case ('status') {
                     <p-tag [value]="getStatusLabel(row.status)" [severity]="getStatusSeverity(row.status)"></p-tag>
                   }
                   @case ('acoes') {
                     <div class="flex justify-center gap-2">
-                      @if (row.status === 'completed') {
-                        <p-button icon="pi pi-print" class="p-button-text p-button-rounded" pTooltip="Imprimir Nada Consta" tooltipPosition="top" (onClick)="imprimirNadaConsta(row)" [attr.aria-label]="'Imprimir Nada Consta ' + row.id"></p-button>
-                        <p-button icon="pi pi-bars" class="p-button-text p-button-rounded" pTooltip="Ações" tooltipPosition="top" (click)="openOptions($event, row.id); $event.stopPropagation()" [attr.aria-label]="'Abrir menu de ações ' + row.id"></p-button>
-                      } @else if (row.status === 'pending') {
-                        <p-button icon="pi pi-refresh" class="p-button-text p-button-rounded" pTooltip="Revalidar" tooltipPosition="top" (onClick)="verificarPendencias(row)" [loading]="verificandoPendencias() === row.id" [attr.aria-label]="'Revalidar Nada Consta ' + row.id"></p-button>
-                        <p-button icon="pi pi-bars" class="p-button-text p-button-rounded" pTooltip="Ações" tooltipPosition="top" (click)="openOptions($event, row.id); $event.stopPropagation()" [attr.aria-label]="'Abrir menu de ações ' + row.id"></p-button>
+                      @if (row.status?.toUpperCase() === 'COMPLETED' || row.status?.toUpperCase() === 'CONCLUIDO' || row.status?.toUpperCase() === 'CONCLUÍDO') {
+                        <p-button
+                          icon="pi pi-print"
+                          [text]="true"
+                          [rounded]="true"
+                          pTooltip="Imprimir Nada Consta"
+                          tooltipPosition="top"
+                          (onClick)="imprimirNadaConsta(row); $event.stopPropagation()"
+                          [attr.aria-label]="'Imprimir Nada Consta ' + row.id">
+                        </p-button>
+                        <p-button
+                          icon="pi pi-ellipsis-v"
+                          [text]="true"
+                          [rounded]="true"
+                          pTooltip="Menu de ações"
+                          tooltipPosition="top"
+                          (onClick)="openOptions($event, row.id); $event.stopPropagation()"
+                          [attr.aria-label]="'Abrir menu de ações ' + row.id">
+                        </p-button>
+                      } @else if (row.status?.toUpperCase() === 'PENDING' || row.status?.toUpperCase() === 'PENDENTE') {
+                        <p-button
+                          icon="pi pi-refresh"
+                          [text]="true"
+                          [rounded]="true"
+                          pTooltip="Revalidar"
+                          tooltipPosition="top"
+                          (onClick)="verificarPendencias(row); $event.stopPropagation()"
+                          [loading]="verificandoPendencias() === row.id"
+                          [attr.aria-label]="'Revalidar Nada Consta ' + row.id">
+                        </p-button>
                       }
                       <!-- status invalidated: não mostra nada -->
                     </div>

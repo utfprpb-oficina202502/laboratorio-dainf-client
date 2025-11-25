@@ -85,11 +85,25 @@ export class NadaConstaService extends CrudService<NadaConsta, number> {
     return this.http.put<NadaConsta>(`${this.url}invalidar/${id}`, {});
   }
 
+  /**
+   * Baixa o PDF do Nada Consta.
+   * @param {number} id Identificador do registro
+   * @returns Resultado da requisição com o PDF em formato arraybuffer
+   * @example
+   * this.nadaConstaService.downloadPdf(123).subscribe(...)
+   */
   downloadPdf(id: number) {
-    return this.http.get(`/nadaconsta/${id}/pdf`, { responseType: 'arraybuffer' });
+    return this.http.get(`${this.url}${id}/pdf`, { responseType: 'arraybuffer' });
   }
 
+  /**
+   * Reenvia o email com o Nada Consta.
+   * @param {number} id Identificador do registro
+   * @returns Resultado da requisição
+   * @example
+   * this.nadaConstaService.reenviarEmail(123).subscribe(...)
+   */
   reenviarEmail(id: number) {
-    return this.http.post(`/nadaconsta/${id}/reenvia`, {});
+    return this.http.post(`${this.url}${id}/reenvio`, {});
   }
 }

@@ -203,18 +203,6 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
    */
   public getInvalidando() { return this.invalidando(); }
 
-  /**
-   * Getter público para o sinal acaoErro
-   * @returns string | null
-   */
-  public getAcaoErro() { return this.acaoErro(); }
-
-  /**
-   * Getter público para o sinal acaoSucesso
-   * @returns string | null
-   */
-  public getAcaoSucesso() { return this.acaoSucesso(); }
-
   adicionar(): void {
     this.showAdicionarModal.set(true);
   }
@@ -309,13 +297,13 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
 
   protected readonly verificandoPendencias = signal<number | null>(null);
   protected readonly invalidando = signal<number | null>(null);
-  protected readonly acaoErro = signal<string | null>(null);
-  protected readonly acaoSucesso = signal<string | null>(null);
 
+  /**
+   * Verifica pendências do Nada Consta e atualiza o status.
+   * @param row Registro do Nada Consta
+   */
   verificarPendencias(row: NadaConsta): void {
     this.verificandoPendencias.set(row.id);
-    this.acaoErro.set(null);
-    this.acaoSucesso.set(null);
     this.service.verificarPendencias(row.id)
       .pipe(finalize(() => {
         this.verificandoPendencias.set(null);
@@ -323,21 +311,31 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
       }))
       .subscribe({
         next: () => {
-          this.acaoSucesso.set('Pendências verificadas com sucesso.');
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Sucesso',
+            detail: 'Pendências verificadas com sucesso.'
+          });
           this.findAll();
           this.cdr.markForCheck();
         },
         error: (err) => {
-          this.acaoErro.set(err?.error?.message || 'Erro ao verificar pendências.');
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erro',
+            detail: err?.error?.message || 'Erro ao verificar pendências.'
+          });
           this.cdr.markForCheck();
         }
       });
   }
 
+  /**
+   * Invalida o Nada Consta.
+   * @param row Registro do Nada Consta
+   */
   invalidar(row: NadaConsta): void {
     this.invalidando.set(row.id);
-    this.acaoErro.set(null);
-    this.acaoSucesso.set(null);
     this.service.invalidar(row.id)
       .pipe(finalize(() => {
         this.invalidando.set(null);
@@ -345,12 +343,20 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
       }))
       .subscribe({
         next: () => {
-          this.acaoSucesso.set('Nada Consta invalidado com sucesso.');
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Sucesso',
+            detail: 'Nada Consta invalidado com sucesso.'
+          });
           this.findAll();
           this.cdr.markForCheck();
         },
         error: (err) => {
-          this.acaoErro.set(err?.error?.message || 'Erro ao invalidar Nada Consta.');
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erro',
+            detail: err?.error?.message || 'Erro ao invalidar Nada Consta.'
+          });
           this.cdr.markForCheck();
         }
       });
@@ -379,33 +385,80 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
 
   public setVerificandoPendencias(val: number | null) { this.verificandoPendencias.set(val); }
   public setInvalidando(val: number | null) { this.invalidando.set(val); }
-  public setAcaoErro(val: string | null) { this.acaoErro.set(val); }
-  public setAcaoSucesso(val: string | null) { this.acaoSucesso.set(val); }
 
-  public menuVisible = signal<number | null>(null); // id da linha com menu aberto
   public menuLoading = signal(false);
-  public menuMessage = signal<string | null>(null);
 
-  // Chama API para imprimir PDF, abre em nova aba
+  /**
+   * Imprime o PDF do Nada Consta em uma nova aba do navegador.
+   * @param row Registro do Nada Consta
+   */
   public imprimirNadaConsta(row: NadaConsta) {
-    const url = `/nadaconsta/${row.id}/pdf`;
-    window.open(url, '_blank');
-    this.menuMessage.set('PDF aberto em nova aba.');
-    this.menuLoading.set(false);
+    this.actionsMenu().hide();
+    this.menuLoading.set(true);
+
+    this.service.downloadPdf(row.id)
+      .pipe(finalize(() => {
+        this.menuLoading.set(false);
+        this.cdr?.markForCheck();
+      }))
+      .subscribe({
+        next: (data) => {
+          // Cria um blob a partir do arraybuffer e abre em nova aba
+          const blob = new Blob([data], { type: 'application/pdf' });
+          const url = window.URL.createObjectURL(blob);
+          window.open(url, '_blank');
+
+          // Libera o objeto URL após um pequeno delay
+          setTimeout(() => window.URL.revokeObjectURL(url), 100);
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'PDF Gerado',
+            detail: 'O PDF foi aberto em uma nova aba.'
+          });
+          this.cdr?.markForCheck();
+        },
+        error: (err) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erro',
+            detail: err?.error?.message || 'Erro ao gerar PDF.'
+          });
+          this.cdr?.markForCheck();
+        }
+      });
   }
 
-  // Chama API para reenviar email
-  public async reenviarEmailNadaConsta(row: NadaConsta) {
+  /**
+   * Reenvia o email com o Nada Consta para o usuário.
+   * @param row Registro do Nada Consta
+   */
+  public reenviarEmailNadaConsta(row: NadaConsta) {
+    this.actionsMenu().hide();
     this.menuLoading.set(true);
-    this.menuMessage.set(null);
-    try {
-      await this.service.reenviarEmail(row.id).toPromise();
-      this.menuMessage.set('2ª via enviada com sucesso.');
-    } catch (err) {
-      this.menuMessage.set('Erro ao enviar 2ª via.');
-    } finally {
-      this.menuLoading.set(false);
-    }
+    this.service.reenviarEmail(row.id)
+      .pipe(finalize(() => {
+        this.menuLoading.set(false);
+        this.cdr?.markForCheck();
+      }))
+      .subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Email Enviado',
+            detail: '2ª via do Nada Consta enviada com sucesso.'
+          });
+          this.cdr?.markForCheck();
+        },
+        error: (err) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erro',
+            detail: err?.error?.message || 'Erro ao enviar 2ª via.'
+          });
+          this.cdr?.markForCheck();
+        }
+      });
   }
 
   // Abre menu suspenso para linha
@@ -413,34 +466,53 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
     const nadaConsta = this.objects.find(e => e.id === id);
     this.contextMenuItems = [];
     if (!nadaConsta) return;
-    if (nadaConsta.status === 'completed') {
-      this.contextMenuItems.push({
-        label: 'Imprimir', icon: 'pi pi-print', command: () => this.imprimirNadaConsta(nadaConsta)
-      });
-      this.contextMenuItems.push({
-        label: '2ª via email', icon: 'pi pi-envelope', command: () => this.reenviarEmailNadaConsta(nadaConsta)
-      });
-      this.contextMenuItems.push({
-        label: 'Invalidar', icon: 'pi pi-ban', command: () => this.abrirDialogConfirmarInvalidar(nadaConsta)
-      });
-      this.contextMenuItems.push({
-        label: 'Cancelar', icon: 'pi pi-times', command: () => this.hideOptions()
-      });
-      this.actionsMenu().toggle(event);
-      this.cdr?.markForCheck();
-    } else if (nadaConsta.status === 'pending') {
-      this.contextMenuItems.push({
-        label: 'Revalidar', icon: 'pi pi-refresh', command: () => this.verificarPendencias(nadaConsta)
-      });
-      this.actionsMenu().toggle(event);
-      this.cdr?.markForCheck();
-    } else {
-      // status invalidated: não mostra popover nem ações
-      this.hideOptions();
-    }
-  }
 
-  hideOptions() {
-    this.actionsMenu().hide();
+    // Normaliza o status para uppercase para comparação consistente
+    const status = nadaConsta.status?.toUpperCase();
+
+    if (status === 'COMPLETED' || status === 'CONCLUIDO' || status === 'CONCLUÍDO') {
+      this.contextMenuItems.push({
+        label: 'Imprimir',
+        icon: 'pi pi-print',
+        command: () => this.imprimirNadaConsta(nadaConsta)
+      });
+      this.contextMenuItems.push({
+        label: '2ª via email',
+        icon: 'pi pi-envelope',
+        command: () => this.reenviarEmailNadaConsta(nadaConsta)
+      });
+      this.contextMenuItems.push({
+        label: 'Invalidar',
+        icon: 'pi pi-ban',
+        command: () => {
+          this.actionsMenu().hide();
+          this.abrirDialogConfirmarInvalidar(nadaConsta);
+        }
+      });
+      this.contextMenuItems.push({
+        label: 'Cancelar',
+        icon: 'pi pi-times',
+        command: () => this.actionsMenu().hide()
+      });
+      this.actionsMenu().toggle(event);
+      this.cdr?.markForCheck();
+    } else if (status === 'PENDING' || status === 'PENDENTE') {
+      this.contextMenuItems.push({
+        label: 'Revalidar',
+        icon: 'pi pi-refresh',
+        command: () => {
+          this.actionsMenu().hide();
+          this.verificarPendencias(nadaConsta);
+        }
+      });
+      this.contextMenuItems.push({
+        label: 'Cancelar',
+        icon: 'pi pi-times',
+        command: () => this.actionsMenu().hide()
+      });
+      this.actionsMenu().toggle(event);
+      this.cdr?.markForCheck();
+    }
+    // status invalidated: não mostra popover nem ações
   }
 }
