@@ -101,6 +101,7 @@ export const MENU_ITEM: MenuItem[] = [
     icon: "list",
     id: "solicitacao",
     group: "ITEM",
+    roles: ["ADMINISTRADOR", "LABORATORISTA"],
   },
   {
     path: "/compra",
