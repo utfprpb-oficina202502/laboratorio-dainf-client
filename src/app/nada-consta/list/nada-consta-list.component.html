@@ -18,7 +18,7 @@
             [attr.aria-label]="'Abrir filtros'">
             <span pButtonIcon class="pi pi-search"></span>
           </p-button>
-          <button pButton type="button" label="Adicionar" class="p-button-outlined ml-2" (click)="adicionar()"></button>
+          <button pButton type="button" label="Adicionar" class="p-button-outlined ml-2" (click)="adicionar()">Adicionar</button>
         </ng-template>
       </app-prime-crud-toolbar>
 
@@ -58,8 +58,8 @@
               <div class="p-success mt-2">Solicitação enviada com sucesso!</div>
             }
             <div class="flex justify-between gap-2 mt-4">
-              <button pButton type="button" label="Cancelar" class="p-button-text" (click)="cancelarAdicionar()" [disabled]="solicitando()"></button>
-              <button pButton type="submit" label="Continuar" [disabled]="!registroAcademico() || solicitando()"></button>
+              <button pButton type="button" label="Cancelar" class="p-button-text" (click)="cancelarAdicionar()" [disabled]="solicitando()">Cancelar</button>
+              <button pButton type="submit" label="Continuar" [disabled]="!registroAcademico() || solicitando()">Continuar</button>
             </div>
           </div>
         </form>
@@ -85,8 +85,8 @@
             <strong>Usuário:</strong> {{ registroParaInvalidar()?.usuario?.nome }}
           </p>
           <div class="flex justify-end gap-2 mt-4">
-            <button pButton type="button" label="Cancelar" class="p-button-text" (click)="cancelarInvalidar()" [disabled]="invalidando() === registroParaInvalidar()?.id"></button>
-            <button pButton type="button" label="Confirmar" class="p-button-danger" (click)="confirmarInvalidar()" [disabled]="invalidando() === registroParaInvalidar()?.id"></button>
+            <button pButton type="button" label="Cancelar" class="p-button-text" (click)="cancelarInvalidar()" [disabled]="invalidando() === registroParaInvalidar()?.id">Cancelar</button>
+            <button pButton type="button" label="Confirmar" class="p-button-danger" (click)="confirmarInvalidar()" [disabled]="invalidando() === registroParaInvalidar()?.id">Confirmar</button>
           </div>
         </div>
       </p-dialog>

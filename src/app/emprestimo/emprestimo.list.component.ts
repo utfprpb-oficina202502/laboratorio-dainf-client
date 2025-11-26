@@ -270,11 +270,11 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
         detail: 'Prazo de devolução alterado com sucesso!',
         life: 3000
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.messageService.add({
         severity: 'error',
         summary: 'Atenção!',
-        detail: error?.message || 'Ocorreu um erro ao alterar a data do prazo de devolução!',
+        detail: (error as Error)?.message || 'Ocorreu um erro ao alterar a data do prazo de devolução!',
         life: 5000
       });
     } finally {

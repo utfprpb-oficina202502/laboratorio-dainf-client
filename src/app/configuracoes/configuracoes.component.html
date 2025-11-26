@@ -4,8 +4,8 @@
       <div class="flex items-center justify-between p-4">
         <span class="text-xl font-bold">Configurações</span>
         <div class="flex gap-2 justify-end">
-          <button pButton type="button" label="Cancelar" severity="secondary" [outlined]="true" (click)="cancelar()" [disabled]="isLoading()"></button>
-          <button pButton type="submit" label="Salvar" (click)="enviar()" [disabled]="isLoading() || !nadaConstaEmail()"></button>
+          <button pButton type="button" label="Cancelar" severity="secondary" [outlined]="true" (click)="cancelar()" [disabled]="isLoading()">Cancelar</button>
+          <button pButton type="submit" label="Salvar" (click)="enviar()" [disabled]="isLoading() || !nadaConstaEmail()">Salvar</button>
         </div>
       </div>
     </ng-template>

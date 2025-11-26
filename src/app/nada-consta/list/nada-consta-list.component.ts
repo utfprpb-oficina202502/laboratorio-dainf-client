@@ -285,12 +285,12 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
 
   reenviarNadaConsta(element: NadaConsta): void {
     // Use console.log instead of alert to be test-friendly and avoid JSDOM/windows issues
-    console.log(`Reenviar Nada Consta para registro ID ${element.id}`);
+    console.warn(`Reenviar Nada Consta para registro ID ${element.id}`);
   }
 
   atualizarStatus(element: NadaConsta): void {
-    // Use console.log instead of alert to be test-friendly
-    console.log(`Atualizar status do registro ID ${element.id}`);
+    // Use console.warn instead of alert to be test-friendly
+    console.warn(`Atualizar status do registro ID ${element.id}`);
   }
 
   protected override urlForm = '';

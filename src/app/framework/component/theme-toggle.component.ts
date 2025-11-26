@@ -14,7 +14,7 @@ import {FormsModule} from "@angular/forms";
     <div class="toggle-wrapper">
       <p-toggleButton
         [(ngModel)]="checked"
-        (onChange)="onToggle($event.checked ?? false)"
+        (onChange)="onToggle($event.checked)"
         [onIcon]="'pi pi-moon'"
         [offIcon]="'pi pi-sun'"
         [onLabel]="'Escuro'"

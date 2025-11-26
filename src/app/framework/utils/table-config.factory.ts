@@ -35,7 +35,7 @@ export interface TableConfig {
   preloadData?: boolean;
   keyboardShortcuts?: boolean;
   pageSizeOptions?: number[];
-  [key: string]: any; // Para extensibilidade futura
+  [key: string]: unknown; // Para extensibilidade futura
 }
 
 /**

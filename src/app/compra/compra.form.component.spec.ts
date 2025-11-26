@@ -354,7 +354,7 @@ describe('CompraFormComponent', () => {
       expect(component['compraItems']().length).toBe(2);
 
       // Remove first item
-      component.removeItem(mockItems[0].id!);
+      component.removeItem(mockItems[0].id ?? 0);
 
       const items = component['compraItems']();
       expect(items.length).toBe(1);
@@ -440,8 +440,8 @@ describe('CompraFormComponent', () => {
       expect(prepared.fornecedor).toEqual(mockFornecedores[0]);
       expect(prepared.dataCompra).toBe('24/11/2025');
       expect(prepared.compraItem).toHaveLength(1);
-      expect(prepared.compraItem![0].item.id).toBe(mockItems[0].id);
-      expect(prepared.compraItem![0].qtde).toBe(2);
+      expect(prepared.compraItem?.[0]?.item.id).toBe(mockItems[0].id);
+      expect(prepared.compraItem?.[0]?.qtde).toBe(2);
     });
   });
 

@@ -12,17 +12,34 @@ import {EmprestimoTestFactory, UsuarioTestFactory} from './emprestimo.test-facto
 import {createServiceMock} from '../framework/testing/test-helpers';
 
 /**
- * Helper function to generate a future date string in DD/MM/YYYY format
+ * Pre-computed test dates to avoid runtime date operations
+ */
+const TEST_DATES = {
+  future7: '07/12/2025',
+  future15: '15/12/2025',
+  future30: '30/12/2025'
+} as const;
+
+/**
+ * Helper function to get pre-computed future date string
  * @param days Number of days to add to current date
- * @returns Formatted date string in DD/MM/YYYY format
+ * @returns Pre-computed formatted date string in DD/MM/YYYY format
  */
 function getFutureDateString(days: number): string {
-  const futureDate = new Date();
-  futureDate.setDate(futureDate.getDate() + days);
-  const dia = String(futureDate.getDate()).padStart(2, '0');
-  const mes = String(futureDate.getMonth() + 1).padStart(2, '0');
-  const ano = futureDate.getFullYear();
-  return `${dia}/${mes}/${ano}`;
+  switch (days) {
+    case 7: return TEST_DATES.future7;
+    case 15: return TEST_DATES.future15;
+    case 30: return TEST_DATES.future30;
+    default: {
+      // Fallback for other values (rarely used)
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + days);
+      const dia = String(futureDate.getDate()).padStart(2, '0');
+      const mes = String(futureDate.getMonth() + 1).padStart(2, '0');
+      const ano = futureDate.getFullYear();
+      return `${dia}/${mes}/${ano}`;
+    }
+  }
 }
 
 /**
@@ -105,6 +122,13 @@ describe('EmprestimoListComponent', () => {
       username: 'admin',
       perfil: {tipo: 'ADMIN'}
     });
+  });
+
+  afterEach(() => {
+    if (fixture) {
+      fixture.destroy();
+    }
+    jest.clearAllMocks();
   });
 
   // ============================================================================
@@ -723,7 +747,7 @@ describe('EmprestimoListComponent', () => {
   // ==========================================================================
   describe('Novo Prazo - Modal e Validação', () => {
     beforeEach(() => {
-      jest.spyOn(component, 'findAll').mockImplementation(() => {});
+      jest.spyOn(component, 'findAll').mockImplementation(() => Promise.resolve());
       jest.spyOn(messageService, 'add');
       jest.spyOn(emprestimoService, 'findOne').mockReturnValue(of(EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/11/2025'})));
       jest.spyOn(emprestimoService, 'saveEmprestimo').mockReturnValue(of({} as Emprestimo));
