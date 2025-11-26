@@ -2,7 +2,10 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {DebugElement, Provider, Type} from '@angular/core';
 import {FormControl, FormGroup} from '@angular/forms';
 import {By} from '@angular/platform-browser';
-import {Confirmation, ConfirmationService} from 'primeng/api';
+import {Confirmation, ConfirmationService, MessageService} from 'primeng/api';
+import {LoaderService} from '../loader/loader.service';
+import {LoggerService} from '../services/logger.service';
+import {LoginService} from '../../login/login.service';
 
 /**
  * Utilitários para testes Angular
@@ -192,4 +195,83 @@ export function mockConfirmReject(confirmationService: jest.Mocked<ConfirmationS
     config.reject?.();
     return confirmationService;
   });
+}
+
+/**
+ * Factory para criar mocks de serviços comuns
+ * Reduz duplicação e padroniza setup de mocks
+ */
+export class ServiceMockFactory {
+  /**
+   * Cria mock do MessageService
+   */
+  static createMessageServiceMock(): jest.Mocked<MessageService> {
+    return {
+      add: jest.fn(),
+      clear: jest.fn()
+    } as unknown as jest.Mocked<MessageService>;
+  }
+
+  /**
+   * Cria mock do ConfirmationService
+   */
+  static createConfirmationServiceMock(): jest.Mocked<ConfirmationService> {
+    return {
+      confirm: jest.fn()
+    } as unknown as jest.Mocked<ConfirmationService>;
+  }
+
+  /**
+   * Cria mock do LoaderService
+   */
+  static createLoaderServiceMock(): jest.Mocked<LoaderService> {
+    return {
+      show: jest.fn(),
+      hide: jest.fn(),
+      showWithCancel: jest.fn()
+    } as unknown as jest.Mocked<LoaderService>;
+  }
+
+  /**
+   * Cria mock do LoggerService
+   */
+  static createLoggerServiceMock(): jest.Mocked<LoggerService> {
+    return {
+      error: jest.fn(),
+      warn: jest.fn(),
+      info: jest.fn(),
+      debug: jest.fn()
+    } as unknown as jest.Mocked<LoggerService>;
+  }
+
+  /**
+   * Cria mock do LoginService básico
+   */
+  static createLoginServiceMock(overrides?: Partial<jest.Mocked<LoginService>>): jest.Mocked<LoginService> {
+    const defaultMock = {
+      getCurrentUser: jest.fn(),
+      userLoggedIsAlunoOrProfessor: jest.fn().mockResolvedValue(false),
+      hasAnyRole: jest.fn().mockReturnValue(false),
+      logout: jest.fn()
+    } as unknown as jest.Mocked<LoginService>;
+
+    return {...defaultMock, ...overrides} as jest.Mocked<LoginService>;
+  }
+
+  /**
+   * Cria conjunto de mocks comuns para componentes CRUD
+   */
+  static createCrudServiceMocks(): {
+    messageService: jest.Mocked<MessageService>;
+    confirmationService: jest.Mocked<ConfirmationService>;
+    loaderService: jest.Mocked<LoaderService>;
+    loggerService: jest.Mocked<LoggerService>;
+  } {
+    return {
+      messageService: this.createMessageServiceMock(),
+      confirmationService: this.createConfirmationServiceMock(),
+      loaderService: this.createLoaderServiceMock(),
+      loggerService: this.createLoggerServiceMock()
+    };
+  }
 }

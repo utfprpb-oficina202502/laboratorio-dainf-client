@@ -9,7 +9,8 @@
           <label for="id">ID do Registro</label>
           <input pInputText type="number" [(ngModel)]="id" name="id" id="id" placeholder="Digite o ID do registro" required />
         </div>
-        <button pButton type="submit" label="Consultar" [disabled]="carregando || form.invalid" class="p-button-outlined">Consultar</button>
+        <p-button [disabled]="carregando || form.invalid" label="Consultar" type="submit"
+                  variant="outlined"/>
       </form>
       <!-- Live region for accessibility -->
       <div class="sr-only" role="status" aria-live="polite">

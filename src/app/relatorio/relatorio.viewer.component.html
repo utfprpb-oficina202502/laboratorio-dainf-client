@@ -8,26 +8,24 @@
         </div>
         <div class="flex items-center gap-2">
           @if (reportURL) {
-            <button
-              (click)="downloadReport()"
-              class="p-button-rounded p-button-text"
+            <p-button
+              (onClick)="downloadReport()"
+              [rounded]="true"
+              type="button"
               icon="pi pi-download"
-              pButton
               pTooltip="Download PDF"
               tooltipPosition="left"
-              type="button">
-            </button>
+              variant="text"/>
           }
           @if ((relatorioCurrent?.paramsList?.length ?? 0) > 0) {
-            <button
-              (click)="dialogFiltroRelatorio = true"
-              class="p-button-rounded p-button-text"
+            <p-button
+              (onClick)="dialogFiltroRelatorio = true"
+              [rounded]="true"
+              type="button"
               icon="pi pi-filter"
-              pButton
               pTooltip="Filtro"
               tooltipPosition="left"
-              type="button">
-            </button>
+              variant="text"/>
           }
         </div>
       </div>

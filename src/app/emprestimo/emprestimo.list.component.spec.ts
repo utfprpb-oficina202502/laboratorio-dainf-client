@@ -55,14 +55,18 @@ describe('EmprestimoListComponent', () => {
   let messageService: jest.Mocked<MessageService>;
   let loginService: jest.Mocked<LoginService>;
 
-  // Dados de teste usando factories
-  const mockEmprestimos: Emprestimo[] = [
-    EmprestimoTestFactory.createPendente({id: 1}),
-    EmprestimoTestFactory.createFinalizado({id: 2}),
-    EmprestimoTestFactory.createAtrasado({id: 3})
-  ];
+  // Dados de teste usando factories - movido para beforeAll para performance
+  let mockEmprestimos: Emprestimo[];
+  let mockUsuarios: Usuario[];
 
-  const mockUsuarios: Usuario[] = UsuarioTestFactory.createList(2);
+  beforeAll(() => {
+    mockEmprestimos = [
+      EmprestimoTestFactory.createPendente({id: 1}),
+      EmprestimoTestFactory.createFinalizado({id: 2}),
+      EmprestimoTestFactory.createAtrasado({id: 3})
+    ];
+    mockUsuarios = UsuarioTestFactory.createList(2);
+  });
 
   beforeEach(async () => {
     const emprestimoServiceSpy = createServiceMock<EmprestimoService>([
@@ -97,6 +101,7 @@ describe('EmprestimoListComponent', () => {
 
     fixture = TestBed.createComponent(EmprestimoListComponent);
     component = fixture.componentInstance;
+
     emprestimoService = TestBed.inject(EmprestimoService) as jest.Mocked<EmprestimoService>;
     usuarioService = TestBed.inject(UsuarioService) as jest.Mocked<UsuarioService>;
     confirmationService = TestBed.inject(ConfirmationService) as jest.Mocked<ConfirmationService>;

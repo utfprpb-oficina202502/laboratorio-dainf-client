@@ -91,15 +91,13 @@
             <tr>
               @if (tableConfig.expandable) {
                 <td class="w-3rem">
-                  <button
+                  <p-button
                     type="button"
-                    pButton
                     [pRowToggler]="row"
-                    class="p-button-text p-button-rounded"
-                    [attr.aria-label]="(isRowExpanded(row) ? 'Recolher' : 'Expandir') + ' detalhes do grupo ' + row.descricao">
-                    <span pButtonIcon
-                          [class]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></span>
-                  </button>
+                    [attr.aria-label]="(isRowExpanded(row) ? 'Recolher' : 'Expandir') + ' detalhes do grupo ' + row.descricao"
+                    [icon]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+                    [rounded]="true"
+                    variant="text"/>
                 </td>
               }
               @if (!isReadOnly() && tableConfig.selectable !== false) {

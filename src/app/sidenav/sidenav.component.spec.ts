@@ -83,6 +83,13 @@ describe('SidenavComponent', () => {
     component = fixture.componentInstance;
   });
 
+  afterEach(() => {
+    if (fixture) {
+      fixture.destroy();
+    }
+    jest.clearAllMocks();
+  });
+
   it('deve criar o componente sidenav', () => {
     expect(component).toBeTruthy();
   });

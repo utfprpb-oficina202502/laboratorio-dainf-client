@@ -328,16 +328,14 @@
           class="max-w-full w-300px"
           [alt]="'Item'" fill/>
         @if (!isAlunoOrProfessor()) {
-          <button
-            pButton
+          <p-button
             type="button"
-            class="p-button-danger"
+            (onClick)="deleteImage(image)"
             pTooltip="Remover Imagem"
             tooltipPosition="bottom"
-            (click)="deleteImage(image)"
+            label="Remover"
             icon="pi pi-trash"
-            label="Remover">
-          </button>
+            severity="danger"/>
         }
       </div>
     </ng-template>
