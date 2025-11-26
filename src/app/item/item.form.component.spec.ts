@@ -30,33 +30,40 @@ describe('ItemFormComponent', () => {
   let confirmationService: jest.Mocked<ConfirmationService>;
   let loggerService: jest.Mocked<LoggerService>;
 
-  const mockGrupos: Grupo[] = [
-    {id: 1, descricao: 'Eletrônicos'},
-    {id: 2, descricao: 'Ferramentas'},
-    {id: 3, descricao: 'Materiais'}
-  ];
+  // Mock data moved to beforeAll for performance
+  let mockGrupos: Grupo[];
+  let mockItem: Item;
+  let mockImages: ItemImage[];
 
-  const mockItem: Item = {
-    id: 1,
-    nome: 'Item Teste',
-    patrimonio: 12345,
-    siorg: 67890,
-    valor: 100.50,
-    qtdeMinima: 5,
-    localizacao: 'Sala 101',
-    tipoItem: 'C',
-    saldo: 10,
-    disponivelEmprestimoCalculado: 8,
-    quantidadeEmprestada: 2,
-    descricao: 'Descrição do item teste',
-    grupo: mockGrupos[0],
-    imageItem: []
-  };
+  beforeAll(() => {
+    mockGrupos = [
+      {id: 1, descricao: 'Eletrônicos'},
+      {id: 2, descricao: 'Ferramentas'},
+      {id: 3, descricao: 'Materiais'}
+    ];
 
-  const mockImages: ItemImage[] = [
-    {id: 1, nameImage: 'image1.jpg', contentType: 'image/jpeg', item: mockItem, base64: ''},
-    {id: 2, nameImage: 'image2.jpg', contentType: 'image/jpeg', item: mockItem, base64: ''}
-  ];
+    mockItem = {
+      id: 1,
+      nome: 'Item Teste',
+      patrimonio: 12345,
+      siorg: 67890,
+      valor: 100.50,
+      qtdeMinima: 5,
+      localizacao: 'Sala 101',
+      tipoItem: 'C',
+      saldo: 10,
+      disponivelEmprestimoCalculado: 8,
+      quantidadeEmprestada: 2,
+      descricao: 'Descrição do item teste',
+      grupo: mockGrupos[0],
+      imageItem: []
+    };
+
+    mockImages = [
+      {id: 1, nameImage: 'image1.jpg', contentType: 'image/jpeg', item: mockItem, base64: ''},
+      {id: 2, nameImage: 'image2.jpg', contentType: 'image/jpeg', item: mockItem, base64: ''}
+    ];
+  });
 
   beforeEach(async () => {
     const itemServiceMock = {
@@ -124,6 +131,13 @@ describe('ItemFormComponent', () => {
 
     fixture = TestBed.createComponent(ItemFormComponent);
     component = fixture.componentInstance;
+  });
+
+  afterEach(() => {
+    if (fixture) {
+      fixture.destroy();
+    }
+    jest.clearAllMocks();
   });
 
   describe('Component Initialization', () => {

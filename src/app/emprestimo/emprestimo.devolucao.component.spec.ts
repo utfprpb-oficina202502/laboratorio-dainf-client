@@ -28,10 +28,19 @@ if (typeof global.structuredClone === 'undefined') {
 // Shared Test Utilities
 // ============================================================================
 
+// ============================================================================
+// Shared Test Utilities
+// ============================================================================
+
+
+
 /**
- * Configuração compartilhada do TestBed para todos os testes do componente
+ * Cria e retorna uma instância configurada do componente com empréstimo vazio
  */
-function setupTestBed(): void {
+function createComponentWithEmprestimo(): {
+  component: EmprestimoDevolucaoComponent;
+  emprestimo: Emprestimo
+} {
   TestBed.configureTestingModule({
     imports: [RouterTestingModule, EmprestimoDevolucaoComponent],
     providers: [
@@ -43,15 +52,7 @@ function setupTestBed(): void {
       {provide: LoggerService, useValue: {}},
     ],
   });
-}
 
-/**
- * Cria e retorna uma instância configurada do componente com empréstimo vazio
- */
-function createComponentWithEmprestimo(): {
-  component: EmprestimoDevolucaoComponent;
-  emprestimo: Emprestimo
-} {
   const fixture = TestBed.createComponent(EmprestimoDevolucaoComponent);
   const component = fixture.componentInstance;
 
@@ -98,7 +99,6 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
   let emprestimo: Emprestimo;
 
   beforeEach(() => {
-    setupTestBed();
     ({component, emprestimo} = createComponentWithEmprestimo());
   });
 
@@ -401,9 +401,11 @@ describe('EmprestimoDevolucaoComponent - verificaOptionsEnabled', () => {
   let emprestimo: Emprestimo;
 
   beforeEach(() => {
-    setupTestBed();
+
     ({component, emprestimo} = createComponentWithEmprestimo());
   });
+
+
 
   it('deve permitir duplicar quando há apenas 1 item do tipo', () => {
     const item = createDevolucaoItem(emprestimo, 1, 100, 5);
@@ -466,9 +468,11 @@ describe('EmprestimoDevolucaoComponent - duplicarItem', () => {
   let emprestimo: Emprestimo;
 
   beforeEach(() => {
-    setupTestBed();
+
     ({component, emprestimo} = createComponentWithEmprestimo());
   });
+
+
 
   it('deve criar duplicata com quantidade especificada', () => {
     const original = createDevolucaoItem(emprestimo, 1, 100, 10);
@@ -579,9 +583,11 @@ describe('EmprestimoDevolucaoComponent - disableBtnSaveDuplicar', () => {
   let emprestimo: Emprestimo;
 
   beforeEach(() => {
-    setupTestBed();
+
     ({component, emprestimo} = createComponentWithEmprestimo());
   });
+
+
 
   it('deve desabilitar quando qtdeItemDuplicado é zero', () => {
     const item = createDevolucaoItem(emprestimo, 1, 100, 10);
@@ -676,9 +682,11 @@ describe('EmprestimoDevolucaoComponent - drop (drag-and-drop)', () => {
   let emprestimo: Emprestimo;
 
   beforeEach(() => {
-    setupTestBed();
+
     ({component, emprestimo} = createComponentWithEmprestimo());
   });
+
+
 
   // Nota: Testes de reordenação dentro da mesma lista (moveItemInArray)
   // requerem mock completo do CDK drag-drop e são melhor testados com testes de integração
@@ -787,9 +795,11 @@ describe('EmprestimoDevolucaoComponent - onContextMenu', () => {
   let emprestimo: Emprestimo;
 
   beforeEach(() => {
-    setupTestBed();
+
     ({component, emprestimo} = createComponentWithEmprestimo());
   });
+
+
 
   it('deve prevenir comportamento padrão do navegador', () => {
     const item = createDevolucaoItem(emprestimo, 1, 100, 5);

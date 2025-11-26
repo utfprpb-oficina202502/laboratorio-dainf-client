@@ -95,6 +95,13 @@ describe('ValidationDirective', () => {
     noLabelFieldElement = elements.noLabelField;
   });
 
+  afterEach(() => {
+    if (fixture) {
+      fixture.destroy();
+    }
+    jest.clearAllMocks();
+  });
+
   // ============================================================================
   // Setup & Lifecycle (5 tests)
   // ============================================================================

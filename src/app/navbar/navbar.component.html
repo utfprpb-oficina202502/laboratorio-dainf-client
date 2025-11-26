@@ -2,17 +2,15 @@
   <ng-template pTemplate="start">
     <div class="flex items-center gap-2">
       <!-- Hamburger menu: Show on mobile/tablet (<1200px), hide on desktop (≥1200px) -->
-      <button
+      <p-button
         id="btn-sidenav"
         type="button"
-        pButton
-        class="p-button-text p-button-plain p-button-icon-only navbar-hamburger"
-        (click)="onHamburgerClick($event)"
+        (onClick)="onHamburgerClick($event)"
+        class="navbar-hamburger"
+        icon="pi pi-bars"
         (touchend)="onHamburgerTouch($event)"
         aria-label="Alternar navegação lateral"
-      >
-        <i class="pi pi-bars"></i>
-      </button>
+        variant="text"/>
       <img src="/logo.png" alt="Logo Laboratório DAINF" class="w-10 h-10 object-contain" />
       <!-- Long title: hidden on small screens -->
       <a
@@ -31,21 +29,22 @@
   <ng-template pTemplate="end">
     <div class="flex items-center gap-3">
       <!-- User menu button: Responsive - full text on desktop, icon on mobile -->
-      <button
+      <p-button
         type="button"
-        pButton
-        class="p-button-text p-button-plain navbar-user-menu"
-        (click)="menu.toggle($event)"
+        (onClick)="menu.toggle($event)"
         aria-label="Menu do usuário"
-      >
+        class="navbar-user-menu"
+        variant="text">
         <!-- Desktop: Show username + icon -->
         <span class="navbar-user-full">
           <span class="text-sm">Olá, {{ getUserLogado() }}</span>
           <i class="pi pi-chevron-down text-xs ml-2"></i>
         </span>
-        <!-- Mobile: Show icon only -->
-        <i class="pi pi-user navbar-user-icon"></i>
-      </button>
+        <!-- Mobile: Show only icon -->
+        <span class="navbar-user-mobile">
+          <i class="pi pi-user"></i>
+        </span>
+      </p-button>
 
       <p-tieredMenu
         #menu

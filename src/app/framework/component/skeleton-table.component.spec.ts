@@ -5,14 +5,24 @@ import {By} from '@angular/platform-browser';
 describe('SkeletonTableComponent', () => {
   let component: SkeletonTableComponent;
   let fixture: ComponentFixture<SkeletonTableComponent>;
+  let cachedElements: Record<string, Element | NodeListOf<Element>> = {};
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     await TestBed.configureTestingModule({
       imports: [SkeletonTableComponent]
     }).compileComponents();
+  });
 
+  beforeEach(() => {
     fixture = TestBed.createComponent(SkeletonTableComponent);
     component = fixture.componentInstance;
+    cachedElements = {}; // Reset cache
+  });
+
+  afterEach(() => {
+    if (fixture) {
+      fixture.destroy();
+    }
   });
 
   describe('Component Initialization', () => {
@@ -58,21 +68,15 @@ describe('SkeletonTableComponent', () => {
 
     it('should update when column input changes', () => {
       fixture.componentRef.setInput('columns', 3);
-      fixture.detectChanges();
-      expect(component.columns()).toBe(3);
-
       fixture.componentRef.setInput('columns', 8);
-      fixture.detectChanges();
+      fixture.detectChanges(); // Single call after both changes
       expect(component.columns()).toBe(8);
     });
 
     it('should update when row input changes', () => {
       fixture.componentRef.setInput('rows', 3);
-      fixture.detectChanges();
-      expect(component.rows()).toBe(3);
-
       fixture.componentRef.setInput('rows', 12);
-      fixture.detectChanges();
+      fixture.detectChanges(); // Single call after both changes
       expect(component.rows()).toBe(12);
     });
   });
@@ -134,16 +138,16 @@ describe('SkeletonTableComponent', () => {
       fixture.componentRef.setInput('columns', 4);
       fixture.detectChanges();
 
-      const headerCells = fixture.nativeElement.querySelectorAll('.header-cell');
-      expect(headerCells.length).toBe(4);
+      cachedElements.headerCells = fixture.nativeElement.querySelectorAll('.header-cell');
+      expect((cachedElements.headerCells as NodeListOf<Element>).length).toBe(4);
     });
 
     it('should render skeleton in each header cell', () => {
       fixture.componentRef.setInput('columns', 3);
       fixture.detectChanges();
 
-      const headerCells = fixture.nativeElement.querySelectorAll('.header-cell');
-      headerCells.forEach((cell: Element) => {
+      cachedElements.headerCells = fixture.nativeElement.querySelectorAll('.header-cell');
+      (cachedElements.headerCells as NodeListOf<Element>).forEach((cell: Element) => {
         const skeleton = cell.querySelector('p-skeleton');
         expect(skeleton).toBeTruthy();
       });

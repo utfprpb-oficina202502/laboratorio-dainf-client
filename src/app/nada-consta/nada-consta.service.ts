@@ -10,11 +10,11 @@ export interface Usuario {
   documento: string;
   email: string;
   telefone: string;
-  permissoes: any[];
+  permissoes: string[];
   fotoUrl: string | null;
   codigoVerificacao: string;
   ativo: boolean;
-  authorities: any[];
+  authorities: string[];
   accountNonExpired: boolean;
   accountNonLocked: boolean;
   credentialsNonExpired: boolean;

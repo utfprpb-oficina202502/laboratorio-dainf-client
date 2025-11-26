@@ -89,6 +89,13 @@ describe('RelatorioFormComponent', () => {
     component = fixture.componentInstance;
   });
 
+  afterEach(() => {
+    if (fixture) {
+      fixture.destroy();
+    }
+    jest.clearAllMocks();
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });

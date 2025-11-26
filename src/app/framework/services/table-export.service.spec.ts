@@ -30,6 +30,23 @@ describe('TableExportService', () => {
   let messageService: jest.Mocked<MessageService>;
   let loggerService: jest.Mocked<LoggerService>;
 
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  /**
+   * Helper para aguardar promises sem usar setTimeout real
+   * Usa fake timers para performance
+   */
+  async function waitForAsync(): Promise<void> {
+    jest.advanceTimersByTime(0);
+    await Promise.resolve();
+  }
+
   // Mock data para testes
   const mockColumns: TableColumn[] = [
     {field: 'id', header: 'ID'},
@@ -116,8 +133,9 @@ describe('TableExportService', () => {
     it('deve exibir mensagem informativa ao iniciar exportação', async () => {
       service.exportToExcel(mockData, mockColumns, 'test');
 
-      // Aguarda promises
-      await new Promise(resolve => setTimeout(resolve, 10));
+      // Aguarda promises usando fake timers
+      jest.advanceTimersByTime(0);
+      await Promise.resolve();
 
       expect(messageService.add).toHaveBeenCalledWith({
         severity: 'info',
@@ -129,7 +147,8 @@ describe('TableExportService', () => {
     it('deve criar workbook e worksheet com nome correto', async () => {
       service.exportToExcel(mockData, mockColumns, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      jest.advanceTimersByTime(0);
+      await Promise.resolve();
 
       expect(mockExcelJS.Workbook).toHaveBeenCalled();
       expect(mockWorkbook.addWorksheet).toHaveBeenCalledWith('Dados');
@@ -138,7 +157,7 @@ describe('TableExportService', () => {
     it('deve filtrar coluna actions dos dados exportados', async () => {
       service.exportToExcel(mockData, mockColumns, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       // Verifica que addRow foi chamado (cabeçalhos + 3 linhas de dados)
       expect(mockWorksheet.addRow).toHaveBeenCalledTimes(4);
@@ -147,7 +166,7 @@ describe('TableExportService', () => {
     it('deve usar nome de arquivo padrão quando não fornecido', async () => {
       service.exportToExcel(mockData, mockColumns);
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       expect(mockLink.download).toContain('dados_export_');
       expect(mockLink.download).toContain('.xlsx');
@@ -156,7 +175,7 @@ describe('TableExportService', () => {
     it('deve usar nome de arquivo fornecido', async () => {
       service.exportToExcel(mockData, mockColumns, 'meus-dados');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       expect(mockLink.download).toContain('meus-dados_export_');
       expect(mockLink.download).toContain('.xlsx');
@@ -181,7 +200,7 @@ describe('TableExportService', () => {
 
       service.exportToExcel(mockData, mockColumns, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       // Verifica que larguras foram definidas
       expect(mockWorksheet.columns[0].width).toBeGreaterThan(0);
@@ -205,7 +224,7 @@ describe('TableExportService', () => {
 
       service.exportToExcel(mockData, mockColumns, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       expect(mockWorksheet.columns[0].width).toBeDefined();
     });
@@ -222,7 +241,7 @@ describe('TableExportService', () => {
 
       service.exportToExcel(mockData, mockColumns, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       expect(mockWorksheet.columns[0].width).toBeLessThanOrEqual(50);
     });
@@ -236,7 +255,7 @@ describe('TableExportService', () => {
 
       service.exportToExcel(dataWithNested, columnsWithNested, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       expect(mockWorksheet.addRow).toHaveBeenCalled();
     });
@@ -250,7 +269,7 @@ describe('TableExportService', () => {
 
       service.exportToExcel(dataWithCustom, columnsWithCustom, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       expect(mockWorksheet.addRow).toHaveBeenCalled();
     });
@@ -264,7 +283,7 @@ describe('TableExportService', () => {
 
       service.exportToExcel(dataWithCustom, columnsWithCustom, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       expect(mockWorksheet.addRow).toHaveBeenCalled();
     });
@@ -278,7 +297,7 @@ describe('TableExportService', () => {
 
       service.exportToExcel(dataWithCustom, columnsWithCustom, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       expect(mockWorksheet.addRow).toHaveBeenCalled();
     });
@@ -292,7 +311,7 @@ describe('TableExportService', () => {
 
       service.exportToExcel(dataWithCustom, columnsWithCustom, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       expect(mockWorksheet.addRow).toHaveBeenCalled();
     });
@@ -306,7 +325,7 @@ describe('TableExportService', () => {
 
       service.exportToExcel(dataWithUndefined, columnsWithUndefined, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       expect(mockWorksheet.addRow).toHaveBeenCalled();
     });
@@ -314,7 +333,7 @@ describe('TableExportService', () => {
     it('deve manipular objetos null nos dados', async () => {
       service.exportToExcel([null as any], mockColumns, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       expect(mockWorksheet.addRow).toHaveBeenCalled();
     });
@@ -326,7 +345,7 @@ describe('TableExportService', () => {
 
       service.exportToExcel(mockData, columnsWithEmptyField, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       expect(mockWorksheet.addRow).toHaveBeenCalled();
     });
@@ -339,7 +358,7 @@ describe('TableExportService', () => {
 
       service.exportToExcel(dataWithMissingPath, columnsWithMissingPath, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       expect(mockWorksheet.addRow).toHaveBeenCalled();
     });
@@ -347,7 +366,7 @@ describe('TableExportService', () => {
     it('deve criar e remover link de download corretamente', async () => {
       service.exportToExcel(mockData, mockColumns, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       expect(document.createElement).toHaveBeenCalledWith('a');
       expect(document.body.appendChild).toHaveBeenCalledWith(mockLink);
@@ -358,7 +377,7 @@ describe('TableExportService', () => {
     it('deve criar e revogar URL do blob', async () => {
       service.exportToExcel(mockData, mockColumns, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       expect(global.URL.createObjectURL).toHaveBeenCalled();
       expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
@@ -367,7 +386,7 @@ describe('TableExportService', () => {
     it('deve configurar tipo MIME correto do blob', async () => {
       service.exportToExcel(mockData, mockColumns, 'test');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       const createObjectURLCall = (global.URL.createObjectURL as jest.Mock).mock.calls[0][0];
       expect(createObjectURLCall.type).toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -537,7 +556,7 @@ describe('TableExportService', () => {
     it('deve realizar fluxo completo de exportação Excel com dados reais', async () => {
       service.exportToExcel(mockData, mockColumns, 'test-export');
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await waitForAsync();
 
       // Verifica mensagem informativa
       expect(messageService.add).toHaveBeenCalledWith(

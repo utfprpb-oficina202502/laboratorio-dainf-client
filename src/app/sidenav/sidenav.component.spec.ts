@@ -83,6 +83,13 @@ describe('SidenavComponent', () => {
     component = fixture.componentInstance;
   });
 
+  afterEach(() => {
+    if (fixture) {
+      fixture.destroy();
+    }
+    jest.clearAllMocks();
+  });
+
   it('deve criar o componente sidenav', () => {
     expect(component).toBeTruthy();
   });
@@ -289,6 +296,64 @@ describe('SidenavComponent', () => {
 
       setTimeout(() => {
         expect(component.showCadastros).toBe(false);
+        done();
+      }, 100);
+    });
+
+    it('ALUNO não deve visualizar menu Solicitação de Compra', (done) => {
+      mockLoginService.getPermissoesUser = jest.fn().mockReturnValue(of([
+        {nome: 'ROLE_ALUNO'}
+      ]));
+
+      component.buildMenu();
+
+      setTimeout(() => {
+        const solicitacaoItem = component.menuItems.find(item => item.id === 'solicitacao');
+        expect(solicitacaoItem).toBeUndefined();
+        done();
+      }, 100);
+    });
+
+    it('PROFESSOR não deve visualizar menu Solicitação de Compra', (done) => {
+      mockLoginService.getPermissoesUser = jest.fn().mockReturnValue(of([
+        {nome: 'ROLE_PROFESSOR'}
+      ]));
+
+      component.buildMenu();
+
+      setTimeout(() => {
+        const solicitacaoItem = component.menuItems.find(item => item.id === 'solicitacao');
+        expect(solicitacaoItem).toBeUndefined();
+        done();
+      }, 100);
+    });
+
+    it('ADMINISTRADOR deve visualizar menu Solicitação de Compra', (done) => {
+      mockLoginService.getPermissoesUser = jest.fn().mockReturnValue(of([
+        {nome: 'ROLE_ADMINISTRADOR'}
+      ]));
+
+      component.buildMenu();
+
+      setTimeout(() => {
+        const solicitacaoItem = component.menuItems.find(item => item.id === 'solicitacao');
+        expect(solicitacaoItem).toBeDefined();
+        expect(solicitacaoItem?.label).toBe('Sol. de Compra');
+        done();
+      }, 100);
+    });
+
+    it('LABORATORISTA deve visualizar menu Solicitação de Compra', (done) => {
+      mockLoginService.getPermissoesUser = jest.fn().mockReturnValue(of([
+        {nome: 'ROLE_LABORATORISTA'}
+      ]));
+
+      component.buildMenu();
+
+      setTimeout(() => {
+        const solicitacaoItem = component.menuItems.find(item => item.id === 'solicitacao');
+        expect(solicitacaoItem).toBeDefined();
+        expect(solicitacaoItem?.label).toBe('Sol. de Compra');
         done();
       }, 100);
     });

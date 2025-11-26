@@ -10,7 +10,7 @@
     "build": "ng build --configuration production",
     "dev": "ng serve",
     "lint": "ng lint",
-    "test": "jest",
+    "test": "jest --detectOpenHandles",
     "test:ci": "jest --ci --runInBand --coverage",
     "test:watch": "jest --watch",
     "start": "node server.js",

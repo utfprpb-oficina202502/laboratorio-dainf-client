@@ -30,41 +30,53 @@ describe('CompraFormComponent', () => {
   let messageService: jest.Mocked<MessageService>;
   let loggerService: jest.Mocked<LoggerService>;
 
-  const mockFornecedores: Partial<Fornecedor>[] = [
-    {id: 1, nomeFantasia: 'Fornecedor A', razaoSocial: 'Fornecedor A Ltda', cnpj: '12345678000190'},
-    {id: 2, nomeFantasia: 'Fornecedor B', razaoSocial: 'Fornecedor B SA', cnpj: '98765432000100'}
-  ];
+  // Mock data moved to beforeAll for performance
+  let mockFornecedores: Partial<Fornecedor>[];
+  let mockItems: Partial<Item>[];
+  let mockCompra: Partial<Compra>;
 
-  const mockItems: Partial<Item>[] = [
-    {
+  beforeAll(() => {
+    mockFornecedores = [
+      {
+        id: 1,
+        nomeFantasia: 'Fornecedor A',
+        razaoSocial: 'Fornecedor A Ltda',
+        cnpj: '12345678000190'
+      },
+      {id: 2, nomeFantasia: 'Fornecedor B', razaoSocial: 'Fornecedor B SA', cnpj: '98765432000100'}
+    ];
+
+    mockItems = [
+      {
+        id: 1,
+        nome: 'Item A',
+        valor: 50.00,
+        saldo: 10,
+        tipoItem: 'C',
+        disponivelEmprestimoCalculado: 10
+      },
+      {
+        id: 2,
+        nome: 'Item B',
+        valor: 100.00,
+        patrimonio: 12345,
+        saldo: 5,
+        tipoItem: 'P',
+        disponivelEmprestimoCalculado: 5
+      }
+    ];
+
+    mockCompra = {
       id: 1,
-      nome: 'Item A',
-      valor: 50.00,
-      saldo: 10,
-      tipoItem: 'C',
-      disponivelEmprestimoCalculado: 10
-    },
-    {
-      id: 2,
-      nome: 'Item B',
-      valor: 100.00,
-      patrimonio: 12345,
-      saldo: 5,
-      tipoItem: 'P',
-      disponivelEmprestimoCalculado: 5
-    }
-  ];
-
-  const mockCompra: Partial<Compra> = {
-    id: 1,
-    fornecedor: mockFornecedores[0] as Fornecedor,
-    usuario: {id: 1, nome: 'Usuário Teste'} as any,
-    dataCompra: '24/11/2025',
-    compraItem: [
-      {id: 1, item: mockItems[0] as Item, qtde: 2, valor: 100.00} as CompraItem,
-      {id: 2, item: mockItems[1] as Item, qtde: 1, valor: 100.00} as CompraItem
-    ]
-  };
+      fornecedor: mockFornecedores[0] as Fornecedor,
+      usuario: {id: 1, nome: 'Usuário Teste'} as any,
+      dataCompra: '24/11/2025',
+      compraItem: [
+        {id: 1, item: mockItems[0] as Item, qtde: 2, valor: 100.00} as CompraItem,
+        {id: 2, item: mockItems[1] as Item, qtde: 1, valor: 100.00} as CompraItem
+      ]
+    };
+  });
 
   beforeEach(async () => {
     const compraServiceMock = {
@@ -128,6 +140,13 @@ describe('CompraFormComponent', () => {
     fixture = TestBed.createComponent(CompraFormComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    if (fixture) {
+      fixture.destroy();
+    }
+    jest.clearAllMocks();
   });
 
   describe('Component Initialization', () => {
@@ -354,7 +373,7 @@ describe('CompraFormComponent', () => {
       expect(component['compraItems']().length).toBe(2);
 
       // Remove first item
-      component.removeItem(mockItems[0].id!);
+      component.removeItem(mockItems[0].id ?? 0);
 
       const items = component['compraItems']();
       expect(items.length).toBe(1);
@@ -440,8 +459,8 @@ describe('CompraFormComponent', () => {
       expect(prepared.fornecedor).toEqual(mockFornecedores[0]);
       expect(prepared.dataCompra).toBe('24/11/2025');
       expect(prepared.compraItem).toHaveLength(1);
-      expect(prepared.compraItem![0].item.id).toBe(mockItems[0].id);
-      expect(prepared.compraItem![0].qtde).toBe(2);
+      expect(prepared.compraItem?.[0]?.item.id).toBe(mockItems[0].id);
+      expect(prepared.compraItem?.[0]?.qtde).toBe(2);
     });
   });
 
