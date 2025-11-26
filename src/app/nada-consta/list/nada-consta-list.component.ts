@@ -1,4 +1,4 @@
-import { Component, forwardRef, signal, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, forwardRef, signal, inject, ChangeDetectionStrategy, ChangeDetectorRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -20,6 +20,9 @@ import { finalize } from 'rxjs';
 import { getNadaConstaStatusLabel, getNadaConstaStatusSeverity } from '../../framework/utils/status-label.util';
 import { createTableConfig } from '../../framework/utils/table-config.factory';
 import { TableEmptyStateComponent } from '../../framework/component/table-empty-state.component';
+import { MenuItem } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
+import { Popover, PopoverModule } from 'primeng/popover';
 
 @Component({
   selector: 'app-nada-consta-list',
@@ -42,11 +45,16 @@ import { TableEmptyStateComponent } from '../../framework/component/table-empty-
     IconFieldModule,
     InputIconModule,
     TableFilterCaptionComponent,
-    TableEmptyStateComponent
+    TableEmptyStateComponent,
+    MenuModule,
+    PopoverModule
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => NadaConstaListComponent) }]
 })
 export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, number> {
+  readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
+  contextMenuItems: MenuItem[] = [];
+
   protected override columnsTable: string[] = [
     'id',
     'usuarioUsername',
@@ -195,18 +203,6 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
    */
   public getInvalidando() { return this.invalidando(); }
 
-  /**
-   * Getter público para o sinal acaoErro
-   * @returns string | null
-   */
-  public getAcaoErro() { return this.acaoErro(); }
-
-  /**
-   * Getter público para o sinal acaoSucesso
-   * @returns string | null
-   */
-  public getAcaoSucesso() { return this.acaoSucesso(); }
-
   adicionar(): void {
     this.showAdicionarModal.set(true);
   }
@@ -301,13 +297,13 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
 
   protected readonly verificandoPendencias = signal<number | null>(null);
   protected readonly invalidando = signal<number | null>(null);
-  protected readonly acaoErro = signal<string | null>(null);
-  protected readonly acaoSucesso = signal<string | null>(null);
 
+  /**
+   * Verifica pendências do Nada Consta e atualiza o status.
+   * @param row Registro do Nada Consta
+   */
   verificarPendencias(row: NadaConsta): void {
     this.verificandoPendencias.set(row.id);
-    this.acaoErro.set(null);
-    this.acaoSucesso.set(null);
     this.service.verificarPendencias(row.id)
       .pipe(finalize(() => {
         this.verificandoPendencias.set(null);
@@ -315,21 +311,19 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
       }))
       .subscribe({
         next: () => {
-          this.acaoSucesso.set('Pendências verificadas com sucesso.');
+          this.showSuccessMessage('Sucesso', 'Pendências verificadas com sucesso.');
           this.findAll();
-          this.cdr.markForCheck();
         },
-        error: (err) => {
-          this.acaoErro.set(err?.error?.message || 'Erro ao verificar pendências.');
-          this.cdr.markForCheck();
-        }
+        error: (err) => this.showErrorMessage(err, 'Erro ao verificar pendências.')
       });
   }
 
+  /**
+   * Invalida o Nada Consta.
+   * @param row Registro do Nada Consta
+   */
   invalidar(row: NadaConsta): void {
     this.invalidando.set(row.id);
-    this.acaoErro.set(null);
-    this.acaoSucesso.set(null);
     this.service.invalidar(row.id)
       .pipe(finalize(() => {
         this.invalidando.set(null);
@@ -337,14 +331,10 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
       }))
       .subscribe({
         next: () => {
-          this.acaoSucesso.set('Nada Consta invalidado com sucesso.');
+          this.showSuccessMessage('Sucesso', 'Nada Consta invalidado com sucesso.');
           this.findAll();
-          this.cdr.markForCheck();
         },
-        error: (err) => {
-          this.acaoErro.set(err?.error?.message || 'Erro ao invalidar Nada Consta.');
-          this.cdr.markForCheck();
-        }
+        error: (err) => this.showErrorMessage(err, 'Erro ao invalidar Nada Consta.')
       });
   }
 
@@ -371,6 +361,182 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
 
   public setVerificandoPendencias(val: number | null) { this.verificandoPendencias.set(val); }
   public setInvalidando(val: number | null) { this.invalidando.set(val); }
-  public setAcaoErro(val: string | null) { this.acaoErro.set(val); }
-  public setAcaoSucesso(val: string | null) { this.acaoSucesso.set(val); }
+
+  public menuLoading = signal(false);
+
+  /**
+   * Exibe mensagem de sucesso usando o MessageService.
+   * @param summary Título da mensagem
+   * @param detail Detalhes da mensagem
+   */
+  private showSuccessMessage(summary: string, detail: string): void {
+    this.messageService.add({ severity: 'success', summary, detail });
+    this.cdr?.markForCheck();
+  }
+
+  /**
+   * Exibe mensagem de erro usando o MessageService.
+   * @param err Objeto de erro da requisição
+   * @param defaultMessage Mensagem padrão caso não haja mensagem no erro
+   */
+  private showErrorMessage(err: any, defaultMessage: string): void {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Erro',
+      detail: err?.error?.message || defaultMessage
+    });
+    this.cdr?.markForCheck();
+  }
+
+  /**
+   * Abre o menu de ações após construir os itens.
+   * @param event Evento do clique
+   */
+  private openActionsMenu(event: Event): void {
+    this.actionsMenu().toggle(event);
+    this.cdr?.markForCheck();
+  }
+
+  /**
+   * Cria o item de menu "Cancelar" padrão.
+   * @returns MenuItem configurado para fechar o menu
+   */
+  private createCancelMenuItem(): MenuItem {
+    return {
+      label: 'Cancelar',
+      icon: 'pi pi-times',
+      ariaLabel: 'Fechar menu de ações',
+      command: () => this.actionsMenu().hide()
+    };
+  }
+
+  /**
+   * Imprime o PDF do Nada Consta em uma nova aba do navegador.
+   * @param row Registro do Nada Consta
+   */
+  public imprimirNadaConsta(row: NadaConsta) {
+    this.actionsMenu().hide();
+    this.menuLoading.set(true);
+
+    this.service.downloadPdf(row.id)
+      .pipe(finalize(() => {
+        this.menuLoading.set(false);
+        this.cdr?.markForCheck();
+      }))
+      .subscribe({
+        next: (data) => {
+          const blob = new Blob([data], { type: 'application/pdf' });
+          const url = globalThis.URL.createObjectURL(blob);
+          globalThis.open(url, '_blank');
+          setTimeout(() => globalThis.URL.revokeObjectURL(url), 100);
+          this.showSuccessMessage('PDF Gerado', 'O PDF foi aberto em uma nova aba.');
+        },
+        error: (err) => this.showErrorMessage(err, 'Erro ao gerar PDF.')
+      });
+  }
+
+  /**
+   * Reenvia o email com o Nada Consta para o usuário.
+   * @param row Registro do Nada Consta
+   */
+  public reenviarEmailNadaConsta(row: NadaConsta) {
+    this.actionsMenu().hide();
+    this.menuLoading.set(true);
+    this.service.reenviarEmail(row.id)
+      .pipe(finalize(() => {
+        this.menuLoading.set(false);
+        this.cdr?.markForCheck();
+      }))
+      .subscribe({
+        next: () => this.showSuccessMessage('Email Enviado', '2ª via do Nada Consta enviada com sucesso.'),
+        error: (err) => this.showErrorMessage(err, 'Erro ao enviar 2ª via.')
+      });
+  }
+
+  /**
+   * Abre menu suspenso para linha com ações baseadas no status.
+   * @param event Evento do clique
+   * @param id ID do registro
+   */
+  public openOptions(event: Event, id: number): void {
+    const nadaConsta = this.objects.find(e => e.id === id);
+    if (!nadaConsta) return;
+
+    this.contextMenuItems = this.buildContextMenuItems(nadaConsta);
+
+    if (this.contextMenuItems.length > 0) {
+      this.openActionsMenu(event);
+    }
+  }
+
+  /**
+   * Constrói os itens do menu contextual baseado no status do Nada Consta.
+   * @param nadaConsta Registro do Nada Consta
+   * @returns Array de MenuItems
+   */
+  private buildContextMenuItems(nadaConsta: NadaConsta): MenuItem[] {
+    const status = nadaConsta.status?.toUpperCase();
+
+    if (status === 'COMPLETED' || status === 'CONCLUIDO' || status === 'CONCLUÍDO') {
+      return this.buildCompletedMenuItems(nadaConsta);
+    }
+
+    if (status === 'PENDING' || status === 'PENDENTE') {
+      return this.buildPendingMenuItems(nadaConsta);
+    }
+
+    return [];
+  }
+
+  /**
+   * Constrói itens do menu para status COMPLETED.
+   * @param nadaConsta Registro do Nada Consta
+   * @returns Array de MenuItems
+   */
+  private buildCompletedMenuItems(nadaConsta: NadaConsta): MenuItem[] {
+    return [
+      {
+        label: 'Imprimir',
+        icon: 'pi pi-print',
+        ariaLabel: 'Baixar e imprimir PDF do Nada Consta',
+        command: () => this.imprimirNadaConsta(nadaConsta)
+      },
+      {
+        label: '2ª via email',
+        icon: 'pi pi-envelope',
+        ariaLabel: 'Reenviar segunda via do Nada Consta por email',
+        command: () => this.reenviarEmailNadaConsta(nadaConsta)
+      },
+      {
+        label: 'Invalidar',
+        icon: 'pi pi-ban',
+        ariaLabel: 'Invalidar este Nada Consta',
+        command: () => {
+          this.actionsMenu().hide();
+          this.abrirDialogConfirmarInvalidar(nadaConsta);
+        }
+      },
+      this.createCancelMenuItem()
+    ];
+  }
+
+  /**
+   * Constrói itens do menu para status PENDING.
+   * @param nadaConsta Registro do Nada Consta
+   * @returns Array de MenuItems
+   */
+  private buildPendingMenuItems(nadaConsta: NadaConsta): MenuItem[] {
+    return [
+      {
+        label: 'Revalidar',
+        icon: 'pi pi-refresh',
+        ariaLabel: 'Verificar pendências e revalidar Nada Consta',
+        command: () => {
+          this.actionsMenu().hide();
+          this.verificarPendencias(nadaConsta);
+        }
+      },
+      this.createCancelMenuItem()
+    ];
+  }
 }

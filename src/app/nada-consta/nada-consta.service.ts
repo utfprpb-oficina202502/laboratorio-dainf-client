@@ -1,5 +1,5 @@
-import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
 import {environment} from '../../environments/environment';
 import {CrudService} from "../framework/service/crud.service";
 
@@ -43,7 +43,7 @@ export class NadaConstaService extends CrudService<NadaConsta, number> {
   /**
    * Consulta um Nada Consta pelo id.
    * @param {number} id Identificador do registro
-   * @returns {Observable<NadaConsta>} Observable do resultado da requisição
+   * @returns Resultado da requisição
    * @example
    * this.nadaConstaService.consultarNadaConsta(123).subscribe(...)
    */
@@ -54,7 +54,7 @@ export class NadaConstaService extends CrudService<NadaConsta, number> {
   /**
    * Solicita um Nada Consta pelo documento.
    * @param {string} documento Documento do usuário
-   * @returns {Observable<any>} Observable do resultado da requisição
+   * @returns Resultado da requisição
    * @example
    * this.nadaConstaService.solicitar('12345678900').subscribe(...)
    */
@@ -65,7 +65,7 @@ export class NadaConstaService extends CrudService<NadaConsta, number> {
   /**
    * Verifica pendências do Nada Consta pelo id.
    * @param {number} id Identificador do registro
-   * @returns {Observable<NadaConsta>} Observable do resultado da requisição
+   * @returns Resultado da requisição
    * @example
    * this.nadaConstaService.verificarPendencias(123).subscribe(...)
    */
@@ -76,11 +76,33 @@ export class NadaConstaService extends CrudService<NadaConsta, number> {
   /**
    * Invalida o Nada Consta pelo id.
    * @param {number} id Identificador do registro
-   * @returns {Observable<NadaConsta>} Observable do resultado da requisição
+   * @returns Resultado da requisição
    * @example
    * this.nadaConstaService.invalidar(123).subscribe(...)
    */
   invalidar(id: number) {
     return this.http.put<NadaConsta>(`${this.url}invalidar/${id}`, {});
+  }
+
+  /**
+   * Baixa o PDF do Nada Consta.
+   * @param {number} id Identificador do registro
+   * @returns Resultado da requisição com o PDF em formato arraybuffer
+   * @example
+   * this.nadaConstaService.downloadPdf(123).subscribe(...)
+   */
+  downloadPdf(id: number) {
+    return this.http.get(`${this.url}${id}/pdf`, { responseType: 'arraybuffer' });
+  }
+
+  /**
+   * Reenvia o email com o Nada Consta.
+   * @param {number} id Identificador do registro
+   * @returns Resultado da requisição
+   * @example
+   * this.nadaConstaService.reenviarEmail(123).subscribe(...)
+   */
+  reenviarEmail(id: number) {
+    return this.http.post(`${this.url}${id}/reenvio`, {});
   }
 }
