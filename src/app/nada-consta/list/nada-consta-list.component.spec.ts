@@ -427,7 +427,7 @@ describe('NadaConstaListComponent', () => {
     it('deve executar comando Imprimir ao clicar', fakeAsync(() => {
       const row = { id: 20, status: 'COMPLETED', usuario: { nome: 'José' } } as any;
       component.objects = [row];
-      const imprimirSpy = jest.spyOn(component, 'imprimirNadaConsta').mockImplementation(() => {});
+      const imprimirSpy = jest.spyOn(component, 'imprimirNadaConsta').mockImplementation(() => undefined);
 
       const mockEvent = new Event('click');
       component.openOptions(mockEvent, 20);
@@ -442,7 +442,7 @@ describe('NadaConstaListComponent', () => {
     it('deve executar comando 2ª via email ao clicar', fakeAsync(() => {
       const row = { id: 21, status: 'COMPLETED', usuario: { nome: 'Fernanda' } } as any;
       component.objects = [row];
-      const reenviarSpy = jest.spyOn(component, 'reenviarEmailNadaConsta').mockImplementation(() => {});
+      const reenviarSpy = jest.spyOn(component, 'reenviarEmailNadaConsta').mockImplementation(() => undefined);
 
       const mockEvent = new Event('click');
       component.openOptions(mockEvent, 21);
@@ -457,7 +457,7 @@ describe('NadaConstaListComponent', () => {
     it('deve executar comando Invalidar e fechar menu ao clicar', fakeAsync(() => {
       const row = { id: 22, status: 'COMPLETED', usuario: { nome: 'Lucas' } } as any;
       component.objects = [row];
-      const invalidarSpy = jest.spyOn(component, 'abrirDialogConfirmarInvalidar').mockImplementation(() => {});
+      const invalidarSpy = jest.spyOn(component, 'abrirDialogConfirmarInvalidar').mockImplementation(() => undefined);
 
       const mockEvent = new Event('click');
       component.openOptions(mockEvent, 22);
@@ -473,7 +473,7 @@ describe('NadaConstaListComponent', () => {
     it('deve executar comando Revalidar e fechar menu ao clicar', fakeAsync(() => {
       const row = { id: 23, status: 'PENDING', usuario: { nome: 'Mariana' } } as any;
       component.objects = [row];
-      const revalidarSpy = jest.spyOn(component, 'verificarPendencias').mockImplementation(() => {});
+      const revalidarSpy = jest.spyOn(component, 'verificarPendencias').mockImplementation(() => undefined);
 
       const mockEvent = new Event('click');
       component.openOptions(mockEvent, 23);
