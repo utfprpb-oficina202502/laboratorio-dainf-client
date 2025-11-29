@@ -95,6 +95,11 @@ export class FormValidationService {
       return `Valor máximo: ${max}`;
     }
 
+    // Erro retornado pelo servidor (RFC 9457)
+    if (errors['serverError']) {
+      return errors['serverError'];
+    }
+
     // Mensagem genérica para validadores customizados
     return 'Campo inválido';
   }
