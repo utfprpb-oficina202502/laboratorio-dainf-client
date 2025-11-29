@@ -12,6 +12,7 @@ import {extractRouteParam, parseNumericId} from '../utils/route-params.operators
 import {FormValidationService} from '../services/form-validation.service';
 import {FormStateManagerService} from '../services/form-state-manager.service';
 import {FormBusinessRulesService} from '../services/form-business-rules.service';
+import {ErrorHandlerService} from '../services/error-handler.service';
 
 @Directive()
 export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, OnDestroy {
@@ -31,6 +32,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
   protected readonly formValidation: FormValidationService;
   protected readonly formStateManager: FormStateManagerService;
   protected readonly formBusinessRules: FormBusinessRulesService;
+  protected readonly errorHandler: ErrorHandlerService;
 
   // Signals for state management
   protected readonly isEditing = signal(false);
@@ -55,6 +57,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
     this.formValidation = inject(FormValidationService);
     this.formStateManager = inject(FormStateManagerService);
     this.formBusinessRules = inject(FormBusinessRulesService);
+    this.errorHandler = inject(ErrorHandlerService);
   }
 
   protected abstract buildForm(): FormGroup;
@@ -127,12 +130,28 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
         error: (error) => {
           this.loaderService.hide();
           this.isLoading.set(false);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Atenção!',
-            detail: 'Ocorreu um erro ao salvar o registro!',
-            life: 5000
-          });
+
+          // Usa o ErrorHandlerService para processar o erro RFC 9457
+          const result = this.errorHandler.handleHttpError(error, false);
+
+          // Se houver erros de validacao por campo, aplica ao formulario
+          if (result.fieldErrors && formGroup) {
+            this.errorHandler.applyFieldErrors(formGroup, result.fieldErrors);
+            this.messageService.add({
+              severity: 'warn',
+              summary: result.title || 'Erro de validacao',
+              detail: 'Verifique os campos destacados no formulario',
+              life: 5000
+            });
+          } else {
+            this.messageService.add({
+              severity: 'error',
+              summary: result.title || 'Atencao!',
+              detail: result.message || 'Ocorreu um erro ao salvar o registro!',
+              life: 5000
+            });
+          }
+
           this.logger.error('Error saving record', error);
         },
       });
@@ -164,12 +183,16 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
       error: (error) => {
         this.loaderService.hide();
         this.isLoading.set(false);
+
+        // Usa o ErrorHandlerService para processar o erro RFC 9457
+        const result = this.errorHandler.handleHttpError(error, false);
         this.messageService.add({
           severity: 'error',
-          summary: 'Atenção!',
-          detail: 'Ocorreu um erro ao buscar o registro!',
+          summary: result.title || 'Atencao!',
+          detail: result.message || 'Ocorreu um erro ao buscar o registro!',
           life: 5000
         });
+
         this.logger.error('Error fetching record', error);
       },
     });

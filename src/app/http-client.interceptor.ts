@@ -6,6 +6,7 @@ import {catchError, tap, timeout} from "rxjs/operators";
 import {inject, Injectable} from "@angular/core";
 import {StorageService} from "./framework/services/storage.service";
 import {JwtUtil} from "./framework/utils/jwt.util";
+import {isProblemDetail, ProblemDetail} from "./framework/model/problem-detail.interface";
 
 @Injectable()
 export class HttpClientInterceptor implements HttpInterceptor {
@@ -52,20 +53,82 @@ export class HttpClientInterceptor implements HttpInterceptor {
         }),
         tap({
           error: (err: unknown) => {
-            const error = err as { status?: number };
-            if (error.status === 403) {
-              this.messageService.add({
-                severity: "info",
-                detail: "Você não tem permissão para acessar este recurso",
-              });
-            } else if (error.status === 401) {
-              // Token inválido ou expirado detectado pelo servidor
-              this.loginService.logout();
-            }
+            this.handleHttpError(err);
           }
         })
       );
     }
     return next.handle(req);
+  }
+
+  /**
+   * Processa erros HTTP, incluindo formato RFC 9457 (ProblemDetail).
+   */
+  private handleHttpError(err: unknown): void {
+    const error = err as { status?: number; error?: unknown };
+    const status = error.status;
+
+    // Verifica se e um ProblemDetail (RFC 9457)
+    if (error.error && isProblemDetail(error.error)) {
+      this.handleProblemDetailError(error.error, status);
+      return;
+    }
+
+    // Tratamento padrao para erros sem ProblemDetail
+    if (status === 403) {
+      this.messageService.add({
+        severity: "info",
+        detail: "Você não tem permissão para acessar este recurso",
+      });
+    } else if (status === 401) {
+      // Token inválido ou expirado detectado pelo servidor
+      this.loginService.logout();
+    }
+  }
+
+  /**
+   * Processa erros no formato RFC 9457 (ProblemDetail).
+   */
+  private handleProblemDetailError(problemDetail: ProblemDetail, status?: number): void {
+    const httpStatus = problemDetail.status || status;
+
+    // Token expirado ou invalido
+    if (httpStatus === 401) {
+      // Verifica tipo especifico do erro
+      if (problemDetail.type?.includes('token-expirado')) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Sessão expirada',
+          detail: 'Sua sessão expirou. Por favor, faça login novamente.',
+          life: 5000
+        });
+      }
+      this.loginService.logout();
+      return;
+    }
+
+    // Acesso negado
+    if (httpStatus === 403) {
+      this.messageService.add({
+        severity: 'info',
+        summary: problemDetail.title || 'Acesso negado',
+        detail: problemDetail.detail || 'Você não tem permissão para acessar este recurso',
+        life: 5000
+      });
+      return;
+    }
+
+    // Precondicao requerida (nada consta, etc)
+    if (httpStatus === 428) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: problemDetail.title || 'Precondição requerida',
+        detail: problemDetail.detail || 'Uma precondição deve ser atendida para continuar.',
+        life: 8000
+      });
+    }
+
+    // Erros de servidor (5xx) - nao tratados aqui, deixa para componentes
+    // Erros de validacao (400, 422) - tratados pelos componentes via ErrorHandlerService
   }
 }

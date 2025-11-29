@@ -1,28 +1,41 @@
-import { Component, forwardRef, signal, inject, ChangeDetectionStrategy, ChangeDetectorRef, viewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { DialogModule } from 'primeng/dialog';
-import { InputTextModule } from 'primeng/inputtext';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-import { TableFilterCaptionComponent } from '../../framework/component/table-filter-caption.component';
-import { PrimeCrudListComponent } from '../../framework/component/prime-crud.list.component';
-import { TableColumn } from '../../framework/model/table-config.interface';
-import { NadaConstaService, NadaConsta } from '../nada-consta.service';
-import { CardModule } from 'primeng/card';
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { ProgressBarModule } from 'primeng/progressbar';
-import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
-import { PrimeCrudToolbarComponent } from '../../framework/component/prime-crud-toolbar.component';
-import { finalize } from 'rxjs';
-import { getNadaConstaStatusLabel, getNadaConstaStatusSeverity } from '../../framework/utils/status-label.util';
-import { createTableConfig } from '../../framework/utils/table-config.factory';
-import { TableEmptyStateComponent } from '../../framework/component/table-empty-state.component';
-import { MenuItem } from 'primeng/api';
-import { MenuModule } from 'primeng/menu';
-import { Popover, PopoverModule } from 'primeng/popover';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  forwardRef,
+  inject,
+  signal,
+  viewChild
+} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {DialogModule} from 'primeng/dialog';
+import {InputTextModule} from 'primeng/inputtext';
+import {IconFieldModule} from 'primeng/iconfield';
+import {InputIconModule} from 'primeng/inputicon';
+import {
+  TableFilterCaptionComponent
+} from '../../framework/component/table-filter-caption.component';
+import {PrimeCrudListComponent} from '../../framework/component/prime-crud.list.component';
+import {TableColumn} from '../../framework/model/table-config.interface';
+import {NadaConsta, NadaConstaService} from '../nada-consta.service';
+import {CardModule} from 'primeng/card';
+import {TableModule} from 'primeng/table';
+import {ButtonModule} from 'primeng/button';
+import {ProgressBarModule} from 'primeng/progressbar';
+import {TagModule} from 'primeng/tag';
+import {TooltipModule} from 'primeng/tooltip';
+import {PrimeCrudToolbarComponent} from '../../framework/component/prime-crud-toolbar.component';
+import {finalize} from 'rxjs';
+import {
+  getNadaConstaStatusLabel,
+  getNadaConstaStatusSeverity
+} from '../../framework/utils/status-label.util';
+import {createTableConfig} from '../../framework/utils/table-config.factory';
+import {TableEmptyStateComponent} from '../../framework/component/table-empty-state.component';
+import {MenuItem} from 'primeng/api';
+import {MenuModule} from 'primeng/menu';
+import {Popover, PopoverModule} from 'primeng/popover';
 
 @Component({
   selector: 'app-nada-consta-list',
@@ -379,11 +392,14 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
    * @param err Objeto de erro da requisição
    * @param defaultMessage Mensagem padrão caso não haja mensagem no erro
    */
-  private showErrorMessage(err: any, defaultMessage: string): void {
+  private showErrorMessage(err: unknown, defaultMessage: string): void {
+    const errorMessage = err && typeof err === 'object' && 'error' in err
+      ? (err as { error?: { message?: string } }).error?.message
+      : undefined;
     this.messageService.add({
       severity: 'error',
       summary: 'Erro',
-      detail: err?.error?.message || defaultMessage
+      detail: errorMessage || defaultMessage
     });
     this.cdr?.markForCheck();
   }
