@@ -10,6 +10,7 @@
         icon="pi pi-bars"
         (touchend)="onHamburgerTouch($event)"
         aria-label="Alternar navegação lateral"
+        severity="secondary"
         variant="text"/>
       <img src="/logo.png" alt="Logo Laboratório DAINF" class="w-10 h-10 object-contain" />
       <!-- Long title: hidden on small screens -->
@@ -34,6 +35,7 @@
         (onClick)="menu.toggle($event)"
         aria-label="Menu do usuário"
         class="navbar-user-menu"
+        severity="secondary"
         variant="text">
         <!-- Desktop: Show username + icon -->
         <span class="navbar-user-full">
@@ -41,9 +43,7 @@
           <i class="pi pi-chevron-down text-xs ml-2"></i>
         </span>
         <!-- Mobile: Show only icon -->
-        <span class="navbar-user-mobile">
-          <i class="pi pi-user"></i>
-        </span>
+        <i class="pi pi-user navbar-user-icon"></i>
       </p-button>
 
       <p-tieredMenu

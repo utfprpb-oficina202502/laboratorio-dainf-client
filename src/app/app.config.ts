@@ -3,7 +3,8 @@ import {provideRouter, withInMemoryScrolling} from '@angular/router';
 import {provideAnimations} from '@angular/platform-browser/animations';
 import {HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
 import {provideServiceWorker} from '@angular/service-worker';
-import {DatePipe} from '@angular/common';
+import {DatePipe, IMAGE_LOADER, ImageLoaderConfig} from '@angular/common';
+import {environment} from '../environments/environment';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import {providePrimeNG} from 'primeng/config';
 
@@ -94,6 +95,23 @@ export const appConfig: ApplicationConfig = {
     {
       provide: DEFAULT_CURRENCY_CODE,
       useValue: 'BRL'
+    },
+
+    // Image Loader para MinIO - permite ngSrc com URLs externas do MinIO
+    {
+      provide: IMAGE_LOADER,
+      useValue: (config: ImageLoaderConfig) => {
+        // Se a URL já é absoluta (http/https), retorna como está
+        if (config.src.startsWith('http://') || config.src.startsWith('https://')) {
+          return config.src;
+        }
+        // Se é uma imagem local (sem path), retorna como está
+        if (!config.src.includes('/')) {
+          return config.src;
+        }
+        // Caso contrário, prefixa com a URL do MinIO
+        return `${environment.minio_url}${config.src}`;
+      }
     },
 
     // PrimeNG Configuration
