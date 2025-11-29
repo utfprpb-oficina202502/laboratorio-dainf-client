@@ -323,10 +323,13 @@
     [responsiveOptions]="responsiveOptions">
     <ng-template let-image pTemplate="item">
       <div class="flex flex-col items-center gap-2">
-        <img
-          ngSrc="minioUrl() + image.nameImage"
-          class="max-w-full w-300px"
-          [alt]="'Item'" fill/>
+        <div class="relative w-300px h-[225px]">
+          <img
+            [alt]="'Item'"
+            [ngSrc]="image.nameImage"
+            class="object-contain rounded"
+            fill/>
+        </div>
         @if (!isAlunoOrProfessor()) {
           <p-button
             type="button"

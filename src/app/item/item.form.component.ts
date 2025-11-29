@@ -57,8 +57,8 @@ interface TipoItemOption {
   imports: [
     CadastroRapidoComponent,
     CommonModule,
-    ReactiveFormsModule,
     NgOptimizedImage,
+    ReactiveFormsModule,
     // PrimeNG
     AutoCompleteModule,
     ButtonModule,
@@ -105,7 +105,6 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   protected readonly dialogImagens = signal(false);
   protected readonly images = signal<ItemImage[]>([]);
   protected readonly loadingImages = signal(false);
-  protected readonly minioUrl = signal(environment.minio_url);
 
   protected readonly responsiveOptions = [
     { breakpoint: '768px', numVisible: 2, numScroll: 2 },

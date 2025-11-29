@@ -63,12 +63,31 @@ A URL da API do backend é configurada dinamicamente durante o processo de build
 
 ### Configuração Dinâmica (Produção/Docker)
 
-Para builds de produção, Docker ou Heroku, a aplicação espera uma variável de ambiente chamada `API_URL`. O script `set-env.js` utiliza essa variável para gerar o arquivo de ambiente correto no momento do build.
+Para builds de produção, Docker ou Heroku, a aplicação utiliza variáveis de ambiente. O script `set-env.js` processa essas variáveis para configurar o ambiente correto no momento do build.
 
-**Exemplo de como definir a variável de ambiente antes do build:**
+#### Variáveis de Ambiente
+
+| Variável    | Obrigatória | Descrição                                              | Exemplo                                  |
+|-------------|-------------|--------------------------------------------------------|------------------------------------------|
+| `API_URL`   | ✅ Sim       | URL base da API REST do backend                        | `https://api.exemplo.com/`               |
+| `MINIO_URL` | ❌ Não       | URL base do bucket MinIO para armazenamento de imagens | `https://minio.exemplo.com:9000/bucket/` |
+
+#### Comportamento
+
+- **`API_URL`**: Atualiza a propriedade `api_url` no `environment.prod.ts`. O build falha se não estiver definida.
+- **`MINIO_URL`**: Atualiza a propriedade `minio_url` no `environment.prod.ts` e adiciona automaticamente a URL no `ngsw-config.json` para que o Service Worker do PWA funcione corretamente com as imagens externas. Se não definida, usa o valor padrão do arquivo.
+
+**Exemplo de como definir as variáveis de ambiente antes do build:**
 ```bash
-export API_URL=https://sua-api.exemplo.com
+export API_URL=https://sua-api.exemplo.com/
+export MINIO_URL=https://seu-minio.exemplo.com:9000/bucket/
 npm run build
+```
+
+**Ou em uma única linha:**
+
+```bash
+API_URL=https://sua-api.exemplo.com/ MINIO_URL=https://seu-minio.exemplo.com:9000/bucket/ npm run build
 ```
 
 ### Configuração Local (Desenvolvimento)

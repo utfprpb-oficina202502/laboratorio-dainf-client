@@ -172,10 +172,13 @@
                         <ng-template let-item pTemplate="item">
                           <div class="flex items-center gap-2">
                             @if (item.imageItem && item.imageItem.length > 0) {
-                              <img
-                                ngSrc="minioUrl() + item.imageItem[0].nameImage"
-                                class="w-16 h-16 object-cover rounded"
-                                alt="Item" fill/>
+                              <div class="relative w-16 h-16">
+                                <img
+                                  [ngSrc]="item.imageItem[0].nameImage"
+                                  alt="Item"
+                                  class="object-cover rounded"
+                                  fill/>
+                              </div>
                             }
                             <div class="flex flex-col">
                               <span>{{ item.nome }}</span>

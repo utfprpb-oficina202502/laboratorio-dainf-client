@@ -31,18 +31,13 @@
                       [class.border-top-1]="!first"
                       [class.surface-border]="!first"
                       >
-                      <div class="md:w-10rem relative">
+                      <div class="md:w-10rem relative w-[200px] h-[150px]">
                         <img
-                          class="w-200px"
-                          class="block xl:block mx-auto border-round w-full"
-                    [src]="
-                      item.imageItem.length > 0
-                        ? minioUrl + item.imageItem[0].nameImage
-                        : ''
-                    "
                           [alt]="item.nome"
-                          />
-                        </div>
+                          [ngSrc]="item.imageItem.length > 0 ? item.imageItem[0].nameImage : 'no-image.svg'"
+                          class="object-cover rounded"
+                          fill/>
+                      </div>
                         <div
                           class="flex flex-column md:flex-row justify-content-between md:align-items-center flex-1 gap-4"
                           >
@@ -97,18 +92,13 @@
                         <div
                           class="surface-50 flex justify-content-center border-round p-3"
                           >
-                          <div class="relative mx-auto">
+                          <div class="relative mx-auto w-[300px] h-[225px]">
                             <img
-                              class="border-round w-full"
-                      [src]="
-                        item.imageItem.length > 0
-                          ? minioUrl + item.imageItem[0].nameImage
-                          : ''
-                      "
                               [alt]="item.nome"
-                              style="max-width: 300px"
-                              />
-                            </div>
+                              [ngSrc]="item.imageItem.length > 0 ? item.imageItem[0].nameImage : 'no-image.svg'"
+                              class="object-cover rounded"
+                              fill/>
+                          </div>
                           </div>
                           <div class="pt-4">
                             <div

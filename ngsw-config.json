@@ -70,7 +70,8 @@
     {
       "name": "minio-images",
       "urls": [
-        "https://minio.app.pb.utfpr.edu.br/**"
+        "https://minio.app.pb.utfpr.edu.br/**",
+        "https://kirinus.tec.br:9000/**"
       ],
       "cacheConfig": {
         "strategy": "performance",
