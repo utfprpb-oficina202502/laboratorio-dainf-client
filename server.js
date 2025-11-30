@@ -14,12 +14,21 @@ const port = process.env.PORT || 4200;
 const apiUrl = process.env.API_URL;
 const minioUrl = process.env.MINIO_URL;
 
-// Validação obrigatória da API_URL
+// Validação obrigatória da API_URL (existência e formato)
 if (!apiUrl) {
   console.error('❌ ERRO: A variável de ambiente API_URL não está definida.');
   console.error('   O servidor não pode iniciar sem a URL da API para o CSP.');
   console.error('   Configure API_URL no Heroku ou no ambiente local.');
   console.error('   Exemplo: API_URL=https://api.exemplo.com/');
+  process.exit(1);
+}
+
+try {
+  new URL(apiUrl);
+} catch {
+  console.error(
+    '❌ ERRO: API_URL inválida. Formato esperado: https://api.exemplo.com/');
+  console.error(`   Valor recebido: ${apiUrl}`);
   process.exit(1);
 }
 
@@ -90,12 +99,21 @@ app.set('trust proxy', 1);
 app.use(compression());
 app.disable('x-powered-by');
 
+// =============================================================================
+// Helmet Security Headers
+// NOTA: 'unsafe-inline' em style-src é necessário porque:
+// - Angular injeta estilos dinamicamente via ComponentStyle
+// - PrimeNG usa estilos inline em componentes (p-dialog, p-table, etc.)
+// - Remover exigiria implementar nonces CSP, que requer SSR ou middleware complexo
+// Risco mitigado: CSS injection é menos crítico que script injection, e Angular
+// sanitiza bindings de estilo automaticamente.
+// =============================================================================
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"], // Angular/PrimeNG requerem para estilos dinâmicos
+      styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", 'blob:', 'data:', ...imgSrcOrigins],
       mediaSrc: ["'self'", 'blob:', ...mediaSrcOrigins],
       connectSrc: ["'self'", ...connectSrcOrigins],
