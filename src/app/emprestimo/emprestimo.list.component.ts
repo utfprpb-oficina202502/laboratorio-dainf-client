@@ -18,11 +18,10 @@ import {MenuModule} from 'primeng/menu';
 import {NovoComponent} from '../geral/novo/novo.component';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 import {BreakpointService} from '../framework/services/breakpoint.service';
-import {
-  TableDefaultTemplatesComponent
-} from '../framework/component/table-default-templates.component';
-import { createTableConfig } from '../framework/utils/table-config.factory';
-import { firstValueFrom } from 'rxjs';
+import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
+import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
+import {createTableConfig} from '../framework/utils/table-config.factory';
+import {firstValueFrom} from 'rxjs';
 
 @Component({
     selector: 'app-list-emprestimo',
@@ -37,7 +36,8 @@ import { firstValueFrom } from 'rxjs';
     PopoverModule,
     MenuModule,
     NovoComponent,
-    TableDefaultTemplatesComponent,
+    TableEmptyStateComponent,
+    TableLoadingStateComponent,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => EmprestimoListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -204,7 +204,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     } else {
       novaData = new Date(this.novaDataPrazo);
     }
-    if (!novaData || isNaN(novaData.getTime())) {
+    if (!novaData || Number.isNaN(novaData.getTime())) {
       this.messageService.add({
         severity: 'error',
         summary: 'Data inválida',
@@ -227,7 +227,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       } else {
         prazoAtual = new Date(prazoStr);
       }
-      if (prazoAtual && !isNaN(prazoAtual.getTime())) {
+      if (prazoAtual && !Number.isNaN(prazoAtual.getTime())) {
         prazoAtual.setHours(0, 0, 0, 0);
       } else {
         prazoAtual = undefined;

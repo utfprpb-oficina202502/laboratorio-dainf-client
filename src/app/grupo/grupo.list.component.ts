@@ -4,17 +4,17 @@ import {GrupoService} from './grupo.service';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
-import {
-  TableDefaultTemplatesComponent
-} from '../framework/component/table-default-templates.component';
-import { createTableConfig } from '../framework/utils/table-config.factory';
+import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
+import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
+import {createTableConfig} from '../framework/utils/table-config.factory';
 
 @Component({
     selector: 'app-list-grupo',
     templateUrl: './grupo.list.component.html',
   imports: [
     PrimeTableSharedModule,
-    TableDefaultTemplatesComponent,
+    TableEmptyStateComponent,
+    TableLoadingStateComponent,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => GrupoListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush

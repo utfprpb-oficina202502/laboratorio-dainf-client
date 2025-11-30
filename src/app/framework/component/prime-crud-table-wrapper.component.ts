@@ -22,12 +22,20 @@ import {CrudListAriaAnnouncerComponent} from './crud-list-aria-announcer.compone
  *     <ng-template pTemplate="header">...</ng-template>
  *     <ng-template pTemplate="body">...</ng-template>
  *
- *     <!-- Single helper component for empty/loading templates -->
- *     <app-table-default-templates
- *       [colspan]="getColumnCount()"
- *       [emptyMessage]="tableConfig.emptyMessage"
- *       [loadingMessage]="tableConfig.loadingMessage">
- *     </app-table-default-templates>
+ *     <!-- Templates de estado vazio e loading (devem ser filhos diretos do p-table) -->
+ *     <ng-template pTemplate="emptymessage">
+ *       <app-table-empty-state
+ *         [colspan]="getColumnCount()"
+ *         [message]="tableConfig.emptyMessage || 'Nenhum registro encontrado'">
+ *       </app-table-empty-state>
+ *     </ng-template>
+ *
+ *     <ng-template pTemplate="loadingbody">
+ *       <app-table-loading-state
+ *         [colspan]="getColumnCount()"
+ *         [message]="tableConfig.loadingMessage || 'Carregando...'">
+ *       </app-table-loading-state>
+ *     </ng-template>
  *   </p-table>
  * </app-prime-crud-table-wrapper>
  */

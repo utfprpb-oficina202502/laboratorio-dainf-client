@@ -15,9 +15,8 @@ import {MenuModule} from 'primeng/menu';
 import {NovoComponent} from '../geral/novo/novo.component';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 import {BreakpointService} from '../framework/services/breakpoint.service';
-import {
-  TableDefaultTemplatesComponent
-} from '../framework/component/table-default-templates.component';
+import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
+import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
 import {createTableConfig} from '../framework/utils/table-config.factory';
 
 @Component({
@@ -30,7 +29,8 @@ import {createTableConfig} from '../framework/utils/table-config.factory';
     PopoverModule,
     MenuModule,
     NovoComponent,
-    TableDefaultTemplatesComponent,
+    TableEmptyStateComponent,
+    TableLoadingStateComponent,
     NgOptimizedImage,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

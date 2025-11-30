@@ -4,11 +4,10 @@ import {TableColumn} from '../framework/model/table-config.interface';
 import {Fornecedor} from './fornecedor';
 import {FornecedorService} from './fornecedor.service';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
-import {
-  TableDefaultTemplatesComponent
-} from '../framework/component/table-default-templates.component';
+import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
+import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
 import {CpfCnpjPipe} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe";
-import { createTableConfig } from '../framework/utils/table-config.factory';
+import {createTableConfig} from '../framework/utils/table-config.factory';
 
 @Component({
     selector: 'app-list-fornecedor',
@@ -16,9 +15,10 @@ import { createTableConfig } from '../framework/utils/table-config.factory';
     styleUrls: ['./fornecedor.list.component.css'],
   imports: [
     PrimeTableSharedModule,
-    TableDefaultTemplatesComponent,
+    TableEmptyStateComponent,
+    TableLoadingStateComponent,
     CpfCnpjPipe,
-],
+  ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => FornecedorListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
