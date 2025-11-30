@@ -75,7 +75,12 @@ Para builds de produção, Docker ou Heroku, a aplicação utiliza variáveis de
 #### Comportamento
 
 - **`API_URL`**: Atualiza a propriedade `api_url` no `environment.prod.ts`. O build falha se não estiver definida.
-- **`MINIO_URL`**: Atualiza a propriedade `minio_url` no `environment.prod.ts` e adiciona automaticamente a URL no `ngsw-config.json` para que o Service Worker do PWA funcione corretamente com as imagens externas. Se não definida, usa o valor padrão do arquivo.
+- **`MINIO_URL`**: Configura o armazenamento de imagens em três lugares:
+  1. **Build (Angular)**: Atualiza `minio_url` no `environment.prod.ts`
+  2. **Build (PWA)**: Adiciona a URL no `ngsw-config.json` para cache do Service Worker
+  3. **Runtime (Express)**: Configura o CSP (Content-Security-Policy) no `server.js` para permitir carregamento de imagens
+
+  Se não definida, usa o valor padrão: `https://minio.app.pb.utfpr.edu.br/dainf-labs/`
 
 **Exemplo de como definir as variáveis de ambiente antes do build:**
 ```bash

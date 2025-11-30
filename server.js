@@ -6,13 +6,25 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 
 const rawApiUrl = (process.env.API_URL || 'http://localhost:8080').trim();
+const rawMinioUrl = (process.env.MINIO_URL || 'https://minio.app.pb.utfpr.edu.br').trim();
+
 let apiOrigin;
 try {
   apiOrigin = new URL(rawApiUrl).origin;
 } catch {
   apiOrigin = null;
 }
+
+let minioOrigin;
+try {
+  minioOrigin = new URL(rawMinioUrl).origin;
+} catch {
+  minioOrigin = null;
+}
+
 const connectSrc = ["'self'", ...(apiOrigin ? [apiOrigin] : [])];
+const imgSrc = ["'self'", "blob:", "data:", ...(minioOrigin ? [minioOrigin] : [])];
+const mediaSrc = ["'self'", "blob:", ...(minioOrigin ? [minioOrigin] : [])];
 
 const app = express();
 const port = process.env.PORT || 4200;
@@ -50,14 +62,15 @@ app.set('trust proxy', 1);
 app.use(compression());
 app.disable('x-powered-by');
 console.log('✅ CSP connect-src is being set to:', connectSrc);
+console.log('✅ CSP img-src is being set to:', imgSrc);
 app.use(helmet({
   contentSecurityPolicy: {
     'useDefaults': true,
     directives: {
       "frameAncestors": ["'none'"],
       "connectSrc": connectSrc,
-      "imgSrc": ["'self'", "blob:", "data:", "https://minio.app.pb.utfpr.edu.br"],
-      "mediaSrc": ["'self'", "blob:", "https://minio.app.pb.utfpr.edu.br"],
+      "imgSrc": imgSrc,
+      "mediaSrc": mediaSrc,
     },
   },
 }));
