@@ -4,6 +4,7 @@ const path = require('path');
 const envFilePath = path.join(__dirname,
   'src/environments/environment.prod.ts');
 const ngswConfigPath = path.join(__dirname, 'ngsw-config.json');
+const indexHtmlPath = path.join(__dirname, 'src/index.html');
 
 const apiUrl = process.env.API_URL;
 const minioUrl = process.env.MINIO_URL;
@@ -46,14 +47,14 @@ try {
   let envFileContent = fs.readFileSync(envFilePath, 'utf8');
 
   /**
-   * Regex seguros para propriedades do environment (sem backtracking problemático)
-   * - Usam [^\n]+ em vez de .+? para evitar super-linear runtime
+   * Regex seguros para propriedades do environment
+   * - [^\n]+ é linear (classe simples, sem overlap com $, não causa backtracking)
    * - Flag 'm' para multiline (^ e $ = início/fim de linha)
    * - Substituição sempre adiciona vírgula para garantir sintaxe válida
    */
-  const apiRegex = /^(\s*)(api_url:\s*)[^\n]+$/m;
-  const minioRegex = /^(\s*)(minio_url:\s*)[^\n]+$/m;
-  const timestampRegex = /^(\s*)(build_timestamp:\s*)[^\n]+$/m;
+  const apiRegex = /^(\s*)(api_url:\s*)[^\n]+$/m; // NOSONAR - [^\n]+ é linear, falso positivo
+  const minioRegex = /^(\s*)(minio_url:\s*)[^\n]+$/m; // NOSONAR
+  const timestampRegex = /^(\s*)(build_timestamp:\s*)[^\n]+$/m; // NOSONAR
 
   // Atualiza api_url
   let replaced = envFileContent.replace(apiRegex, `$1$2'${normalizedApiUrl}',`);
@@ -126,5 +127,35 @@ if (normalizedMinioUrl) {
   } catch (err) {
     console.warn('⚠️ AVISO: Erro ao atualizar ngsw-config.json:', err.message);
   }
+}
+
+try {
+  let indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
+
+  const apiOrigin = new URL(normalizedApiUrl).origin;
+  const minioOrigin = normalizedMinioUrl ? new URL(normalizedMinioUrl).origin
+    : '';
+
+  const connectOrigins = [apiOrigin, minioOrigin].filter(Boolean).join(' ');
+  const imgOrigin = minioOrigin || '';
+  const mediaOrigin = minioOrigin || '';
+
+  let updatedHtml = indexHtml
+  .replaceAll('CSP_CONNECT_ORIGINS', connectOrigins)
+  .replaceAll('CSP_IMG_ORIGIN', imgOrigin)
+  .replaceAll('CSP_MEDIA_ORIGIN', mediaOrigin);
+
+  if (updatedHtml === indexHtml) {
+    console.log('✓ index.html CSP já está atualizado.');
+  } else {
+    fs.writeFileSync(indexHtmlPath, updatedHtml, 'utf8');
+    console.log('✓ index.html atualizado com CSP:');
+    console.log(`  - connect-src: 'self' ${connectOrigins}`);
+    console.log(`  - img-src: 'self' blob: data: ${imgOrigin}`);
+    console.log(`  - media-src: 'self' blob: ${mediaOrigin}`);
+  }
+} catch (err) {
+  console.error('❌ ERRO ao atualizar CSP no index.html:', err.message);
+  process.exit(1);
 }
 
