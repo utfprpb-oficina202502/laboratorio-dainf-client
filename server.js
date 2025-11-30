@@ -5,9 +5,66 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 
-
 const app = express();
 const port = process.env.PORT || 4200;
+
+// ============================================================================
+// CSP - Content Security Policy (configurado via variáveis de ambiente)
+// ============================================================================
+const apiUrl = process.env.API_URL;
+const minioUrl = process.env.MINIO_URL;
+
+// Validação obrigatória da API_URL (existência e formato)
+if (!apiUrl) {
+  console.error('❌ ERRO: A variável de ambiente API_URL não está definida.');
+  console.error('   O servidor não pode iniciar sem a URL da API para o CSP.');
+  console.error('   Configure API_URL no Heroku ou no ambiente local.');
+  console.error('   Exemplo: API_URL=https://api.exemplo.com/');
+  process.exit(1);
+}
+
+try {
+  new URL(apiUrl);
+} catch {
+  console.error(
+    '❌ ERRO: API_URL inválida. Formato esperado: https://api.exemplo.com/');
+  console.error(`   Valor recebido: ${apiUrl}`);
+  process.exit(1);
+}
+
+/**
+ * Extrai a origem (protocol + host) de uma URL
+ * @param {string} url - URL completa
+ * @returns {string|null} - Origem ou null se inválida
+ */
+function extractOrigin(url) {
+  if (!url) {
+    return null;
+  }
+  try {
+    const parsed = new URL(url);
+    return parsed.origin;
+  } catch {
+    console.warn(`⚠️ URL inválida ignorada para CSP: ${url}`);
+    return null;
+  }
+}
+
+const apiOrigin = extractOrigin(apiUrl);
+const minioOrigin = extractOrigin(minioUrl);
+
+// Monta as origens para cada diretiva
+const connectSrcOrigins = [apiOrigin, minioOrigin].filter(Boolean);
+const imgSrcOrigins = [minioOrigin].filter(Boolean);
+const mediaSrcOrigins = [minioOrigin].filter(Boolean);
+
+console.log('🔒 CSP configurado:');
+console.log(`   connect-src: 'self' ${connectSrcOrigins.join(' ')
+|| '(nenhuma origem externa)'}`);
+console.log(`   img-src: 'self' blob: data: ${imgSrcOrigins.join(' ')
+|| '(nenhuma origem externa)'}`);
+console.log(`   media-src: 'self' blob: ${mediaSrcOrigins.join(' ')
+|| '(nenhuma origem externa)'}`);
 
 const appName = process.env.APP_NAME || 'tcc-client';
 const distRoot = path.join(__dirname, 'dist');
@@ -42,9 +99,36 @@ app.set('trust proxy', 1);
 app.use(compression());
 app.disable('x-powered-by');
 
+// =============================================================================
+// Helmet Security Headers
+// NOTA: 'unsafe-inline' em style-src é necessário porque:
+// - Angular injeta estilos dinamicamente via ComponentStyle
+// - PrimeNG usa estilos inline em componentes (p-dialog, p-table, etc.)
+// - Remover exigiria implementar nonces CSP, que requer SSR ou middleware complexo
+// Risco mitigado: CSS injection é menos crítico que script injection, e Angular
+// sanitiza bindings de estilo automaticamente.
+// =============================================================================
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'blob:', 'data:', ...imgSrcOrigins],
+      mediaSrc: ["'self'", 'blob:', ...mediaSrcOrigins],
+      connectSrc: ["'self'", ...connectSrcOrigins],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'none'"], // Equivalente a X-Frame-Options: DENY
+      upgradeInsecureRequests: [] // Força HTTPS
+    }
+  },
   frameguard: {action: 'deny'},
+  hsts: {maxAge: 31536000, includeSubDomains: true}, // 1 ano de HSTS
+  noSniff: true,
+  referrerPolicy: {policy: 'strict-origin-when-cross-origin'}
 }));
 
 // cache
