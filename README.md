@@ -82,6 +82,10 @@ Para builds de produção, Docker ou Heroku, a aplicação utiliza variáveis de
 
   Se não definida, usa o valor padrão: `https://minio.app.pb.utfpr.edu.br/dainf-labs/`
 
+#### Cache do PWA (Service Worker)
+
+O script `set-env.js` também atualiza automaticamente o `build_timestamp` no `environment.prod.ts` a cada build. Isso garante que o Service Worker do PWA sempre detecte uma nova versão, mesmo quando apenas configurações do servidor (CSP, etc.) são alteradas.
+
 **Exemplo de como definir as variáveis de ambiente antes do build:**
 ```bash
 export API_URL=https://sua-api.exemplo.com/

@@ -105,9 +105,9 @@ export const appConfig: ApplicationConfig = {
         if (config.src.startsWith('http://') || config.src.startsWith('https://')) {
           return config.src;
         }
-        // Imagens locais (assets da pasta public/)
-        const localImages = ['no-image.svg'];
-        if (localImages.includes(config.src)) {
+        // Imagens locais: assets/ ou arquivos específicos da pasta public/
+        const publicFiles = ['no-image.svg', 'utfpr.jpg', 'logo.png', 'touch_icon.png'];
+        if (config.src.startsWith('assets/') || publicFiles.includes(config.src)) {
           return config.src;
         }
         // Imagens do MinIO - adiciona prefixo automaticamente

@@ -14,6 +14,8 @@ export class Item {
   descricao!: string;
   grupo!: Grupo;
   imageItem!: ItemImage[];
+  /** URL da imagem (usado em listagens - DTO simplificado do backend) */
+  imagemUrl?: string;
   disponivelEmprestimoCalculado!: number;
-  quantidadeEmprestada!:number;
+  quantidadeEmprestada!: number;
 }

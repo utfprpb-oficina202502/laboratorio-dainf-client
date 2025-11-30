@@ -147,7 +147,7 @@
                           tabindex="0"
                           [attr.aria-label]="'Visualizar item ' + row.nome">
                           <img
-                            [ngSrc]="row.imageItem?.length > 0 ? row.imageItem[0].nameImage : 'no-image.svg'"
+                            [ngSrc]="row.imagemUrl || 'no-image.svg'"
                             [alt]="'Item ' + row.nome"
                             fill
                             loading="lazy"
@@ -218,7 +218,7 @@
                   <div class="flex-shrink-0">
                     <div class="relative w-120px h-[90px]">
                       <img
-                        [ngSrc]="row.imageItem?.length > 0 ? row.imageItem[0].nameImage : 'no-image.svg'"
+                        [ngSrc]="row.imagemUrl || 'no-image.svg'"
                         [alt]="'Item ' + row.nome"
                         fill
                         loading="lazy"
