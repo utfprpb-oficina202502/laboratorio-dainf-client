@@ -12,7 +12,6 @@ import {ItemService} from '../item/item.service';
 import {UsuarioService} from '../usuario/usuario.service';
 import {Usuario} from '../usuario/usuario';
 import {SelectItem} from 'primeng/api';
-import {environment} from 'src/environments/environment';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
@@ -46,6 +45,7 @@ import {LoggerService} from '../framework/services/logger.service';
   imports: [
     CadastroRapidoComponent,
     CommonModule,
+    NgOptimizedImage,
     ReactiveFormsModule,
     FormsModule,
     // PrimeNG
@@ -64,8 +64,7 @@ import {LoggerService} from '../framework/services/logger.service';
     FormFieldComponent,
     VoltarComponent,
     CancelarComponent,
-    SalvarComponent,
-    NgOptimizedImage
+    SalvarComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -87,7 +86,6 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   protected readonly documentoUsuario = signal<string>('');
   protected readonly disableForm = signal<boolean>(false);
   protected readonly idReserva = signal<number>(0);
-  protected readonly minioUrl = signal<string>(environment.minio_url);
 
   // Temporary signals for adding items
   protected tempItem = signal<Item | null>(null);

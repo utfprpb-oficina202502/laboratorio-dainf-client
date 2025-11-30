@@ -123,10 +123,13 @@
                       <ng-template let-item pTemplate="item">
                         <div class="flex items-center gap-2 relative">
                           @if (item.imageItem && item.imageItem.length > 0) {
-                            <img
-                              ngSrc="minioUrl() + item.imageItem[0].nameImage"
-                              class="w-16 h-16 object-cover rounded"
-                              alt="Item" fill/>
+                            <div class="relative w-16 h-16">
+                              <img
+                                [ngSrc]="item.imageItem[0].nameImage"
+                                alt="Item"
+                                class="object-cover rounded"
+                                fill/>
+                            </div>
                           }
                           <div class="flex flex-col">
                             <span>{{ item.nome }}</span>
@@ -277,11 +280,13 @@
     [responsiveOptions]="responsiveOptions">
     <ng-template let-image pTemplate="item">
       <div class="flex justify-center p-4">
-        <img
-          ngSrc="minioUrl() + image.nameImage"
-          alt="Item"
-          class="max-w-full rounded shadow-md w-300px"
-          fill/>
+        <div class="relative w-300px h-[225px]">
+          <img
+            [ngSrc]="image.nameImage"
+            alt="Item"
+            class="object-contain rounded shadow-md"
+            fill/>
+        </div>
       </div>
     </ng-template>
   </p-carousel>

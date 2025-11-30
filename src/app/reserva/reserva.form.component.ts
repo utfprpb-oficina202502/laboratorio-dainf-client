@@ -12,7 +12,6 @@ import {Item} from '../item/item';
 import {ItemService} from '../item/item.service';
 import {ReservaItem} from './reservaItem';
 import {ItemImage} from '../item/itemImage';
-import {environment} from 'src/environments/environment';
 import {BreakpointService} from '../framework/services/breakpoint.service';
 
 // PrimeNG
@@ -41,6 +40,7 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
   imports: [
     CadastroRapidoComponent,
     CommonModule,
+    NgOptimizedImage,
     ReactiveFormsModule,
     FormsModule,
     // PrimeNG
@@ -58,8 +58,7 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
     FormFieldComponent,
     VoltarComponent,
     CancelarComponent,
-    SalvarComponent,
-    NgOptimizedImage
+    SalvarComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -79,7 +78,6 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
   protected readonly reservaItems = signal<ReservaItem[]>([]);
   protected readonly images = signal<ItemImage[]>([]);
   protected readonly dialogImagens = signal<boolean>(false);
-  protected readonly minioUrl = signal<string>(environment.minio_url);
 
   // Temporary signals for adding items (not part of main form)
   protected readonly tempItem = signal<Item | null>(null);

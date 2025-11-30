@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, forwardRef, inject, viewChild} from "@angular/core";
-import {NgOptimizedImage} from '@angular/common';
+import {NgOptimizedImage} from "@angular/common";
 import {Z_INDEX} from '../framework/constants';
 import {Item} from "./item";
 import {ItemService} from "./item.service";
@@ -10,7 +10,6 @@ import {MenuItem} from 'primeng/api';
 import {Popover, PopoverModule} from 'primeng/popover';
 import {ReservaService} from "../reserva/reserva.service";
 import {Reserva} from "../reserva/reserva";
-import {environment} from "src/environments/environment";
 import {DialogModule} from 'primeng/dialog';
 import {MenuModule} from 'primeng/menu';
 import {NovoComponent} from '../geral/novo/novo.component';
@@ -19,7 +18,7 @@ import {BreakpointService} from '../framework/services/breakpoint.service';
 import {
   TableDefaultTemplatesComponent
 } from '../framework/component/table-default-templates.component';
-import { createTableConfig } from '../framework/utils/table-config.factory';
+import {createTableConfig} from '../framework/utils/table-config.factory';
 
 @Component({
     selector: "app-list-item",
@@ -31,8 +30,8 @@ import { createTableConfig } from '../framework/utils/table-config.factory';
     PopoverModule,
     MenuModule,
     NovoComponent,
-    NgOptimizedImage,
     TableDefaultTemplatesComponent,
+    NgOptimizedImage,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => ItemListComponent) }]
@@ -54,7 +53,6 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   reservasItem: Reserva[] = [];
   dialogReservaitem = false;
   displayedColumnsReserva = ["dataRetirada", "qtde"];
-  minioUrl: string;
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -125,8 +123,6 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
 
   constructor() {
     super();
-
-    this.minioUrl = environment.minio_url;
     this.configureTable();
   }
 

@@ -147,10 +147,9 @@
                           tabindex="0"
                           [attr.aria-label]="'Visualizar item ' + row.nome">
                           <img
-                            [ngSrc]="row.imageItem?.length > 0 ? minioUrl + row.imageItem[0].nameImage : 'no-image.svg'"
+                            [ngSrc]="row.imageItem?.length > 0 ? row.imageItem[0].nameImage : 'no-image.svg'"
                             [alt]="'Item ' + row.nome"
                             fill
-                            priority="false"
                             loading="lazy"
                             class="object-cover rounded cursor-pointer"
                           />
@@ -219,10 +218,9 @@
                   <div class="flex-shrink-0">
                     <div class="relative w-120px h-[90px]">
                       <img
-                        [ngSrc]="row.imageItem?.length > 0 ? minioUrl + row.imageItem[0].nameImage : 'no-image.svg'"
+                        [ngSrc]="row.imageItem?.length > 0 ? row.imageItem[0].nameImage : 'no-image.svg'"
                         [alt]="'Item ' + row.nome"
                         fill
-                        priority="false"
                         loading="lazy"
                         class="object-cover rounded-lg"/>
                     </div>

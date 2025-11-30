@@ -97,19 +97,20 @@ export const appConfig: ApplicationConfig = {
       useValue: 'BRL'
     },
 
-    // Image Loader para MinIO - permite ngSrc com URLs externas do MinIO
+    // Image Loader para MinIO - centraliza a lógica de URLs de imagens
     {
       provide: IMAGE_LOADER,
       useValue: (config: ImageLoaderConfig) => {
-        // Se a URL já é absoluta (http/https), retorna como está
+        // URLs absolutas - retorna como está
         if (config.src.startsWith('http://') || config.src.startsWith('https://')) {
           return config.src;
         }
-        // Se é uma imagem local (sem path), retorna como está
-        if (!config.src.includes('/')) {
+        // Imagens locais (assets da pasta public/)
+        const localImages = ['no-image.svg'];
+        if (localImages.includes(config.src)) {
           return config.src;
         }
-        // Caso contrário, prefixa com a URL do MinIO
+        // Imagens do MinIO - adiciona prefixo automaticamente
         return `${environment.minio_url}${config.src}`;
       }
     },

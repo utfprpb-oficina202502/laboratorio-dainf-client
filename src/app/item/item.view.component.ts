@@ -1,9 +1,8 @@
 import {Component, inject, Injector, OnInit} from '@angular/core';
-import {CommonModule} from '@angular/common';
+import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {Item} from './item';
 import {ItemService} from './item.service';
 import {Reserva} from '../reserva/reserva';
-import {environment} from 'src/environments/environment';
 import {LoginService} from '../login/login.service';
 
 // PrimeNG
@@ -17,6 +16,7 @@ import {CardModule} from 'primeng/card';
     templateUrl: './item.view.component.html',
   imports: [
     CommonModule,
+    NgOptimizedImage,
     // PrimeNG
     DataViewModule,
     TagModule,
@@ -34,12 +34,7 @@ export class ItemViewComponent implements OnInit {
   dialogReservaitem = false;
   displayedColumnsReserva = ['dataRetirada', 'qtde'];
   layout: 'grid' | 'list' = 'grid';
-  minioUrl: string;
   itens: Item[] = [];
-
-  constructor() {
-    this.minioUrl = environment.minio_url;
-  }
 
   ngOnInit() {
     this.itemService.findAll().subscribe({
