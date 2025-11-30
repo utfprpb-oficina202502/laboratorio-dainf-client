@@ -46,18 +46,17 @@ try {
   let envFileContent = fs.readFileSync(envFilePath, 'utf8');
 
   /**
-   * Regex flexíveis para propriedades do environment
-   * - Capturam qualquer formato de valor (aspas simples, duplas, número, etc.)
+   * Regex seguros para propriedades do environment (sem backtracking problemático)
+   * - Usam [^\n]+ em vez de .+? para evitar super-linear runtime
    * - Flag 'm' para multiline (^ e $ = início/fim de linha)
-   * - Não casam linhas comentadas (que começam com //)
+   * - Substituição sempre adiciona vírgula para garantir sintaxe válida
    */
-  const apiRegex = /^(\s*)(api_url:\s*).+?(,?\s*)$/m;
-  const minioRegex = /^(\s*)(minio_url:\s*).+?(,?\s*)$/m;
-  const timestampRegex = /^(\s*)(build_timestamp:\s*).+?(,?\s*)$/m;
+  const apiRegex = /^(\s*)(api_url:\s*)[^\n]+$/m;
+  const minioRegex = /^(\s*)(minio_url:\s*)[^\n]+$/m;
+  const timestampRegex = /^(\s*)(build_timestamp:\s*)[^\n]+$/m;
 
   // Atualiza api_url
-  let replaced = envFileContent.replace(apiRegex,
-    `$1$2'${normalizedApiUrl}'$3`);
+  let replaced = envFileContent.replace(apiRegex, `$1$2'${normalizedApiUrl}',`);
   if (replaced === envFileContent) {
     console.error(
       '❌ ERRO: Não foi possível localizar a propriedade api_url em environment.prod.ts.');
@@ -68,7 +67,7 @@ try {
   // Atualiza minio_url se fornecida
   if (normalizedMinioUrl) {
     const minioReplaced = replaced.replace(minioRegex,
-      `$1$2'${normalizedMinioUrl}'$3`);
+      `$1$2'${normalizedMinioUrl}',`);
     if (minioReplaced === replaced) {
       console.warn(
         '⚠️ AVISO: Não foi possível localizar a propriedade minio_url em environment.prod.ts.');
@@ -81,7 +80,7 @@ try {
   // Atualiza build_timestamp para forçar invalidação do cache do Service Worker
   const buildTimestamp = Date.now().toString();
   const timestampReplaced = replaced.replace(timestampRegex,
-    `$1$2'${buildTimestamp}'$3`);
+    `$1$2'${buildTimestamp}',`);
   if (timestampReplaced === replaced) {
     console.warn(
       '⚠️ AVISO: Não foi possível localizar build_timestamp em environment.prod.ts.');
