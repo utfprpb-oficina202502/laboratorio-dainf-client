@@ -22,7 +22,7 @@ try {
   minioOrigin = null;
 }
 
-const connectSrc = ["'self'", ...(apiOrigin ? [apiOrigin] : [])];
+const connectSrc = ["'self'", ...(apiOrigin ? [apiOrigin] : []), ...(minioOrigin ? [minioOrigin] : [])];
 const imgSrc = ["'self'", "blob:", "data:", ...(minioOrigin ? [minioOrigin] : [])];
 const mediaSrc = ["'self'", "blob:", ...(minioOrigin ? [minioOrigin] : [])];
 
