@@ -5,6 +5,7 @@ export const environment = {
   api_url: 'http://localhost:8080/',
   google_client_id: '726155933363-am0vqngulv5soqerhhprndt5kj4judtl.apps.googleusercontent.com',
   minio_url: 'https://minio.app.pb.utfpr.edu.br/dainf-labs/',
+  build_timestamp: '0',
   charts: {
     colors: defaultChartColors
   }

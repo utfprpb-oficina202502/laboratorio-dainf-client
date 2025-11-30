@@ -45,26 +45,51 @@ if (normalizedMinioUrl) {
 try {
   let envFileContent = fs.readFileSync(envFilePath, 'utf8');
 
+  /**
+   * Regex flexíveis para propriedades do environment
+   * - Capturam qualquer formato de valor (aspas simples, duplas, número, etc.)
+   * - Flag 'm' para multiline (^ e $ = início/fim de linha)
+   * - Não casam linhas comentadas (que começam com //)
+   */
+  const apiRegex = /^(\s*)(api_url:\s*).+?(,?\s*)$/m;
+  const minioRegex = /^(\s*)(minio_url:\s*).+?(,?\s*)$/m;
+  const timestampRegex = /^(\s*)(build_timestamp:\s*).+?(,?\s*)$/m;
+
   // Atualiza api_url
-  const apiRegex = /(api_url:\s*['"])([^'"]*)(['"],?)/;
-  let replaced = envFileContent.replace(apiRegex, `$1${normalizedApiUrl}$3`);
+  let replaced = envFileContent.replace(apiRegex,
+    `$1$2'${normalizedApiUrl}'$3`);
   if (replaced === envFileContent) {
     console.error(
       '❌ ERRO: Não foi possível localizar a propriedade api_url em environment.prod.ts.');
     process.exit(1);
   }
+  console.log(`✓ api_url atualizado para: ${normalizedApiUrl}`);
 
   // Atualiza minio_url se fornecida
   if (normalizedMinioUrl) {
-    const minioRegex = /(minio_url:\s*['"])([^'"]*)(['"],?)/;
     const minioReplaced = replaced.replace(minioRegex,
-      `$1${normalizedMinioUrl}$3`);
+      `$1$2'${normalizedMinioUrl}'$3`);
     if (minioReplaced === replaced) {
       console.warn(
         '⚠️ AVISO: Não foi possível localizar a propriedade minio_url em environment.prod.ts.');
     } else {
       replaced = minioReplaced;
+      console.log(`✓ minio_url atualizado para: ${normalizedMinioUrl}`);
     }
+  }
+
+  // Atualiza build_timestamp para forçar invalidação do cache do Service Worker
+  const buildTimestamp = Date.now().toString();
+  const timestampReplaced = replaced.replace(timestampRegex,
+    `$1$2'${buildTimestamp}'$3`);
+  if (timestampReplaced === replaced) {
+    console.warn(
+      '⚠️ AVISO: Não foi possível localizar build_timestamp em environment.prod.ts.');
+    console.warn(
+      '   Adicione a propriedade build_timestamp ao arquivo para habilitar invalidação de cache.');
+  } else {
+    replaced = timestampReplaced;
+    console.log(`✓ build_timestamp atualizado para: ${buildTimestamp}`);
   }
 
   fs.writeFileSync(envFilePath, replaced, 'utf8');
