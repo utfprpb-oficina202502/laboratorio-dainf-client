@@ -14,6 +14,15 @@ const port = process.env.PORT || 4200;
 const apiUrl = process.env.API_URL;
 const minioUrl = process.env.MINIO_URL;
 
+// Validação obrigatória da API_URL
+if (!apiUrl) {
+  console.error('❌ ERRO: A variável de ambiente API_URL não está definida.');
+  console.error('   O servidor não pode iniciar sem a URL da API para o CSP.');
+  console.error('   Configure API_URL no Heroku ou no ambiente local.');
+  console.error('   Exemplo: API_URL=https://api.exemplo.com/');
+  process.exit(1);
+}
+
 /**
  * Extrai a origem (protocol + host) de uma URL
  * @param {string} url - URL completa
