@@ -101,7 +101,7 @@
                 @case ('usuario') {
                   <button type="button" (click)="openOptions($event, rowData)"
                           class="p-0 border-0 bg-transparent text-inherit cursor-pointer hover:underline">{{
-                      rowData.usuario?.nome || 'N/A'
+                      rowData.nomeUsuario || 'N/A'
                     }}
                   </button>
                 }

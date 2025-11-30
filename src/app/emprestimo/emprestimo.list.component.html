@@ -136,8 +136,8 @@
                   class="cursor-pointer">
                   @switch (column.field) {
                     @case ('usuarioEmprestimo') {
-                      <span [attr.aria-label]="column.header + ': ' + row.usuarioEmprestimo?.nome">
-                        {{ row.usuarioEmprestimo?.nome }}
+                      <span [attr.aria-label]="column.header + ': ' + row.nomeUsuarioEmprestimo">
+                        {{ row.nomeUsuarioEmprestimo }}
                       </span>
                     }
                     @case ('status') {
@@ -203,7 +203,8 @@
               <div class="flex gap-4">
                 <div class="flex-1">
                   <p class="mb-1"><strong>Codigo:</strong> {{ row.id }}</p>
-                  <p class="mb-1"><strong>Aluno/Professor:</strong> {{ row.usuarioEmprestimo?.nome }}</p>
+                  <p class="mb-1"><strong>Aluno/Professor:</strong> {{ row.nomeUsuarioEmprestimo }}
+                  </p>
                   <p class="mb-1"><strong>Data do Emprestimo:</strong> {{ row.dataEmprestimo }}</p>
                   <p class="mb-1"><strong>Prazo de Devolucao:</strong> {{ row.prazoDevolucao }}</p>
                   <p class="mb-0"><strong>Status:</strong>

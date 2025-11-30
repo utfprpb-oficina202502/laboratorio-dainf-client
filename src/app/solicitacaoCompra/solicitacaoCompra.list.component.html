@@ -88,7 +88,7 @@
                   <span>{{ rowData.dataSolicitacao }}</span>
                 }
                 @case ('usuario') {
-                  <span>{{ rowData.usuario?.nome || 'N/A' }}</span>
+                  <span>{{ rowData.nomeUsuario || 'N/A' }}</span>
                 }
                 @case ('actions') {
                   <app-action-buttons

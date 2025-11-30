@@ -85,10 +85,10 @@
                   <span>{{ rowData.dataSaida }}</span>
                 }
                 @case ('qtde') {
-                  <span>{{ getQtdeTotal(rowData?.saidaItem) }}</span>
+                  <span>{{ rowData?.qtdeTotal }}</span>
                 }
                 @case ('usuarioResponsavel') {
-                  <span>{{ rowData?.usuarioResponsavel?.nome || 'N/A' }}</span>
+                  <span>{{ rowData?.nomeUsuarioResponsavel || 'N/A' }}</span>
                 }
                 @case ('observacao') {
                   <span class="text-truncate d-block" [title]="rowData?.observacao">
