@@ -4,7 +4,6 @@ const path = require('path');
 const envFilePath = path.join(__dirname,
   'src/environments/environment.prod.ts');
 const ngswConfigPath = path.join(__dirname, 'ngsw-config.json');
-const indexHtmlPath = path.join(__dirname, 'src/index.html');
 
 const apiUrl = process.env.API_URL;
 const minioUrl = process.env.MINIO_URL;
@@ -129,33 +128,5 @@ if (normalizedMinioUrl) {
   }
 }
 
-try {
-  let indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
-
-  const apiOrigin = new URL(normalizedApiUrl).origin;
-  const minioOrigin = normalizedMinioUrl ? new URL(normalizedMinioUrl).origin
-    : '';
-
-  const connectOrigins = [apiOrigin, minioOrigin].filter(Boolean).join(' ');
-  const imgOrigin = minioOrigin || '';
-  const mediaOrigin = minioOrigin || '';
-
-  let updatedHtml = indexHtml
-  .replaceAll('CSP_CONNECT_ORIGINS', connectOrigins)
-  .replaceAll('CSP_IMG_ORIGIN', imgOrigin)
-  .replaceAll('CSP_MEDIA_ORIGIN', mediaOrigin);
-
-  if (updatedHtml === indexHtml) {
-    console.log('✓ index.html CSP já está atualizado.');
-  } else {
-    fs.writeFileSync(indexHtmlPath, updatedHtml, 'utf8');
-    console.log('✓ index.html atualizado com CSP:');
-    console.log(`  - connect-src: 'self' ${connectOrigins}`);
-    console.log(`  - img-src: 'self' blob: data: ${imgOrigin}`);
-    console.log(`  - media-src: 'self' blob: ${mediaOrigin}`);
-  }
-} catch (err) {
-  console.error('❌ ERRO ao atualizar CSP no index.html:', err.message);
-  process.exit(1);
-}
+console.log('✓ CSP será aplicado via headers HTTP no server.js');
 

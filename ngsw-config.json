@@ -70,7 +70,8 @@
     {
       "name": "minio-images",
       "urls": [
-        "https://minio.app.pb.utfpr.edu.br/**"
+        "https://minio.app.pb.utfpr.edu.br/**",
+        "https://test-minio.com:9000/**"
       ],
       "cacheConfig": {
         "strategy": "performance",
