@@ -10,7 +10,7 @@ import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.mod
 import {
   TableDefaultTemplatesComponent
 } from '../framework/component/table-default-templates.component';
-import { createTableConfig } from '../framework/utils/table-config.factory';
+import {createTableConfig} from '../framework/utils/table-config.factory';
 
 @Component({
     selector: 'app-list-reserva',
@@ -27,7 +27,7 @@ import { createTableConfig } from '../framework/utils/table-config.factory';
 })
 export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number> {
   protected override service = inject(ReservaService);
-  protected override columnsTable = ['id', 'descricao', 'dataReserva', 'dataRetirada', 'usuario', 'actions'];
+  protected override columnsTable = ['id', 'descricao', 'dataReserva', 'dataRetirada', 'nomeUsuario', 'actions'];
   protected override urlForm = 'reserva/form';
 
   readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
@@ -71,9 +71,9 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
       align: 'center'
     },
     {
-      field: 'usuario',
+      field: 'nomeUsuario',
       header: 'Usuário',
-      type: 'custom',
+      type: 'text',
       sortable: true,
       filterable: true,
       minWidth: '14rem'
@@ -144,7 +144,7 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'descricao', 'dataReserva'],
+      globalFilterFields: ['id', 'descricao', 'dataReserva', 'nomeUsuario'],
       defaultSortField: 'id',
       caption: 'Reservas',
       stateKey: 'reserva-list',

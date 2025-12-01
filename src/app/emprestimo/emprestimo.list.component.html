@@ -135,7 +135,7 @@
                   (click)="openOptions($event, row.id)"
                   class="cursor-pointer">
                   @switch (column.field) {
-                    @case ('usuarioEmprestimo') {
+                    @case ('nomeUsuarioEmprestimo') {
                       <span [attr.aria-label]="column.header + ': ' + row.nomeUsuarioEmprestimo">
                         {{ row.nomeUsuarioEmprestimo }}
                       </span>

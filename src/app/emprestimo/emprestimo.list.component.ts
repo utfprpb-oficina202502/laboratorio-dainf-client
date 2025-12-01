@@ -21,8 +21,8 @@ import {BreakpointService} from '../framework/services/breakpoint.service';
 import {
   TableDefaultTemplatesComponent
 } from '../framework/component/table-default-templates.component';
-import { createTableConfig } from '../framework/utils/table-config.factory';
-import { firstValueFrom } from 'rxjs';
+import {createTableConfig} from '../framework/utils/table-config.factory';
+import {firstValueFrom} from 'rxjs';
 
 @Component({
     selector: 'app-list-emprestimo',
@@ -65,7 +65,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   novaDataPrazo: string | undefined;
   emprestimoSelecionadoParaPrazo: Emprestimo | undefined;
 
-  protected override columnsTable = ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status', 'actions'];
+  protected override columnsTable = ['id', 'nomeUsuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status', 'actions'];
   private readonly tableColumns: TableColumn[] = [
     {
       field: 'id',
@@ -77,9 +77,9 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       align: 'center'
     },
     {
-      field: 'usuarioEmprestimo',
+      field: 'nomeUsuarioEmprestimo',
       header: 'Aluno/Professor',
-      type: 'custom',
+      type: 'text',
       sortable: true,
       filterable: true,
       width: '20rem'
@@ -204,7 +204,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     } else {
       novaData = new Date(this.novaDataPrazo);
     }
-    if (!novaData || isNaN(novaData.getTime())) {
+    if (!novaData || Number.isNaN(novaData.getTime())) {
       this.messageService.add({
         severity: 'error',
         summary: 'Data inválida',
@@ -227,7 +227,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       } else {
         prazoAtual = new Date(prazoStr);
       }
-      if (prazoAtual && !isNaN(prazoAtual.getTime())) {
+      if (prazoAtual && !Number.isNaN(prazoAtual.getTime())) {
         prazoAtual.setHours(0, 0, 0, 0);
       } else {
         prazoAtual = undefined;
@@ -437,7 +437,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status'],
+      globalFilterFields: ['id', 'nomeUsuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status'],
       defaultSortField: 'id',
       caption: 'Empréstimos',
       stateKey: 'emprestimo-list',

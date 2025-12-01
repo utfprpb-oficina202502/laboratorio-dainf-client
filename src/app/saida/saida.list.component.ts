@@ -9,7 +9,7 @@ import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {
   TableDefaultTemplatesComponent
 } from '../framework/component/table-default-templates.component';
-import { createTableConfig } from '../framework/utils/table-config.factory';
+import {createTableConfig} from '../framework/utils/table-config.factory';
 
 @Component({
     selector: 'app-list-saida',
@@ -24,7 +24,7 @@ import { createTableConfig } from '../framework/utils/table-config.factory';
 })
 export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
   protected override service = inject(SaidaService);
-  protected override columnsTable = ['id', 'dataSaida', 'qtde', 'usuarioResponsavel', 'observacao', 'actions'];
+  protected override columnsTable = ['id', 'dataSaida', 'qtdeTotal', 'nomeUsuarioResponsavel', 'observacao', 'actions'];
   protected override urlForm = 'saida/form';
 
   private readonly tableColumns: TableColumn[] = [
@@ -47,18 +47,18 @@ export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
       align: 'center'
     },
     {
-      field: 'qtde',
+      field: 'qtdeTotal',
       header: 'Quantidade',
-      type: 'custom',
+      type: 'number',
       sortable: false,
       filterable: false,
       width: '10rem',
       align: 'center'
     },
     {
-      field: 'usuarioResponsavel',
+      field: 'nomeUsuarioResponsavel',
       header: 'Usuário Responsável',
-      type: 'custom',
+      type: 'text',
       sortable: true,
       filterable: true,
       minWidth: '16rem'
@@ -105,7 +105,7 @@ export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'dataSaida', 'usuarioResponsavel', 'observacao'],
+      globalFilterFields: ['id', 'dataSaida', 'nomeUsuarioResponsavel', 'observacao'],
       defaultSortField: 'id',
       caption: 'Saídas',
       stateKey: 'saida-list',

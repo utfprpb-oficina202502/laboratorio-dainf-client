@@ -7,7 +7,7 @@ import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.mod
 import {
   TableDefaultTemplatesComponent
 } from '../framework/component/table-default-templates.component';
-import { createTableConfig } from '../framework/utils/table-config.factory';
+import {createTableConfig} from '../framework/utils/table-config.factory';
 
 @Component({
     selector: 'app-list-solicitacao-compra',
@@ -21,7 +21,7 @@ import { createTableConfig } from '../framework/utils/table-config.factory';
 })
 export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<SolicitacaoCompra, number> implements OnInit {
   protected override service = inject(SolicitacaoCompraService);
-  protected override columnsTable = ['id', 'descricao', 'dataSolicitacao', 'usuario', 'actions'];
+  protected override columnsTable = ['id', 'descricao', 'dataSolicitacao', 'nomeUsuario', 'actions'];
   protected override urlForm = 'solicitacao-compra/form';
 
   private readonly tableColumns: TableColumn[] = [
@@ -52,9 +52,9 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
       align: 'center'
     },
     {
-      field: 'usuario',
+      field: 'nomeUsuario',
       header: 'Usuário',
-      type: 'custom',
+      type: 'text',
       sortable: true,
       filterable: true,
       minWidth: '16rem'
@@ -106,7 +106,7 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'descricao', 'dataSolicitacao', 'usuario'],
+      globalFilterFields: ['id', 'descricao', 'dataSolicitacao', 'nomeUsuario'],
       defaultSortField: 'id',
       caption: 'Solicitações de Compra',
       stateKey: 'solicitacao-compra-list',

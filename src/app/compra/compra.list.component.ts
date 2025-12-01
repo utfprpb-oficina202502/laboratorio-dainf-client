@@ -7,7 +7,7 @@ import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.mod
 import {
   TableDefaultTemplatesComponent
 } from '../framework/component/table-default-templates.component';
-import { createTableConfig } from '../framework/utils/table-config.factory';
+import {createTableConfig} from '../framework/utils/table-config.factory';
 
 @Component({
     selector: 'app-list-compra',
@@ -22,7 +22,7 @@ import { createTableConfig } from '../framework/utils/table-config.factory';
 })
 export class CompraListComponent extends PrimeCrudListComponent<Compra, number> {
   protected override service = inject(CompraService);
-  protected override columnsTable = ['id', 'fornecedor', 'dataCompra', 'actions'];
+  protected override columnsTable = ['id', 'fornecedorNomeFantasia', 'fornecedorRazaoSocial', 'dataCompra', 'actions'];
   protected override urlForm = 'compra/form';
 
   private readonly tableColumns: TableColumn[] = [
@@ -36,12 +36,20 @@ export class CompraListComponent extends PrimeCrudListComponent<Compra, number> 
       align: 'center'
     },
     {
-      field: 'fornecedor',
-      header: 'Fornecedor',
-      type: 'custom',
+      field: 'fornecedorNomeFantasia',
+      header: 'Nome Fantasia',
+      type: 'text',
       sortable: true,
       filterable: true,
-      minWidth: '20rem'
+      minWidth: '14rem'
+    },
+    {
+      field: 'fornecedorRazaoSocial',
+      header: 'Razão Social',
+      type: 'text',
+      sortable: true,
+      filterable: true,
+      minWidth: '14rem'
     },
     {
       field: 'dataCompra',
@@ -87,7 +95,7 @@ export class CompraListComponent extends PrimeCrudListComponent<Compra, number> 
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'fornecedor', 'dataCompra'],
+      globalFilterFields: ['id', 'fornecedorNomeFantasia', 'fornecedorRazaoSocial', 'dataCompra'],
       defaultSortField: 'id',
       caption: 'Compras',
       stateKey: 'compra-list',

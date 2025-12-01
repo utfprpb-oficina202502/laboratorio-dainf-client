@@ -79,17 +79,19 @@
                 @case ('id') {
                   <span [attr.aria-label]="'Código: ' + rowData.id">{{ rowData.id }}</span>
                 }
-                @case ('fornecedor') {
-                  <div class="flex flex-col">
-                    <span class="font-semibold text-base"
-                          [attr.aria-label]="'Nome Fantasia: ' + (rowData.fornecedorNomeFantasia || 'N/A')">
-                      {{ rowData.fornecedorNomeFantasia || 'N/A' }}
-                    </span>
-                    <span class="text-sm text-gray-600"
-                          [attr.aria-label]="'Razão Social: ' + (rowData.fornecedorRazaoSocial || 'N/A')">
-                      {{ rowData.fornecedorRazaoSocial || 'N/A' }}
-                    </span>
-                  </div>
+                @case ('fornecedorNomeFantasia') {
+                  <span
+                    [attr.aria-label]="'Nome Fantasia: ' + (rowData.fornecedorNomeFantasia || 'N/A')"
+                    class="font-semibold">
+                    {{ rowData.fornecedorNomeFantasia || 'N/A' }}
+                  </span>
+                }
+                @case ('fornecedorRazaoSocial') {
+                  <span
+                    [attr.aria-label]="'Razão Social: ' + (rowData.fornecedorRazaoSocial || 'N/A')"
+                    class="text-gray-600">
+                    {{ rowData.fornecedorRazaoSocial || 'N/A' }}
+                  </span>
                 }
                 @case ('dataCompra') {
                   <span
