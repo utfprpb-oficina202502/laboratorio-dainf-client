@@ -116,14 +116,14 @@
 
           <ng-template pTemplate="emptymessage">
             <app-table-empty-state
-            [colspan]="getVisibleColumns().length"
+              [colspan]="getColumnCount()"
             [message]="tableConfig.emptyMessage || 'Nenhuma saída encontrada'">
             </app-table-empty-state>
           </ng-template>
 
           <ng-template pTemplate="loadingbody">
             <app-table-loading-state
-              [colspan]="getVisibleColumns().length"
+              [colspan]="getColumnCount()"
               [message]="tableConfig.loadingMessage || 'Carregando saídas...'">
             </app-table-loading-state>
           </ng-template>
