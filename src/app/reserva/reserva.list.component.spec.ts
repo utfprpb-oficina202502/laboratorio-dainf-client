@@ -262,8 +262,8 @@ describe('ReservaListComponent', () => {
     beforeEach(() => {
       mockReserva = ReservaTestFactory.create({id: 123});
       jest.spyOn(component['router'], 'navigate').mockImplementation(() => Promise.resolve(true));
-      setItemSpy = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      });
+      // No-op: localStorage.setItem é mockado para evitar efeitos colaterais
+      setItemSpy = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => undefined);
     });
 
     afterEach(() => {
