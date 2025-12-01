@@ -56,4 +56,14 @@ export class ItemService extends CrudService<Item, number> {
   deleteImage(itemImage: ItemImage, idItem: number): Observable<void> {
     return this.http.post<void>(`${this.url}delete-image/${idItem}`, itemImage);
   }
+
+  /**
+   * Define uma imagem como capa do item
+   * @param itemId ID do item
+   * @param imageId ID da imagem a ser definida como capa
+   * @returns Observable<void>
+   */
+  setCoverImage(itemId: number, imageId: number): Observable<void> {
+    return this.http.post<void>(`${this.url}set-cover-image/${itemId}/${imageId}`, {});
+  }
 }

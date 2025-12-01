@@ -60,8 +60,22 @@ describe('ItemFormComponent', () => {
     };
 
     mockImages = [
-      {id: 1, nameImage: 'image1.jpg', contentType: 'image/jpeg', item: mockItem, base64: ''},
-      {id: 2, nameImage: 'image2.jpg', contentType: 'image/jpeg', item: mockItem, base64: ''}
+      {
+        id: 1,
+        nameImage: 'image1.jpg',
+        contentType: 'image/jpeg',
+        item: mockItem,
+        base64: '',
+        isCover: true
+      },
+      {
+        id: 2,
+        nameImage: 'image2.jpg',
+        contentType: 'image/jpeg',
+        item: mockItem,
+        base64: '',
+        isCover: false
+      }
     ];
   });
 
@@ -70,7 +84,8 @@ describe('ItemFormComponent', () => {
       save: jest.fn(),
       findOne: jest.fn(),
       findAllImagesItem: jest.fn(),
-      deleteImage: jest.fn()
+      deleteImage: jest.fn(),
+      setCoverImage: jest.fn()
     };
 
     const grupoServiceMock = {
@@ -374,6 +389,86 @@ describe('ItemFormComponent', () => {
 
       const finalLength = component['object']()?.imageItem?.length || 0;
       expect(finalLength).toBe(initialLength - 1);
+    });
+  });
+
+  describe('Set Cover Image', () => {
+    beforeEach(() => {
+      component.ngOnInit();
+      fixture.detectChanges();
+      component['object'].set(mockItem);
+      component['images'].set([...mockImages]);
+    });
+
+    it('should set cover image successfully', () => {
+      itemService.setCoverImage.mockReturnValue(of(void 0));
+
+      component.setCoverImage(mockImages[1]);
+
+      expect(loaderService.show).toHaveBeenCalled();
+      expect(itemService.setCoverImage).toHaveBeenCalledWith(mockItem.id, mockImages[1].id);
+      expect(component['images']()[0].isCover).toBe(false);
+      expect(component['images']()[1].isCover).toBe(true);
+      expect(loaderService.hide).toHaveBeenCalled();
+      expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'success',
+        detail: 'Imagem definida como capa'
+      }));
+    });
+
+    it('should handle error when setting cover image', () => {
+      const error = new Error('Failed to set cover');
+      itemService.setCoverImage.mockReturnValue(throwError(() => error));
+
+      component.setCoverImage(mockImages[1]);
+
+      expect(loaderService.show).toHaveBeenCalled();
+      expect(loaderService.hide).toHaveBeenCalled();
+      expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'error',
+        detail: 'Não foi possível definir a imagem como capa'
+      }));
+      expect(loggerService.error).toHaveBeenCalledWith('Erro ao definir imagem como capa', error);
+    });
+
+    it('should not call service if item has no ID', () => {
+      component['object'].set({} as Item);
+
+      component.setCoverImage(mockImages[0]);
+
+      expect(itemService.setCoverImage).not.toHaveBeenCalled();
+      expect(loaderService.show).not.toHaveBeenCalled();
+    });
+
+    it('should not call service if image has no ID', () => {
+      component.setCoverImage({} as ItemImage);
+
+      expect(itemService.setCoverImage).not.toHaveBeenCalled();
+      expect(loaderService.show).not.toHaveBeenCalled();
+    });
+
+    it('should update only the selected image as cover', () => {
+      itemService.setCoverImage.mockReturnValue(of(void 0));
+      const threeImages = [
+        {...mockImages[0], isCover: false},
+        {...mockImages[1], isCover: true},
+        {
+          id: 3,
+          nameImage: 'image3.jpg',
+          contentType: 'image/jpeg',
+          item: mockItem,
+          base64: '',
+          isCover: false
+        }
+      ];
+      component['images'].set(threeImages);
+
+      component.setCoverImage(threeImages[2]);
+
+      const updatedImages = component['images']();
+      expect(updatedImages[0].isCover).toBe(false);
+      expect(updatedImages[1].isCover).toBe(false);
+      expect(updatedImages[2].isCover).toBe(true);
     });
   });
 

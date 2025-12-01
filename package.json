@@ -31,6 +31,7 @@
     "@angular/service-worker": "^20.3.3",
     "@eslint/js": "^9.37.0",
     "@primeuix/themes": "^1.2.5",
+    "baseline-browser-mapping": "^2.8.32",
     "compression": "^1.8.1",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",

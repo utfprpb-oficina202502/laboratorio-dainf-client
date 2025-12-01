@@ -54,12 +54,15 @@
           <input
             pInputText
             type="text"
+            (input)="onDocumentoInput($event)"
+            autocomplete="off"
             id="documento"
             formControlName="documento"
-            placeholder="RA/SIAPE"
+            inputmode="numeric"
             aria-label="RA ou SIAPE"
             class="login-input"
             [class.input-error]="form.get('documento')?.invalid && form.get('documento')?.touched"
+            placeholder="RA/SIAPE (apenas números)"
           />
           @if (getErrorMessage('documento')) {
             <small class="error-message">{{ getErrorMessage('documento') }}</small>

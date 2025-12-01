@@ -1,6 +1,14 @@
-import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  signal
+} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {Z_INDEX} from '../framework/constants';
 import {Usuario} from './usuario';
 import {UsuarioService} from './usuario.service';
@@ -64,15 +72,11 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
   protected override type = Usuario;
   private readonly fb = inject(FormBuilder);
   protected readonly logger = inject(LoggerService);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Signals for dropdown options and dialog state
   protected readonly grupoAcessoDropdown = signal<PermissaoSelectItem[]>([]);
   protected readonly dialogChangeSenha = signal(false);
-
-  // Signals for password change form
-  protected readonly redSenhaAtual = signal('');
-  protected readonly redNovaSenha = signal('');
-  protected readonly redConfNovaSenha = signal('');
 
   // Separate form for password change
   protected readonly formChangeSenha = signal<FormGroup | null>(null);
@@ -105,7 +109,6 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
       telefone: ['', [Validators.required, Validators.maxLength(20)]],
       permissoes: [[], [Validators.required]],
       documento: ['', [Validators.maxLength(100)]],
-      username: ['', [Validators.required, Validators.maxLength(100)]],
       password: [{ value: '', disabled: !isNew }, isNew ? [Validators.required, Validators.minLength(6)] : []]
     });
   }
@@ -126,8 +129,9 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
    * Load permission options for dropdown
    */
   buildGrupoDeAcesso(): void {
-    this.service.findAllPermissao()
-      .subscribe({
+    this.service.findAllPermissao().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
         next: (permissoes) => {
           if (permissoes && permissoes.length > 0) {
             const items: PermissaoSelectItem[] = permissoes.map(permissao => ({
@@ -182,9 +186,6 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
     if (form) {
       form.reset();
     }
-    this.redSenhaAtual.set('');
-    this.redNovaSenha.set('');
-    this.redConfNovaSenha.set('');
   }
 
   /**
@@ -215,8 +216,9 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
       this.loaderService.show();
 
       const usuarioComNovaSenha = { ...obj, password: novaSenha };
-      this.service.changeSenha(usuarioComNovaSenha, senhaAtual)
-        .subscribe({
+      this.service.changeSenha(usuarioComNovaSenha, senhaAtual).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
           next: () => {
             this.loaderService.hide();
             this.messageService.add({
@@ -258,8 +260,7 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
         email: object.email,
         telefone: object.telefone,
         permissoes: object.permissoes || [],
-        documento: object.documento,
-        username: object.username
+        documento: object.documento
       });
 
       // Disable password field for existing users
@@ -269,17 +270,20 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
 
   /**
    * Override to prepare form value before saving
+   * Nota: username é preenchido automaticamente com o email para retrocompatibilidade com o backend
    */
   protected override prepareFormValue(formValue: Partial<Usuario>): Partial<Usuario> {
     const formGroup = this.form();
     const id = formGroup?.get('id')?.value;
     const password = formGroup?.get('password')?.value;
+    const email = formGroup?.get('email')?.value;
 
-    // Include id and password if present
+    // Include id, password and set username = email for backwards compatibility
     return {
       ...formValue,
       ...(id && { id }),
-      ...(password && { password })
+      ...(password && {password}),
+      username: email // Retrocompatibilidade: username = email
     };
   }
 }

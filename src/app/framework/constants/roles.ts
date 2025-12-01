@@ -32,11 +32,12 @@ export function getRoleLabel(roleName: string): string {
 /**
  * Converte array de roles para string formatada
  * @param roles Array de objetos com propriedade 'nome'
- * @returns String com labels separados por vírgula (ex: 'Aluno, Professor')
+ * @returns String com labels separados por ponto-e-vírgula (ex: 'Aluno; Professor')
+ * @example formatRoles([{nome: 'ROLE_ALUNO'}, {nome: 'ROLE_PROFESSOR'}]) // 'Aluno; Professor'
  */
 export function formatRoles(roles: { nome: string }[]): string {
   if (!roles || roles.length === 0) {
     return '';
   }
-  return roles.map(r => getRoleLabel(r.nome)).join(', ');
+  return roles.map(r => getRoleLabel(r.nome)).join('; ');
 }

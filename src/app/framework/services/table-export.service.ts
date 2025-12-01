@@ -114,27 +114,20 @@ export class TableExportService {
   }
 
   /**
-   * Exporta dados para formato CSV usando exportação CSV nativa do PrimeNG
+   * Exporta dados para formato CSV com suporte a exportValueGetter customizado
+   * Não usa exportação nativa do PrimeNG para garantir formatação correta de valores
    *
-   * @param table Instância da Table do PrimeNG
+   * @param table Instância da Table do PrimeNG (usado apenas para referência, pode ser null)
    * @param data Array de objetos a exportar
    * @param columns Configuração das colunas da tabela
+   * @param fileName Nome base do arquivo (sem extensão)
    */
   exportToCSV<T>(
-    table: Table | null | undefined,
+    _table: Table | null | undefined,
     data: T[],
-    columns: TableColumn[]
+    columns: TableColumn[],
+    fileName = 'dados'
   ): void {
-    if (!table) {
-      this.logger.warn('TableExportService: exportCSV called without table reference.');
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Aviso',
-        detail: 'Tabela não encontrada para exportação CSV'
-      });
-      return;
-    }
-
     if (!data || data.length === 0) {
       this.messageService.add({
         severity: 'warn',
@@ -155,12 +148,6 @@ export class TableExportService {
         return;
       }
 
-      // Define propriedade columns que exportCSV do PrimeNG espera
-      (table as unknown as { columns: unknown[] }).columns = exportableColumns.map(column => ({
-        field: column.field,
-        header: column.header
-      }));
-
       // Exibe mensagem informativa que exportação está sendo preparada
       this.messageService.add({
         severity: 'info',
@@ -168,8 +155,11 @@ export class TableExportService {
         detail: 'O arquivo CSV será baixado em breve...'
       });
 
-      // Chama método nativo exportCSV do PrimeNG
-      table.exportCSV();
+      // Gera conteúdo CSV manualmente para respeitar exportValueGetter
+      const csvContent = this.generateCSVContent(data, exportableColumns);
+
+      // Cria e baixa arquivo CSV
+      this.downloadCSV(csvContent, `${fileName}_export_${Date.now()}.csv`);
 
     } catch (error) {
       this.logger.error('Error exporting CSV', error);
@@ -179,6 +169,87 @@ export class TableExportService {
         detail: 'Erro ao exportar dados para CSV'
       });
     }
+  }
+
+  /**
+   * Gera conteúdo CSV a partir dos dados e colunas
+   * Respeita exportValueGetter para formatação customizada de valores
+   *
+   * @param data Array de objetos a exportar
+   * @param columns Colunas exportáveis
+   * @returns String com conteúdo CSV
+   */
+  private generateCSVContent<T>(data: T[], columns: TableColumn[]): string {
+    const separator = ',';
+    const lineBreak = '\r\n';
+
+    // Cabeçalho
+    const headers = columns.map(col => this.escapeCSVValue(col.header || col.field));
+    const headerLine = headers.join(separator);
+
+    // Linhas de dados
+    const dataLines = data.map(item => {
+      const values = columns.map(col => {
+        const cellValue = this.extractCellValue(item, col);
+        return this.escapeCSVValue(cellValue);
+      });
+      return values.join(separator);
+    });
+
+    return headerLine + lineBreak + dataLines.join(lineBreak);
+  }
+
+  /**
+   * Escapa valor para formato CSV
+   * Adiciona aspas se necessário e escapa aspas internas
+   *
+   * @param value Valor a escapar
+   * @returns Valor formatado para CSV
+   */
+  private escapeCSVValue(value: ExcelCellValue): string {
+    if (value === null || value === undefined) {
+      return '';
+    }
+
+    let stringValue: string;
+    if (value instanceof Date) {
+      stringValue = value.toLocaleDateString('pt-BR');
+    } else {
+      stringValue = String(value);
+    }
+
+    // Se contém separador (vírgula), quebra de linha ou aspas, precisa escapar
+    if (stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('"')) {
+      // Escapa aspas duplicando-as e envolve em aspas
+      return '"' + stringValue.replaceAll('"', '""') + '"';
+    }
+
+    return stringValue;
+  }
+
+  /**
+   * Cria e baixa arquivo CSV
+   *
+   * @param content Conteúdo CSV
+   * @param fileName Nome do arquivo
+   */
+  private downloadCSV(content: string, fileName: string): void {
+    // BOM para UTF-8 (garante encoding correto em Excel)
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + content], {type: 'text/csv;charset=utf-8;'});
+
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
   }
 
   /**
@@ -249,10 +320,11 @@ export class TableExportService {
 
   /**
    * Extrai valor de exibição de um array
-   * Formata como lista separada por vírgula: "valor1, valor2, valor3"
+   * Formata como lista separada por ponto-e-vírgula: "valor1; valor2; valor3"
+   * Usa ponto-e-vírgula para não conflitar com separador CSV (vírgula)
    *
    * @param arr Array a extrair valores
-   * @returns String formatada com valores separados por vírgula
+   * @returns String formatada com valores separados por ponto-e-vírgula
    */
   private extractArrayDisplayValue(arr: unknown[]): string {
     if (arr.length === 0) {
@@ -270,7 +342,7 @@ export class TableExportService {
       return this.safeStringify(item);
     }).filter(v => v !== '');
 
-    return displayValues.join(', ');
+    return displayValues.join('; ');
   }
 
   /**

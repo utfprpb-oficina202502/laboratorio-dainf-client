@@ -1,6 +1,5 @@
 import {TestBed} from '@angular/core/testing';
 import {MessageService} from 'primeng/api';
-import {Table} from 'primeng/table';
 import {TableExportService} from './table-export.service';
 import {LoggerService} from './logger.service';
 import {TableColumn} from '../model/table-config.interface';
@@ -24,6 +23,51 @@ describe('TableExportService', () => {
   async function waitForAsync(): Promise<void> {
     await Promise.resolve();
     await Promise.resolve(); // Double flush for nested promises
+  }
+
+  /**
+   * Interface para mocks de download CSV
+   */
+  interface CSVDownloadMocks {
+    mockClick: jest.Mock;
+    mockLink: HTMLAnchorElement;
+    mockCreateElement: jest.SpyInstance;
+    mockAppendChild: jest.SpyInstance;
+    mockRemoveChild: jest.SpyInstance;
+    cleanup: () => void;
+  }
+
+  /**
+   * Helper para configurar mocks de download CSV
+   * Evita duplicação de código entre testes
+   */
+  function setupCSVDownloadMocks(): CSVDownloadMocks {
+    const mockClick = jest.fn();
+    const mockLink = {
+      setAttribute: jest.fn(),
+      style: {},
+      click: mockClick
+    } as unknown as HTMLAnchorElement;
+
+    const mockCreateElement = jest.spyOn(document, 'createElement').mockReturnValue(mockLink);
+    const mockAppendChild = jest.spyOn(document.body, 'appendChild').mockImplementation(() => mockLink);
+    const mockRemoveChild = jest.spyOn(document.body, 'removeChild').mockImplementation(() => mockLink);
+
+    global.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
+    global.URL.revokeObjectURL = jest.fn();
+
+    return {
+      mockClick,
+      mockLink,
+      mockCreateElement,
+      mockAppendChild,
+      mockRemoveChild,
+      cleanup: () => {
+        mockCreateElement.mockRestore();
+        mockAppendChild.mockRestore();
+        mockRemoveChild.mockRestore();
+      }
+    };
   }
 
   // Mock data para testes
@@ -295,38 +339,18 @@ describe('TableExportService', () => {
   });
 
   describe('exportToCSV', () => {
-    let mockTable: jest.Mocked<Table>;
+    let csvMocks: CSVDownloadMocks;
 
     beforeEach(() => {
-      mockTable = {
-        exportCSV: jest.fn(),
-        columns: []
-      } as unknown as jest.Mocked<Table>;
+      csvMocks = setupCSVDownloadMocks();
     });
 
-    it('deve exibir warning quando table é null', () => {
-      service.exportToCSV(null, mockData, mockColumns);
-
-      expect(loggerService.warn).toHaveBeenCalledWith(
-        'TableExportService: exportCSV called without table reference.'
-      );
-      expect(messageService.add).toHaveBeenCalledWith({
-        severity: 'warn',
-        summary: 'Aviso',
-        detail: 'Tabela não encontrada para exportação CSV'
-      });
-    });
-
-    it('deve exibir warning quando table é undefined', () => {
-      service.exportToCSV(undefined, mockData, mockColumns);
-
-      expect(loggerService.warn).toHaveBeenCalledWith(
-        'TableExportService: exportCSV called without table reference.'
-      );
+    afterEach(() => {
+      csvMocks.cleanup();
     });
 
     it('deve exibir warning quando não há dados', () => {
-      service.exportToCSV(mockTable, [], mockColumns);
+      service.exportToCSV(null, [], mockColumns);
 
       expect(messageService.add).toHaveBeenCalledWith({
         severity: 'warn',
@@ -336,7 +360,7 @@ describe('TableExportService', () => {
     });
 
     it('deve exibir warning quando dados são null', () => {
-      service.exportToCSV(mockTable, null as unknown as unknown[], mockColumns);
+      service.exportToCSV(null, null as unknown as unknown[], mockColumns);
 
       expect(messageService.add).toHaveBeenCalledWith({
         severity: 'warn',
@@ -351,7 +375,7 @@ describe('TableExportService', () => {
         {field: 'other', header: 'Other', exportable: false}
       ];
 
-      service.exportToCSV(mockTable, mockData, nonExportableColumns);
+      service.exportToCSV(null, mockData, nonExportableColumns);
 
       expect(messageService.add).toHaveBeenCalledWith({
         severity: 'warn',
@@ -360,37 +384,8 @@ describe('TableExportService', () => {
       });
     });
 
-    it('deve configurar columns na table antes de exportar', () => {
-      service.exportToCSV(mockTable, mockData, mockColumns);
-
-      expect(mockTable.columns).toBeDefined();
-      expect(Array.isArray(mockTable.columns)).toBe(true);
-    });
-
-    it('deve filtrar coluna actions das colunas exportáveis', () => {
-      service.exportToCSV(mockTable, mockData, mockColumns);
-
-      const columns = mockTable.columns as { field: string }[];
-      const hasActions = columns.some((col) => col.field === 'actions');
-      expect(hasActions).toBe(false);
-    });
-
-    it('deve filtrar colunas com exportable=false', () => {
-      const columnsWithNonExportable: TableColumn[] = [
-        {field: 'id', header: 'ID'},
-        {field: 'name', header: 'Nome'},
-        {field: 'internal', header: 'Internal', exportable: false}
-      ];
-
-      service.exportToCSV(mockTable, mockData, columnsWithNonExportable);
-
-      const columns = mockTable.columns as { field: string }[];
-      const hasInternal = columns.some((col) => col.field === 'internal');
-      expect(hasInternal).toBe(false);
-    });
-
     it('deve exibir mensagem informativa ao iniciar exportação', () => {
-      service.exportToCSV(mockTable, mockData, mockColumns);
+      service.exportToCSV(null, mockData, mockColumns);
 
       expect(messageService.add).toHaveBeenCalledWith({
         severity: 'info',
@@ -399,50 +394,50 @@ describe('TableExportService', () => {
       });
     });
 
-    it('deve chamar exportCSV da table do PrimeNG', () => {
-      service.exportToCSV(mockTable, mockData, mockColumns);
+    it('deve criar e baixar arquivo CSV', () => {
+      service.exportToCSV(null, mockData, mockColumns, 'test');
 
-      expect(mockTable.exportCSV).toHaveBeenCalled();
+      expect(csvMocks.mockCreateElement).toHaveBeenCalledWith('a');
+      expect(csvMocks.mockLink.setAttribute).toHaveBeenCalledWith('href', 'blob:mock-url');
+      expect(csvMocks.mockLink.setAttribute).toHaveBeenCalledWith('download', expect.stringContaining('test_export_'));
+      expect(csvMocks.mockClick).toHaveBeenCalled();
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
     });
 
-    it('deve manipular erro durante exportação', () => {
-      mockTable.exportCSV.mockImplementation(() => {
-        throw new Error('Export failed');
-      });
+    it('deve usar nome de arquivo padrão quando não fornecido', () => {
+      service.exportToCSV(null, mockData, mockColumns);
 
-      service.exportToCSV(mockTable, mockData, mockColumns);
-
-      expect(loggerService.error).toHaveBeenCalledWith('Error exporting CSV', expect.any(Error));
-      expect(messageService.add).toHaveBeenCalledWith({
-        severity: 'error',
-        summary: 'Erro',
-        detail: 'Erro ao exportar dados para CSV'
-      });
+      expect(csvMocks.mockLink.setAttribute).toHaveBeenCalledWith('download', expect.stringContaining('dados_export_'));
     });
 
-    it('deve incluir field e header nas colunas exportáveis', () => {
-      service.exportToCSV(mockTable, mockData, mockColumns);
+    it('deve usar nome de arquivo fornecido', () => {
+      service.exportToCSV(null, mockData, mockColumns, 'meus-dados');
 
-      const columns = mockTable.columns as { field: string; header: string }[];
-      expect(columns.length).toBeGreaterThan(0);
-      columns.forEach((col) => {
-        expect(col).toHaveProperty('field');
-        expect(col).toHaveProperty('header');
-      });
+      expect(csvMocks.mockLink.setAttribute).toHaveBeenCalledWith('download', expect.stringContaining('meus-dados_export_'));
     });
 
-    it('deve preservar ordem das colunas', () => {
-      service.exportToCSV(mockTable, mockData, mockColumns);
+    it('deve usar exportValueGetter customizado no CSV', () => {
+      const dataWithRoles = [
+        {id: 1, roles: [{nome: 'ROLE_ADMIN'}]}
+      ];
+      const columnsWithGetter: TableColumn[] = [
+        {field: 'id', header: 'ID'},
+        {
+          field: 'roles',
+          header: 'Papéis',
+          exportValueGetter: () => 'Admin Formatado'
+        }
+      ];
 
-      const columns = mockTable.columns as { field: string }[];
-      expect(columns[0].field).toBe('id');
-      expect(columns[1].field).toBe('name');
-      expect(columns[2].field).toBe('grupo.descricao');
+      service.exportToCSV(null, dataWithRoles, columnsWithGetter, 'test');
+
+      // Verifica que o CSV foi gerado (download foi disparado)
+      expect(csvMocks.mockClick).toHaveBeenCalled();
     });
   });
 
   describe('extractArrayDisplayValue (via exportToExcel)', () => {
-    it('deve formatar array de objetos com propriedade nome como lista separada por vírgula', async () => {
+    it('deve formatar array de objetos com propriedade nome como lista separada por ponto-e-vírgula', async () => {
       const dataWithArray = [
         {id: 1, permissoes: [{nome: 'Admin'}, {nome: 'User'}]}
       ];
@@ -465,7 +460,7 @@ describe('TableExportService', () => {
       const permissoesSchema = options.schema.find(s => s.column === 'Permissões');
       const result = permissoesSchema?.value(dataWithArray[0]);
 
-      expect(result).toBe('Admin, User');
+      expect(result).toBe('Admin; User');
     });
 
     it('deve formatar array de objetos com propriedade descricao', async () => {
@@ -488,7 +483,7 @@ describe('TableExportService', () => {
       const gruposSchema = options.schema.find(s => s.column === 'Grupos');
       const result = gruposSchema?.value(dataWithArray[0]);
 
-      expect(result).toBe('Grupo A, Grupo B');
+      expect(result).toBe('Grupo A; Grupo B');
     });
 
     it('deve retornar string vazia para array vazio', async () => {
@@ -530,7 +525,7 @@ describe('TableExportService', () => {
       const tagsSchema = options.schema.find(s => s.column === 'Tags');
       const result = tagsSchema?.value(dataWithPrimitiveArray[0]);
 
-      expect(result).toBe('tag1, tag2, tag3');
+      expect(result).toBe('tag1; tag2; tag3');
     });
   });
 
@@ -638,24 +633,22 @@ describe('TableExportService', () => {
     });
 
     it('deve realizar fluxo completo de exportação CSV com dados reais', () => {
-      const mockTable: jest.Mocked<Table> = {
-        exportCSV: jest.fn(),
-        columns: []
-      } as unknown as jest.Mocked<Table>;
+      // Usa helper para configurar mocks
+      const mocks = setupCSVDownloadMocks();
 
-      service.exportToCSV(mockTable, mockData, mockColumns);
+      service.exportToCSV(null, mockData, mockColumns, 'test-export');
 
       // Verifica mensagem informativa
       expect(messageService.add).toHaveBeenCalledWith(
         expect.objectContaining({severity: 'info'})
       );
 
-      // Verifica configuração das colunas
-      expect(mockTable.columns).toBeDefined();
-      expect(Array.isArray(mockTable.columns)).toBe(true);
+      // Verifica que o download foi disparado
+      expect(mocks.mockClick).toHaveBeenCalled();
+      expect(mocks.mockLink.setAttribute).toHaveBeenCalledWith('download', expect.stringContaining('test-export_export_'));
 
-      // Verifica chamada do método exportCSV
-      expect(mockTable.exportCSV).toHaveBeenCalled();
+      // Cleanup
+      mocks.cleanup();
     });
   });
 });

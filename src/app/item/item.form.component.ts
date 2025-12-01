@@ -8,7 +8,7 @@ import {
   signal,
   viewChild
 } from '@angular/core';
-import {CommonModule, NgOptimizedImage} from '@angular/common';
+import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
 import {Z_INDEX} from '../framework/constants';
@@ -31,6 +31,7 @@ import {ButtonModule} from "primeng/button";
 import {CardModule} from "primeng/card";
 import {CarouselModule} from "primeng/carousel";
 import {DialogModule} from "primeng/dialog";
+import {ImageModule} from "primeng/image";
 import {InputTextModule} from "primeng/inputtext";
 import {TextareaModule} from "primeng/textarea";
 import {InputNumberModule} from "primeng/inputnumber";
@@ -57,7 +58,6 @@ interface TipoItemOption {
   imports: [
     CadastroRapidoComponent,
     CommonModule,
-    NgOptimizedImage,
     ReactiveFormsModule,
     // PrimeNG
     AutoCompleteModule,
@@ -66,6 +66,7 @@ interface TipoItemOption {
     CarouselModule,
     DialogModule,
     FileUploadModule,
+    ImageModule,
     InputTextModule,
     TextareaModule,
     InputNumberModule,
@@ -104,7 +105,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     { label: 'Consumo', value: 'C' },
     { label: 'Permanente', value: 'P' }
   ]);
-  protected readonly dialogImagens = signal(false);
+  protected dialogImagens = signal(false);
   protected readonly images = signal<ItemImage[]>([]);
   protected readonly loadingImages = signal(false);
 
@@ -384,6 +385,42 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
       rejectLabel: 'Não',
       accept: () => {
         this.performDeleteImage(image);
+      }
+    });
+  }
+
+  /**
+   * Define uma imagem como capa do item
+   */
+  setCoverImage(image: ItemImage): void {
+    const obj = this.object();
+    if (!obj?.id || !image?.id) return;
+
+    this.loaderService.show();
+    this.service.setCoverImage(obj.id, image.id).subscribe({
+      next: () => {
+        // Atualiza localmente o estado das imagens
+        this.images.update(imgs =>
+          imgs.map(img => ({
+            ...img,
+            isCover: img.id === image.id
+          }))
+        );
+        this.loaderService.hide();
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Sucesso',
+          detail: 'Imagem definida como capa'
+        });
+      },
+      error: (error) => {
+        this.loaderService.hide();
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Não foi possível definir a imagem como capa'
+        });
+        this.logger.error('Erro ao definir imagem como capa', error);
       }
     });
   }

@@ -2,13 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
-  OnDestroy,
   signal
 } from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
-import {Subscription} from 'rxjs';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {Z_INDEX} from '../framework/constants';
 import {Usuario} from './usuario';
 import {UsuarioService} from './usuario.service';
@@ -57,18 +57,23 @@ import {StorageService} from '../framework/services/storage.service';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario, number> implements OnDestroy {
+export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario, number> {
   // Constants for template
   protected readonly Z_INDEX = Z_INDEX;
 
   protected override service = inject(UsuarioService);
   protected override urlList = '/usuario';
   protected override type = Usuario;
+
+  // Injeção de DestroyRef para gerenciamento automático de subscriptions
+  private readonly destroyRef = inject(DestroyRef);
+
   // Signals for state management
   protected readonly dialogChangeSenha = signal(false);
   protected readonly grupoAcessoDropdown = signal<SelectItem[]>([]);
   protected readonly loadingPermissoes = signal(false);
   protected readonly changeSenhaForm = signal<FormGroup | null>(null);
+
   // Computed signal for document label
   protected readonly documentLabel = computed(() => {
     const obj = this.object();
@@ -76,11 +81,10 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
     const isAluno = permissoes.some((p: Permissao) => p.nome.includes('ROLE_ALUNO'));
     return isAluno ? 'RA' : 'SIAPE';
   });
+
   private readonly fb = inject(FormBuilder);
   protected readonly logger = inject(LoggerService);
   private readonly storageService = inject(StorageService);
-  private permissoesSubscription?: Subscription;
-  private changeSenhaSubscription?: Subscription;
 
   constructor() {
     super();
@@ -181,7 +185,9 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
 
       const usuarioToUpdate = {...obj, password: novaSenha};
 
-      this.changeSenhaSubscription = this.service.changeSenha(usuarioToUpdate, senhaAtual).subscribe({
+      this.service.changeSenha(usuarioToUpdate, senhaAtual).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
         next: () => {
           this.loaderService.hide();
           this.messageService.add({
@@ -258,13 +264,6 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
     }
   }
 
-  /**
-   * Cleanup on component destroy
-   */
-  ngOnDestroy(): void {
-    this.cancelPermissoesRequest();
-    this.cancelChangeSenhaRequest();
-  }
 
   /**
    * Build the reactive form for user profile
@@ -272,9 +271,8 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
   protected override buildForm(): FormGroup {
     return this.fb.group({
       id: [{value: null, disabled: true}],
-      nome: [{value: '', disabled: true}, [Validators.required, Validators.minLength(3)]],
+      nome: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(255)]],
       email: [{value: '', disabled: true}, [Validators.required, Validators.email]],
-      username: [{value: '', disabled: true}, [Validators.required]],
       telefone: ['', [Validators.required, Validators.minLength(8)]],
       documento: ['', [Validators.required, Validators.minLength(3)]],
       permissoes: [{value: [], disabled: true}, [Validators.required]]
@@ -283,6 +281,7 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
 
   /**
    * Override to include disabled fields
+   * Nota: username é preenchido automaticamente com o email para retrocompatibilidade com o backend
    */
   protected override prepareFormValue(formValue: Partial<Usuario>): Partial<Usuario> {
     const formGroup = this.form();
@@ -291,7 +290,6 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
     const id = formGroup.get('id')?.value;
     const nome = formGroup.get('nome')?.value;
     const email = formGroup.get('email')?.value;
-    const username = formGroup.get('username')?.value;
     const permissoes = formGroup.get('permissoes')?.value;
 
     return {
@@ -299,7 +297,7 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
       ...(id && {id}),
       ...(nome && {nome}),
       ...(email && {email}),
-      ...(username && {username}),
+      username: email, // Retrocompatibilidade: username = email
       ...(permissoes && {permissoes})
     };
   }
@@ -314,7 +312,6 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
         id: object.id,
         nome: object.nome,
         email: object.email,
-        username: object.username,
         telefone: object.telefone,
         documento: object.documento,
         permissoes: object.permissoes || object.authorities || []
@@ -350,11 +347,11 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
    * Load available permissoes for dropdown
    */
   private loadPermissoes(): void {
-    this.cancelPermissoesRequest();
-
     this.loadingPermissoes.set(true);
 
-    this.permissoesSubscription = this.service.findAllPermissao().subscribe({
+    this.service.findAllPermissao().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (permissoes) => {
         const items: SelectItem[] = permissoes.map(permissao => ({
           label: this.formatRole(permissao.nome),
@@ -376,24 +373,5 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
   private formatRole(nome: string): string {
     const formatted = nome.replaceAll('ROLE_', '');
     return formatted.charAt(0).toUpperCase() + formatted.slice(1).toLowerCase();
-  }
-
-  /**
-   * Cancel ongoing permissoes request
-   */
-  private cancelPermissoesRequest(): void {
-    if (this.permissoesSubscription && !this.permissoesSubscription.closed) {
-      this.permissoesSubscription.unsubscribe();
-      this.loadingPermissoes.set(false);
-    }
-  }
-
-  /**
-   * Cancel ongoing change senha request
-   */
-  private cancelChangeSenhaRequest(): void {
-    if (this.changeSenhaSubscription && !this.changeSenhaSubscription.closed) {
-      this.changeSenhaSubscription.unsubscribe();
-    }
   }
 }
