@@ -105,7 +105,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     { label: 'Consumo', value: 'C' },
     { label: 'Permanente', value: 'P' }
   ]);
-  protected readonly dialogImagens = signal(false);
+  protected dialogImagens = signal(false);
   protected readonly images = signal<ItemImage[]>([]);
   protected readonly loadingImages = signal(false);
 

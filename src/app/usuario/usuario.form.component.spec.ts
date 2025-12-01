@@ -1,7 +1,6 @@
 import {TestBed} from '@angular/core/testing';
 import {FormBuilder, ReactiveFormsModule} from '@angular/forms';
-import {RouterTestingModule} from '@angular/router/testing';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, provideRouter} from '@angular/router';
 import {MessageService} from 'primeng/api';
 import {of, throwError} from 'rxjs';
 import {UsuarioFormComponent} from './usuario.form.component';
@@ -49,8 +48,9 @@ describe('UsuarioFormComponent', () => {
     };
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule, ReactiveFormsModule, UsuarioFormComponent],
+      imports: [ReactiveFormsModule, UsuarioFormComponent],
       providers: [
+        provideRouter([]),
         FormBuilder,
         {provide: MessageService, useValue: messageServiceMock},
         {provide: UsuarioService, useValue: usuarioServiceMock},
