@@ -1,6 +1,15 @@
-import {ChangeDetectionStrategy, Component, computed, effect, inject, signal} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  OnDestroy,
+  signal
+} from '@angular/core';
 import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import {Subscription} from 'rxjs';
 import {Emprestimo} from './emprestimo';
 import {EmprestimoService} from './emprestimo.service';
 import {
@@ -68,7 +77,7 @@ import {LoggerService} from '../framework/services/logger.service';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Emprestimo, number> {
+export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Emprestimo, number> implements OnDestroy {
   protected override service = inject(EmprestimoService);
   protected override urlList = '/emprestimo';
   protected override type = Emprestimo;
@@ -76,9 +85,12 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   private readonly itemService = inject(ItemService);
   private readonly usuarioService = inject(UsuarioService);
   protected readonly logger = inject(LoggerService);
+  protected readonly itemLoading = signal(false);
 
   // State signals
   protected readonly itemList = signal<Item[]>([]);
+  protected readonly itemTotalRecords = signal(0);
+  private itemSubscription?: Subscription;
   protected readonly usuarioList = signal<Usuario[]>([]);
   protected readonly emprestimoItems = signal<EmprestimoItem[]>([]);
   protected readonly maxDateEmprestimo = signal<Date>(new Date());
@@ -86,6 +98,10 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   protected readonly documentoUsuario = signal<string>('');
   protected readonly disableForm = signal<boolean>(false);
   protected readonly idReserva = signal<number>(0);
+  // Pagination state for Item autocomplete
+  private readonly ITEM_PAGE_SIZE = 10;
+  private itemPage = 0;
+  private itemQuery = '';
 
   // Temporary signals for adding items
   protected tempItem = signal<Item | null>(null);
@@ -149,14 +165,84 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   }
 
   /**
-   * Autocomplete for Items
+   * Autocomplete for Items with pagination
    */
   findProdutos(event: AutoCompleteCompleteEvent): void {
-    this.itemService.completeItem(event.query, true).subscribe({
-      next: (e) => {
-        this.itemList.set(e);
+    this.cancelItemRequest(); // Cancel previous request to prevent race condition
+
+    // Reset pagination on new query
+    if (event.query !== this.itemQuery) {
+      this.itemPage = 0;
+      this.itemList.set([]);
+    }
+    this.itemQuery = event.query;
+
+    this.loadItemsPage();
+  }
+
+  /**
+   * Handler for p-autoComplete onLazyLoad (virtual scroll)
+   */
+  onItemLazyLoad(event: { first: number; last: number }): void {
+    this.cancelItemRequest(); // Cancel previous request to prevent race condition
+
+    const currentLength = this.itemList().length;
+    const neededPage = Math.floor(event.last / this.ITEM_PAGE_SIZE);
+
+    // Load next page if approaching end and more records exist
+    if (neededPage >= this.itemPage && currentLength < this.itemTotalRecords()) {
+      this.itemPage = neededPage;
+      this.loadItemsPage();
+    }
+  }
+
+  /**
+   * Cleanup subscriptions on destroy
+   */
+  ngOnDestroy(): void {
+    this.cancelItemRequest();
+  }
+
+  /**
+   * Load a page of items
+   */
+  private loadItemsPage(): void {
+    this.itemLoading.set(true);
+
+    this.itemSubscription = this.itemService
+    .completeItemPaged(this.itemQuery, true, this.itemPage, this.ITEM_PAGE_SIZE)
+    .subscribe({
+      next: (response) => {
+        // Append to existing list for virtual scroll
+        const currentList = this.itemList();
+        if (this.itemPage === 0) {
+          this.itemList.set(response.content);
+        } else {
+          this.itemList.set([...currentList, ...response.content]);
+        }
+        this.itemTotalRecords.set(response.totalElements);
+        this.itemLoading.set(false);
+      },
+      error: (error) => {
+        this.logger.error('Error fetching items', error);
+        this.itemLoading.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Erro ao carregar itens. Tente novamente.',
+          life: 5000
+        });
       }
     });
+  }
+
+  /**
+   * Cancel ongoing item request
+   */
+  private cancelItemRequest(): void {
+    if (this.itemSubscription && !this.itemSubscription.closed) {
+      this.itemSubscription.unsubscribe();
+    }
   }
 
   /**

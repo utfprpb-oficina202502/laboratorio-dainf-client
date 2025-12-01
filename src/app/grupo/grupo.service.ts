@@ -15,9 +15,7 @@ export class GrupoService extends CrudService<Grupo, number> {
     super(`${environment.api_url}grupo/`, http);
   }
 
-  complete(query: string): Observable<Grupo[]> {
-    return this.http.get<Grupo[]>(`${this.url}complete?query=${query}`);
-  }
+  // Usa completePaged() herdado de CrudService
 
   findItensVinculados(id: number): Observable<Item[]> {
     return this.http.get<Item[]>(this.url + `itens-vinculados/${id}`);
