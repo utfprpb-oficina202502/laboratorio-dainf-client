@@ -110,12 +110,16 @@
                   <app-action-buttons
                     [showEdit]="canEdit()"
                     [showDelete]="canDelete()"
+                    (delete)="delete(rowData.id)"
                     [editTooltip]="'Editar reserva'"
                     [deleteTooltip]="'Remover reserva'"
+                    (view)="edit(rowData.id)"
                     [editAriaLabel]="'Editar reserva ' + rowData.id"
                     [deleteAriaLabel]="'Remover reserva ' + rowData.id"
+                    [showView]="isAlunoOrProfessor()"
                     (edit)="edit(rowData.id)"
-                    (delete)="delete(rowData.id)">
+                    [viewAriaLabel]="'Visualizar reserva ' + rowData.id"
+                    [viewTooltip]="'Visualizar reserva'">
                   </app-action-buttons>
                 }
                 @default {

@@ -93,12 +93,18 @@
                 }
                 @case ('actions') {
                   <app-action-buttons
-                    [showEdit]="true"
-                    [showDelete]="true"
-                    [editTooltip]="'Editar'"
-                    [deleteTooltip]="'Remover'"
+                    (delete)="delete(rowData.id)"
+                    (view)="edit(rowData.id)"
+                    [deleteAriaLabel]="'Remover compra ' + rowData.id"
+                    [deleteTooltip]="'Remover compra'"
+                    [editAriaLabel]="'Editar compra ' + rowData.id"
+                    [editTooltip]="'Editar compra'"
+                    [showDelete]="canDelete()"
+                    [showEdit]="canEdit()"
+                    [showView]="isAlunoOrProfessor()"
                     (edit)="edit(rowData.id)"
-                    (delete)="delete(rowData.id)">
+                    [viewAriaLabel]="'Visualizar compra ' + rowData.id"
+                    [viewTooltip]="'Visualizar compra'">
                   </app-action-buttons>
                 }
                 @default {
