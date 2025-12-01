@@ -32,7 +32,6 @@
     "@eslint/js": "^9.37.0",
     "@primeuix/themes": "^1.2.5",
     "compression": "^1.8.1",
-    "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
     "helmet": "^8.1.0",
@@ -41,6 +40,7 @@
     "quill": "^2.0.3",
     "rxjs": "^7.8.1",
     "tslib": "^2.3.0",
+    "write-excel-file": "^2.3.10",
     "zone.js": "^0.15.1"
   },
   "devDependencies": {

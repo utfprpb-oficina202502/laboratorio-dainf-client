@@ -386,10 +386,11 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   }
 
   // Export functionality - can be overridden in child components for custom export logic
+  // Passa columnToggleModel para exportar apenas colunas visíveis selecionadas pelo usuário
   exportExcel() {
     const exportableColumns = this.getExportableColumns();
     const fileName = this.getExportFileName();
-    this.tableExportService.exportToExcel(this.objects, exportableColumns, fileName);
+    this.tableExportService.exportToExcel(this.objects, exportableColumns, fileName, this.columnToggleModel);
   }
 
   onSelectionChange(selection: T[]): void {

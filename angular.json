@@ -15,8 +15,9 @@
           "options": {
             "allowedCommonJsDependencies": [
               "rxjs-compat",
-              "exceljs",
-              "sweetalert2"
+              "sweetalert2",
+              "jszip",
+              "file-saver"
             ],
             "outputPath": {
               "base": "dist/tcc-client"
