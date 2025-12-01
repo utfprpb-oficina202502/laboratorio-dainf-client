@@ -74,3 +74,7 @@ DAINF/UTFPR lab management system
 - `FormBusinessRulesService`: Domain logic (user assignment, totals, saldo validation, item management)
 
 All services: `@Injectable({providedIn: 'root'})` | Use `inject()` | JSDoc pt-BR
+
+## Related Projects
+
+- **Backend:** `C:\Users\rodiz\IdeaProjects\laboratorio-dainf-server` (Spring Boot 3.5.6 + Java 21 + PostgreSQL + MinIO)

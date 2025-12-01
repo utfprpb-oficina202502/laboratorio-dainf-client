@@ -26,20 +26,20 @@
       @if (form(); as formGroup) {
         <form [formGroup]="formGroup" (ngSubmit)="save()" class="flex flex-col gap-4">
           <div class="grid grid-cols-12 gap-4">
-            <!-- Nome Field (read-only) -->
+            <!-- Nome Field -->
             <div class="col-span-12 md:col-span-5">
               <app-form-field
                 [control]="formGroup.get('nome')"
                 label="Nome"
                 [required]="true"
                 fieldId="nome"
-                hint="Nome não pode ser alterado">
+                hint="Digite seu nome completo">
                 <input
                   pInputText
                   id="nome"
                   formControlName="nome"
                   class="w-full"
-                  readonly/>
+                  placeholder="Ex: João Silva"/>
               </app-form-field>
             </div>
 
@@ -103,7 +103,7 @@
             </div>
 
             <!-- Documento Field (RA/SIAPE) -->
-            <div class="col-span-12 md:col-span-3">
+            <div class="col-span-12 md:col-span-4">
               <app-form-field
                 [control]="formGroup.get('documento')"
                 [label]="documentLabel()"
@@ -116,23 +116,6 @@
                   formControlName="documento"
                   class="w-full"
                   [placeholder]="documentLabel()"/>
-              </app-form-field>
-            </div>
-
-            <!-- Username Field (read-only) -->
-            <div class="col-span-12 md:col-span-5">
-              <app-form-field
-                [control]="formGroup.get('username')"
-                label="Usuário"
-                [required]="true"
-                fieldId="username"
-                hint="Nome de usuário não pode ser alterado">
-                <input
-                  pInputText
-                  id="username"
-                  formControlName="username"
-                  class="w-full"
-                  readonly/>
               </app-form-field>
             </div>
           </div>

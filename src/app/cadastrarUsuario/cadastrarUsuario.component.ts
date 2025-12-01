@@ -45,7 +45,7 @@ export class CadastrarUsuarioComponent implements OnInit {
     this.form = this.fb.group({
       nome: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email, this.utfprEmailValidator]],
-      documento: ['', [Validators.required, Validators.minLength(3)]],
+      documento: ['', [Validators.required, Validators.minLength(3), Validators.pattern(/^\d+$/)]],
       telefone: ['', [Validators.required, Validators.minLength(8)]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', [Validators.required]]
@@ -120,6 +120,15 @@ export class CadastrarUsuarioComponent implements OnInit {
     this.router.navigate(["/login"]);
   }
 
+  /**
+   * Retorna a mensagem de erro apropriada para um campo do formulário.
+   * A ordem das verificações é importante para exibir a mensagem mais relevante.
+   * @param fieldName Nome do campo no formulário
+   * @returns Mensagem de erro em pt-BR ou string vazia se não houver erro
+   * @example
+   * getErrorMessage('documento') // 'O RA/SIAPE deve conter apenas números'
+   * getErrorMessage('email') // 'Digite um email válido da UTFPR...'
+   */
   getErrorMessage(fieldName: string): string {
     const control = this.form.get(fieldName);
     if (!control?.errors || !control?.touched) {
@@ -128,6 +137,11 @@ export class CadastrarUsuarioComponent implements OnInit {
 
     if (control.errors['required']) {
       return 'Este campo é obrigatório';
+    }
+    // Pattern é verificado antes de minlength para documento,
+    // pois "abc" deve mostrar "apenas números" e não "mínimo 3 caracteres"
+    if (control.errors['pattern']) {
+      return 'O RA/SIAPE deve conter apenas números';
     }
     if (control.errors['minlength']) {
       return `Mínimo de ${control.errors['minlength'].requiredLength} caracteres`;
@@ -141,10 +155,29 @@ export class CadastrarUsuarioComponent implements OnInit {
     return '';
   }
 
+  /**
+   * Retorna mensagem de erro quando as senhas não conferem.
+   * Verifica o erro a nível de FormGroup (validador cross-field).
+   * @returns Mensagem de erro ou string vazia se senhas conferem
+   */
   getPasswordMatchError(): string {
     if (this.form.errors?.['passwordMismatch'] && this.form.get('confirmPassword')?.touched) {
       return 'As senhas não conferem';
     }
     return '';
+  }
+
+  /**
+   * Filtra caracteres não numéricos do campo RA/SIAPE.
+   * Remove qualquer caractere que não seja dígito em tempo real.
+   * @param event Evento de input do campo
+   */
+  onDocumentoInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const filteredValue = input.value.replaceAll(/\D/g, '');
+    if (input.value !== filteredValue) {
+      input.value = filteredValue;
+      this.form.get('documento')?.setValue(filteredValue, {emitEvent: false});
+    }
   }
 }

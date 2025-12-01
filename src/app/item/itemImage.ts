@@ -6,4 +6,5 @@ export class ItemImage {
   nameImage!: string;
   item!: Item;
   base64!: string;
+  isCover?: boolean;
 }

@@ -24,7 +24,7 @@ import {formatRoles} from '../framework/constants/roles';
 })
 export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number> {
   protected override service = inject(UsuarioService);
-  protected override columnsTable = ['id', 'nome', 'username', 'permissoes', 'actions'];
+  protected override columnsTable = ['id', 'nome', 'email', 'permissoes', 'actions'];
   protected override urlForm = 'usuario/form';
 
   private readonly tableColumns: TableColumn[] = [
@@ -46,12 +46,12 @@ export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number
       minWidth: '16rem'
     },
     {
-      field: 'username',
-      header: 'Usuário',
+      field: 'email',
+      header: 'Email',
       type: 'text',
       sortable: true,
       filterable: true,
-      minWidth: '12rem'
+      minWidth: '14rem'
     },
     {
       field: 'permissoes',
@@ -80,11 +80,10 @@ export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number
 
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'nome', 'username'],
+      globalFilterFields: ['id', 'nome', 'email'],
       defaultSortField: 'nome',
       caption: 'Usuários',
       stateKey: 'usuario-list',
-      // ...outras propriedades específicas...
     });
   }
 

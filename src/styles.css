@@ -341,6 +341,13 @@
 
 @layer overrides {
   /* ============================================================================
+     Dialog Overlay - Ensure modal backdrop covers sidenav and navbar
+     ============================================================================ */
+  .p-dialog-mask {
+    z-index: 10000 !important;
+  }
+
+  /* ============================================================================
      Theme-Specific Button Overrides
      NOTE: !important needed to override PrimeNG's high specificity
      ============================================================================ */

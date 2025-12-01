@@ -55,13 +55,13 @@ describe('roles', () => {
   });
 
   describe('formatRoles', () => {
-    it('deve formatar array de permissões como string separada por vírgula', () => {
+    it('deve formatar array de permissões como string separada por ponto-e-vírgula', () => {
       const permissoes = [
         {nome: 'ROLE_ALUNO'},
         {nome: 'ROLE_PROFESSOR'}
       ];
 
-      expect(formatRoles(permissoes)).toBe('Aluno, Professor');
+      expect(formatRoles(permissoes)).toBe('Aluno; Professor');
     });
 
     it('deve retornar label único para array com uma permissão', () => {
@@ -90,7 +90,7 @@ describe('roles', () => {
         {nome: 'ROLE_ALUNO'}
       ];
 
-      expect(formatRoles(todasPermissoes)).toBe('Administrador, Laboratorista, Professor, Aluno');
+      expect(formatRoles(todasPermissoes)).toBe('Administrador; Laboratorista; Professor; Aluno');
     });
 
     it('deve lidar com roles desconhecidas graciosamente', () => {
@@ -99,7 +99,7 @@ describe('roles', () => {
         {nome: 'ROLE_CUSTOM'}
       ];
 
-      expect(formatRoles(permissoes)).toBe('Aluno, CUSTOM');
+      expect(formatRoles(permissoes)).toBe('Aluno; CUSTOM');
     });
   });
 });

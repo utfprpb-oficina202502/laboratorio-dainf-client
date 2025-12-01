@@ -327,23 +327,49 @@
     [circular]="true"
     [responsiveOptions]="responsiveOptions">
     <ng-template let-image pTemplate="item">
-      <div class="flex flex-col items-center gap-2">
-        <div class="relative w-300px h-[225px]">
-          <img
+      <div class="flex flex-col items-center gap-2 relative">
+        <!-- Indicador de capa -->
+        @if (image.isCover) {
+          <span
+            class="absolute top-2 left-2 bg-primary text-white px-2 py-1 rounded text-xs z-10 flex items-center gap-1">
+            <i class="pi pi-star-fill"></i>Capa
+          </span>
+        }
+
+        <!-- Imagem com preview/lightbox -->
+        <div class="w-300px h-[225px] flex items-center justify-center">
+          <p-image
+            [preview]="true"
             [alt]="'Item'"
-            [ngSrc]="image.nameImage"
-            class="object-contain rounded"
-            fill/>
+            [src]="image.nameImage"
+            height="225"
+            imageClass="object-contain rounded max-h-[225px]"
+            width="300"/>
         </div>
+
+        <!-- Botões de ação -->
         @if (!isAlunoOrProfessor()) {
-          <p-button
-            type="button"
-            (onClick)="deleteImage(image)"
-            pTooltip="Remover Imagem"
-            tooltipPosition="bottom"
-            label="Remover"
-            icon="pi pi-trash"
-            severity="danger"/>
+          <div class="flex gap-2">
+            <p-button
+              (onClick)="setCoverImage(image)"
+              [disabled]="image.isCover"
+              [label]="image.isCover ? 'Capa atual' : 'Definir capa'"
+              [severity]="image.isCover ? 'success' : 'secondary'"
+              icon="pi pi-star"
+              pTooltip="Definir como capa"
+              size="small"
+              tooltipPosition="bottom"
+              type="button"/>
+            <p-button
+              (onClick)="deleteImage(image)"
+              icon="pi pi-trash"
+              label="Remover"
+              pTooltip="Remover Imagem"
+              severity="danger"
+              size="small"
+              tooltipPosition="bottom"
+              type="button"/>
+          </div>
         }
       </div>
     </ng-template>

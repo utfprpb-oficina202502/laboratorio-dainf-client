@@ -480,11 +480,12 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     return `Tabela de ${this.getEntityPluralName()} com ${this.totalElements} registros`;
   }
 
-  // CSV Export using PrimeNG built-in functionality
+  // CSV Export com suporte a exportValueGetter customizado
   exportCSV(table?: Table | null) {
     const tableRef = table || this.dataTable();
     const exportableColumns = this.getExportableColumns();
-    this.tableExportService.exportToCSV(tableRef, this.objects, exportableColumns);
+    const fileName = this.getExportFileName();
+    this.tableExportService.exportToCSV(tableRef, this.objects, exportableColumns, fileName);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
