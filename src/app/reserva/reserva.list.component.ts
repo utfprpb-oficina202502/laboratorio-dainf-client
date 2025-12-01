@@ -1,4 +1,11 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject, viewChild} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  forwardRef,
+  inject,
+  viewChild
+} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Reserva} from './reserva';
@@ -29,6 +36,9 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
   protected override service = inject(ReservaService);
   protected override columnsTable = ['id', 'descricao', 'dataReserva', 'dataRetirada', 'nomeUsuario', 'actions'];
   protected override urlForm = 'reserva/form';
+
+  // Override: Todos os usuários autenticados podem criar reservas (alunos/professores incluídos)
+  override readonly canCreate = computed(() => true);
 
   readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
   contextMenuItems: MenuItem[] = [];
@@ -124,18 +134,21 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
       });
     }
 
-    this.contextMenuItems.push(
-      {
-        label: 'Editar',
-        icon: 'pi pi-pencil',
-        command: () => this.edit(reserva.id)
-      },
-      {
+    // Editar/Visualizar - altera label e ícone baseado na permissão
+    this.contextMenuItems.push({
+      label: isAlunoOrProfessor ? 'Visualizar' : 'Editar',
+      icon: isAlunoOrProfessor ? 'pi pi-eye' : 'pi pi-pencil',
+      command: () => this.edit(reserva.id)
+    });
+
+    // Remover - apenas para admin/laboratorista
+    if (!isAlunoOrProfessor) {
+      this.contextMenuItems.push({
         label: 'Remover',
         icon: 'pi pi-trash',
         command: () => this.delete(reserva.id)
-      }
-    );
+      });
+    }
 
     this.actionsMenu().toggle(event);
     this.cdr?.markForCheck();
