@@ -441,6 +441,181 @@ describe('TableExportService', () => {
     });
   });
 
+  describe('extractArrayDisplayValue (via exportToExcel)', () => {
+    it('deve formatar array de objetos com propriedade nome como lista separada por vírgula', async () => {
+      const dataWithArray = [
+        {id: 1, permissoes: [{nome: 'Admin'}, {nome: 'User'}]}
+      ];
+      const columnsWithArray: TableColumn[] = [
+        {field: 'id', header: 'ID'},
+        {field: 'permissoes', header: 'Permissões'}
+      ];
+
+      service.exportToExcel(dataWithArray, columnsWithArray, 'test');
+
+      await waitForAsync();
+
+      expect((writeXlsxFile as jest.Mock)).toHaveBeenCalled();
+      const callArgs = (writeXlsxFile as jest.Mock).mock.calls[0];
+      const options = callArgs[1] as {
+        schema: { column: string; value: (item: unknown) => unknown }[]
+      };
+
+      // Testa a função value do schema para o campo permissoes
+      const permissoesSchema = options.schema.find(s => s.column === 'Permissões');
+      const result = permissoesSchema?.value(dataWithArray[0]);
+
+      expect(result).toBe('Admin, User');
+    });
+
+    it('deve formatar array de objetos com propriedade descricao', async () => {
+      const dataWithArray = [
+        {id: 1, grupos: [{descricao: 'Grupo A'}, {descricao: 'Grupo B'}]}
+      ];
+      const columnsWithArray: TableColumn[] = [
+        {field: 'id', header: 'ID'},
+        {field: 'grupos', header: 'Grupos'}
+      ];
+
+      service.exportToExcel(dataWithArray, columnsWithArray, 'test');
+
+      await waitForAsync();
+
+      const callArgs = (writeXlsxFile as jest.Mock).mock.calls[0];
+      const options = callArgs[1] as {
+        schema: { column: string; value: (item: unknown) => unknown }[]
+      };
+      const gruposSchema = options.schema.find(s => s.column === 'Grupos');
+      const result = gruposSchema?.value(dataWithArray[0]);
+
+      expect(result).toBe('Grupo A, Grupo B');
+    });
+
+    it('deve retornar string vazia para array vazio', async () => {
+      const dataWithEmptyArray = [{id: 1, items: []}];
+      const columnsWithArray: TableColumn[] = [
+        {field: 'id', header: 'ID'},
+        {field: 'items', header: 'Items'}
+      ];
+
+      service.exportToExcel(dataWithEmptyArray, columnsWithArray, 'test');
+
+      await waitForAsync();
+
+      const callArgs = (writeXlsxFile as jest.Mock).mock.calls[0];
+      const options = callArgs[1] as {
+        schema: { column: string; value: (item: unknown) => unknown }[]
+      };
+      const itemsSchema = options.schema.find(s => s.column === 'Items');
+      const result = itemsSchema?.value(dataWithEmptyArray[0]);
+
+      expect(result).toBe('');
+    });
+
+    it('deve formatar array de valores primitivos', async () => {
+      const dataWithPrimitiveArray = [{id: 1, tags: ['tag1', 'tag2', 'tag3']}];
+      const columnsWithArray: TableColumn[] = [
+        {field: 'id', header: 'ID'},
+        {field: 'tags', header: 'Tags'}
+      ];
+
+      service.exportToExcel(dataWithPrimitiveArray, columnsWithArray, 'test');
+
+      await waitForAsync();
+
+      const callArgs = (writeXlsxFile as jest.Mock).mock.calls[0];
+      const options = callArgs[1] as {
+        schema: { column: string; value: (item: unknown) => unknown }[]
+      };
+      const tagsSchema = options.schema.find(s => s.column === 'Tags');
+      const result = tagsSchema?.value(dataWithPrimitiveArray[0]);
+
+      expect(result).toBe('tag1, tag2, tag3');
+    });
+  });
+
+  describe('exportValueGetter', () => {
+    it('deve usar exportValueGetter customizado quando definido', async () => {
+      const dataWithRoles = [
+        {id: 1, roles: [{nome: 'ROLE_ADMIN'}, {nome: 'ROLE_USER'}]}
+      ];
+      const columnsWithGetter: TableColumn[] = [
+        {field: 'id', header: 'ID'},
+        {
+          field: 'roles',
+          header: 'Papéis',
+          exportValueGetter: (item: unknown) => {
+            const data = item as { roles: { nome: string }[] };
+            return data.roles.map(r => r.nome.replace('ROLE_', '')).join(', ');
+          }
+        }
+      ];
+
+      service.exportToExcel(dataWithRoles, columnsWithGetter, 'test');
+
+      await waitForAsync();
+
+      const callArgs = (writeXlsxFile as jest.Mock).mock.calls[0];
+      const options = callArgs[1] as {
+        schema: { column: string; value: (item: unknown) => unknown }[]
+      };
+      const rolesSchema = options.schema.find(s => s.column === 'Papéis');
+      const result = rolesSchema?.value(dataWithRoles[0]);
+
+      expect(result).toBe('ADMIN, USER');
+    });
+
+    it('deve retornar null quando exportValueGetter retorna null', async () => {
+      const dataWithNull = [{id: 1, opcional: null}];
+      const columnsWithNullGetter: TableColumn[] = [
+        {field: 'id', header: 'ID'},
+        {
+          field: 'opcional',
+          header: 'Opcional',
+          exportValueGetter: () => null
+        }
+      ];
+
+      service.exportToExcel(dataWithNull, columnsWithNullGetter, 'test');
+
+      await waitForAsync();
+
+      const callArgs = (writeXlsxFile as jest.Mock).mock.calls[0];
+      const options = callArgs[1] as {
+        schema: { column: string; value: (item: unknown) => unknown }[]
+      };
+      const opcionalSchema = options.schema.find(s => s.column === 'Opcional');
+      const result = opcionalSchema?.value(dataWithNull[0]);
+
+      expect(result).toBeNull();
+    });
+
+    it('deve priorizar exportValueGetter sobre extração padrão', async () => {
+      const data = [{id: 1, valor: 'original'}];
+      const columns: TableColumn[] = [
+        {field: 'id', header: 'ID'},
+        {
+          field: 'valor',
+          header: 'Valor',
+          exportValueGetter: () => 'customizado'
+        }
+      ];
+
+      service.exportToExcel(data, columns, 'test');
+
+      await waitForAsync();
+
+      const callArgs = (writeXlsxFile as jest.Mock).mock.calls[0];
+      const options = callArgs[1] as {
+        schema: { column: string; value: (item: unknown) => unknown }[]
+      };
+      const valorSchema = options.schema.find(s => s.column === 'Valor');
+      const result = valorSchema?.value(data[0]);
+
+      expect(result).toBe('customizado');
+    });
+  });
+
   describe('testes de integração', () => {
     it('deve realizar fluxo completo de exportação Excel com dados reais', async () => {
       service.exportToExcel(mockData, mockColumns, 'test-export');

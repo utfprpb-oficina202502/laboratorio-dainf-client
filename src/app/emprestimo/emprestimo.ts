@@ -15,4 +15,7 @@ export class Emprestimo {
 
   /** Nome do usuário do empréstimo (usado em listagens - DTO simplificado do backend) */
   nomeUsuarioEmprestimo?: string;
+
+  /** Status do empréstimo calculado pelo backend (P=Pendente, A=Atrasado, F=Finalizado) */
+  status?: string;
 }
