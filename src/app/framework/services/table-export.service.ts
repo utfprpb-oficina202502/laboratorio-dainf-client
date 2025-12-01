@@ -200,6 +200,12 @@ export class TableExportService {
       if (columnType) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (schemaColumn as any).type = columnType;
+
+        // write-excel-file exige formato para células de data
+        if (columnType === Date) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (schemaColumn as any).format = 'dd/mm/yyyy';
+        }
       }
 
       return schemaColumn;
@@ -274,14 +280,17 @@ export class TableExportService {
    * Converte valor para Date se possível
    *
    * @param value Valor a converter
-   * @returns Date ou string se inválido
+   * @returns Date ou null se inválido
    */
-  private convertToDate(value: unknown): Date | string {
-    if (typeof value === 'string') {
-      const date = new Date(value);
-      return Number.isNaN(date.getTime()) ? value : date;
+  private convertToDate(value: unknown): Date | null {
+    if (value instanceof Date) {
+      return Number.isNaN(value.getTime()) ? null : value;
     }
-    return this.safeStringify(value);
+    if (typeof value === 'string' || typeof value === 'number') {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+    return null;
   }
 
   /**

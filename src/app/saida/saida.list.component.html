@@ -88,7 +88,7 @@
                   <span>{{ rowData?.qtdeTotal }}</span>
                 }
                 @case ('nomeUsuarioResponsavel') {
-                  <span>{{ rowData?.nomeUsuarioResponsavel || 'N/A' }}</span>
+                  <span>{{ rowData?.nomeUsuarioResponsavel || 'Não informado' }}</span>
                 }
                 @case ('observacao') {
                   <span class="text-truncate d-block" [title]="rowData?.observacao">

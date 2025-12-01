@@ -81,16 +81,16 @@
                 }
                 @case ('fornecedorNomeFantasia') {
                   <span
-                    [attr.aria-label]="'Nome Fantasia: ' + (rowData.fornecedorNomeFantasia || 'N/A')"
+                    [attr.aria-label]="'Nome Fantasia: ' + (rowData.fornecedorNomeFantasia || 'Não informado')"
                     class="font-semibold">
-                    {{ rowData.fornecedorNomeFantasia || 'N/A' }}
+                    {{ rowData.fornecedorNomeFantasia || 'Não informado' }}
                   </span>
                 }
                 @case ('fornecedorRazaoSocial') {
                   <span
-                    [attr.aria-label]="'Razão Social: ' + (rowData.fornecedorRazaoSocial || 'N/A')"
+                    [attr.aria-label]="'Razão Social: ' + (rowData.fornecedorRazaoSocial || 'Não informado')"
                     class="text-gray-600">
-                    {{ rowData.fornecedorRazaoSocial || 'N/A' }}
+                    {{ rowData.fornecedorRazaoSocial || 'Não informado' }}
                   </span>
                 }
                 @case ('dataCompra') {

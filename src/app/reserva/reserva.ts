@@ -9,4 +9,7 @@ export class Reserva {
   observacao!: string;
   usuario!: Usuario;
   reservaItem!: ReservaItem[];
+
+  /** Nome do usuário (usado em listagens - DTO simplificado do backend) */
+  nomeUsuario?: string;
 }

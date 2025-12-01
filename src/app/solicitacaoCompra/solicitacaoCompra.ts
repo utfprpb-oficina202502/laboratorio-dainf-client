@@ -8,4 +8,7 @@ export class SolicitacaoCompra {
   usuario!: Usuario;
   solicitacaoItem!: SolicitacaoCompraItem[];
   observacao!: string;
+
+  /** Nome do usuário (usado em listagens - DTO simplificado do backend) */
+  nomeUsuario?: string;
 }
