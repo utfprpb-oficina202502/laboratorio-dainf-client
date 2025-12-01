@@ -74,7 +74,7 @@ describe('ItemFormComponent', () => {
     };
 
     const grupoServiceMock = {
-      complete: jest.fn()
+      completePaged: jest.fn()
     };
 
     const loginServiceMock = {
@@ -214,23 +214,35 @@ describe('ItemFormComponent', () => {
   });
 
   describe('Grupo Autocomplete', () => {
+    const mockPageResponse = {
+      content: [
+        {id: 1, descricao: 'Eletrônicos'},
+        {id: 2, descricao: 'Ferramentas'},
+        {id: 3, descricao: 'Materiais'}
+      ],
+      totalElements: 3,
+      totalPages: 1,
+      size: 10,
+      number: 0
+    };
+
     beforeEach(() => {
       component.ngOnInit();
       fixture.detectChanges();
     });
 
     it('should fetch grupos on autocomplete event', () => {
-      grupoService.complete.mockReturnValue(of(mockGrupos));
+      grupoService.completePaged.mockReturnValue(of(mockPageResponse));
 
       component.findGrupos({query: 'Eletr'} as any);
 
-      expect(grupoService.complete).toHaveBeenCalledWith('Eletr');
-      expect(component['grupoList']()).toEqual(mockGrupos);
+      expect(grupoService.completePaged).toHaveBeenCalledWith('Eletr', 0, 10);
+      expect(component['grupoList']()).toEqual(mockPageResponse.content);
     });
 
     it('should handle error when fetching grupos', () => {
       const error = new Error('Network error');
-      grupoService.complete.mockReturnValue(throwError(() => error));
+      grupoService.completePaged.mockReturnValue(throwError(() => error));
 
       component.findGrupos({query: 'test'} as any);
 
@@ -238,13 +250,13 @@ describe('ItemFormComponent', () => {
     });
 
     it('should cancel previous grupo request before making new one', () => {
-      grupoService.complete.mockReturnValue(of(mockGrupos));
+      grupoService.completePaged.mockReturnValue(of(mockPageResponse));
 
       component.findGrupos({query: 'first'} as any);
       component.findGrupos({query: 'second'} as any);
 
       // Subscription should be canceled and new one created
-      expect(grupoService.complete).toHaveBeenCalledTimes(2);
+      expect(grupoService.completePaged).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -480,7 +492,14 @@ describe('ItemFormComponent', () => {
 
   describe('Component Cleanup', () => {
     it('should cancel grupo subscription on destroy', () => {
-      grupoService.complete.mockReturnValue(of(mockGrupos));
+      const mockPageResponse = {
+        content: mockGrupos,
+        totalElements: mockGrupos.length,
+        totalPages: 1,
+        size: 10,
+        number: 0
+      };
+      grupoService.completePaged.mockReturnValue(of(mockPageResponse));
       component.findGrupos({query: 'test'} as any);
 
       component.ngOnDestroy();
