@@ -128,11 +128,19 @@
         </tr>
       </ng-template>
 
-          <app-table-default-templates
+          <ng-template pTemplate="emptymessage">
+            <app-table-empty-state
             [colspan]="getColumnCount()"
-            [emptyMessage]="tableConfig.emptyMessage || 'Nenhuma reserva encontrada'"
-            [loadingMessage]="tableConfig.loadingMessage || 'Carregando reservas...'">
-          </app-table-default-templates>
+            [message]="tableConfig.emptyMessage || 'Nenhuma reserva encontrada'">
+            </app-table-empty-state>
+          </ng-template>
+
+          <ng-template pTemplate="loadingbody">
+            <app-table-loading-state
+              [colspan]="getColumnCount()"
+              [message]="tableConfig.loadingMessage || 'Carregando reservas...'">
+            </app-table-loading-state>
+          </ng-template>
     </p-table>
 
       </app-prime-crud-table-wrapper>

@@ -4,9 +4,8 @@ import {TableColumn} from '../framework/model/table-config.interface';
 import {Compra} from './compra';
 import {CompraService} from './compra.service';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
-import {
-  TableDefaultTemplatesComponent
-} from '../framework/component/table-default-templates.component';
+import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
+import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
 import {createTableConfig} from '../framework/utils/table-config.factory';
 
 @Component({
@@ -15,7 +14,8 @@ import {createTableConfig} from '../framework/utils/table-config.factory';
     styleUrls: ['./compra.list.component.css'],
   imports: [
     PrimeTableSharedModule,
-    TableDefaultTemplatesComponent,
+    TableEmptyStateComponent,
+    TableLoadingStateComponent,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => CompraListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush

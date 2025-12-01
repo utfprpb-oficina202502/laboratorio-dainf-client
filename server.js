@@ -9,20 +9,17 @@ const app = express();
 const port = process.env.PORT || 4200;
 
 // ============================================================================
-// CSP - Content Security Policy (configurado via variáveis de ambiente)
+// CSP - Content Security Policy
+// Valores padrão baseados em environment.prod.ts, sobrescritos por variáveis
+// de ambiente quando disponíveis (ex: Heroku)
 // ============================================================================
-const apiUrl = process.env.API_URL;
-const minioUrl = process.env.MINIO_URL;
+const DEFAULT_API_URL = 'http://localhost:8080/';
+const DEFAULT_MINIO_URL = 'https://minio.app.pb.utfpr.edu.br/dainf-labs/';
 
-// Validação obrigatória da API_URL (existência e formato)
-if (!apiUrl) {
-  console.error('❌ ERRO: A variável de ambiente API_URL não está definida.');
-  console.error('   O servidor não pode iniciar sem a URL da API para o CSP.');
-  console.error('   Configure API_URL no Heroku ou no ambiente local.');
-  console.error('   Exemplo: API_URL=https://api.exemplo.com/');
-  process.exit(1);
-}
+const apiUrl = process.env.API_URL || DEFAULT_API_URL;
+const minioUrl = process.env.MINIO_URL || DEFAULT_MINIO_URL;
 
+// Validação do formato da URL
 try {
   new URL(apiUrl);
 } catch {
@@ -59,6 +56,10 @@ const imgSrcOrigins = [minioOrigin].filter(Boolean);
 const mediaSrcOrigins = [minioOrigin].filter(Boolean);
 
 console.log('🔒 CSP configurado:');
+console.log(
+  `   API_URL: ${apiUrl}${process.env.API_URL ? ' (env)' : ' (padrão)'}`);
+console.log(
+  `   MINIO_URL: ${minioUrl}${process.env.MINIO_URL ? ' (env)' : ' (padrão)'}`);
 console.log(`   connect-src: 'self' ${connectSrcOrigins.join(' ')
 || '(nenhuma origem externa)'}`);
 console.log(`   img-src: 'self' blob: data: ${imgSrcOrigins.join(' ')

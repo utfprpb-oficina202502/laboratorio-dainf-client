@@ -6,9 +6,8 @@ import {SaidaService} from './saida.service';
 import {SaidaItem} from './saidaItem';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
-import {
-  TableDefaultTemplatesComponent
-} from '../framework/component/table-default-templates.component';
+import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
+import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
 import {createTableConfig} from '../framework/utils/table-config.factory';
 
 @Component({
@@ -17,7 +16,8 @@ import {createTableConfig} from '../framework/utils/table-config.factory';
   imports: [
     PrimeTableSharedModule,
     ConfirmDialogModule,
-    TableDefaultTemplatesComponent,
+    TableEmptyStateComponent,
+    TableLoadingStateComponent,
   ],
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => SaidaListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush

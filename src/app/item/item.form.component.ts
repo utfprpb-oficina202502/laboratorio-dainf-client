@@ -98,6 +98,8 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
 
   // Signals for component state
   protected readonly grupoList = signal<Grupo[]>([]);
+  protected readonly grupoLoading = signal(false);
+  protected readonly grupoTotalRecords = signal(0);
   protected readonly tipoItemOptions = signal<TipoItemOption[]>([
     { label: 'Consumo', value: 'C' },
     { label: 'Permanente', value: 'P' }
@@ -105,6 +107,11 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   protected readonly dialogImagens = signal(false);
   protected readonly images = signal<ItemImage[]>([]);
   protected readonly loadingImages = signal(false);
+
+  // Pagination state for Grupo autocomplete
+  private readonly GRUPO_PAGE_SIZE = 10;
+  private grupoPage = 0;
+  private grupoQuery = '';
 
   protected readonly responsiveOptions = [
     { breakpoint: '768px', numVisible: 2, numScroll: 2 },
@@ -254,17 +261,66 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   }
 
   /**
-   * Find grupos for autocomplete
+   * Find grupos for autocomplete with pagination
    */
   findGrupos($event: AutoCompleteCompleteEvent): void {
     this.cancelGrupoRequest();
 
-    this.grupoSubscription = this.grupoService.complete($event.query).subscribe({
-      next: (grupos) => {
-        this.grupoList.set(grupos);
+    // Reset pagination on new query
+    if ($event.query !== this.grupoQuery) {
+      this.grupoPage = 0;
+      this.grupoList.set([]);
+    }
+    this.grupoQuery = $event.query;
+
+    this.loadGruposPage();
+  }
+
+  /**
+   * Handler for p-autoComplete onLazyLoad (virtual scroll)
+   */
+  onGrupoLazyLoad(event: { first: number; last: number }): void {
+    this.cancelGrupoRequest(); // Cancel previous request to prevent race condition
+
+    const currentLength = this.grupoList().length;
+    const neededPage = Math.floor(event.last / this.GRUPO_PAGE_SIZE);
+
+    // Load next page if approaching end and more records exist
+    if (neededPage >= this.grupoPage && currentLength < this.grupoTotalRecords()) {
+      this.grupoPage = neededPage;
+      this.loadGruposPage();
+    }
+  }
+
+  /**
+   * Load a page of grupos
+   */
+  private loadGruposPage(): void {
+    this.grupoLoading.set(true);
+
+    this.grupoSubscription = this.grupoService
+    .completePaged(this.grupoQuery, this.grupoPage, this.GRUPO_PAGE_SIZE)
+    .subscribe({
+      next: (response) => {
+        // Append to existing list for virtual scroll
+        const currentList = this.grupoList();
+        if (this.grupoPage === 0) {
+          this.grupoList.set(response.content);
+        } else {
+          this.grupoList.set([...currentList, ...response.content]);
+        }
+        this.grupoTotalRecords.set(response.totalElements);
+        this.grupoLoading.set(false);
       },
       error: (error) => {
         this.logger.error('Error fetching grupos', error);
+        this.grupoLoading.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Erro ao carregar grupos. Tente novamente.',
+          life: 5000
+        });
       }
     });
   }

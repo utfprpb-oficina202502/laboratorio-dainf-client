@@ -4,10 +4,9 @@ import {TableColumn} from '../framework/model/table-config.interface';
 import {Relatorio} from './relatorio';
 import {RelatorioService} from './relatorio.service';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
-import {
-  TableDefaultTemplatesComponent
-} from '../framework/component/table-default-templates.component';
-import { createTableConfig } from '../framework/utils/table-config.factory';
+import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
+import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
+import {createTableConfig} from '../framework/utils/table-config.factory';
 
 @Component({
   selector: 'app-list-relatorio',
@@ -19,7 +18,8 @@ import { createTableConfig } from '../framework/utils/table-config.factory';
   }],
   imports: [
     PrimeTableSharedModule,
-    TableDefaultTemplatesComponent,
+    TableEmptyStateComponent,
+    TableLoadingStateComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

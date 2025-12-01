@@ -101,21 +101,32 @@
         </div>
       </p-dialog>
 
-      @if (loading()) {
-        <p-progressBar mode="indeterminate" [style.height]="'6px'"></p-progressBar>
-      }
+      <!-- Wrapper component handles skeleton/table conditional rendering -->
+      <app-prime-crud-table-wrapper
+          [entityName]="getEntityName().toLowerCase()"
+          [entityPluralName]="getEntityPluralName().toLowerCase()"
+          [loading]="loading()"
+          [skeletonColumns]="displayedColumns.length"
+          [skeletonRows]="rows"
+          [totalElements]="totalElements">
 
-      <p-table
-        [value]="objects"
-        [paginator]="true"
-        [rows]="rows"
-        [totalRecords]="totalElements"
-        [rowsPerPageOptions]="pageSizeOptions"
-        [first]="first"
-        (onPage)="onPageChange($event)"
-        [loading]="loading()"
-        [responsiveLayout]="'scroll'"
-        [attr.aria-label]="'Lista de nada consta com ' + totalElements + ' registro(s)'">
+        <p-table
+          #dt
+          (onPage)="onPageChange($event)"
+          (onSort)="onSort($event)"
+          [attr.aria-label]="'Lista de nada consta com ' + totalElements + ' registro(s)'"
+          [first]="first"
+          [lazyLoadOnInit]="tableConfig.lazyLoadOnInit !== false"
+          [lazy]="tableConfig.lazy !== false"
+          [loading]="loading()"
+          [paginator]="true"
+          [responsiveLayout]="'scroll'"
+          [rowsPerPageOptions]="pageSizeOptions"
+          [rows]="rows"
+          [showCurrentPageReport]="true"
+          [totalRecords]="totalElements"
+          [value]="objects"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros">
 
         <ng-template pTemplate="caption">
           <app-table-filter-caption
@@ -228,12 +239,20 @@
 
         <ng-template pTemplate="emptymessage">
           <app-table-empty-state
-            [colspan]="getVisibleColumns().length"
-            [message]="'Nenhuma solicitação de nada consta encontrada'"
-            [icon]="'pi-info-circle'">
+              [colspan]="getColumnCount()"
+              [message]="tableConfig.emptyMessage || 'Nenhuma solicitação de nada consta encontrada'">
           </app-table-empty-state>
         </ng-template>
+
+          <ng-template pTemplate="loadingbody">
+            <app-table-loading-state
+                [colspan]="getColumnCount()"
+                [message]="tableConfig.loadingMessage || 'Carregando nada consta...'">
+            </app-table-loading-state>
+          </ng-template>
       </p-table>
+
+      </app-prime-crud-table-wrapper>
 
       <!-- Popover global, fora do loop -->
       <p-popover #actionsMenu [attr.aria-label]="'Menu de ações do Nada Consta'">
