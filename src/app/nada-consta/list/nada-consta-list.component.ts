@@ -33,6 +33,10 @@ import {
 } from '../../framework/utils/status-label.util';
 import {createTableConfig} from '../../framework/utils/table-config.factory';
 import {TableEmptyStateComponent} from '../../framework/component/table-empty-state.component';
+import {TableLoadingStateComponent} from '../../framework/component/table-loading-state.component';
+import {
+  PrimeCrudTableWrapperComponent
+} from '../../framework/component/prime-crud-table-wrapper.component';
 import {MenuItem} from 'primeng/api';
 import {MenuModule} from 'primeng/menu';
 import {Popover, PopoverModule} from 'primeng/popover';
@@ -53,12 +57,14 @@ import {Popover, PopoverModule} from 'primeng/popover';
     TagModule,
     TooltipModule,
     PrimeCrudToolbarComponent,
+    PrimeCrudTableWrapperComponent,
+    TableEmptyStateComponent,
+    TableLoadingStateComponent,
     DialogModule,
     InputTextModule,
     IconFieldModule,
     InputIconModule,
     TableFilterCaptionComponent,
-    TableEmptyStateComponent,
     MenuModule,
     PopoverModule
   ],
@@ -124,10 +130,11 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
       defaultSortOrder: -1,
       caption: 'Lista de Nada Consta',
       trackByField: 'id',
-      emptyMessage: 'Nenhum registro encontrado.',
-      loadingMessage: 'Carregando registros...',
+      emptyMessage: 'Nenhuma solicitação de nada consta encontrada',
+      loadingMessage: 'Carregando nada consta...',
       globalFilterPlaceholder: 'Buscar Nada Consta...',
       stateKey: 'nada-consta-list',
+      selectable: false,
     });
     this.columnsTable = this.tableConfig.columns.map(column => column.field);
     // Exibe por padrão apenas os campos principais

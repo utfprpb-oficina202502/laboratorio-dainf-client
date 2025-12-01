@@ -1,4 +1,4 @@
-import {ApplicationConfig, DEFAULT_CURRENCY_CODE, isDevMode, LOCALE_ID} from '@angular/core';
+import {ApplicationConfig, DEFAULT_CURRENCY_CODE, LOCALE_ID} from '@angular/core';
 import {provideRouter, withInMemoryScrolling} from '@angular/router';
 import {provideAnimations} from '@angular/platform-browser/animations';
 import {HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
@@ -129,9 +129,10 @@ export const appConfig: ApplicationConfig = {
     }),
 
     // Service Worker (PWA)
-    // Enabled in production builds only (development uses isDevMode() check)
+    // Habilitado apenas em produção - usa environment.production diretamente
+    // para evitar problemas de ordem de avaliação de módulos com isDevMode()
     provideServiceWorker('ngsw-worker.js', {
-      enabled: !isDevMode(),
+      enabled: environment.production,
       registrationStrategy: 'registerWhenStable:30000'
     })
   ]
