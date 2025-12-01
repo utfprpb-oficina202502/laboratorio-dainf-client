@@ -19,6 +19,17 @@
         [skeletonRows]="rows"
         [totalElements]="totalElements">
 
+        <!-- Filtros sempre visíveis durante loading -->
+        <div tableFilter>
+          <app-table-filter-caption
+            (clear)="clearGlobalFilter()"
+            (filter)="onGlobalFilter($event)"
+            [ariaLabel]="'Campo de busca para filtrar grupos'"
+            [filterValue]="filterValue"
+            [placeholder]="getGlobalFilterPlaceholder()">
+          </app-table-filter-caption>
+        </div>
+
         <p-table
         #dt
         [loading]="loading()"
@@ -46,16 +57,6 @@
         [showCurrentPageReport]="true"
         [tableStyleClass]="getTableStyleClass()"
         [attr.aria-label]="'Lista de grupos com ' + totalElements + ' registro(s)'">
-
-        <ng-template pTemplate="caption">
-          <app-table-filter-caption
-            (clear)="clearGlobalFilter()"
-            (filter)="onGlobalFilter($event)"
-            [ariaLabel]="'Campo de busca para filtrar grupos'"
-            [filterValue]="filterValue"
-            [placeholder]="getGlobalFilterPlaceholder()">
-          </app-table-filter-caption>
-        </ng-template>
 
           <ng-template pTemplate="header">
             <tr>

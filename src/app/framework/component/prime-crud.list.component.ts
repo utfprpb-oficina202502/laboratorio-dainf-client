@@ -520,7 +520,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   // Setup debounced filtering for better performance
   private setupDebouncedFiltering(): void {
     this.filterSubject.pipe(
-      debounceTime(300),  // Reduced from 600ms for better perceived responsiveness
+      debounceTime(1000),  // 1 segundo para usuário terminar de digitar
       distinctUntilChanged(),
       takeUntil(this.destroy$)
     ).subscribe(filterValue => {

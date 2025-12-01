@@ -317,6 +317,7 @@
   [modal]="true"
   [(visible)]="dialogImagens"
   [baseZIndex]="Z_INDEX.DIALOG"
+  [appendTo]="'body'"
   class="dialog-xl"
   [focusOnShow]="false">
   <p-carousel
@@ -336,16 +337,17 @@
           </span>
         }
 
-        <!-- Imagem com preview/lightbox -->
-        <div class="w-[300px] h-[225px] flex items-center justify-center">
-          <p-image
-            [preview]="true"
+        <!-- Imagem clicável para ampliar -->
+        <button
+          (click)="openImagePreview(image)"
+          [attr.aria-label]="'Ampliar imagem'"
+          class="w-[300px] h-[225px] flex items-center justify-center cursor-pointer bg-transparent border-none p-0"
+          type="button">
+          <img
+            [src]="getImageUrl(image.nameImage)"
             [alt]="'Item'"
-            [src]="image.nameImage"
-            height="225"
-            imageClass="object-contain rounded max-h-[225px]"
-            width="300"/>
-        </div>
+            class="object-contain rounded max-h-[225px] max-w-[300px] hover:opacity-80 transition-opacity"/>
+        </button>
 
         <!-- Botões de ação -->
         @if (!isAlunoOrProfessor()) {
@@ -374,4 +376,24 @@
       </div>
     </ng-template>
   </p-carousel>
+</p-dialog>
+
+<!-- Dialog de Visualização Ampliada -->
+<p-dialog
+  [(visible)]="dialogImagemAmpliada"
+  [appendTo]="'body'"
+  [baseZIndex]="Z_INDEX.DIALOG"
+  [dismissableMask]="true"
+  [focusOnShow]="false"
+  [modal]="true"
+  [style]="{'max-width': '90vw', 'max-height': '90vh'}"
+  header="Visualização da Imagem">
+  @if (selectedImage()) {
+    <div class="flex items-center justify-center">
+      <img
+        [alt]="'Item'"
+        [src]="getImageUrl(selectedImage()!.nameImage)"
+        class="max-w-full max-h-[80vh] object-contain rounded"/>
+    </div>
+  }
 </p-dialog>

@@ -31,7 +31,6 @@ import {ButtonModule} from "primeng/button";
 import {CardModule} from "primeng/card";
 import {CarouselModule} from "primeng/carousel";
 import {DialogModule} from "primeng/dialog";
-import {ImageModule} from "primeng/image";
 import {InputTextModule} from "primeng/inputtext";
 import {TextareaModule} from "primeng/textarea";
 import {InputNumberModule} from "primeng/inputnumber";
@@ -66,7 +65,6 @@ interface TipoItemOption {
     CarouselModule,
     DialogModule,
     FileUploadModule,
-    ImageModule,
     InputTextModule,
     TextareaModule,
     InputNumberModule,
@@ -106,7 +104,9 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     { label: 'Permanente', value: 'P' }
   ]);
   protected dialogImagens = signal(false);
+  protected dialogImagemAmpliada = signal(false);
   protected readonly images = signal<ItemImage[]>([]);
+  protected readonly selectedImage = signal<ItemImage | null>(null);
   protected readonly loadingImages = signal(false);
 
   // Pagination state for Grupo autocomplete
@@ -576,6 +576,32 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     } else {
       // Don't clear values, let user manage them
     }
+  }
+
+  /**
+   * Abre o dialog de visualização ampliada da imagem
+   * @param image Imagem a ser exibida
+   */
+  openImagePreview(image: ItemImage): void {
+    this.selectedImage.set(image);
+    this.dialogImagemAmpliada.set(true);
+  }
+
+  /**
+   * Constrói a URL completa para uma imagem do MinIO
+   * @param imageName Nome do arquivo da imagem
+   * @returns URL completa para o MinIO
+   */
+  getImageUrl(imageName: string): string {
+    if (!imageName) {
+      return 'no-image.svg';
+    }
+    // Se já for URL absoluta, retorna como está
+    if (imageName.startsWith('http://') || imageName.startsWith('https://')) {
+      return imageName;
+    }
+    // Adiciona prefixo do MinIO
+    return `${environment.minio_url}${imageName}`;
   }
 
   /**

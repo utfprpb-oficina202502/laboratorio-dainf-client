@@ -9,6 +9,9 @@ import {CrudListAriaAnnouncerComponent} from './crud-list-aria-announcer.compone
  * Encapsulates the @if/@else pattern for loading states and ARIA live region
  * to eliminate template duplication across 10+ list components.
  *
+ * Os filtros são projetados em um slot separado ([tableFilter]) que permanece
+ * sempre visível durante o carregamento, permitindo interação contínua do usuário.
+ *
  * @example
  * <app-prime-crud-table-wrapper
  *   [loading]="loading()"
@@ -17,6 +20,16 @@ import {CrudListAriaAnnouncerComponent} from './crud-list-aria-announcer.compone
  *   [entityPluralName]="getEntityPluralName().toLowerCase()"
  *   [skeletonRows]="rows"
  *   [skeletonColumns]="displayedColumns.length">
+ *
+ *   <!-- Filtros ficam sempre visíveis durante loading -->
+ *   <ng-container tableFilter>
+ *     <app-table-filter-caption
+ *       (clear)="clearGlobalFilter()"
+ *       (filter)="onGlobalFilter($event)"
+ *       [filterValue]="filterValue"
+ *       [placeholder]="getGlobalFilterPlaceholder()">
+ *     </app-table-filter-caption>
+ *   </ng-container>
  *
  *   <p-table #dt [value]="objects" ...>
  *     <ng-template pTemplate="header">...</ng-template>
@@ -51,6 +64,11 @@ import {CrudListAriaAnnouncerComponent} from './crud-list-aria-announcer.compone
       [entityName]="entityName()"
       [entityPluralName]="entityPluralName()">
     </app-crud-list-aria-announcer>
+
+    <!-- Filtros sempre visíveis (não bloqueados pelo skeleton) -->
+    <div class="mb-3">
+      <ng-content select="[tableFilter]"></ng-content>
+    </div>
 
     <!-- Skeleton vs Content with responsive wrapper -->
     @if (loading()) {

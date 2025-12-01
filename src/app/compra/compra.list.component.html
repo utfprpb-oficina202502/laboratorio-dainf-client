@@ -17,6 +17,17 @@
         [skeletonRows]="rows"
         [totalElements]="totalElements">
 
+        <!-- Filtros sempre visíveis durante loading -->
+        <div tableFilter>
+          <app-table-filter-caption
+            (clear)="clearGlobalFilter()"
+            (filter)="onGlobalFilter($event)"
+            [ariaLabel]="'Campo de busca para filtrar compras'"
+            [filterValue]="filterValue"
+            [placeholder]="'Buscar compras...'">
+          </app-table-filter-caption>
+        </div>
+
         <p-table #dt
              [loading]="loading()"
              [value]="objects"
@@ -43,16 +54,6 @@
              currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
              [showCurrentPageReport]="true"
              [attr.aria-label]="'Lista de compras com ' + totalElements + ' registro(s)'">
-
-      <ng-template pTemplate="caption">
-        <app-table-filter-caption
-          (clear)="clearGlobalFilter()"
-          (filter)="onGlobalFilter($event)"
-          [ariaLabel]="'Campo de busca para filtrar compras'"
-          [filterValue]="filterValue"
-          [placeholder]="'Buscar compras...'">
-        </app-table-filter-caption>
-      </ng-template>
 
       <ng-template pTemplate="header">
         <tr>

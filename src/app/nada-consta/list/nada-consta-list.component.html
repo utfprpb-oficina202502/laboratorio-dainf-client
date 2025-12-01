@@ -110,6 +110,17 @@
           [skeletonRows]="rows"
           [totalElements]="totalElements">
 
+        <!-- Filtros sempre visíveis durante loading -->
+        <div tableFilter>
+          <app-table-filter-caption
+            (clear)="clearGlobalFilter()"
+            (filter)="onGlobalFilter($event)"
+            [ariaLabel]="'Campo de busca para filtrar Nada Consta'"
+            [filterValue]="filterValue"
+            [placeholder]="getGlobalFilterPlaceholder()">
+          </app-table-filter-caption>
+        </div>
+
         <p-table
           #dt
           (onPage)="onPageChange($event)"
@@ -127,16 +138,6 @@
           [totalRecords]="totalElements"
           [value]="objects"
           currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros">
-
-        <ng-template pTemplate="caption">
-          <app-table-filter-caption
-            (clear)="clearGlobalFilter()"
-            (filter)="onGlobalFilter($event)"
-            [ariaLabel]="'Campo de busca para filtrar Nada Consta'"
-            [filterValue]="filterValue"
-            [placeholder]="getGlobalFilterPlaceholder()">
-          </app-table-filter-caption>
-        </ng-template>
 
         <ng-template pTemplate="header">
           <tr>
