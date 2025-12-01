@@ -78,15 +78,6 @@
               [style.width]="column.width"
               [style.min-width]="column.minWidth">
               @switch (column.field) {
-                @case ('id') {
-                  <span>{{ rowData.id }}</span>
-                }
-                @case ('descricao') {
-                  <span>{{ rowData.descricao }}</span>
-                }
-                @case ('dataSolicitacao') {
-                  <span>{{ rowData.dataSolicitacao }}</span>
-                }
                 @case ('nomeUsuario') {
                   <span>{{ rowData.nomeUsuario || 'Não informado' }}</span>
                 }

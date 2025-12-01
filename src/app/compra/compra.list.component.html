@@ -76,9 +76,6 @@
               [style.width]="column.width"
               [style.min-width]="column.minWidth">
               @switch (column.field) {
-                @case ('id') {
-                  <span [attr.aria-label]="'Código: ' + rowData.id">{{ rowData.id }}</span>
-                }
                 @case ('fornecedorNomeFantasia') {
                   <span
                     [attr.aria-label]="'Nome Fantasia: ' + (rowData.fornecedorNomeFantasia || 'Não informado')"
@@ -92,10 +89,6 @@
                     class="text-gray-600">
                     {{ rowData.fornecedorRazaoSocial || 'Não informado' }}
                   </span>
-                }
-                @case ('dataCompra') {
-                  <span
-                    [attr.aria-label]="'Data da Compra: ' + rowData.dataCompra">{{ rowData.dataCompra }}</span>
                 }
                 @case ('actions') {
                   <app-action-buttons
