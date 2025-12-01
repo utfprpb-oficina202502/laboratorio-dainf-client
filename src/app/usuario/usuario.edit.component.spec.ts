@@ -17,9 +17,7 @@ import {ErrorHandlerService} from '../framework/services/error-handler.service';
 import {PermissaoTestFactory, UsuarioTestFactory} from './usuario.test-factory';
 
 describe('UsuarioEditComponent', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let component: any; // Usando any para acessar membros protected nos testes
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let fixture: any;
 
   beforeEach(() => {

@@ -16,9 +16,7 @@ import {ErrorHandlerService} from '../framework/services/error-handler.service';
 import {PermissaoTestFactory, UsuarioTestFactory} from './usuario.test-factory';
 
 describe('UsuarioFormComponent', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let component: any; // Usando any para acessar membros protected nos testes
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let fixture: any;
   let usuarioService: jest.Mocked<UsuarioService>;
   let messageService: jest.Mocked<MessageService>;
