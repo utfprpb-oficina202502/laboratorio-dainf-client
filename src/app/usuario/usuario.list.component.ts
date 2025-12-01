@@ -8,6 +8,7 @@ import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.mod
 import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
 import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
 import {createTableConfig} from '../framework/utils/table-config.factory';
+import {formatRoles} from '../framework/constants/roles';
 
 @Component({
     selector: 'app-list-usuario',
@@ -58,7 +59,8 @@ export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number
       type: 'custom',
       sortable: true,
       filterable: true,
-      minWidth: '16rem'
+      minWidth: '16rem',
+      exportValueGetter: (item: unknown) => formatRoles((item as Usuario).permissoes)
     },
     {
       field: 'actions',
@@ -99,23 +101,13 @@ export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number
     return 'usuarios';
   }
 
-  formatGruposAcesso(permissao: Permissao[]) {
-    let toReturn = "";
-    for (let i = 0; i < permissao.length; i++) {
-      if (permissao[i].nome === 'ROLE_ALUNO') {
-        toReturn += 'Aluno';
-      } else if (permissao[i].nome === 'ROLE_PROFESSOR') {
-        toReturn += 'Professor';
-      } else if (permissao[i].nome === 'ROLE_LABORATORISTA') {
-        toReturn += 'Laboratorista';
-      } else {
-        toReturn += 'Administrador';
-      }
-      if (i !== permissao.length - 1) {
-        toReturn += ', ';
-      }
-    }
-    return toReturn;
+  /**
+   * Formata permissões para exibição na tabela
+   * @param permissao Array de permissões do usuário
+   * @returns String formatada com os grupos de acesso
+   */
+  formatGruposAcesso(permissao: Permissao[]): string {
+    return formatRoles(permissao);
   }
 
 }

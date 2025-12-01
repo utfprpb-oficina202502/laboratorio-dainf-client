@@ -34,6 +34,9 @@ export interface TableColumn {
   /** Include in export operations */
   exportable?: boolean;
 
+  /** Função customizada para extrair valor de exportação (CSV/Excel) */
+  exportValueGetter?: (item: unknown) => string | number | boolean | null;
+
   /** Custom template reference for cell content */
   template?: TemplateRef<unknown>;
 

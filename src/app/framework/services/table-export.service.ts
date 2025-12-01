@@ -221,10 +221,21 @@ export class TableExportService {
    * @returns Valor formatado para a célula
    */
   private extractCellValue<T>(item: T, column: TableColumn): ExcelCellValue {
+    // Se a coluna tem exportValueGetter customizado, usa ele
+    if (column.exportValueGetter) {
+      const customValue = column.exportValueGetter(item);
+      return customValue ?? null;
+    }
+
     const value = this.getFieldValue(item, column.field);
 
     if (value === null || value === undefined) {
       return null;
+    }
+
+    // Arrays são formatados como lista separada por vírgula
+    if (Array.isArray(value)) {
+      return this.extractArrayDisplayValue(value);
     }
 
     // Objetos (exceto Date) são tratados por método auxiliar
@@ -234,6 +245,32 @@ export class TableExportService {
 
     // Converte baseado no tipo da coluna
     return this.convertValueByColumnType(value, column.type);
+  }
+
+  /**
+   * Extrai valor de exibição de um array
+   * Formata como lista separada por vírgula: "valor1, valor2, valor3"
+   *
+   * @param arr Array a extrair valores
+   * @returns String formatada com valores separados por vírgula
+   */
+  private extractArrayDisplayValue(arr: unknown[]): string {
+    if (arr.length === 0) {
+      return '';
+    }
+
+    const displayValues = arr.map(item => {
+      if (item === null || item === undefined) {
+        return '';
+      }
+      if (typeof item === 'object') {
+        return this.extractObjectDisplayValue(item as Record<string, unknown>);
+      }
+      // Primitivos: string, number, boolean, bigint, symbol
+      return this.safeStringify(item);
+    }).filter(v => v !== '');
+
+    return displayValues.join(', ');
   }
 
   /**
