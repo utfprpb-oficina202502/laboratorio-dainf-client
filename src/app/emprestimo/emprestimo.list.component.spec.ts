@@ -152,7 +152,7 @@ describe('EmprestimoListComponent', () => {
     it('deve configurar tabela com colunas corretas', () => {
       expect(component['columnsTable']).toEqual([
         'id',
-        'usuarioEmprestimo',
+        'nomeUsuarioEmprestimo',
         'dataEmprestimo',
         'prazoDevolucao',
         'status',
