@@ -78,17 +78,8 @@
               [style.width]="column.width"
               [style.min-width]="column.minWidth">
               @switch (column.field) {
-                @case ('id') {
-                  <span>{{ rowData.id }}</span>
-                }
-                @case ('dataSaida') {
-                  <span>{{ rowData.dataSaida }}</span>
-                }
-                @case ('qtde') {
-                  <span>{{ rowData?.qtdeTotal }}</span>
-                }
-                @case ('usuarioResponsavel') {
-                  <span>{{ rowData?.nomeUsuarioResponsavel || 'N/A' }}</span>
+                @case ('nomeUsuarioResponsavel') {
+                  <span>{{ rowData?.nomeUsuarioResponsavel || 'Não informado' }}</span>
                 }
                 @case ('observacao') {
                   <span class="text-truncate d-block" [title]="rowData?.observacao">

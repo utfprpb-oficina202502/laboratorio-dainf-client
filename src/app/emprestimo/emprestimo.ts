@@ -12,4 +12,7 @@ export class Emprestimo {
   emprestimoItem!: EmprestimoItem[];
   emprestimoDevolucaoItem!: EmprestimoDevolucaoItem[];
   observacao!: string;
+
+  /** Nome do usuário do empréstimo (usado em listagens - DTO simplificado do backend) */
+  nomeUsuarioEmprestimo?: string;
 }

@@ -65,7 +65,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   novaDataPrazo: string | undefined;
   emprestimoSelecionadoParaPrazo: Emprestimo | undefined;
 
-  protected override columnsTable = ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status', 'actions'];
+  protected override columnsTable = ['id', 'nomeUsuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status', 'actions'];
   private readonly tableColumns: TableColumn[] = [
     {
       field: 'id',
@@ -77,9 +77,9 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       align: 'center'
     },
     {
-      field: 'usuarioEmprestimo',
+      field: 'nomeUsuarioEmprestimo',
       header: 'Aluno/Professor',
-      type: 'custom',
+      type: 'text',
       sortable: true,
       filterable: true,
       width: '20rem'
@@ -437,7 +437,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'usuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status'],
+      globalFilterFields: ['id', 'nomeUsuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status'],
       defaultSortField: 'id',
       caption: 'Empréstimos',
       stateKey: 'emprestimo-list',

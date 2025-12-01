@@ -8,4 +8,10 @@ export class Compra {
   fornecedor!: Fornecedor;
   compraItem!: CompraItem[];
   usuario!: Usuario;
+
+  /** Nome fantasia do fornecedor (usado em listagens - DTO simplificado do backend) */
+  fornecedorNomeFantasia?: string;
+
+  /** Razão social do fornecedor (usado em listagens - DTO simplificado do backend) */
+  fornecedorRazaoSocial?: string;
 }

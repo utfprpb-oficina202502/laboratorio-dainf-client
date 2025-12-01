@@ -76,24 +76,19 @@
               [style.width]="column.width"
               [style.min-width]="column.minWidth">
               @switch (column.field) {
-                @case ('id') {
-                  <span [attr.aria-label]="'Código: ' + rowData.id">{{ rowData.id }}</span>
-                }
-                @case ('fornecedor') {
-                  <div class="flex flex-col">
-                    <span class="font-semibold text-base"
-                          [attr.aria-label]="'Nome Fantasia: ' + (rowData.fornecedorNomeFantasia || 'N/A')">
-                      {{ rowData.fornecedorNomeFantasia || 'N/A' }}
-                    </span>
-                    <span class="text-sm text-gray-600"
-                          [attr.aria-label]="'Razão Social: ' + (rowData.fornecedorRazaoSocial || 'N/A')">
-                      {{ rowData.fornecedorRazaoSocial || 'N/A' }}
-                    </span>
-                  </div>
-                }
-                @case ('dataCompra') {
+                @case ('fornecedorNomeFantasia') {
                   <span
-                    [attr.aria-label]="'Data da Compra: ' + rowData.dataCompra">{{ rowData.dataCompra }}</span>
+                    [attr.aria-label]="'Nome Fantasia: ' + (rowData.fornecedorNomeFantasia || 'Não informado')"
+                    class="font-semibold">
+                    {{ rowData.fornecedorNomeFantasia || 'Não informado' }}
+                  </span>
+                }
+                @case ('fornecedorRazaoSocial') {
+                  <span
+                    [attr.aria-label]="'Razão Social: ' + (rowData.fornecedorRazaoSocial || 'Não informado')"
+                    class="text-gray-600">
+                    {{ rowData.fornecedorRazaoSocial || 'Não informado' }}
+                  </span>
                 }
                 @case ('actions') {
                   <app-action-buttons
