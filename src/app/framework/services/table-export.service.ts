@@ -3,14 +3,21 @@ import {MessageService} from 'primeng/api';
 import {Table} from 'primeng/table';
 import {LoggerService} from './logger.service';
 import {TableColumn} from '../model/table-config.interface';
+import type {ColumnSchema} from 'write-excel-file';
+import writeXlsxFile from 'write-excel-file';
+
+/**
+ * Tipo para valores de célula suportados pelo Excel
+ */
+type ExcelCellValue = string | number | boolean | Date | null;
 
 /**
  * Serviço responsável pela exportação de dados de tabela para formatos Excel e CSV.
  *
  * Funcionalidades:
- * - Carregamento lazy do ExcelJS apenas quando exportação Excel é disparada (economiza ~947KB do bundle inicial)
+ * - Usa write-excel-file para geração de Excel (compatível com CSP restritivo)
  * - Manipula acesso a campos de objetos aninhados (ex: 'grupo.descricao')
- * - Ajusta automaticamente larguras das colunas no Excel
+ * - Respeita colunas visíveis selecionadas pelo usuário (columnToggleModel)
  * - Suporta tipos de coluna personalizados com extração inteligente de valores de exibição
  * - Fornece feedback ao usuário via MessageService
  *
@@ -20,7 +27,8 @@ import {TableColumn} from '../model/table-config.interface';
  *   private exportService = inject(TableExportService);
  *
  *   exportExcel(): void {
- *     this.exportService.exportToExcel(this.items, this.columns, 'meus-dados');
+ *     // Exporta apenas colunas visíveis (respeitando columnToggleModel)
+ *     this.exportService.exportToExcel(this.items, this.columns, 'meus-dados', this.columnToggleModel);
  *   }
  *
  *   exportCSV(): void {
@@ -38,13 +46,14 @@ export class TableExportService {
 
   /**
    * Exporta dados para formato Excel (.xlsx)
-   * ExcelJS é carregado de forma lazy para evitar aumentar bundle inicial
+   * Usa write-excel-file que é compatível com CSP restritivo (não usa eval)
    *
    * @param data Array de objetos a exportar
    * @param columns Configuração das colunas da tabela
    * @param fileName Nome base do arquivo (sem extensão)
+   * @param visibleColumns Array opcional de campos visíveis (columnToggleModel) - se fornecido, apenas estas colunas serão exportadas
    */
-  exportToExcel<T>(data: T[], columns: TableColumn[], fileName = 'dados'): void {
+  exportToExcel<T>(data: T[], columns: TableColumn[], fileName = 'dados', visibleColumns?: string[]): void {
     if (!data || data.length === 0) {
       this.messageService.add({
         severity: 'warn',
@@ -61,54 +70,39 @@ export class TableExportService {
       detail: 'O arquivo Excel será baixado em breve...'
     });
 
-    // Carrega ExcelJS de forma lazy apenas quando exportação é disparada
-    import('exceljs').then(async (ExcelJS) => {
-      const exportData = this.prepareExportData(data, columns);
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Dados');
+    // Filtra e prepara colunas para exportação
+    const exportableColumns = this.getExportableColumns(columns, visibleColumns);
 
-      // Adiciona cabeçalhos do primeiro objeto de dados
-      if (exportData.length > 0) {
-        const headers = Object.keys(exportData[0]);
-        worksheet.addRow(headers);
+    if (exportableColumns.length === 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Aviso',
+        detail: 'Nenhuma coluna disponível para exportação'
+      });
+      return;
+    }
 
-        // Adiciona linhas de dados
-        exportData.forEach((row: Record<string, unknown>) => {
-          worksheet.addRow(Object.values(row));
-        });
+    // Cria schema para write-excel-file baseado nas colunas
+    const schema = this.buildExcelSchema<T>(exportableColumns);
 
-        // Ajusta largura das colunas automaticamente
-        worksheet.columns.forEach((column: unknown) => {
-          let maxLength = 0;
-          (column as {
-            eachCell: (options: {
-              includeEmpty: boolean
-            }, callback: (cell: unknown) => void) => void;
-            width?: number
-          })
-          .eachCell({includeEmpty: true}, (cell: unknown) => {
-            const cellValue = (cell as { value?: unknown }).value;
-            // Manipula diferentes tipos de valores de célula para cálculo correto de comprimento
-            let columnLength = 10; // Comprimento padrão
-            if (cellValue !== null && cellValue !== undefined) {
-              if (typeof cellValue === 'string' || typeof cellValue === 'number' || typeof cellValue === 'boolean') {
-                columnLength = String(cellValue).length;
-              } else if (typeof cellValue === 'object') {
-                // Para objetos, usa comprimento da string JSON (não deveriam aparecer nos dados de exportação)
-                columnLength = JSON.stringify(cellValue).length;
-              }
-            }
-            if (columnLength > maxLength) {
-              maxLength = columnLength;
-            }
-          });
-          (column as { width?: number }).width = Math.min(maxLength + 2, 50);
-        });
+    // Gera e baixa arquivo Excel
+    // Usa type assertion para resolver ambiguidade de overloads do TypeScript
+    (writeXlsxFile as <ObjectType>(
+      objects: ObjectType[],
+      options: {
+        schema: ColumnSchema<ObjectType, NonNullable<ExcelCellValue>>[];
+        fileName: string;
+        sheet?: string;
+        headerStyle?: { fontWeight?: 'bold'; backgroundColor?: string };
       }
-
-      // Gera buffer e faz download
-      const buffer = await workbook.xlsx.writeBuffer();
-      this.saveAsExcelFile(buffer, fileName);
+    ) => Promise<void>)(data, {
+      schema,
+      fileName: `${fileName}_export_${Date.now()}.xlsx`,
+      sheet: 'Dados',
+      headerStyle: {
+        fontWeight: 'bold',
+        backgroundColor: '#f5f5f5'
+      }
     }).catch(error => {
       this.logger.error('Error exporting to Excel', error);
       this.messageService.add({
@@ -188,42 +182,156 @@ export class TableExportService {
   }
 
   /**
-   * Prepara dados para exportação extraindo valores de objetos aninhados
-   * e manipulando tipos de coluna personalizados
+   * Constrói o schema do write-excel-file baseado nas colunas da tabela
    *
-   * @param data Array de objetos a exportar
-   * @param columns Configuração das colunas da tabela
-   * @returns Array de objetos achatados prontos para exportação
+   * @param columns Colunas a incluir na exportação
+   * @returns Schema compatível com write-excel-file
    */
-  private prepareExportData<T>(data: T[], columns: TableColumn[]): Record<string, unknown>[] {
-    const exportableColumns = this.getExportableColumns(columns);
+  private buildExcelSchema<T>(columns: TableColumn[]): ColumnSchema<T, NonNullable<ExcelCellValue>>[] {
+    return columns.map(column => {
+      const schemaColumn: ColumnSchema<T, NonNullable<ExcelCellValue>> = {
+        column: column.header || column.field,
+        width: this.calculateColumnWidth(column),
+        value: (item: T) => this.extractCellValue(item, column)
+      };
 
-    return data.map(item => {
-      const exportItem: Record<string, unknown> = {};
+      // Define tipo baseado na configuração da coluna
+      const columnType = this.mapColumnType(column.type);
+      if (columnType) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (schemaColumn as any).type = columnType;
+      }
 
-      exportableColumns.forEach(column => {
-        const header = column.header || column.field;
-        const value = this.getFieldValue(item, column.field);
-
-        // Manipula diferentes tipos de coluna para exportação
-        if (column.type === 'custom' && value && typeof value === 'object') {
-          // Para colunas personalizadas com objetos, tenta obter um valor de exibição
-          if (Object.hasOwn(value, 'descricao')) {
-            exportItem[header] = (value as Record<string, unknown>).descricao;
-          } else if (Object.hasOwn(value, 'nome')) {
-            exportItem[header] = (value as Record<string, unknown>).nome;
-          } else if (Object.hasOwn(value, 'id')) {
-            exportItem[header] = (value as Record<string, unknown>).id;
-          } else {
-            exportItem[header] = '';
-          }
-        } else {
-          exportItem[header] = value ?? '';
-        }
-      });
-
-      return exportItem;
+      return schemaColumn;
     });
+  }
+
+  /**
+   * Extrai valor da célula para exportação
+   * Manipula objetos aninhados e tipos personalizados
+   *
+   * @param item Objeto de dados
+   * @param column Configuração da coluna
+   * @returns Valor formatado para a célula
+   */
+  private extractCellValue<T>(item: T, column: TableColumn): ExcelCellValue {
+    const value = this.getFieldValue(item, column.field);
+
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    // Objetos (exceto Date) são tratados por método auxiliar
+    if (typeof value === 'object' && !(value instanceof Date)) {
+      return this.extractObjectDisplayValue(value as Record<string, unknown>);
+    }
+
+    // Converte baseado no tipo da coluna
+    return this.convertValueByColumnType(value, column.type);
+  }
+
+  /**
+   * Extrai valor de exibição de um objeto
+   * Procura por propriedades comuns: descricao, nome, id
+   *
+   * @param obj Objeto a extrair valor
+   * @returns String do valor encontrado ou vazio
+   */
+  private extractObjectDisplayValue(obj: Record<string, unknown>): string {
+    const displayProps = ['descricao', 'nome', 'id'];
+
+    for (const prop of displayProps) {
+      if (Object.hasOwn(obj, prop)) {
+        return this.safeStringify(obj[prop]);
+      }
+    }
+
+    return '';
+  }
+
+  /**
+   * Converte valor para o tipo apropriado baseado no tipo da coluna
+   *
+   * @param value Valor a converter
+   * @param columnType Tipo da coluna
+   * @returns Valor convertido
+   */
+  private convertValueByColumnType(value: unknown, columnType?: string): ExcelCellValue {
+    switch (columnType) {
+      case 'date':
+        return this.convertToDate(value);
+      case 'number':
+      case 'currency':
+        return typeof value === 'number' ? value : Number(value);
+      case 'boolean':
+        return Boolean(value);
+      default:
+        return this.safeStringify(value);
+    }
+  }
+
+  /**
+   * Converte valor para Date se possível
+   *
+   * @param value Valor a converter
+   * @returns Date ou string se inválido
+   */
+  private convertToDate(value: unknown): Date | string {
+    if (typeof value === 'string') {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? value : date;
+    }
+    return this.safeStringify(value);
+  }
+
+  /**
+   * Converte qualquer valor para string de forma segura
+   * Evita [object Object] usando JSON.stringify para objetos
+   *
+   * @param value Valor a converter
+   * @returns Representação string do valor
+   */
+  private safeStringify(value: unknown): string {
+    if (value === null || value === undefined) {
+      return '';
+    }
+    if (typeof value === 'object') {
+      return JSON.stringify(value);
+    }
+    return String(value);
+  }
+
+  /**
+   * Mapeia tipo de coluna da tabela para tipo do write-excel-file
+   *
+   * @param columnType Tipo da coluna na configuração
+   * @returns Construtor de tipo ou undefined para string padrão
+   */
+  private mapColumnType(columnType?: string): typeof String | typeof Number | typeof Boolean | typeof Date | undefined {
+    switch (columnType) {
+      case 'number':
+      case 'currency':
+        return Number;
+      case 'boolean':
+        return Boolean;
+      case 'date':
+        return Date;
+      default:
+        return String;
+    }
+  }
+
+  /**
+   * Calcula largura apropriada para a coluna no Excel
+   *
+   * @param column Configuração da coluna
+   * @returns Largura em caracteres
+   */
+  private calculateColumnWidth(column: TableColumn): number {
+    // Usa header como base para largura mínima
+    const headerLength = (column.header || column.field).length;
+    // Largura mínima de 10, máxima de 50
+    return Math.max(10, Math.min(headerLength + 4, 50));
   }
 
   /**
@@ -253,44 +361,31 @@ export class TableExportService {
 
   /**
    * Filtra colunas para obter apenas as exportáveis
+   * Respeita a seleção de colunas visíveis do usuário (columnToggleModel)
    *
    * @param columns Todas as colunas da tabela
+   * @param visibleColumns Array opcional de campos visíveis - se fornecido, apenas estas colunas serão incluídas
    * @returns Colunas que devem ser incluídas na exportação
    */
-  private getExportableColumns(columns: TableColumn[]): TableColumn[] {
-    return columns.filter(col =>
-      col.field !== 'actions' &&
-      col.exportable !== false
-    );
+  private getExportableColumns(columns: TableColumn[], visibleColumns?: string[]): TableColumn[] {
+    return columns.filter(col => {
+      // Exclui coluna de ações
+      if (col.field === 'actions') {
+        return false;
+      }
+
+      // Exclui colunas marcadas como não exportáveis
+      if (col.exportable === false) {
+        return false;
+      }
+
+      // Se visibleColumns foi fornecido, filtra apenas colunas visíveis
+      if (visibleColumns && visibleColumns.length > 0) {
+        return visibleColumns.includes(col.field);
+      }
+
+      return true;
+    });
   }
 
-  /**
-   * Salva buffer Excel como arquivo para download
-   *
-   * @param buffer Buffer do arquivo Excel
-   * @param fileName Nome base do arquivo (sem extensão)
-   */
-  private saveAsExcelFile(buffer: ArrayBuffer, fileName: string): void {
-    try {
-      // Usa API moderna de File System Access com fallback
-      const blob = new Blob([buffer], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      });
-      const url = globalThis.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${fileName}_export_${Date.now()}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      globalThis.URL.revokeObjectURL(url);
-    } catch (error) {
-      this.logger.error('Error saving Excel file', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Erro',
-        detail: 'Erro ao salvar arquivo Excel'
-      });
-    }
-  }
 }

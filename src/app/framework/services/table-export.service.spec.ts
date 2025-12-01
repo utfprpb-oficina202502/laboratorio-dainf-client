@@ -4,52 +4,31 @@ import {Table} from 'primeng/table';
 import {TableExportService} from './table-export.service';
 import {LoggerService} from './logger.service';
 import {TableColumn} from '../model/table-config.interface';
+// Importa o módulo mockado para acessar a função mock
+import writeXlsxFile from 'write-excel-file';
 
-// Mock do ExcelJS
-const mockWorksheet = {
-  addRow: jest.fn(),
-  columns: [] as any[]
-};
-
-const mockWorkbook = {
-  addWorksheet: jest.fn(() => mockWorksheet),
-  xlsx: {
-    writeBuffer: jest.fn(() => Promise.resolve(new ArrayBuffer(8)))
-  }
-};
-
-const mockExcelJS = {
-  Workbook: jest.fn(() => mockWorkbook)
-};
-
-// Mock do dynamic import de exceljs
-jest.mock('exceljs', () => mockExcelJS, {virtual: true});
+// Jest.mock é hoisted para o topo do arquivo
+jest.mock('write-excel-file', () => ({
+  __esModule: true,
+  default: jest.fn()
+}));
 
 describe('TableExportService', () => {
   let service: TableExportService;
   let messageService: jest.Mocked<MessageService>;
   let loggerService: jest.Mocked<LoggerService>;
 
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
   /**
-   * Helper para aguardar promises sem usar setTimeout real
-   * Usa fake timers para performance
+   * Helper para aguardar promises assíncronas
    */
   async function waitForAsync(): Promise<void> {
-    jest.advanceTimersByTime(0);
     await Promise.resolve();
+    await Promise.resolve(); // Double flush for nested promises
   }
 
   // Mock data para testes
   const mockColumns: TableColumn[] = [
-    {field: 'id', header: 'ID'},
+    {field: 'id', header: 'ID', type: 'number'},
     {field: 'name', header: 'Nome'},
     {field: 'grupo.descricao', header: 'Grupo'},
     {field: 'actions', header: 'Ações'}
@@ -61,16 +40,12 @@ describe('TableExportService', () => {
     {id: 3, name: 'Item 3', grupo: {descricao: 'Grupo C'}}
   ];
 
-  // Mock do DOM
-  let mockLink: any;
-
   beforeEach(() => {
     // Reset mocks
     jest.clearAllMocks();
-    mockWorksheet.addRow.mockClear();
-    mockWorksheet.columns = [];
-    mockWorkbook.addWorksheet.mockReturnValue(mockWorksheet);
-    mockWorkbook.xlsx.writeBuffer.mockResolvedValue(new ArrayBuffer(8));
+
+    // Configura o mock para retornar Promise.resolve()
+    (writeXlsxFile as jest.Mock).mockResolvedValue(undefined);
 
     // Cria mocks dos serviços
     messageService = {
@@ -91,18 +66,6 @@ describe('TableExportService', () => {
     });
 
     service = TestBed.inject(TableExportService);
-
-    // Mock do DOM e URL APIs
-    mockLink = {
-      href: '',
-      download: '',
-      click: jest.fn(),
-      remove: jest.fn()
-    };
-    jest.spyOn(document, 'createElement').mockReturnValue(mockLink as any);
-    jest.spyOn(document.body, 'appendChild').mockImplementation(() => mockLink as any);
-    global.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
-    global.URL.revokeObjectURL = jest.fn();
   });
 
   afterEach(() => {
@@ -118,24 +81,24 @@ describe('TableExportService', () => {
         summary: 'Aviso',
         detail: 'Não há dados para exportar'
       });
+      expect((writeXlsxFile as jest.Mock)).not.toHaveBeenCalled();
     });
 
     it('deve exibir warning quando dados são null', () => {
-      service.exportToExcel(null as any, mockColumns, 'test');
+      service.exportToExcel(null as unknown as unknown[], mockColumns, 'test');
 
       expect(messageService.add).toHaveBeenCalledWith({
         severity: 'warn',
         summary: 'Aviso',
         detail: 'Não há dados para exportar'
       });
+      expect((writeXlsxFile as jest.Mock)).not.toHaveBeenCalled();
     });
 
     it('deve exibir mensagem informativa ao iniciar exportação', async () => {
       service.exportToExcel(mockData, mockColumns, 'test');
 
-      // Aguarda promises usando fake timers
-      jest.advanceTimersByTime(0);
-      await Promise.resolve();
+      await waitForAsync();
 
       expect(messageService.add).toHaveBeenCalledWith({
         severity: 'info',
@@ -144,23 +107,38 @@ describe('TableExportService', () => {
       });
     });
 
-    it('deve criar workbook e worksheet com nome correto', async () => {
-      service.exportToExcel(mockData, mockColumns, 'test');
-
-      jest.advanceTimersByTime(0);
-      await Promise.resolve();
-
-      expect(mockExcelJS.Workbook).toHaveBeenCalled();
-      expect(mockWorkbook.addWorksheet).toHaveBeenCalledWith('Dados');
-    });
-
-    it('deve filtrar coluna actions dos dados exportados', async () => {
+    it('deve chamar writeXlsxFile com schema e opções corretas', async () => {
       service.exportToExcel(mockData, mockColumns, 'test');
 
       await waitForAsync();
 
-      // Verifica que addRow foi chamado (cabeçalhos + 3 linhas de dados)
-      expect(mockWorksheet.addRow).toHaveBeenCalledTimes(4);
+      expect((writeXlsxFile as jest.Mock)).toHaveBeenCalledWith(
+        mockData,
+        expect.objectContaining({
+          schema: expect.any(Array),
+          fileName: expect.stringContaining('test_export_'),
+          sheet: 'Dados',
+          headerStyle: expect.objectContaining({
+            fontWeight: 'bold',
+            backgroundColor: '#f5f5f5'
+          })
+        })
+      );
+    });
+
+    it('deve filtrar coluna actions do schema', async () => {
+      service.exportToExcel(mockData, mockColumns, 'test');
+
+      await waitForAsync();
+
+      const callArgs = (writeXlsxFile as jest.Mock).mock.calls[0];
+      const options = callArgs[1] as unknown as { schema: { column: string }[] };
+      const schemaColumns = options.schema.map(s => s.column);
+
+      expect(schemaColumns).not.toContain('Ações');
+      expect(schemaColumns).toContain('ID');
+      expect(schemaColumns).toContain('Nome');
+      expect(schemaColumns).toContain('Grupo');
     });
 
     it('deve usar nome de arquivo padrão quando não fornecido', async () => {
@@ -168,8 +146,11 @@ describe('TableExportService', () => {
 
       await waitForAsync();
 
-      expect(mockLink.download).toContain('dados_export_');
-      expect(mockLink.download).toContain('.xlsx');
+      const callArgs = (writeXlsxFile as jest.Mock).mock.calls[0];
+      const options = callArgs[1] as unknown as { fileName: string };
+
+      expect(options.fileName).toContain('dados_export_');
+      expect(options.fileName).toContain('.xlsx');
     });
 
     it('deve usar nome de arquivo fornecido', async () => {
@@ -177,73 +158,76 @@ describe('TableExportService', () => {
 
       await waitForAsync();
 
-      expect(mockLink.download).toContain('meus-dados_export_');
-      expect(mockLink.download).toContain('.xlsx');
+      const callArgs = (writeXlsxFile as jest.Mock).mock.calls[0];
+      const options = callArgs[1] as unknown as { fileName: string };
+
+      expect(options.fileName).toContain('meus-dados_export_');
+      expect(options.fileName).toContain('.xlsx');
     });
 
-    it('deve ajustar larguras de colunas automaticamente', async () => {
-      // Adiciona mock para eachCell
-      mockWorksheet.columns = [
-        {
-          eachCell: jest.fn((_options, callback) => {
-            callback({value: 'Test Value Long String'});
-          }),
-          width: 0
-        },
-        {
-          eachCell: jest.fn((_options, callback) => {
-            callback({value: 'Short'});
-          }),
-          width: 0
-        }
-      ];
+    it('deve respeitar visibleColumns quando fornecido', async () => {
+      const visibleColumns = ['id', 'name']; // Apenas id e name visíveis
 
-      service.exportToExcel(mockData, mockColumns, 'test');
+      service.exportToExcel(mockData, mockColumns, 'test', visibleColumns);
 
       await waitForAsync();
 
-      // Verifica que larguras foram definidas
-      expect(mockWorksheet.columns[0].width).toBeGreaterThan(0);
-      expect(mockWorksheet.columns[1].width).toBeGreaterThan(0);
+      const callArgs = (writeXlsxFile as jest.Mock).mock.calls[0];
+      const options = callArgs[1] as unknown as { schema: { column: string }[] };
+      const schemaColumns = options.schema.map(s => s.column);
+
+      expect(schemaColumns).toEqual(['ID', 'Nome']);
+      expect(schemaColumns).not.toContain('Grupo');
     });
 
-    it('deve manipular diferentes tipos de valores de célula', async () => {
-      mockWorksheet.columns = [
-        {
-          eachCell: jest.fn((_options, callback) => {
-            callback({value: 'string value'});
-            callback({value: 123});
-            callback({value: true});
-            callback({value: null});
-            callback({value: undefined});
-            callback({value: {nested: 'object'}});
-          }),
-          width: 0
-        }
-      ];
-
-      service.exportToExcel(mockData, mockColumns, 'test');
+    it('deve ignorar visibleColumns vazio e exportar todas as colunas', async () => {
+      service.exportToExcel(mockData, mockColumns, 'test', []);
 
       await waitForAsync();
 
-      expect(mockWorksheet.columns[0].width).toBeDefined();
+      const callArgs = (writeXlsxFile as jest.Mock).mock.calls[0];
+      const options = callArgs[1] as unknown as { schema: { column: string }[] };
+      const schemaColumns = options.schema.map(s => s.column);
+
+      // Deve incluir todas exceto 'actions'
+      expect(schemaColumns).toContain('ID');
+      expect(schemaColumns).toContain('Nome');
+      expect(schemaColumns).toContain('Grupo');
     });
 
-    it('deve limitar largura máxima das colunas em 50', async () => {
-      mockWorksheet.columns = [
-        {
-          eachCell: jest.fn((_options, callback) => {
-            callback({value: 'a'.repeat(100)}); // String muito longa
-          }),
-          width: 0
-        }
+    it('deve exibir warning quando não há colunas exportáveis', async () => {
+      const onlyActionsColumns: TableColumn[] = [
+        {field: 'actions', header: 'Ações'}
       ];
 
-      service.exportToExcel(mockData, mockColumns, 'test');
+      service.exportToExcel(mockData, onlyActionsColumns, 'test');
 
       await waitForAsync();
 
-      expect(mockWorksheet.columns[0].width).toBeLessThanOrEqual(50);
+      expect(messageService.add).toHaveBeenCalledWith({
+        severity: 'warn',
+        summary: 'Aviso',
+        detail: 'Nenhuma coluna disponível para exportação'
+      });
+      expect((writeXlsxFile as jest.Mock)).not.toHaveBeenCalled();
+    });
+
+    it('deve filtrar colunas com exportable=false', async () => {
+      const columnsWithNonExportable: TableColumn[] = [
+        {field: 'id', header: 'ID'},
+        {field: 'name', header: 'Nome'},
+        {field: 'internal', header: 'Internal', exportable: false}
+      ];
+
+      service.exportToExcel(mockData, columnsWithNonExportable, 'test');
+
+      await waitForAsync();
+
+      const callArgs = (writeXlsxFile as jest.Mock).mock.calls[0];
+      const options = callArgs[1] as unknown as { schema: { column: string }[] };
+      const schemaColumns = options.schema.map(s => s.column);
+
+      expect(schemaColumns).not.toContain('Internal');
     });
 
     it('deve manipular campos de objetos aninhados', async () => {
@@ -257,7 +241,7 @@ describe('TableExportService', () => {
 
       await waitForAsync();
 
-      expect(mockWorksheet.addRow).toHaveBeenCalled();
+      expect((writeXlsxFile as jest.Mock)).toHaveBeenCalled();
     });
 
     it('deve manipular colunas com type=custom e objeto com descricao', async () => {
@@ -271,125 +255,42 @@ describe('TableExportService', () => {
 
       await waitForAsync();
 
-      expect(mockWorksheet.addRow).toHaveBeenCalled();
+      expect((writeXlsxFile as jest.Mock)).toHaveBeenCalled();
     });
 
-    it('deve manipular colunas custom com objeto contendo nome', async () => {
-      const dataWithCustom = [{id: 1, person: {nome: 'John', age: 30}}];
-      const columnsWithCustom: TableColumn[] = [
-        {field: 'id', header: 'ID'},
-        {field: 'person', header: 'Person', type: 'custom'}
-      ];
+    it('deve manipular erro durante exportação', async () => {
+      (writeXlsxFile as jest.Mock).mockRejectedValueOnce(new Error('Export failed'));
 
-      service.exportToExcel(dataWithCustom, columnsWithCustom, 'test');
-
-      await waitForAsync();
-
-      expect(mockWorksheet.addRow).toHaveBeenCalled();
-    });
-
-    it('deve manipular colunas custom com objeto contendo id', async () => {
-      const dataWithCustom = [{id: 1, item: {id: 999, code: 'ABC'}}];
-      const columnsWithCustom: TableColumn[] = [
-        {field: 'id', header: 'ID'},
-        {field: 'item', header: 'Item', type: 'custom'}
-      ];
-
-      service.exportToExcel(dataWithCustom, columnsWithCustom, 'test');
-
-      await waitForAsync();
-
-      expect(mockWorksheet.addRow).toHaveBeenCalled();
-    });
-
-    it('deve retornar string vazia para colunas custom sem propriedades conhecidas', async () => {
-      const dataWithCustom = [{id: 1, item: {unknownProp: 'value'}}];
-      const columnsWithCustom: TableColumn[] = [
-        {field: 'id', header: 'ID'},
-        {field: 'item', header: 'Item', type: 'custom'}
-      ];
-
-      service.exportToExcel(dataWithCustom, columnsWithCustom, 'test');
-
-      await waitForAsync();
-
-      expect(mockWorksheet.addRow).toHaveBeenCalled();
-    });
-
-    it('deve retornar string vazia para valores undefined', async () => {
-      const dataWithUndefined = [{id: 1, missingField: undefined}];
-      const columnsWithUndefined: TableColumn[] = [
-        {field: 'id', header: 'ID'},
-        {field: 'missingField', header: 'Missing'}
-      ];
-
-      service.exportToExcel(dataWithUndefined, columnsWithUndefined, 'test');
-
-      await waitForAsync();
-
-      expect(mockWorksheet.addRow).toHaveBeenCalled();
-    });
-
-    it('deve manipular objetos null nos dados', async () => {
-      service.exportToExcel([null as any], mockColumns, 'test');
-
-      await waitForAsync();
-
-      expect(mockWorksheet.addRow).toHaveBeenCalled();
-    });
-
-    it('deve manipular campos vazios', async () => {
-      const columnsWithEmptyField: TableColumn[] = [
-        {field: '', header: 'Empty'}
-      ];
-
-      service.exportToExcel(mockData, columnsWithEmptyField, 'test');
-
-      await waitForAsync();
-
-      expect(mockWorksheet.addRow).toHaveBeenCalled();
-    });
-
-    it('deve manipular propriedades inexistentes no caminho', async () => {
-      const dataWithMissingPath = [{id: 1, user: {name: 'John'}}];
-      const columnsWithMissingPath: TableColumn[] = [
-        {field: 'user.profile.age', header: 'Age'}
-      ];
-
-      service.exportToExcel(dataWithMissingPath, columnsWithMissingPath, 'test');
-
-      await waitForAsync();
-
-      expect(mockWorksheet.addRow).toHaveBeenCalled();
-    });
-
-    it('deve criar e remover link de download corretamente', async () => {
       service.exportToExcel(mockData, mockColumns, 'test');
 
       await waitForAsync();
 
-      expect(document.createElement).toHaveBeenCalledWith('a');
-      expect(document.body.appendChild).toHaveBeenCalledWith(mockLink);
-      expect(mockLink.click).toHaveBeenCalled();
-      expect(mockLink.remove).toHaveBeenCalled();
+      expect(loggerService.error).toHaveBeenCalledWith('Error exporting to Excel', expect.any(Error));
+      expect(messageService.add).toHaveBeenCalledWith({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao exportar dados para Excel'
+      });
     });
 
-    it('deve criar e revogar URL do blob', async () => {
-      service.exportToExcel(mockData, mockColumns, 'test');
+    it('deve criar schema com larguras de coluna baseadas nos headers', async () => {
+      const columnsWithLongHeaders: TableColumn[] = [
+        {field: 'id', header: 'ID'},
+        {field: 'longName', header: 'Este é um header muito longo para testar'}
+      ];
+
+      service.exportToExcel(mockData, columnsWithLongHeaders, 'test');
 
       await waitForAsync();
 
-      expect(global.URL.createObjectURL).toHaveBeenCalled();
-      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
-    });
+      const callArgs = (writeXlsxFile as jest.Mock).mock.calls[0];
+      const options = callArgs[1] as unknown as { schema: { width: number }[] };
 
-    it('deve configurar tipo MIME correto do blob', async () => {
-      service.exportToExcel(mockData, mockColumns, 'test');
-
-      await waitForAsync();
-
-      const createObjectURLCall = (global.URL.createObjectURL as jest.Mock).mock.calls[0][0];
-      expect(createObjectURLCall.type).toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      // Verifica que larguras foram definidas
+      expect(options.schema[0].width).toBeDefined();
+      expect(options.schema[1].width).toBeDefined();
+      // Header longo deve ter largura maior (até o limite de 50)
+      expect(options.schema[1].width).toBeGreaterThan(options.schema[0].width);
     });
   });
 
@@ -435,7 +336,7 @@ describe('TableExportService', () => {
     });
 
     it('deve exibir warning quando dados são null', () => {
-      service.exportToCSV(mockTable, null as any, mockColumns);
+      service.exportToCSV(mockTable, null as unknown as unknown[], mockColumns);
 
       expect(messageService.add).toHaveBeenCalledWith({
         severity: 'warn',
@@ -469,8 +370,8 @@ describe('TableExportService', () => {
     it('deve filtrar coluna actions das colunas exportáveis', () => {
       service.exportToCSV(mockTable, mockData, mockColumns);
 
-      const columns = mockTable.columns as any[];
-      const hasActions = columns.some((col: any) => col.field === 'actions');
+      const columns = mockTable.columns as { field: string }[];
+      const hasActions = columns.some((col) => col.field === 'actions');
       expect(hasActions).toBe(false);
     });
 
@@ -483,8 +384,8 @@ describe('TableExportService', () => {
 
       service.exportToCSV(mockTable, mockData, columnsWithNonExportable);
 
-      const columns = mockTable.columns as any[];
-      const hasInternal = columns.some((col: any) => col.field === 'internal');
+      const columns = mockTable.columns as { field: string }[];
+      const hasInternal = columns.some((col) => col.field === 'internal');
       expect(hasInternal).toBe(false);
     });
 
@@ -522,9 +423,9 @@ describe('TableExportService', () => {
     it('deve incluir field e header nas colunas exportáveis', () => {
       service.exportToCSV(mockTable, mockData, mockColumns);
 
-      const columns = mockTable.columns as any[];
+      const columns = mockTable.columns as { field: string; header: string }[];
       expect(columns.length).toBeGreaterThan(0);
-      columns.forEach((col: any) => {
+      columns.forEach((col) => {
         expect(col).toHaveProperty('field');
         expect(col).toHaveProperty('header');
       });
@@ -533,7 +434,7 @@ describe('TableExportService', () => {
     it('deve preservar ordem das colunas', () => {
       service.exportToCSV(mockTable, mockData, mockColumns);
 
-      const columns = mockTable.columns as any[];
+      const columns = mockTable.columns as { field: string }[];
       expect(columns[0].field).toBe('id');
       expect(columns[1].field).toBe('name');
       expect(columns[2].field).toBe('grupo.descricao');
@@ -541,18 +442,6 @@ describe('TableExportService', () => {
   });
 
   describe('testes de integração', () => {
-    beforeEach(() => {
-      mockWorksheet.columns = [
-        {
-          eachCell: jest.fn((_options, callback) => {
-            callback({value: 'Header'});
-            callback({value: 'Data Value'});
-          }),
-          width: 0
-        }
-      ];
-    });
-
     it('deve realizar fluxo completo de exportação Excel com dados reais', async () => {
       service.exportToExcel(mockData, mockColumns, 'test-export');
 
@@ -563,21 +452,14 @@ describe('TableExportService', () => {
         expect.objectContaining({severity: 'info'})
       );
 
-      // Verifica criação do workbook
-      expect(mockExcelJS.Workbook).toHaveBeenCalled();
-      expect(mockWorkbook.addWorksheet).toHaveBeenCalledWith('Dados');
-
-      // Verifica adição de linhas (1 header + 3 data rows)
-      expect(mockWorksheet.addRow).toHaveBeenCalledTimes(4);
-
-      // Verifica geração do buffer
-      expect(mockWorkbook.xlsx.writeBuffer).toHaveBeenCalled();
-
-      // Verifica download do arquivo
-      expect(document.createElement).toHaveBeenCalledWith('a');
-      expect(mockLink.click).toHaveBeenCalled();
-      expect(mockLink.remove).toHaveBeenCalled();
-      expect(mockLink.download).toContain('test-export_export_');
+      // Verifica chamada do writeXlsxFile
+      expect((writeXlsxFile as jest.Mock)).toHaveBeenCalledWith(
+        mockData,
+        expect.objectContaining({
+          fileName: expect.stringContaining('test-export_export_'),
+          sheet: 'Dados'
+        })
+      );
     });
 
     it('deve realizar fluxo completo de exportação CSV com dados reais', () => {
