@@ -19,6 +19,17 @@
         [skeletonRows]="rows"
         [totalElements]="totalElements">
 
+        <!-- Filtros sempre visíveis durante loading -->
+        <div tableFilter>
+          <app-table-filter-caption
+            (clear)="clearGlobalFilter()"
+            (filter)="onGlobalFilter($event)"
+            [ariaLabel]="'Campo de busca para filtrar reservas'"
+            [filterValue]="filterValue"
+            [placeholder]="'Buscar reservas...'">
+          </app-table-filter-caption>
+        </div>
+
         <p-table #dt
              [value]="objects"
              [rows]="rows"
@@ -45,16 +56,6 @@
              currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
              [showCurrentPageReport]="true"
              [attr.aria-label]="'Lista de reservas com ' + totalElements + ' registro(s)'">
-
-      <ng-template pTemplate="caption">
-        <app-table-filter-caption
-          (clear)="clearGlobalFilter()"
-          (filter)="onGlobalFilter($event)"
-          [ariaLabel]="'Campo de busca para filtrar reservas'"
-          [filterValue]="filterValue"
-          [placeholder]="'Buscar reservas...'">
-        </app-table-filter-caption>
-      </ng-template>
 
       <ng-template pTemplate="header">
         <tr>

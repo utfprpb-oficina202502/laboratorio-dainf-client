@@ -341,10 +341,21 @@
 
 @layer overrides {
   /* ============================================================================
-     Dialog Overlay - Ensure modal backdrop covers sidenav and navbar
+     Dialog Overlay - Ensure modal backdrop and dialog cover sidenav and navbar
+     Uses :has() to detect open dialogs and lower sidenav z-index
      ============================================================================ */
   .p-dialog-mask {
     z-index: 10000 !important;
+  }
+
+  /* Ensure the dialog itself (not just mask) is above sidenav */
+  .p-dialog {
+    z-index: 10001 !important;
+  }
+
+  /* When a dialog is open, lower the sidenav z-index so backdrop covers it */
+  body:has(.p-dialog-mask) .sidebar {
+    z-index: 1 !important;
   }
 
   /* ============================================================================
