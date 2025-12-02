@@ -107,10 +107,10 @@
                           class="p-0 border-0 bg-transparent text-inherit cursor-pointer hover:underline">{{ rowData.dataRetirada }}
                   </button>
                 }
-                @case ('nomeUsuario') {
+                @case ('usuarioNome') {
                   <button type="button" (click)="openOptions($event, rowData)"
                           class="p-0 border-0 bg-transparent text-inherit cursor-pointer hover:underline">{{
-                      rowData.nomeUsuario || 'Não informado'
+                      rowData.usuarioNome || 'Não informado'
                     }}
                   </button>
                 }

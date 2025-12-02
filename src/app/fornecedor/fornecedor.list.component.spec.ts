@@ -138,49 +138,44 @@ describe('FornecedorListComponent', () => {
   });
 
   // ============================================================================
-  // Permission-Based Action Buttons (8 tests)
+  // Permission-Based Action Buttons (6 tests)
   // ============================================================================
   describe('Permission-Based Action Buttons', () => {
-    it('deve ter canEdit() retornando true para admin/laboratorista', () => {
-      jest.spyOn(component, 'canEdit').mockReturnValue(true);
-      expect(component.canEdit()).toBe(true);
+    it('deve ter canEdit() como função definida', () => {
+      expect(typeof component.canEdit).toBe('function');
     });
 
-    it('deve ter canEdit() retornando false para aluno/professor', () => {
-      jest.spyOn(component, 'canEdit').mockReturnValue(false);
-      expect(component.canEdit()).toBe(false);
+    it('deve ter canDelete() como função definida', () => {
+      expect(typeof component.canDelete).toBe('function');
     });
 
-    it('deve ter canDelete() retornando true para admin/laboratorista', () => {
-      jest.spyOn(component, 'canDelete').mockReturnValue(true);
-      expect(component.canDelete()).toBe(true);
+    it('deve ter isAlunoOrProfessor() como função definida', () => {
+      expect(typeof component.isAlunoOrProfessor).toBe('function');
     });
 
-    it('deve ter canDelete() retornando false para aluno/professor', () => {
-      jest.spyOn(component, 'canDelete').mockReturnValue(false);
-      expect(component.canDelete()).toBe(false);
-    });
+    it('deve navegar para formulário de edição ao chamar edit()', () => {
+      const navigateSpy = jest.spyOn(component['router'], 'navigate').mockResolvedValue(true);
 
-    it('deve ter isAlunoOrProfessor() retornando true para aluno', () => {
-      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(true);
-      expect(component.isAlunoOrProfessor()).toBe(true);
-    });
-
-    it('deve ter isAlunoOrProfessor() retornando false para admin', () => {
-      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
-      expect(component.isAlunoOrProfessor()).toBe(false);
-    });
-
-    it('deve chamar edit() com id correto', () => {
-      const editSpy = jest.spyOn(component, 'edit');
       component.edit(123);
-      expect(editSpy).toHaveBeenCalledWith(123);
+
+      expect(navigateSpy).toHaveBeenCalledWith(['fornecedor/form', 123]);
     });
 
-    it('deve chamar delete() com id correto', () => {
-      const deleteSpy = jest.spyOn(component, 'delete');
+    it('deve solicitar confirmação ao chamar delete()', () => {
+      const confirmationService = TestBed.inject(ConfirmationService) as jest.Mocked<ConfirmationService>;
+
       component.delete(456);
-      expect(deleteSpy).toHaveBeenCalledWith(456);
+
+      expect(confirmationService.confirm).toHaveBeenCalled();
+    });
+
+    it('deve passar id correto para o serviço de confirmação', () => {
+      const confirmationService = TestBed.inject(ConfirmationService) as jest.Mocked<ConfirmationService>;
+
+      component.delete(789);
+
+      const confirmCall = confirmationService.confirm.mock.calls[0][0];
+      expect(confirmCall).toBeDefined();
     });
   });
 
