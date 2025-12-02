@@ -3,7 +3,7 @@ import {CrudService, PageResponse} from '../framework/service/crud.service';
 import {Emprestimo} from './emprestimo';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {environment} from '../../environments/environment';
-import {Observable} from 'rxjs';
+import {Observable, throwError} from 'rxjs';
 import {EmprestimoFilter} from './emprestimo.filter';
 
 @Injectable()
@@ -45,6 +45,9 @@ export class EmprestimoService extends CrudService<Emprestimo, number> {
    * @returns Observable de PageResponse<Emprestimo>
    */
   findByItemPaged(itemId: number, page = 0, size = 10, order = 'id', asc = true): Observable<PageResponse<Emprestimo>> {
+    if (typeof itemId !== 'number' || isNaN(itemId) || itemId <= 0) {
+      return throwError(() => new Error('itemId inválido'));
+    }
     const params = new HttpParams()
       .set('page', String(page))
       .set('size', String(size))

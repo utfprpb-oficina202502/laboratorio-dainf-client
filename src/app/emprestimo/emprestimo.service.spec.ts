@@ -113,4 +113,108 @@ describe('EmprestimoService', () => {
       req.flush(errorMessage, { status: 500, statusText: 'Server Error' });
     });
   });
+
+  describe('findByItemPaged edge cases', () => {
+    it('should handle itemId undefined', () => {
+      const spy = jest.spyOn((service as any).http, 'get');
+      service.findByItemPaged(undefined as any).subscribe({
+        next: () => fail('Should not succeed'),
+        error: (error) => {
+          expect(error).toBeTruthy();
+        }
+      });
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should handle itemId as string', () => {
+      const spy = jest.spyOn((service as any).http, 'get');
+      service.findByItemPaged('abc' as any).subscribe({
+        next: () => fail('Should not succeed'),
+        error: (error) => {
+          expect(error).toBeTruthy();
+        }
+      });
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should handle backend response with missing fields', () => {
+      const mockResponse = {
+        content: [],
+        totalElements: 0
+        // totalPages, size, number faltando
+      };
+      service.findByItemPaged(1).subscribe(response => {
+        expect(response.content).toEqual([]);
+        expect(response.totalElements).toBe(0);
+        expect(response.totalPages).toBeUndefined();
+        expect(response.size).toBeUndefined();
+        expect(response.number).toBeUndefined();
+      });
+      const req = httpMock.expectOne(req => req.url.includes('emprestimo/find-by-item/1'));
+      expect(req.request.method).toBe('GET');
+      req.flush(mockResponse);
+    });
+
+    it('should handle backend response with empty array and totalElements > 0', () => {
+      const mockResponse: PageResponse<Emprestimo> = {
+        content: [],
+        totalElements: 5,
+        totalPages: 1,
+        size: 10,
+        number: 0
+      };
+      service.findByItemPaged(2).subscribe(response => {
+        expect(response.content).toEqual([]);
+        expect(response.totalElements).toBe(5);
+      });
+      const req = httpMock.expectOne(req => req.url.includes('emprestimo/find-by-item/2'));
+      expect(req.request.method).toBe('GET');
+      req.flush(mockResponse);
+    });
+
+    it('should handle 404 error', () => {
+      service.findByItemPaged(999).subscribe({
+        next: () => fail('Should have failed'),
+        error: (error) => {
+          expect(error.status).toBe(404);
+        }
+      });
+      const req = httpMock.expectOne(req => req.url.includes('emprestimo/find-by-item/999'));
+      req.flush('Not found', { status: 404, statusText: 'Not Found' });
+    });
+
+    it('should handle timeout error', () => {
+      service.findByItemPaged(888).subscribe({
+        next: () => fail('Should have failed'),
+        error: (error) => {
+          expect(error.name).toBe('TimeoutError');
+        }
+      });
+      const req = httpMock.expectOne(req => req.url.includes('emprestimo/find-by-item/888'));
+      req.error(new ErrorEvent('timeout'), { status: 0, statusText: 'Timeout' });
+    });
+
+    it('should complete observable after response', (done) => {
+      const mockResponse: PageResponse<Emprestimo> = {
+        content: [],
+        totalElements: 0,
+        totalPages: 0,
+        size: 10,
+        number: 0
+      };
+      let completed = false;
+      service.findByItemPaged(3).subscribe({
+        next: (response) => {
+          expect(response).toEqual(mockResponse);
+        },
+        complete: () => {
+          completed = true;
+          expect(completed).toBe(true);
+          done();
+        }
+      });
+      const req = httpMock.expectOne(req => req.url.includes('emprestimo/find-by-item/3'));
+      req.flush(mockResponse);
+    });
+  });
 });
