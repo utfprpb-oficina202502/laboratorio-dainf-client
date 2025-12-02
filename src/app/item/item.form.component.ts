@@ -19,6 +19,8 @@ import {Item} from './item';
 import {ItemService} from './item.service';
 import {Grupo} from '../grupo/grupo';
 import {GrupoService} from '../grupo/grupo.service';
+import {Emprestimo} from '../emprestimo/emprestimo';
+import {EmprestimoService} from '../emprestimo/emprestimo.service';
 import {FileUpload, FileUploadModule} from 'primeng/fileupload';
 import {environment} from '../../environments/environment';
 import {ItemImage} from './itemImage';
@@ -35,7 +37,10 @@ import {InputTextModule} from "primeng/inputtext";
 import {TextareaModule} from "primeng/textarea";
 import {InputNumberModule} from "primeng/inputnumber";
 import {SelectModule} from "primeng/select";
+import {TableModule} from "primeng/table";
 import {TooltipModule} from "primeng/tooltip";
+import {ProgressBarModule} from 'primeng/progressbar';
+import {TagModule} from 'primeng/tag';
 
 // Framework
 import {FormFieldComponent} from "../framework/component/form-field.component";
@@ -69,7 +74,10 @@ interface TipoItemOption {
     TextareaModule,
     InputNumberModule,
     SelectModule,
+    TableModule,
     TooltipModule,
+    ProgressBarModule,
+    TagModule,
     // Framework
     FormFieldComponent,
     // Geral
@@ -88,6 +96,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   protected override type = Item;
   private readonly fb = inject(FormBuilder);
   private readonly grupoService = inject(GrupoService);
+  private readonly emprestimoService = inject(EmprestimoService);
   // Constants for template
   protected readonly Z_INDEX = Z_INDEX;
   private grupoSubscription?: Subscription;
@@ -108,6 +117,11 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   protected readonly images = signal<ItemImage[]>([]);
   protected readonly selectedImage = signal<ItemImage | null>(null);
   protected readonly loadingImages = signal(false);
+
+  // Empréstimos modal signals
+  protected readonly emprestimosModalVisible = signal(false);
+  protected readonly emprestimos = signal<Emprestimo[]>([]);
+  protected readonly loadingEmprestimos = signal(false);
 
   // Pagination state for Grupo autocomplete
   private readonly GRUPO_PAGE_SIZE = 10;
@@ -378,7 +392,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
    */
   deleteImage(image: ItemImage): void {
     this.confirmationService.confirm({
-      message: 'Tem certeza que deseja remover a imagem? A ação não poderá ser desfeita.',
+      message: 'Tem certeza que deseja remover a imagem? Ação não poderá ser desfeita.',
       header: 'Confirmação',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sim',
@@ -602,6 +616,65 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     }
     // Adiciona prefixo do MinIO
     return `${environment.minio_url}${imageName}`;
+  }
+
+  /**
+   * Abre o modal de empréstimos do item
+   */
+  openEmprestimosModal(): void {
+    const obj = this.object();
+    if (!obj || !('id' in obj) || !obj.id) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Atenção',
+        detail: 'Salve o item primeiro para visualizar os empréstimos.',
+        life: 4000
+      });
+      return;
+    }
+    this.loadEmprestimosByItem(obj.id);
+  }
+
+  /**
+   * Carrega empréstimos do item via API
+   * @param itemId ID do item
+   */
+  private loadEmprestimosByItem(itemId: number): void {
+    this.loadingEmprestimos.set(true);
+    this.emprestimoService.findByItem(itemId).subscribe({
+      next: (emprestimos) => {
+        this.emprestimos.set(emprestimos);
+        this.emprestimosModalVisible.set(true);
+        this.loadingEmprestimos.set(false);
+      },
+      error: (error) => {
+        this.loadingEmprestimos.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Erro ao carregar empréstimos do item.',
+          life: 5000
+        });
+        this.logger.error('Erro ao carregar empréstimos do item', error);
+      }
+    });
+  }
+
+  /**
+   * Navega para o detalhamento do empréstimo
+   * @param emprestimoId ID do empréstimo
+   */
+  viewEmprestimo(emprestimoId: number): void {
+    this.emprestimosModalVisible.set(false);
+    this.router.navigate(['emprestimo/form', emprestimoId]);
+  }
+
+  /**
+   * Fecha o modal de empréstimos
+   */
+  closeEmprestimosModal(): void {
+    this.emprestimosModalVisible.set(false);
+    this.emprestimos.set([]);
   }
 
   /**
