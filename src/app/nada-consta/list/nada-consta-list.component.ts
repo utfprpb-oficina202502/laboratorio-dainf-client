@@ -76,9 +76,88 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
   contextMenuItems: MenuItem[] = [];
   protected readonly Z_INDEX = Z_INDEX;
 
+  public tableColumns: TableColumn[] = [
+    {
+      field: 'id',
+      header: 'ID',
+      type: 'number',
+      sortable: true,
+      filterable: true,
+      width: '8rem',
+      align: 'center'
+    },
+    {
+      field: 'usuarioEmail',
+      header: 'Usuário',
+      type: 'text',
+      sortable: true,
+      filterable: true,
+      minWidth: '16rem'
+    },
+    {
+      field: 'status',
+      header: 'Status',
+      type: 'text',
+      sortable: true,
+      filterable: true,
+      width: '8rem',
+      align: 'center'
+    },
+    {
+      field: 'sendAt',
+      header: 'Enviado em',
+      type: 'text',
+      sortable: true,
+      filterable: false,
+      width: '12rem'
+    },
+    {
+      field: 'createdAt',
+      header: 'Criado em',
+      type: 'text',
+      sortable: true,
+      filterable: false,
+      width: '12rem'
+    },
+    {
+      field: 'updatedAt',
+      header: 'Atualizado em',
+      type: 'text',
+      sortable: true,
+      filterable: false,
+      width: '12rem'
+    },
+    {
+      field: 'createdBy',
+      header: 'Criado por',
+      type: 'text',
+      sortable: true,
+      filterable: true,
+      minWidth: '12rem'
+    },
+    {
+      field: 'updatedBy',
+      header: 'Atualizado por',
+      type: 'text',
+      sortable: true,
+      filterable: true,
+      minWidth: '12rem'
+    },
+    {
+      field: 'acoes',
+      header: 'Ações',
+      type: 'custom',
+      sortable: false,
+      filterable: false,
+      exportable: false,
+      align: 'center',
+      width: '10rem',
+      toggleable: false
+    }
+  ];
   protected override columnsTable: string[] = [
     'id',
-    'usuarioUsername',
+    'usuarioEmail',
     'status',
     'sendAt',
     'createdAt',
@@ -86,18 +165,6 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
     'createdBy',
     'updatedBy',
     'acoes'
-  ];
-
-  public tableColumns: TableColumn[] = [
-    { field: 'id', header: 'ID', type: 'number', sortable: true, filterable: true, width: '8rem', align: 'center' },
-    { field: 'usuarioUsername', header: 'Usuário', type: 'text', sortable: true, filterable: true, minWidth: '16rem' },
-    { field: 'status', header: 'Status', type: 'text', sortable: true, filterable: true, width: '8rem', align: 'center' },
-    { field: 'sendAt', header: 'Enviado em', type: 'text', sortable: true, filterable: false, width: '12rem' },
-    { field: 'createdAt', header: 'Criado em', type: 'text', sortable: true, filterable: false, width: '12rem' },
-    { field: 'updatedAt', header: 'Atualizado em', type: 'text', sortable: true, filterable: false, width: '12rem' },
-    { field: 'createdBy', header: 'Criado por', type: 'text', sortable: false, filterable: false, minWidth: '12rem' },
-    { field: 'updatedBy', header: 'Atualizado por', type: 'text', sortable: false, filterable: false, minWidth: '12rem' },
-    { field: 'acoes', header: 'Ações', type: 'custom', sortable: false, filterable: false, exportable: false, align: 'center', width: '10rem', toggleable: false }
   ];
 
   protected readonly service = inject(NadaConstaService);
@@ -127,7 +194,7 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'usuarioUsername', 'status'],
+      globalFilterFields: ['id', 'usuarioEmail', 'status'],
       defaultSortField: 'id',
       defaultSortOrder: -1,
       caption: 'Lista de Nada Consta',
@@ -140,7 +207,7 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
     });
     this.columnsTable = this.tableConfig.columns.map(column => column.field);
     // Exibe por padrão apenas os campos principais
-    this.displayedColumns = ['id', 'usuarioUsername', 'status', 'sendAt', 'acoes'];
+    this.displayedColumns = ['id', 'usuarioEmail', 'status', 'sendAt', 'acoes'];
   }
 
   // Sinal para controlar exibição do modal

@@ -21,7 +21,7 @@ import {createTableConfig} from '../framework/utils/table-config.factory';
 })
 export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<SolicitacaoCompra, number> implements OnInit {
   protected override service = inject(SolicitacaoCompraService);
-  protected override columnsTable = ['id', 'descricao', 'dataSolicitacao', 'nomeUsuario', 'actions'];
+  protected override columnsTable = ['id', 'descricao', 'dataSolicitacao', 'usuarioNome', 'actions'];
   protected override urlForm = 'solicitacao-compra/form';
 
   private readonly tableColumns: TableColumn[] = [
@@ -52,7 +52,7 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
       align: 'center'
     },
     {
-      field: 'nomeUsuario',
+      field: 'usuarioNome',
       header: 'Usuário',
       type: 'text',
       sortable: true,
@@ -106,7 +106,7 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'descricao', 'dataSolicitacao', 'nomeUsuario'],
+      globalFilterFields: ['id', 'descricao', 'dataSolicitacao', 'usuarioNome'],
       defaultSortField: 'id',
       caption: 'Solicitações de Compra',
       stateKey: 'solicitacao-compra-list',

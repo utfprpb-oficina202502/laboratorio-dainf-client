@@ -1,5 +1,5 @@
-import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {inject, Injectable} from '@angular/core';
 import {environment} from '../../environments/environment';
 import {CrudService} from "../framework/service/crud.service";
 
@@ -24,6 +24,8 @@ export interface Usuario {
 export interface NadaConsta {
   id: number;
   usuario: Usuario;
+  /** Email do usuário (campo do DTO simplificado do backend) */
+  usuarioEmail?: string;
   status: string;
   sendAt: string;
   createdAt: string;

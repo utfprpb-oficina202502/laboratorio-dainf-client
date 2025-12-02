@@ -158,3 +158,24 @@ export const BREAKPOINT = {
   /** 2X large devices (1536px) */
   XXL: 1536,
 } as const;
+
+/**
+ * Sort Order Constants
+ * Valores de direção de ordenação compatíveis com PrimeNG
+ *
+ * @example
+ * // Uso em componentes de lista
+ * this.sortOrder = SORT_ORDER.ASC;
+ *
+ * // Verificação de direção
+ * const direction = this.sortOrder === SORT_ORDER.ASC ? 'asc' : 'desc';
+ */
+export const SORT_ORDER = {
+  /** Ordenação ascendente (A-Z, 0-9, mais antigo primeiro) */
+  ASC: 1,
+  /** Ordenação descendente (Z-A, 9-0, mais recente primeiro) */
+  DESC: -1,
+} as const;
+
+/** Tipo para valores de ordenação */
+export type SortOrderType = typeof SORT_ORDER[keyof typeof SORT_ORDER];

@@ -24,7 +24,7 @@ import {createTableConfig} from '../framework/utils/table-config.factory';
 })
 export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
   protected override service = inject(SaidaService);
-  protected override columnsTable = ['id', 'dataSaida', 'qtdeTotal', 'nomeUsuarioResponsavel', 'observacao', 'actions'];
+  protected override columnsTable = ['id', 'dataSaida', 'qtdeTotal', 'usuarioResponsavelNome', 'observacao', 'actions'];
   protected override urlForm = 'saida/form';
 
   private readonly tableColumns: TableColumn[] = [
@@ -50,13 +50,13 @@ export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
       field: 'qtdeTotal',
       header: 'Quantidade',
       type: 'number',
-      sortable: false,
-      filterable: false,
+      sortable: true,
+      filterable: true,
       width: '10rem',
       align: 'center'
     },
     {
-      field: 'nomeUsuarioResponsavel',
+      field: 'usuarioResponsavelNome',
       header: 'Usuário Responsável',
       type: 'text',
       sortable: true,
@@ -105,7 +105,7 @@ export class SaidaListComponent extends PrimeCrudListComponent<Saida, number> {
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'dataSaida', 'nomeUsuarioResponsavel', 'observacao'],
+      globalFilterFields: ['id', 'dataSaida', 'usuarioResponsavelNome', 'observacao'],
       defaultSortField: 'id',
       caption: 'Saídas',
       stateKey: 'saida-list',

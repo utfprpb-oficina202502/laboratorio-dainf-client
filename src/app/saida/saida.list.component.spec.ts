@@ -19,7 +19,7 @@ class SaidaTestFactory {
     saida.id = overrides.id ?? this.nextId++;
     saida.dataSaida = overrides.dataSaida ?? '01/12/2025';
     saida.observacao = overrides.observacao ?? 'Observação de teste';
-    saida.nomeUsuarioResponsavel = overrides.nomeUsuarioResponsavel ?? 'Usuário Teste';
+    saida.usuarioResponsavelNome = overrides.usuarioResponsavelNome ?? 'Usuário Teste';
     saida.saidaItem = overrides.saidaItem ?? [];
     if (overrides.idEmprestimo !== undefined) {
       saida.idEmprestimo = overrides.idEmprestimo;
@@ -130,7 +130,7 @@ describe('SaidaListComponent', () => {
         'id',
         'dataSaida',
         'qtdeTotal',
-        'nomeUsuarioResponsavel',
+        'usuarioResponsavelNome',
         'observacao',
         'actions'
       ]);
@@ -327,6 +327,47 @@ describe('SaidaListComponent', () => {
 
     it('deve ter userRole() definido', () => {
       expect(component.userRole).toBeDefined();
+    });
+  });
+
+  // ============================================================================
+  // Configuração de Ordenação (7 tests)
+  // ============================================================================
+  describe('Configuração de Ordenação', () => {
+    it('deve ter coluna id com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'id');
+      expect(column?.sortable).toBe(true);
+    });
+
+    it('deve ter coluna dataSaida com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'dataSaida');
+      expect(column?.sortable).toBe(true);
+    });
+
+    it('deve ter coluna qtdeTotal com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'qtdeTotal');
+      expect(column?.sortable).toBe(true);
+    });
+
+    it('deve ter coluna usuarioResponsavelNome com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'usuarioResponsavelNome');
+      expect(column?.sortable).toBe(true);
+    });
+
+    it('deve ter coluna observacao com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'observacao');
+      expect(column?.sortable).toBe(true);
+    });
+
+    it('deve ter coluna actions com sortable false', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'actions');
+      expect(column?.sortable).toBe(false);
+    });
+
+    it('deve ter todas as colunas de dados com sortable habilitado', () => {
+      const dataColumns = component['tableConfig'].columns.filter(c => c.field !== 'actions');
+      const allSortable = dataColumns.every(c => c.sortable === true);
+      expect(allSortable).toBe(true);
     });
   });
 });

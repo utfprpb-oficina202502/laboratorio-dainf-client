@@ -11,7 +11,7 @@ import {
 import {Z_INDEX} from '../framework/constants';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
-import {Emprestimo} from './emprestimo';
+import {Emprestimo, EmprestimoStatus} from './emprestimo';
 import {EmprestimoService} from './emprestimo.service';
 import {EmprestimoItem} from './emprestimoItem';
 import {MenuItem, SelectItem} from 'primeng/api';
@@ -83,7 +83,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   itensDoEmprestimo = signal<EmprestimoItem[]>([]);
   loadingItensDialog = signal(false);
 
-  protected override columnsTable = ['id', 'nomeUsuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status', 'actions'];
+  protected override columnsTable = ['id', 'usuarioEmprestimoNome', 'dataEmprestimo', 'prazoDevolucao', 'status', 'actions'];
   private readonly tableColumns: TableColumn[] = [
     {
       field: 'id',
@@ -95,7 +95,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       align: 'center'
     },
     {
-      field: 'nomeUsuarioEmprestimo',
+      field: 'usuarioEmprestimoNome',
       header: 'Aluno/Professor',
       type: 'text',
       sortable: true,
@@ -125,7 +125,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       header: 'Status',
       type: 'custom',
       sortable: true,
-      filterable: false,
+      filterable: true,
       width: '10rem',
       align: 'center'
     },
@@ -380,7 +380,17 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     this.novaData().overlayVisible = true;
   }
 
-  getStatusEmprestimo(emprestimo: Emprestimo) {
+  /**
+   * Calcula o status do empréstimo baseado nas datas.
+   *
+   * @param emprestimo Empréstimo a ter o status calculado
+   * @returns Status: 'P' (Pendente), 'A' (Atrasado), 'F' (Finalizado)
+   *
+   * @example
+   * getStatusEmprestimo(emprestimoSemDevolucao) // → 'P' ou 'A'
+   * getStatusEmprestimo(emprestimoDevolvido)    // → 'F'
+   */
+  getStatusEmprestimo(emprestimo: Emprestimo): EmprestimoStatus {
     // Handle null/undefined prazoDevolucao gracefully
     if (!emprestimo.prazoDevolucao) {
       return 'P'; // Default to pending if no due date
@@ -480,7 +490,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'nomeUsuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status'],
+      globalFilterFields: ['id', 'usuarioEmprestimoNome', 'dataEmprestimo', 'prazoDevolucao', 'status'],
       defaultSortField: 'id',
       caption: 'Empréstimos',
       stateKey: 'emprestimo-list',

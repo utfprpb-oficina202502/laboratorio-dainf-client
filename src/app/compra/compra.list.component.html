@@ -59,11 +59,19 @@
         <tr>
           @for (column of getVisibleColumns(); track column.field) {
             <th scope="col"
-              [style.text-align]="column.align || 'left'"
+                [attr.aria-label]="column.tooltip || column.header"
+                [attr.id]="'col-' + column.field"
               [style.width]="column.width"
               [style.min-width]="column.minWidth"
-              [attr.id]="'col-' + column.field">
-              {{ column.header }}
+                [class]="column.headerClass"
+                [pSortableColumn]="column.sortable === false || column.field === 'actions' ? undefined : column.field">
+              <div [class.justify-center]="column.align === 'center'"
+                   class="flex items-center gap-2">
+                {{ column.header }}
+                @if (column.sortable !== false && column.field !== 'actions') {
+                  <p-sortIcon [field]="column.field" aria-hidden="true"></p-sortIcon>
+                }
+              </div>
             </th>
           }
         </tr>

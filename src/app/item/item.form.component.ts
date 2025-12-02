@@ -114,10 +114,6 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   private grupoPage = 0;
   private grupoQuery = '';
 
-  protected readonly responsiveOptions = [
-    { breakpoint: '768px', numVisible: 2, numScroll: 2 },
-    { breakpoint: '560px', numVisible: 1, numScroll: 1 }
-  ];
 
   // Computed signals
   protected readonly canShowImagens = computed(() => {

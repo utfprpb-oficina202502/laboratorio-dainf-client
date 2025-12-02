@@ -89,7 +89,6 @@
               @for (column of getVisibleColumns(); track column.field) {
                 <th scope="col"
                   [attr.id]="'col-' + column.field"
-                  [attr.data-field]="column.field"
                     [pSortableColumn]="column.sortable === false || column.field === 'actions' ? undefined : column.field"
                   [style.width]="column.width"
                   [style.min-width]="column.minWidth"
@@ -137,9 +136,9 @@
                   (click)="openOptions($event, row.id)"
                   class="cursor-pointer">
                   @switch (column.field) {
-                    @case ('nomeUsuarioEmprestimo') {
-                      <span [attr.aria-label]="column.header + ': ' + row.nomeUsuarioEmprestimo">
-                        {{ row.nomeUsuarioEmprestimo }}
+                    @case ('usuarioEmprestimoNome') {
+                      <span [attr.aria-label]="column.header + ': ' + row.usuarioEmprestimoNome">
+                        {{ row.usuarioEmprestimoNome }}
                       </span>
                     }
                     @case ('status') {
@@ -440,7 +439,7 @@
     <div class="mb-4">
       <p class="mb-1"><strong>Código:</strong> {{ emprestimoSelecionadoParaItens.id }}</p>
       <p class="mb-1">
-        <strong>Aluno/Professor:</strong> {{ emprestimoSelecionadoParaItens.nomeUsuarioEmprestimo }}
+        <strong>Aluno/Professor:</strong> {{ emprestimoSelecionadoParaItens.usuarioEmprestimoNome }}
       </p>
       <p class="mb-0"><strong>Data do
         Empréstimo:</strong> {{ emprestimoSelecionadoParaItens.dataEmprestimo }}</p>

@@ -32,7 +32,7 @@ export class ReservaTestFactory {
     reserva.dataReserva = overrides.dataReserva ?? '01/12/2025';
     reserva.dataRetirada = overrides.dataRetirada ?? '05/12/2025';
     reserva.observacao = overrides.observacao ?? 'Observação de teste';
-    reserva.nomeUsuario = overrides.nomeUsuario ?? 'Usuário Teste';
+    reserva.usuarioNome = overrides.usuarioNome ?? 'Usuário Teste';
 
     if (overrides.usuario) {
       reserva.usuario = overrides.usuario;
@@ -68,7 +68,7 @@ export class ReservaTestFactory {
     return this.create({
       ...overrides,
       usuario,
-      nomeUsuario: usuario.nome
+      usuarioNome: usuario.nome
     });
   }
 

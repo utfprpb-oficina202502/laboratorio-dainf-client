@@ -20,6 +20,7 @@ import {LoginService} from "../login/login.service";
 import {DateUtil} from "../framework/util/dateUtil";
 import {ChartService} from "../framework/charts/chart.service";
 import {LoggerService} from "../framework/services/logger.service";
+import {BreakpointService} from "../framework/services/breakpoint.service";
 import {MessageService} from 'primeng/api';
 
 // PrimeNG
@@ -67,6 +68,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   protected dialogVisible = signal(false);
   private readonly loginService = inject(LoginService);
   private readonly chartService = inject(ChartService);
+  protected readonly breakpointService = inject(BreakpointService);
   // Signals para controlar visibilidade dos botões de fullscreen
   protected readonly hasLineChartData = signal(false);
   protected dtIniFiltro = signal<string | null>(null);

@@ -11,5 +11,5 @@ export class Reserva {
   reservaItem!: ReservaItem[];
 
   /** Nome do usuário (usado em listagens - DTO simplificado do backend) */
-  nomeUsuario?: string;
+  usuarioNome?: string;
 }

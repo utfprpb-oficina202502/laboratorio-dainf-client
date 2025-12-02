@@ -57,7 +57,7 @@ export class UsuarioListComponent extends PrimeCrudListComponent<Usuario, number
       field: 'permissoes',
       header: 'Grupo de Acesso',
       type: 'custom',
-      sortable: true,
+      sortable: false,
       filterable: true,
       minWidth: '16rem',
       exportValueGetter: (item: unknown) => formatRoles((item as Usuario).permissoes)

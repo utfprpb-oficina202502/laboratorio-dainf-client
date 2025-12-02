@@ -254,4 +254,40 @@ describe('CompraListComponent', () => {
       expect(component['tableConfig'].columns.length).toBe(5);
     });
   });
+
+  // ============================================================================
+  // Configuração de Ordenação (6 tests)
+  // ============================================================================
+  describe('Configuração de Ordenação', () => {
+    it('deve ter coluna id com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'id');
+      expect(column?.sortable).toBe(true);
+    });
+
+    it('deve ter coluna fornecedorNomeFantasia com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'fornecedorNomeFantasia');
+      expect(column?.sortable).toBe(true);
+    });
+
+    it('deve ter coluna fornecedorRazaoSocial com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'fornecedorRazaoSocial');
+      expect(column?.sortable).toBe(true);
+    });
+
+    it('deve ter coluna dataCompra com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'dataCompra');
+      expect(column?.sortable).toBe(true);
+    });
+
+    it('deve ter coluna actions com sortable false', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'actions');
+      expect(column?.sortable).toBe(false);
+    });
+
+    it('deve ter todas as colunas de dados com sortable habilitado', () => {
+      const dataColumns = component['tableConfig'].columns.filter(c => c.field !== 'actions');
+      const allSortable = dataColumns.every(c => c.sortable === true);
+      expect(allSortable).toBe(true);
+    });
+  });
 });
