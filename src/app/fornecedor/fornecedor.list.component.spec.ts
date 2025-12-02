@@ -1,41 +1,35 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {SaidaListComponent} from './saida.list.component';
-import {SaidaService} from './saida.service';
+import {FornecedorListComponent} from './fornecedor.list.component';
+import {FornecedorService} from './fornecedor.service';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import {RouterTestingModule} from '@angular/router/testing';
 import {of} from 'rxjs';
-import {Saida} from './saida';
+import {Fornecedor} from './fornecedor';
 import {LoginService} from '../login/login.service';
 import {createServiceMock} from '../framework/testing/test-helpers';
 
 /**
- * Factory para criação de objetos Saida para testes
+ * Factory para criação de objetos Fornecedor para testes
  */
-class SaidaTestFactory {
+class FornecedorTestFactory {
   private static nextId = 1;
 
-  static create(overrides: Partial<Saida> = {}): Saida {
-    const saida = new Saida();
-    saida.id = overrides.id ?? this.nextId++;
-    saida.dataSaida = overrides.dataSaida ?? '01/12/2025';
-    saida.observacao = overrides.observacao ?? 'Observação de teste';
-    saida.usuarioResponsavelNome = overrides.usuarioResponsavelNome ?? 'Usuário Teste';
-    saida.saidaItem = overrides.saidaItem ?? [];
-    if (overrides.idEmprestimo !== undefined) {
-      saida.idEmprestimo = overrides.idEmprestimo;
-    }
-    return saida;
+  static create(overrides: Partial<Fornecedor> = {}): Fornecedor {
+    const fornecedor = new Fornecedor();
+    fornecedor.id = overrides.id ?? this.nextId++;
+    fornecedor.razaoSocial = overrides.razaoSocial ?? `Fornecedor Teste LTDA ${fornecedor.id}`;
+    fornecedor.nomeFantasia = overrides.nomeFantasia ?? `Fornecedor ${fornecedor.id}`;
+    fornecedor.cnpj = overrides.cnpj ?? '12345678000199';
+    fornecedor.ie = overrides.ie ?? '123456789';
+    fornecedor.endereco = overrides.endereco ?? 'Rua Teste, 123';
+    fornecedor.observacao = overrides.observacao ?? '';
+    fornecedor.telefone = overrides.telefone ?? '(41) 99999-9999';
+    fornecedor.email = overrides.email ?? 'teste@fornecedor.com';
+    return fornecedor;
   }
 
-  static createList(count: number): Saida[] {
+  static createList(count: number): Fornecedor[] {
     return Array.from({length: count}, (_, i) => this.create({id: i + 1}));
-  }
-
-  static createFromEmprestimo(overrides: Partial<Saida> = {}): Saida {
-    return this.create({
-      ...overrides,
-      idEmprestimo: 123
-    });
   }
 
   static resetIdCounter(): void {
@@ -44,24 +38,23 @@ class SaidaTestFactory {
 }
 
 /**
- * Testes abrangentes para SaidaListComponent
- * Cobre lógica de permissões e integração com ActionButtonsComponent
+ * Testes abrangentes para FornecedorListComponent
+ * Cobre lógica de permissões, configuração de tabela e integração com ActionButtonsComponent
  */
-describe('SaidaListComponent', () => {
-  let component: SaidaListComponent;
-  let fixture: ComponentFixture<SaidaListComponent>;
-  let saidaService: jest.Mocked<SaidaService>;
-  let messageService: jest.Mocked<MessageService>;
+describe('FornecedorListComponent', () => {
+  let component: FornecedorListComponent;
+  let fixture: ComponentFixture<FornecedorListComponent>;
+  let fornecedorService: jest.Mocked<FornecedorService>;
   let loginService: jest.Mocked<LoginService>;
 
-  let mockSaidas: Saida[];
+  let mockFornecedores: Fornecedor[];
 
   beforeAll(() => {
-    mockSaidas = SaidaTestFactory.createList(3);
+    mockFornecedores = FornecedorTestFactory.createList(3);
   });
 
   beforeEach(async () => {
-    const saidaServiceSpy = createServiceMock<SaidaService>([
+    const fornecedorServiceSpy = createServiceMock<FornecedorService>([
       'findAll',
       'findAllPaged',
       'delete',
@@ -73,28 +66,27 @@ describe('SaidaListComponent', () => {
     const loginServiceSpy = createServiceMock<LoginService>(['isAlunoOrProfessor']);
 
     await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, SaidaListComponent],
+      imports: [RouterTestingModule, FornecedorListComponent],
       providers: [
-        {provide: SaidaService, useValue: saidaServiceSpy},
+        {provide: FornecedorService, useValue: fornecedorServiceSpy},
         {provide: ConfirmationService, useValue: confirmationServiceSpy},
         {provide: MessageService, useValue: messageServiceSpy},
         {provide: LoginService, useValue: loginServiceSpy}
       ]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(SaidaListComponent);
+    fixture = TestBed.createComponent(FornecedorListComponent);
     component = fixture.componentInstance;
 
-    saidaService = TestBed.inject(SaidaService) as jest.Mocked<SaidaService>;
-    messageService = TestBed.inject(MessageService) as jest.Mocked<MessageService>;
+    fornecedorService = TestBed.inject(FornecedorService) as jest.Mocked<FornecedorService>;
     loginService = TestBed.inject(LoginService) as jest.Mocked<LoginService>;
 
-    saidaService.findAll.mockReturnValue(of(mockSaidas));
-    saidaService.findAllPaged.mockReturnValue(of({
-      content: mockSaidas,
-      totalElements: mockSaidas.length,
+    fornecedorService.findAll.mockReturnValue(of(mockFornecedores));
+    fornecedorService.findAllPaged.mockReturnValue(of({
+      content: mockFornecedores,
+      totalElements: mockFornecedores.length,
       totalPages: 1,
-      size: mockSaidas.length,
+      size: mockFornecedores.length,
       number: 0
     }));
 
@@ -110,7 +102,7 @@ describe('SaidaListComponent', () => {
       fixture.destroy();
     }
     jest.clearAllMocks();
-    SaidaTestFactory.resetIdCounter();
+    FornecedorTestFactory.resetIdCounter();
   });
 
   // ============================================================================
@@ -122,27 +114,26 @@ describe('SaidaListComponent', () => {
     });
 
     it('deve injetar serviços corretamente', () => {
-      expect(component['service']).toBe(saidaService);
+      expect(component['service']).toBe(fornecedorService);
     });
 
     it('deve configurar tabela com colunas corretas', () => {
       expect(component['columnsTable']).toEqual([
         'id',
-        'dataSaida',
-        'qtdeTotal',
-        'usuarioResponsavelNome',
-        'observacao',
+        'razaoSocial',
+        'nomeFantasia',
+        'cnpj',
         'actions'
       ]);
     });
 
     it('deve definir urlForm corretamente', () => {
-      expect(component['urlForm']).toBe('saida/form');
+      expect(component['urlForm']).toBe('fornecedor/form');
     });
 
     it('deve configurar tableConfig corretamente', () => {
       expect(component['tableConfig'].columns).toBeDefined();
-      expect(component['tableConfig'].stateKey).toBe('saida-list');
+      expect(component['tableConfig'].stateKey).toBe('fornecedor-list');
     });
   });
 
@@ -186,93 +177,10 @@ describe('SaidaListComponent', () => {
       expect(editSpy).toHaveBeenCalledWith(123);
     });
 
-    it('deve chamar preDelete() com saida correta', () => {
-      const preDeleteSpy = jest.spyOn(component, 'preDelete');
-      const mockSaida = SaidaTestFactory.create({id: 456});
-      component.preDelete(mockSaida);
-      expect(preDeleteSpy).toHaveBeenCalledWith(mockSaida);
-    });
-  });
-
-  // ============================================================================
-  // preDelete() Business Logic (4 tests)
-  // ============================================================================
-  describe('preDelete() Business Logic', () => {
-    it('deve mostrar mensagem de info se saida tem idEmprestimo', () => {
-      const saidaComEmprestimo = SaidaTestFactory.createFromEmprestimo();
-
-      component.preDelete(saidaComEmprestimo);
-
-      expect(messageService.add).toHaveBeenCalledWith(
-        expect.objectContaining({
-          severity: 'info',
-          summary: 'Atenção!'
-        })
-      );
-    });
-
-    it('deve chamar delete() se saida não tem idEmprestimo', () => {
-      const saidaSemEmprestimo = SaidaTestFactory.create({idEmprestimo: undefined});
+    it('deve chamar delete() com id correto', () => {
       const deleteSpy = jest.spyOn(component, 'delete');
-
-      component.preDelete(saidaSemEmprestimo);
-
-      expect(deleteSpy).toHaveBeenCalledWith(saidaSemEmprestimo.id);
-    });
-
-    it('não deve chamar delete() se saida tem idEmprestimo', () => {
-      const saidaComEmprestimo = SaidaTestFactory.createFromEmprestimo();
-      const deleteSpy = jest.spyOn(component, 'delete');
-
-      component.preDelete(saidaComEmprestimo);
-
-      expect(deleteSpy).not.toHaveBeenCalled();
-    });
-
-    it('deve mostrar mensagem explicando o motivo do bloqueio', () => {
-      const saidaComEmprestimo = SaidaTestFactory.createFromEmprestimo();
-
-      component.preDelete(saidaComEmprestimo);
-
-      expect(messageService.add).toHaveBeenCalledWith(
-        expect.objectContaining({
-          detail: expect.stringContaining('devolução')
-        })
-      );
-    });
-  });
-
-  // ============================================================================
-  // getQtdeTotal() (3 tests)
-  // ============================================================================
-  describe('getQtdeTotal()', () => {
-    it('deve calcular soma de quantidades', () => {
-      const saidaItems = [
-        {qtde: 5},
-        {qtde: 3},
-        {qtde: 2}
-      ] as any[];
-
-      const total = component.getQtdeTotal(saidaItems);
-
-      expect(total).toBe(10);
-    });
-
-    it('deve retornar 0 para array vazio', () => {
-      const total = component.getQtdeTotal([]);
-
-      expect(total).toBe(0);
-    });
-
-    it('deve lidar com valores numéricos em string', () => {
-      const saidaItems = [
-        {qtde: '5'},
-        {qtde: '3'}
-      ] as any[];
-
-      const total = component.getQtdeTotal(saidaItems);
-
-      expect(total).toBe(8);
+      component.delete(456);
+      expect(deleteSpy).toHaveBeenCalledWith(456);
     });
   });
 
@@ -282,22 +190,21 @@ describe('SaidaListComponent', () => {
   describe('Base Class Overrides', () => {
     it('deve retornar nome de arquivo de exportação correto', () => {
       const filename = component['getExportFileName']();
-      expect(filename).toBe('saidas');
+      expect(filename).toBe('fornecedores');
     });
 
     it('deve retornar nome da entidade correto', () => {
       const entityName = component['getEntityName']();
-      expect(entityName).toBe('Saída');
+      expect(entityName).toBe('Fornecedor');
     });
 
     it('deve retornar nome plural da entidade correto', () => {
       const pluralName = component['getEntityPluralName']();
-      expect(pluralName).toBe('Saídas');
+      expect(pluralName).toBe('Fornecedores');
     });
 
-    it('deve configurar tableConfig com campos corretos', () => {
-      expect(component['tableConfig'].globalFilterFields).toBeDefined();
-      expect(component['tableConfig'].defaultSortField).toBe('id');
+    it('deve desabilitar hostListenerColumnEnable', () => {
+      expect(component['hostListenerColumnEnable']).toBe(false);
     });
   });
 
@@ -331,6 +238,41 @@ describe('SaidaListComponent', () => {
   });
 
   // ============================================================================
+  // TableConfig (5 tests)
+  // ============================================================================
+  describe('TableConfig', () => {
+    it('deve ter campos de filtro global', () => {
+      expect(component['tableConfig'].globalFilterFields).toBeDefined();
+      expect(component['tableConfig'].globalFilterFields).toContain('id');
+      expect(component['tableConfig'].globalFilterFields).toContain('razaoSocial');
+      expect(component['tableConfig'].globalFilterFields).toContain('nomeFantasia');
+      expect(component['tableConfig'].globalFilterFields).toContain('cnpj');
+    });
+
+    it('deve ter campo de ordenação padrão como razaoSocial', () => {
+      expect(component['tableConfig'].defaultSortField).toBe('razaoSocial');
+    });
+
+    it('deve ter caption definido', () => {
+      expect(component['tableConfig'].caption).toBe('Fornecedores');
+    });
+
+    it('deve ter 5 colunas configuradas', () => {
+      expect(component['tableConfig'].columns.length).toBe(5);
+    });
+
+    it('deve ter displayedColumns configurado corretamente', () => {
+      expect(component['displayedColumns']).toEqual([
+        'id',
+        'razaoSocial',
+        'nomeFantasia',
+        'cnpj',
+        'actions'
+      ]);
+    });
+  });
+
+  // ============================================================================
   // Configuração de Ordenação (7 tests)
   // ============================================================================
   describe('Configuração de Ordenação', () => {
@@ -339,23 +281,18 @@ describe('SaidaListComponent', () => {
       expect(column?.sortable).toBe(true);
     });
 
-    it('deve ter coluna dataSaida com sortable true', () => {
-      const column = component['tableConfig'].columns.find(c => c.field === 'dataSaida');
+    it('deve ter coluna razaoSocial com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'razaoSocial');
       expect(column?.sortable).toBe(true);
     });
 
-    it('deve ter coluna qtdeTotal com sortable true', () => {
-      const column = component['tableConfig'].columns.find(c => c.field === 'qtdeTotal');
+    it('deve ter coluna nomeFantasia com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'nomeFantasia');
       expect(column?.sortable).toBe(true);
     });
 
-    it('deve ter coluna usuarioResponsavelNome com sortable true', () => {
-      const column = component['tableConfig'].columns.find(c => c.field === 'usuarioResponsavelNome');
-      expect(column?.sortable).toBe(true);
-    });
-
-    it('deve ter coluna observacao com sortable true', () => {
-      const column = component['tableConfig'].columns.find(c => c.field === 'observacao');
+    it('deve ter coluna cnpj com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'cnpj');
       expect(column?.sortable).toBe(true);
     });
 
@@ -368,6 +305,47 @@ describe('SaidaListComponent', () => {
       const dataColumns = component['tableConfig'].columns.filter(c => c.field !== 'actions');
       const allSortable = dataColumns.every(c => c.sortable === true);
       expect(allSortable).toBe(true);
+    });
+
+    it('deve ter coluna de ações como única não-ordenável', () => {
+      const nonSortableColumns = component['tableConfig'].columns.filter(c => c.sortable === false);
+      expect(nonSortableColumns.length).toBe(1);
+      expect(nonSortableColumns[0].field).toBe('actions');
+    });
+  });
+
+  // ============================================================================
+  // Configuração de Colunas (5 tests)
+  // ============================================================================
+  describe('Configuração de Colunas', () => {
+    it('deve ter coluna id com tipo number', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'id');
+      expect(column?.type).toBe('number');
+      expect(column?.align).toBe('center');
+    });
+
+    it('deve ter coluna razaoSocial com tipo text', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'razaoSocial');
+      expect(column?.type).toBe('text');
+      expect(column?.minWidth).toBe('20rem');
+    });
+
+    it('deve ter coluna nomeFantasia com tipo text', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'nomeFantasia');
+      expect(column?.type).toBe('text');
+      expect(column?.minWidth).toBe('18rem');
+    });
+
+    it('deve ter coluna cnpj com tipo custom para formatação', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'cnpj');
+      expect(column?.type).toBe('custom');
+      expect(column?.align).toBe('center');
+    });
+
+    it('deve ter coluna actions com propriedades de não-exportação', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'actions');
+      expect(column?.exportable).toBe(false);
+      expect(column?.toggleable).toBe(false);
     });
   });
 });

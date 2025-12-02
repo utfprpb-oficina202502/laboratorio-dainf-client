@@ -100,7 +100,7 @@ describe('ReservaListComponent', () => {
         'descricao',
         'dataReserva',
         'dataRetirada',
-        'nomeUsuario',
+        'usuarioNome',
         'actions'
       ]);
     });
@@ -372,6 +372,41 @@ describe('ReservaListComponent', () => {
 
     it('deve ter campo de ordenação padrão definido', () => {
       expect(component['tableConfig'].defaultSortField).toBe('id');
+    });
+  });
+
+  // ============================================================================
+  // Configuração de Ordenação (6 tests)
+  // ============================================================================
+  describe('Configuração de Ordenação', () => {
+    it('deve ter coluna id com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'id');
+      expect(column?.sortable).toBe(true);
+    });
+
+    it('deve ter coluna descricao com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'descricao');
+      expect(column?.sortable).toBe(true);
+    });
+
+    it('deve ter coluna dataReserva com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'dataReserva');
+      expect(column?.sortable).toBe(true);
+    });
+
+    it('deve ter coluna dataRetirada com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'dataRetirada');
+      expect(column?.sortable).toBe(true);
+    });
+
+    it('deve ter coluna usuarioNome com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'usuarioNome');
+      expect(column?.sortable).toBe(true);
+    });
+
+    it('deve ter coluna actions com sortable false', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'actions');
+      expect(column?.sortable).toBe(false);
     });
   });
 });

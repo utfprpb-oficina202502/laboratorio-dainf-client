@@ -10,5 +10,5 @@ export class SolicitacaoCompra {
   observacao!: string;
 
   /** Nome do usuário (usado em listagens - DTO simplificado do backend) */
-  nomeUsuario?: string;
+  usuarioNome?: string;
 }

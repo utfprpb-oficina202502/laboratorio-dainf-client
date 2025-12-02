@@ -34,7 +34,7 @@ import {createTableConfig} from '../framework/utils/table-config.factory';
 })
 export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number> {
   protected override service = inject(ReservaService);
-  protected override columnsTable = ['id', 'descricao', 'dataReserva', 'dataRetirada', 'nomeUsuario', 'actions'];
+  protected override columnsTable = ['id', 'descricao', 'dataReserva', 'dataRetirada', 'usuarioNome', 'actions'];
   protected override urlForm = 'reserva/form';
 
   // Override: Todos os usuários autenticados podem criar reservas (alunos/professores incluídos)
@@ -81,7 +81,7 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
       align: 'center'
     },
     {
-      field: 'nomeUsuario',
+      field: 'usuarioNome',
       header: 'Usuário',
       type: 'text',
       sortable: true,
@@ -157,7 +157,7 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
-      globalFilterFields: ['id', 'descricao', 'dataReserva', 'nomeUsuario'],
+      globalFilterFields: ['id', 'descricao', 'dataReserva', 'usuarioNome'],
       defaultSortField: 'id',
       caption: 'Reservas',
       stateKey: 'reserva-list',

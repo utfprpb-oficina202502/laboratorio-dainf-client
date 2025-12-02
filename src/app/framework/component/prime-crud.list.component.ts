@@ -33,6 +33,7 @@ import {TableColumnManagerService} from '../services/table-column-manager.servic
 import {TableRowExpansionManagerService} from '../services/table-row-expansion-manager.service';
 import {StorageService} from '../services/storage.service';
 import {BreakpointService} from '../services/breakpoint.service';
+import {SORT_ORDER, SortOrderType} from '../constants';
 
 @Directive()
 export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy {
@@ -252,7 +253,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.pageIndex = Math.floor((event.first ?? 0) / (event.rows ?? 10));
     this.pageSize = event.rows ?? 10;
 
-    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue)
+    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue, this.buildSortParam())
     .subscribe({
       next: (e) => this.handleDataLoadSuccess(e),
       error: (error) => this.handleDataLoadError(error)
@@ -279,7 +280,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.loading.set(true);
 
     // Start an HTTP request immediately without blocking on DOM calculations
-    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue || '')
+    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue || '', this.buildSortParam())
     .subscribe({
       next: (e) => {
         this.buildColumnsTable();  // Build columns while data is being processed
@@ -432,16 +433,47 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     });
   }
 
-  // PrimeNG Sort event handler
-  onSort(event: SortEvent) {
+  /**
+   * Handler do evento de ordenação do PrimeNG Table.
+   * Atualiza campo e direção de ordenação, reseta para primeira página e recarrega dados.
+   *
+   * @param event Evento de ordenação contendo field e order
+   *
+   * @example
+   * // No template:
+   * <p-table (onSort)="onSort($event)">
+   */
+  onSort(event: SortEvent): void {
     this.sortField = event.field as string;
-    this.sortOrder = event.order ?? 1;
+    this.sortOrder = (event.order ?? SORT_ORDER.ASC) as SortOrderType;
 
     // Reset to the first page when sorting
     this.pageIndex = 0;
     this.first = 0;
 
     this.loadData();
+  }
+
+  /**
+   * Constrói o parâmetro de ordenação para API backend no formato Spring Data.
+   *
+   * @returns String no formato 'field,direction' ou undefined se não houver ordenação
+   *
+   * @example
+   * // Retornos possíveis:
+   * buildSortParam() // → undefined (sem ordenação)
+   * buildSortParam() // → 'dataEmprestimo,asc' (ordenação ascendente)
+   * buildSortParam() // → 'id,desc' (ordenação descendente)
+   *
+   * // Uso no service:
+   * this.service.findAllPaged(page, size, filter, this.buildSortParam())
+   */
+  protected buildSortParam(): string | undefined {
+    if (!this.sortField) {
+      return undefined;
+    }
+    const direction = this.sortOrder === SORT_ORDER.ASC ? 'asc' : 'desc';
+    return `${this.sortField},${direction}`;
   }
 
   // Bulk delete functionality
@@ -941,34 +973,14 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.triggerChangeDetection();
   }
 
-  // Centralized data loading method
+  // Centralized data loading method - server-side sorting applied by backend
   private loadData() {
     this.loading.set(true);
     this.buildColumnsTable();
 
-    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue)
+    this.service.findAllPaged(this.pageIndex, this.pageSize, this.filterValue, this.buildSortParam())
     .subscribe({
-      next: (e) => {
-          // Apply client-side sorting if needed
-          if (this.sortField && e.content) {
-            e.content.sort((a: T, b: T) => {
-              const aVal = (a as Record<string, unknown>)[this.sortField];
-              const bVal = (b as Record<string, unknown>)[this.sortField];
-
-              // Handle null/undefined
-              if (aVal === null && bVal === null) return 0;
-              if (aVal === null || aVal === undefined) return this.sortOrder;
-              if (bVal === null || bVal === undefined) return -1 * this.sortOrder;
-
-              // Compare values (works for strings, numbers, dates)
-              if (aVal < bVal) return -1 * this.sortOrder;
-              if (aVal > bVal) return this.sortOrder;
-              return 0;
-            });
-          }
-
-          this.handleDataLoadSuccess(e);
-        },
+      next: (e) => this.handleDataLoadSuccess(e),
       error: (error) => this.handleDataLoadError(error)
     });
   }

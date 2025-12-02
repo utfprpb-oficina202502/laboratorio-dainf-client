@@ -11,7 +11,7 @@ export class Saida {
   idEmprestimo!: number;
 
   /** Nome do usuário responsável (usado em listagens - DTO simplificado do backend) */
-  nomeUsuarioResponsavel?: string;
+  usuarioResponsavelNome?: string;
 
   /** Quantidade total de itens (usado em listagens - DTO simplificado do backend) */
   qtdeTotal?: number;

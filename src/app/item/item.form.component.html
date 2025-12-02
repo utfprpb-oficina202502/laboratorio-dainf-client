@@ -318,21 +318,22 @@
   [(visible)]="dialogImagens"
   [baseZIndex]="Z_INDEX.DIALOG"
   [appendTo]="'body'"
-  class="dialog-xl"
+  [style]="{'width': '90vw', 'max-width': '600px'}"
   [focusOnShow]="false">
   <p-carousel
     [value]="images()"
     class="custom-carousel"
-    [numVisible]="3"
+    [numVisible]="1"
     [numScroll]="1"
     [circular]="true"
-    [responsiveOptions]="responsiveOptions">
+    [showIndicators]="images().length > 1"
+    [showNavigators]="images().length > 1">
     <ng-template let-image pTemplate="item">
-      <div class="flex flex-col items-center gap-2 relative">
+      <div class="flex flex-col items-center gap-3 py-2 px-2 md:px-4">
         <!-- Indicador de capa -->
         @if (image.isCover) {
           <span
-            class="absolute top-2 left-2 bg-primary text-white px-2 py-1 rounded text-xs z-10 flex items-center gap-1">
+              class="bg-primary text-white px-2 md:px-3 py-1 rounded text-xs md:text-sm flex items-center gap-1">
             <i class="pi pi-star-fill"></i>Capa
           </span>
         }
@@ -341,17 +342,24 @@
         <button
           (click)="openImagePreview(image)"
           [attr.aria-label]="'Ampliar imagem'"
-          class="w-[300px] h-[225px] flex items-center justify-center cursor-pointer bg-transparent border-none p-0"
+          class="w-full flex items-center justify-center cursor-pointer bg-transparent border-none p-0"
           type="button">
           <img
             [src]="getImageUrl(image.nameImage)"
             [alt]="'Item'"
-            class="object-contain rounded max-h-[225px] max-w-[300px] hover:opacity-80 transition-opacity"/>
+            class="object-contain rounded w-auto h-auto max-h-[40vh] md:max-h-[50vh] max-w-full hover:opacity-80 transition-opacity"/>
         </button>
+
+        <!-- Contador de imagens -->
+        @if (images().length > 1) {
+          <span class="text-xs md:text-sm text-gray-500">
+            {{ images().indexOf(image) + 1 }} de {{ images().length }}
+          </span>
+        }
 
         <!-- Botões de ação -->
         @if (!isAlunoOrProfessor()) {
-          <div class="flex gap-2">
+          <div class="flex flex-wrap justify-center gap-2">
             <p-button
               (onClick)="setCoverImage(image)"
               [disabled]="image.isCover"

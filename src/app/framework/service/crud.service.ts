@@ -38,13 +38,26 @@ export abstract class CrudService<T, ID> {
     return this.http.get<T>(this.getUrl() + id);
   }
 
-  findAllPaged(page: number, size: number, filter = ''): Observable<PageResponse<T>> {
+  /**
+   * Busca paginada com suporte a ordenação server-side
+   * @param page Número da página (0-indexed)
+   * @param size Tamanho da página
+   * @param filter Filtro de busca global
+   * @param sort Parâmetro de ordenação no formato 'field,direction' (ex: 'dataCompra,desc')
+   * @returns Observable de PageResponse<T>
+   */
+  findAllPaged(page: number, size: number, filter = '', sort?: string): Observable<PageResponse<T>> {
     page = Math.max(0, Number(page));
     size = Math.max(1, Number(size));
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('page', String(page))
       .set('size', String(size))
       .set('filter', filter);
+
+    if (sort) {
+      params = params.set('sort', sort);
+    }
+
     return this.http.get<PageResponse<T>>(`${this.url}page`, {params});
   }
 
@@ -70,10 +83,11 @@ export abstract class CrudService<T, ID> {
   }
 
   /**
-   * Busca paginada para autocomplete
+   * Busca paginada para autocomplete.
+   * Não suporta ordenação customizada pois autocomplete ordena por relevância no backend.
    * @param query Texto para filtro
-   * @param page Numero da pagina (0-indexed)
-   * @param size Tamanho da pagina (default: 10)
+   * @param page Número da página (0-indexed)
+   * @param size Tamanho da página (default: 10)
    * @returns Observable de PageResponse<T>
    */
   completePaged(query: string, page = 0, size = 10): Observable<PageResponse<T>> {

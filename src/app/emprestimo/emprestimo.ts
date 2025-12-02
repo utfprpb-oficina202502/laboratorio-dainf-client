@@ -2,6 +2,14 @@ import {Usuario} from '../usuario/usuario';
 import {EmprestimoItem} from './emprestimoItem';
 import {EmprestimoDevolucaoItem} from './emprestimoDevolucaoItem';
 
+/**
+ * Status do empréstimo
+ * - P: Pendente (em andamento, prazo não vencido)
+ * - A: Atrasado (prazo vencido, não devolvido)
+ * - F: Finalizado (devolvido)
+ */
+export type EmprestimoStatus = 'P' | 'A' | 'F';
+
 export class Emprestimo {
   id!: number;
   dataEmprestimo!: string;
@@ -14,8 +22,8 @@ export class Emprestimo {
   observacao!: string;
 
   /** Nome do usuário do empréstimo (usado em listagens - DTO simplificado do backend) */
-  nomeUsuarioEmprestimo?: string;
+  usuarioEmprestimoNome?: string;
 
-  /** Status do empréstimo calculado pelo backend (P=Pendente, A=Atrasado, F=Finalizado) */
-  status?: string;
+  /** Status do empréstimo calculado no frontend baseado em prazoDevolucao e dataDevolucao */
+  status?: EmprestimoStatus;
 }
