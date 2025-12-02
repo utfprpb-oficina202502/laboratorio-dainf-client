@@ -436,10 +436,16 @@
     } @else {
       <p-table
         [value]="emprestimos()"
-        [paginator]="emprestimos().length > 10"
-        [rows]="10"
+        [rows]="emprestimosRows()"
+        [totalRecords]="emprestimosTotalRecords()"
+        [paginator]="emprestimosTotalRecords() > emprestimosRows()"
         [rowsPerPageOptions]="[5, 10, 25, 50]"
-        [loading]="false"
+        [lazy]="true"
+        [lazyLoadOnInit]="false"
+        (onPage)="onEmprestimosPageChange($event)"
+        (onSort)="onEmprestimosSort($event)"
+        [first]="emprestimosFirst()"
+        [loading]="loadingEmprestimos()"
         responsiveLayout="scroll"
         [tableStyleClass]="'compact-table'"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} empréstimos"
@@ -447,12 +453,12 @@
 
         <ng-template pTemplate="header">
           <tr>
-            <th style="width: 8rem">Código</th>
-            <th style="min-width: 12rem">Usuário</th>
-            <th style="width: 10rem">Data Empréstimo</th>
-            <th style="width: 10rem">Prazo Devolução</th>
-            <th style="width: 10rem">Data Devolução</th>
-            <th style="width: 8rem">Status</th>
+            <th style="width: 8rem" pSortableColumn="id">Código <p-sortIcon field="id"></p-sortIcon></th>
+            <th style="min-width: 12rem" pSortableColumn="nomeUsuarioEmprestimo">Usuário <p-sortIcon field="nomeUsuarioEmprestimo"></p-sortIcon></th>
+            <th style="width: 10rem" pSortableColumn="dataEmprestimo">Data Empréstimo <p-sortIcon field="dataEmprestimo"></p-sortIcon></th>
+            <th style="width: 10rem" pSortableColumn="prazoDevolucao">Prazo Devolução <p-sortIcon field="prazoDevolucao"></p-sortIcon></th>
+            <th style="width: 10rem" pSortableColumn="dataDevolucao">Data Devolução <p-sortIcon field="dataDevolucao"></p-sortIcon></th>
+            <th style="width: 8rem" pSortableColumn="status">Status <p-sortIcon field="status"></p-sortIcon></th>
             <th style="width: 10rem">Ações</th>
           </tr>
         </ng-template>

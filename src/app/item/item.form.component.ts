@@ -15,6 +15,7 @@ import {Z_INDEX} from '../framework/constants';
 import {
   PrimeReactiveCrudFormComponent
 } from '../framework/component/prime-reactive-crud.form.component';
+import {PageResponse} from '../framework/service/crud.service';
 import {Item} from './item';
 import {ItemService} from './item.service';
 import {Grupo} from '../grupo/grupo';
@@ -37,7 +38,8 @@ import {InputTextModule} from "primeng/inputtext";
 import {TextareaModule} from "primeng/textarea";
 import {InputNumberModule} from "primeng/inputnumber";
 import {SelectModule} from "primeng/select";
-import {TableModule} from "primeng/table";
+import {TableModule, TablePageEvent} from "primeng/table";
+import {SortEvent} from "primeng/api";
 import {TooltipModule} from "primeng/tooltip";
 import {ProgressBarModule} from 'primeng/progressbar';
 import {TagModule} from 'primeng/tag';
@@ -124,6 +126,14 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   protected readonly emprestimos = signal<Emprestimo[]>([]);
   protected readonly loadingEmprestimos = signal(false);
   private emprestimosRequestCancelled = false;
+
+  // Pagination state for empréstimos
+  protected readonly emprestimosPage = signal(0);
+  protected readonly emprestimosRows = signal(10);
+  protected readonly emprestimosTotalRecords = signal(0);
+  protected readonly emprestimosFirst = signal(0);
+  protected readonly emprestimosSortField = signal('id');
+  protected readonly emprestimosSortOrder = signal(1); // 1 for ascending, -1 for descending
 
   // Pagination state for Grupo autocomplete
   private readonly GRUPO_PAGE_SIZE = 10;
@@ -641,6 +651,13 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     this.loadingEmprestimos.set(true);
     this.emprestimos.set([]);
 
+    // Reset pagination state
+    this.emprestimosPage.set(0);
+    this.emprestimosFirst.set(0);
+    this.emprestimosTotalRecords.set(0);
+    this.emprestimosSortField.set('id');
+    this.emprestimosSortOrder.set(1);
+
     // Start the HTTP request
     this.loadEmprestimosByItem(obj.id);
   }
@@ -652,35 +669,60 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   private loadEmprestimosByItem(itemId: number): void {
     this.cancelEmprestimosRequest();
 
-    this.emprestimosSubscription = this.emprestimoService.findByItem(itemId).subscribe({
-      next: (emprestimos) => {
-        // Only update data if request wasn't cancelled
-        if (!this.emprestimosRequestCancelled) {
-          this.emprestimos.set(emprestimos);
-        }
-        this.loadingEmprestimos.set(false);
-      },
-      error: (error) => {
-        if (!this.emprestimosRequestCancelled) {
+    this.emprestimosSubscription = this.emprestimoService
+      .findByItemPaged(itemId, this.emprestimosPage(), this.emprestimosRows(), this.emprestimosSortField(), this.emprestimosSortOrder() === 1)
+      .subscribe({
+        next: (response: PageResponse<Emprestimo>) => {
+          // Only update data if request wasn't cancelled
+          if (!this.emprestimosRequestCancelled) {
+            this.emprestimos.set(response.content);
+            this.emprestimosTotalRecords.set(response.totalElements);
+          }
           this.loadingEmprestimos.set(false);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erro',
-            detail: 'Erro ao carregar empréstimos do item.',
-            life: 5000
-          });
-          this.logger.error('Erro ao carregar empréstimos do item', error);
+        },
+        error: (error) => {
+          if (!this.emprestimosRequestCancelled) {
+            this.loadingEmprestimos.set(false);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erro',
+              detail: 'Erro ao carregar empréstimos do item.',
+              life: 5000
+            });
+            this.logger.error('Erro ao carregar empréstimos do item', error);
+          }
         }
-      }
-    });
+      });
   }
 
   /**
-   * Cancel ongoing emprestimos request
+   * Handle pagination changes for empréstimos table
+   * @param event Pagination event from p-table
    */
-  private cancelEmprestimosRequest(): void {
-    if (this.emprestimosSubscription && !this.emprestimosSubscription.closed) {
-      this.emprestimosSubscription.unsubscribe();
+  onEmprestimosPageChange(event: TablePageEvent): void {
+    this.emprestimosFirst.set(event.first ?? 0);
+    this.emprestimosRows.set(event.rows ?? 10);
+    this.emprestimosPage.set(Math.floor((event.first ?? 0) / (event.rows ?? 10)));
+
+    const obj = this.object();
+    if (obj && 'id' in obj && obj.id) {
+      this.loadingEmprestimos.set(true);
+      this.loadEmprestimosByItem(obj.id);
+    }
+  }
+
+  /**
+   * Handle sorting changes for empréstimos table
+   * @param event Sort event from p-table
+   */
+  onEmprestimosSort(event: SortEvent): void {
+    this.emprestimosSortField.set(event.field ?? 'id');
+    this.emprestimosSortOrder.set(event.order ?? 1);
+
+    const obj = this.object();
+    if (obj && 'id' in obj && obj.id) {
+      this.loadingEmprestimos.set(true);
+      this.loadEmprestimosByItem(obj.id);
     }
   }
 
@@ -702,6 +744,15 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     this.emprestimos.set([]);
     this.loadingEmprestimos.set(false);
     this.cancelEmprestimosRequest();
+  }
+
+  /**
+   * Cancel ongoing emprestimos request
+   */
+  private cancelEmprestimosRequest(): void {
+    if (this.emprestimosSubscription && !this.emprestimosSubscription.closed) {
+      this.emprestimosSubscription.unsubscribe();
+    }
   }
 
   /**
