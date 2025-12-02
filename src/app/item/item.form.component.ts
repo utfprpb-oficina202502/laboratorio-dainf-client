@@ -101,6 +101,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   protected readonly Z_INDEX = Z_INDEX;
   private grupoSubscription?: Subscription;
   private imagesSubscription?: Subscription;
+  private emprestimosSubscription?: Subscription;
   protected readonly logger = inject(LoggerService);
   private readonly confirmationService = inject(ConfirmationService);
 
@@ -122,6 +123,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   protected readonly emprestimosModalVisible = signal(false);
   protected readonly emprestimos = signal<Emprestimo[]>([]);
   protected readonly loadingEmprestimos = signal(false);
+  private emprestimosRequestCancelled = false;
 
   // Pagination state for Grupo autocomplete
   private readonly GRUPO_PAGE_SIZE = 10;
@@ -632,6 +634,14 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
       });
       return;
     }
+
+    // Reset cancelled flag and open modal with loading state
+    this.emprestimosRequestCancelled = false;
+    this.emprestimosModalVisible.set(true);
+    this.loadingEmprestimos.set(true);
+    this.emprestimos.set([]);
+
+    // Start the HTTP request
     this.loadEmprestimosByItem(obj.id);
   }
 
@@ -640,24 +650,38 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
    * @param itemId ID do item
    */
   private loadEmprestimosByItem(itemId: number): void {
-    this.loadingEmprestimos.set(true);
-    this.emprestimoService.findByItem(itemId).subscribe({
+    this.cancelEmprestimosRequest();
+
+    this.emprestimosSubscription = this.emprestimoService.findByItem(itemId).subscribe({
       next: (emprestimos) => {
-        this.emprestimos.set(emprestimos);
-        this.emprestimosModalVisible.set(true);
+        // Only update data if request wasn't cancelled
+        if (!this.emprestimosRequestCancelled) {
+          this.emprestimos.set(emprestimos);
+        }
         this.loadingEmprestimos.set(false);
       },
       error: (error) => {
-        this.loadingEmprestimos.set(false);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erro',
-          detail: 'Erro ao carregar empréstimos do item.',
-          life: 5000
-        });
-        this.logger.error('Erro ao carregar empréstimos do item', error);
+        if (!this.emprestimosRequestCancelled) {
+          this.loadingEmprestimos.set(false);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erro',
+            detail: 'Erro ao carregar empréstimos do item.',
+            life: 5000
+          });
+          this.logger.error('Erro ao carregar empréstimos do item', error);
+        }
       }
     });
+  }
+
+  /**
+   * Cancel ongoing emprestimos request
+   */
+  private cancelEmprestimosRequest(): void {
+    if (this.emprestimosSubscription && !this.emprestimosSubscription.closed) {
+      this.emprestimosSubscription.unsubscribe();
+    }
   }
 
   /**
@@ -673,8 +697,11 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
    * Fecha o modal de empréstimos
    */
   closeEmprestimosModal(): void {
+    this.emprestimosRequestCancelled = true;
     this.emprestimosModalVisible.set(false);
     this.emprestimos.set([]);
+    this.loadingEmprestimos.set(false);
+    this.cancelEmprestimosRequest();
   }
 
   /**
@@ -683,5 +710,6 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   ngOnDestroy(): void {
     this.cancelGrupoRequest();
     this.cancelImagesRequest();
+    this.cancelEmprestimosRequest();
   }
 }
