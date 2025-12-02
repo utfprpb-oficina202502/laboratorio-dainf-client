@@ -61,6 +61,7 @@
             class="dialog-sm"
     [modal]="true"
             [baseZIndex]="Z_INDEX.DIALOG"
+            [appendTo]="'body'"
     [focusOnShow]="false">
     <form #formFiltro="ngForm">
       @for (param of relatorioCurrent!.paramsList; track param) {

@@ -36,8 +36,9 @@
             </p-button>
           }
         }
-        <!-- Expand/Collapse buttons -->
-        @if (listInstance.tableConfig.expandable) {
+        <!-- Expand/Collapse buttons - only show when expandMode is 'multiple' -->
+        @if (listInstance.tableConfig.expandable && listInstance.tableConfig.expandMode
+        === 'multiple') {
           <p-button
             type="button"
             [outlined]="true"

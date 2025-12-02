@@ -1,9 +1,19 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject, viewChild} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  forwardRef,
+  inject,
+  signal,
+  untracked,
+  viewChild
+} from '@angular/core';
 import {Z_INDEX} from '../framework/constants';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Emprestimo} from './emprestimo';
 import {EmprestimoService} from './emprestimo.service';
+import {EmprestimoItem} from './emprestimoItem';
 import {MenuItem, SelectItem} from 'primeng/api';
 import {Popover, PopoverModule} from 'primeng/popover';
 import {DateUtil} from '../framework/util/dateUtil';
@@ -15,6 +25,7 @@ import {AutoCompleteModule} from 'primeng/autocomplete';
 import {DatePicker, DatePickerModule} from 'primeng/datepicker';
 import {SelectModule} from 'primeng/select';
 import {MenuModule} from 'primeng/menu';
+import {SkeletonModule} from 'primeng/skeleton';
 import {NovoComponent} from '../geral/novo/novo.component';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 import {BreakpointService} from '../framework/services/breakpoint.service';
@@ -35,6 +46,7 @@ import {firstValueFrom} from 'rxjs';
     SelectModule,
     PopoverModule,
     MenuModule,
+    SkeletonModule,
     NovoComponent,
     TableEmptyStateComponent,
     TableLoadingStateComponent,
@@ -64,6 +76,12 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
   modalNovoPrazoVisible = false;
   novaDataPrazo: string | undefined;
   emprestimoSelecionadoParaPrazo: Emprestimo | undefined;
+
+  // Dialog de itens emprestados
+  dialogItensVisible = false;
+  emprestimoSelecionadoParaItens: Emprestimo | undefined;
+  itensDoEmprestimo = signal<EmprestimoItem[]>([]);
+  loadingItensDialog = signal(false);
 
   protected override columnsTable = ['id', 'nomeUsuarioEmprestimo', 'dataEmprestimo', 'prazoDevolucao', 'status', 'actions'];
   private readonly tableColumns: TableColumn[] = [
@@ -131,6 +149,22 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     this.emprestimoFilter = new EmprestimoFilter();
     this.buildDropdown();
     this.configureTable();
+
+    // Garante que a coluna de ações permaneça visível para alunos/professores
+    // para que possam acessar o botão "Ver itens"
+    effect(() => {
+      // Rastreia mudanças de permissão (trigger do effect)
+      this.isReadOnly();
+
+      // Usa untracked para evitar dependências circulares ao modificar tableConfig
+      untracked(() => {
+        const actionsColumn = this.tableConfig.columns?.find(col => col.field === 'actions');
+        if (actionsColumn && !actionsColumn.visible) {
+          actionsColumn.visible = true;
+          this.cdr?.markForCheck();
+        }
+      });
+    });
   }
 
   // Getter for backwards compatibility with custom methods
@@ -144,6 +178,15 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     this.contextMenuItems = [];
     const emprestimo = this.objects.find(e => e.id === id);
     const status = emprestimo ? this.getStatusEmprestimo(emprestimo) : undefined;
+
+    // Opção Ver Itens - disponível para todos
+    if (emprestimo) {
+      this.contextMenuItems.push({
+        label: 'Ver Itens',
+        icon: 'pi pi-list',
+        command: () => this.abrirDialogItens(emprestimo)
+      });
+    }
 
     if (!isAlunoOrProfessor) {
       this.contextMenuItems.push({
@@ -441,7 +484,6 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       defaultSortField: 'id',
       caption: 'Empréstimos',
       stateKey: 'emprestimo-list',
-      // ...outras propriedades específicas...
     });
 
     this.columnsTable = this.tableConfig.columns.map(column => column.field);
@@ -450,5 +492,45 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
 
   formatDateString(dateStr: string | undefined): string {
     return DateUtil.formatDateString(dateStr);
+  }
+
+  /**
+   * Abre o dialog para visualizar os itens de um empréstimo.
+   * Realiza lazy loading dos itens via API findOne.
+   * @param emprestimo Empréstimo selecionado
+   */
+  abrirDialogItens(emprestimo: Emprestimo): void {
+    this.actionsMenu().hide();
+    this.emprestimoSelecionadoParaItens = emprestimo;
+    this.dialogItensVisible = true;
+    this.loadingItensDialog.set(true);
+    this.itensDoEmprestimo.set([]);
+
+    this.emprestimoService.findOne(emprestimo.id).subscribe({
+      next: (emprestimoCompleto) => {
+        this.itensDoEmprestimo.set(emprestimoCompleto.emprestimoItem || []);
+        this.loadingItensDialog.set(false);
+        this.cdr?.markForCheck();
+      },
+      error: () => {
+        this.loadingItensDialog.set(false);
+        this.cdr?.markForCheck();
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Erro ao carregar itens do empréstimo',
+          life: 5000
+        });
+      }
+    });
+  }
+
+  /**
+   * Fecha o dialog de itens emprestados.
+   */
+  fecharDialogItens(): void {
+    this.dialogItensVisible = false;
+    this.emprestimoSelecionadoParaItens = undefined;
+    this.itensDoEmprestimo.set([]);
   }
 }

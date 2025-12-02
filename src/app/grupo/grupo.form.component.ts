@@ -4,11 +4,13 @@ import {
   computed,
   inject,
   OnDestroy,
+  OnInit,
   signal
 } from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
-import {Subscription} from 'rxjs';
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import {Subject, Subscription} from 'rxjs';
+import {debounceTime, distinctUntilChanged, takeUntil} from 'rxjs/operators';
 import {Z_INDEX} from '../framework/constants';
 import {Grupo} from './grupo';
 import {GrupoService} from './grupo.service';
@@ -16,6 +18,7 @@ import {
   PrimeReactiveCrudFormComponent
 } from '../framework/component/prime-reactive-crud.form.component';
 import {Item} from '../item/item';
+import {TableModule, TablePageEvent} from 'primeng/table';
 
 // PrimeNG Modules
 import {DialogModule} from 'primeng/dialog';
@@ -23,8 +26,9 @@ import {InputTextModule} from 'primeng/inputtext';
 import {TooltipModule} from 'primeng/tooltip';
 import {CardModule} from 'primeng/card';
 import {ButtonModule} from 'primeng/button';
-import {TableModule} from 'primeng/table';
 import {ProgressSpinnerModule} from 'primeng/progressspinner';
+import {IconFieldModule} from 'primeng/iconfield';
+import {InputIconModule} from 'primeng/inputicon';
 
 // Custom Components
 import {VoltarComponent} from '../geral/voltar/voltar.component';
@@ -40,6 +44,7 @@ import {LoggerService} from '../framework/services/logger.service';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     // PrimeNG
     CardModule,
     InputTextModule,
@@ -48,6 +53,8 @@ import {LoggerService} from '../framework/services/logger.service';
     DialogModule,
     TableModule,
     ProgressSpinnerModule,
+    IconFieldModule,
+    InputIconModule,
     // Custom
     VoltarComponent,
     CancelarComponent,
@@ -56,7 +63,7 @@ import {LoggerService} from '../framework/services/logger.service';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, number> implements OnDestroy {
+export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, number> implements OnInit, OnDestroy {
   // Constants for template
   protected readonly Z_INDEX = Z_INDEX;
 
@@ -72,6 +79,16 @@ export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, nu
   protected readonly itensVinculados = signal<Item[]>([]);
   protected readonly loadingItensVinculados = signal(false);
 
+  // Pagination signals
+  protected readonly totalItensVinculados = signal(0);
+  protected readonly pageIndexItens = signal(0);
+  protected readonly pageSizeItens = signal(25);
+  protected readonly firstItens = signal(0);
+
+  // Filter for items
+  protected filtroItens = '';
+  private readonly filterSubject = new Subject<string>();
+
   // Computed signal for whether to show the "Itens Vinculados" button
   protected readonly canShowItensVinculados = computed(() => {
     const obj = this.object();
@@ -80,6 +97,23 @@ export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, nu
 
   constructor() {
     super();
+  }
+
+  ngOnInit(): void {
+    super.ngOnInit();
+    this.setupDebouncedFiltering();
+  }
+
+  /**
+   * Show dialog with linked items
+   */
+  showDialogItensVinculados(): void {
+    // Reset pagination and filter when opening dialog
+    this.pageIndexItens.set(0);
+    this.firstItens.set(0);
+    this.filtroItens = '';
+    this.dialogItensVinculados.set(true);
+    this.findItensVinculados();
   }
 
   /**
@@ -93,58 +127,28 @@ export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, nu
   }
 
   /**
-   * Show dialog with linked items
+   * Handle page change event from p-table
    */
-  showDialogItensVinculados(): void {
+  onPageChangeItens(event: TablePageEvent): void {
+    this.pageIndexItens.set(Math.floor((event.first ?? 0) / (event.rows ?? 25)));
+    this.pageSizeItens.set(event.rows ?? 25);
+    this.firstItens.set(event.first ?? 0);
     this.findItensVinculados();
   }
 
   /**
-   * Fetch items linked to this group
+   * Handle filter input change
    */
-  private findItensVinculados(): void {
-    const obj = this.object();
-    if (!obj || !('id' in obj) || !obj.id) {
-      return;
-    }
+  onFilterItens(filter: string): void {
+    this.filterSubject.next(filter);
+  }
 
-    // Cancel any existing request
+  /**
+   * Cleanup on component destroy
+   */
+  override ngOnDestroy(): void {
     this.cancelItensVinculadosRequest();
-
-    this.loadingItensVinculados.set(true);
-    this.loaderService.showWithCancel(
-      () => this.cancelItensVinculadosRequest(),
-      'Cancelar Busca'
-    );
-
-    this.itensVinculadosSubscription = this.service.findItensVinculados(obj.id).subscribe({
-      next: (items) => {
-        this.loadingItensVinculados.set(false);
-        this.loaderService.hide();
-        if (items.length === 0) {
-          this.messageService.add({
-            severity: 'info',
-            summary: 'Ops...',
-            detail: 'Não existe nenhum item vinculado ao grupo.',
-            life: 4000
-          });
-        } else {
-          this.itensVinculados.set(items);
-          this.dialogItensVinculados.set(true);
-        }
-      },
-      error: (error) => {
-        this.loadingItensVinculados.set(false);
-        this.loaderService.hide();
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erro',
-          detail: 'Erro ao buscar itens vinculados.',
-          life: 5000
-        });
-        this.logger.error('Erro ao buscar itens vinculados', error);
-      }
-    });
+    super.ngOnDestroy();
   }
 
   /**
@@ -159,10 +163,68 @@ export class GrupoFormComponent extends PrimeReactiveCrudFormComponent<Grupo, nu
   }
 
   /**
-   * Cleanup on component destroy
+   * Setup debounced filtering for items search
    */
-  ngOnDestroy(): void {
+  private setupDebouncedFiltering(): void {
+    this.filterSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(filter => {
+      this.filtroItens = filter;
+      this.pageIndexItens.set(0);
+      this.firstItens.set(0);
+      this.findItensVinculados();
+    });
+  }
+
+  /**
+   * Fetch items linked to this group with pagination
+   */
+  private findItensVinculados(): void {
+    const obj = this.object();
+    if (!obj || !('id' in obj) || !obj.id) {
+      return;
+    }
+
+    // Cancel any existing request
     this.cancelItensVinculadosRequest();
+
+    this.loadingItensVinculados.set(true);
+
+    this.itensVinculadosSubscription = this.service.findItensVinculados(
+      obj.id,
+      this.pageIndexItens(),
+      this.pageSizeItens(),
+      this.filtroItens
+    ).subscribe({
+      next: (pageResponse) => {
+        this.loadingItensVinculados.set(false);
+        this.itensVinculados.set(pageResponse.content);
+        this.totalItensVinculados.set(pageResponse.totalElements);
+
+        // Close dialog and show message if no items found
+        if (pageResponse.totalElements === 0 && !this.filtroItens) {
+          this.dialogItensVinculados.set(false);
+          this.messageService.add({
+            severity: 'info',
+            summary: 'Ops...',
+            detail: 'Não existe nenhum item vinculado ao grupo.',
+            life: 4000
+          });
+        }
+      },
+      error: (error) => {
+        this.loadingItensVinculados.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Erro ao buscar itens vinculados.',
+          life: 5000
+        });
+        this.logger.error('Erro ao buscar itens vinculados', error);
+      }
+    });
   }
 
   /**

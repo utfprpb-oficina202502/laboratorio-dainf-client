@@ -116,7 +116,8 @@
                     [attr.aria-label]="(isRowExpanded(row) ? 'Recolher' : 'Expandir') + ' detalhes do emprestimo ' + row.id"
                     [icon]="isRowExpanded(row) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
                     [rounded]="true"
-                    variant="text"/>
+                    [text]="true"
+                    severity="secondary"/>
                 </td>
               }
               @if (!isReadOnly() && tableConfig.selectable !== false) {
@@ -167,16 +168,29 @@
                       </div>
                     }
                     @case ('actions') {
-                      <app-action-buttons
-                        [showEdit]="canEdit()"
-                        [showDelete]="canDelete()"
-                        [editTooltip]="'Editar empréstimo'"
-                        [deleteTooltip]="'Remover empréstimo'"
-                        [editAriaLabel]="'Editar empréstimo ' + row.id"
-                        [deleteAriaLabel]="'Remover empréstimo ' + row.id"
-                        (edit)="edit(row.id)"
-                        (delete)="delete(row.id)">
-                      </app-action-buttons>
+                      <div class="flex items-center justify-center gap-1">
+                        <p-button
+                          (onClick)="abrirDialogItens(row); $event.stopPropagation()"
+                          [attr.aria-label]="'Ver itens do empréstimo ' + row.id"
+                          [rounded]="true"
+                          [text]="true"
+                          icon="pi pi-list"
+                          pTooltip="Ver itens"
+                          severity="secondary"
+                          tooltipPosition="top"
+                          type="button">
+                        </p-button>
+                        <app-action-buttons
+                          (delete)="delete(row.id)"
+                          (edit)="edit(row.id)"
+                          [deleteAriaLabel]="'Remover empréstimo ' + row.id"
+                          [deleteTooltip]="'Remover empréstimo'"
+                          [editAriaLabel]="'Editar empréstimo ' + row.id"
+                          [editTooltip]="'Editar empréstimo'"
+                          [showDelete]="canDelete()"
+                          [showEdit]="canEdit()">
+                        </app-action-buttons>
+                      </div>
                     }
                     @default {
                       @if (column.field === 'prazoDevolucao') {
@@ -193,36 +207,6 @@
                 </td>
             }
           </tr>
-        </ng-template>
-
-        <ng-template pTemplate="rowexpansion" let-row>
-          @if (rowExpansionTemplate()) {
-            <ng-container [ngTemplateOutlet]="rowExpansionTemplate()"
-                          [ngTemplateOutletContext]="{$implicit: row}"></ng-container>
-          } @else {
-            <div class="p-3">
-              <div class="flex gap-4">
-                <div class="flex-1">
-                  <p class="mb-1"><strong>Codigo:</strong> {{ row.id }}</p>
-                  <p class="mb-1"><strong>Aluno/Professor:</strong> {{ row.nomeUsuarioEmprestimo }}
-                  </p>
-                  <p class="mb-1"><strong>Data do Emprestimo:</strong> {{ row.dataEmprestimo }}</p>
-                  <p class="mb-1"><strong>Prazo de Devolucao:</strong> {{ row.prazoDevolucao }}</p>
-                  <p class="mb-0"><strong>Status:</strong>
-                  @if (getStatusEmprestimo(row) === 'P') {
-                    <span class="text-blue-500">Em andamento</span>
-                  }
-                  @if (getStatusEmprestimo(row) === 'A') {
-                    <span class="text-red-500">Em atraso</span>
-                  }
-                  @if (getStatusEmprestimo(row) === 'F') {
-                    <span class="text-green-600">Finalizado</span>
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
-        }
         </ng-template>
 
           <ng-template pTemplate="emptymessage">
@@ -251,6 +235,7 @@
   [(visible)]="dialogFiltroEmprestimo"
   [baseZIndex]="Z_INDEX.DIALOG"
   [modal]="true"
+  [appendTo]="'body'"
   class="dialog-sm-fixed">
 
   <form>
@@ -400,6 +385,7 @@
   [(visible)]="modalNovoPrazoVisible"
   [baseZIndex]="Z_INDEX.DIALOG"
   [modal]="true"
+  [appendTo]="'body'"
   class="dialog-sm-fixed"
   [focusOnShow]="false">
   <form>
@@ -433,6 +419,87 @@
         severity="primary"
         (onClick)="enviarNovoPrazo()"
         label="Atualizar Prazo">
+      </p-button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Dialog de Itens Emprestados -->
+<p-dialog
+  (onHide)="fecharDialogItens()"
+  [(visible)]="dialogItensVisible"
+  [appendTo]="'body'"
+  [baseZIndex]="Z_INDEX.DIALOG"
+  [breakpoints]="{'768px': '95vw'}"
+  [focusOnShow]="false"
+  [modal]="true"
+  [style]="{'width': '90vw', 'max-width': '500px'}"
+  header="Itens do Empréstimo">
+
+  @if (emprestimoSelecionadoParaItens) {
+    <div class="mb-4">
+      <p class="mb-1"><strong>Código:</strong> {{ emprestimoSelecionadoParaItens.id }}</p>
+      <p class="mb-1">
+        <strong>Aluno/Professor:</strong> {{ emprestimoSelecionadoParaItens.nomeUsuarioEmprestimo }}
+      </p>
+      <p class="mb-0"><strong>Data do
+        Empréstimo:</strong> {{ emprestimoSelecionadoParaItens.dataEmprestimo }}</p>
+    </div>
+  }
+
+  <div class="min-w-0">
+    @if (loadingItensDialog()) {
+      <app-skeleton-table [columns]="3" [rows]="3"></app-skeleton-table>
+    } @else if (itensDoEmprestimo().length > 0) {
+      <p-table [tableStyle]="{'min-width': '100%'}" [value]="itensDoEmprestimo()">
+        <ng-template pTemplate="header">
+          <tr>
+            <th scope="col">Item</th>
+            <th class="text-center w-24" scope="col">Qtde</th>
+            <th class="text-center w-28" scope="col">Devolver</th>
+          </tr>
+        </ng-template>
+        <ng-template let-emprestimoItem pTemplate="body">
+          <tr>
+            <td>
+              {{ emprestimoItem.item?.nome }}
+              @if (emprestimoItem.item?.patrimonio) {
+                <span class="text-gray-500 text-sm"> ({{ emprestimoItem.item.patrimonio }})</span>
+              }
+            </td>
+            <td class="text-center">{{ emprestimoItem.qtde }}</td>
+            <td class="text-center">
+              @if (emprestimoItem.devolver) {
+                <p-tag severity="success" value="Sim"></p-tag>
+              } @else {
+                <p-tag severity="secondary" value="Não"></p-tag>
+              }
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td class="text-center p-4" colspan="3">
+              <p class="text-gray-500 italic mb-0">Nenhum item registrado</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    } @else {
+      <div class="text-center py-4">
+        <p class="text-gray-500 italic mb-0">Nenhum item registrado neste empréstimo</p>
+      </div>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end">
+      <p-button
+        (onClick)="fecharDialogItens()"
+        [outlined]="true"
+        label="Fechar"
+        severity="secondary"
+        type="button">
       </p-button>
     </div>
   </ng-template>
