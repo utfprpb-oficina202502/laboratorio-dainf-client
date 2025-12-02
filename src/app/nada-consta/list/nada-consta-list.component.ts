@@ -38,6 +38,7 @@ import {
   PrimeCrudTableWrapperComponent
 } from '../../framework/component/prime-crud-table-wrapper.component';
 import {MenuItem} from 'primeng/api';
+import {Z_INDEX} from '../../framework/constants';
 import {MenuModule} from 'primeng/menu';
 import {Popover, PopoverModule} from 'primeng/popover';
 
@@ -73,6 +74,7 @@ import {Popover, PopoverModule} from 'primeng/popover';
 export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, number> {
   readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
   contextMenuItems: MenuItem[] = [];
+  protected readonly Z_INDEX = Z_INDEX;
 
   protected override columnsTable: string[] = [
     'id',

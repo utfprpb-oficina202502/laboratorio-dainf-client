@@ -77,47 +77,68 @@
   (visibleChange)="dialogItensVinculados.set($event)"
   [modal]="true"
   [baseZIndex]="Z_INDEX.DIALOG"
+  [appendTo]="'body'"
   class="dialog-lg"
   [focusOnShow]="false"
   [dismissableMask]="true">
 
   <ng-template pTemplate="content">
-    @if (loadingItensVinculados()) {
-      <div class="flex justify-center items-center py-8">
-        <p-progressSpinner [style]="{width: '64px', height: '64px'}"></p-progressSpinner>
-      </div>
-    } @else {
-      <p-table
+    <!-- Filter Input -->
+    <div class="mb-4">
+      <p-iconField class="w-full" iconPosition="left">
+        <p-inputIcon aria-hidden="true" class="pi pi-search"></p-inputIcon>
+        <input
+            (ngModelChange)="onFilterItens($event)"
+            [ngModel]="filtroItens"
+            autocomplete="off"
+            class="w-full"
+            pInputText
+            placeholder="Buscar por código ou nome..."
+            type="text"/>
+      </p-iconField>
+    </div>
+
+    <p-table
         [value]="itensVinculados()"
         [scrollable]="true"
         scrollHeight="400px"
+        (onPage)="onPageChangeItens($event)"
+        [first]="firstItens()"
+        [lazy]="true"
+        [loading]="loadingItensVinculados()"
+        [paginator]="true"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [rows]="pageSizeItens()"
+        [showCurrentPageReport]="true"
+        [totalRecords]="totalItensVinculados()"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} itens"
+        paginatorDropdownAppendTo="body"
         styleClass="p-datatable-sm">
 
-        <ng-template pTemplate="header">
-          <tr>
-            <th scope="col" class="w-100px">Código</th>
-            <th scope="col">Descrição</th>
-          </tr>
-        </ng-template>
+      <ng-template pTemplate="header">
+        <tr>
+          <th class="w-100px" scope="col">Código</th>
+          <th scope="col">Descrição</th>
+        </tr>
+      </ng-template>
 
-        <ng-template pTemplate="body" let-item>
-          <tr>
-            <td>{{ item.id }}</td>
-            <td>{{ item.nome }}</td>
-          </tr>
-        </ng-template>
+      <ng-template let-item pTemplate="body">
+        <tr>
+          <td>{{ item.id }}</td>
+          <td>{{ item.nome }}</td>
+        </tr>
+      </ng-template>
 
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="2" class="text-center py-4">
-              <div class="flex flex-col items-center gap-2">
-                <i class="pi pi-inbox text-4xl text-gray-400"></i>
-                <p class="text-gray-600">Nenhum item vinculado a este grupo</p>
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    }
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td class="text-center py-4" colspan="2">
+            <div class="flex flex-col items-center gap-2">
+              <i class="pi pi-inbox text-4xl text-gray-400"></i>
+              <p class="text-gray-600">Nenhum item vinculado a este grupo</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
   </ng-template>
 </p-dialog>

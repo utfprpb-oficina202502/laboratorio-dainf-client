@@ -327,6 +327,19 @@
     }
   }
 
+  /* Constrained medium - Fixed width medium dialogs (for tables with few columns) */
+  .dialog-md-fixed.p-dialog .p-dialog-content {
+    min-width: 480px;
+    max-width: 480px;
+  }
+
+  @media (max-width: 520px) {
+    .dialog-md-fixed.p-dialog .p-dialog-content {
+      min-width: 90vw;
+      max-width: 90vw;
+    }
+  }
+
   /* Custom medium-large - 650px specific */
   .dialog-md-lg.p-dialog .p-dialog-content {
     min-width: 650px;
@@ -341,21 +354,18 @@
 
 @layer overrides {
   /* ============================================================================
-     Dialog Overlay - Ensure modal backdrop and dialog cover sidenav and navbar
-     Uses :has() to detect open dialogs and lower sidenav z-index
+     PrimeNG Overlay Z-Index Management
+     Ensures all PrimeNG overlays (dialog, drawer, image, galleria) appear above
+     the sidenav (desktop: 100, mobile: 1050) and navbar.
      ============================================================================ */
-  .p-dialog-mask {
+  /* All PrimeNG overlay masks - high z-index to cover sidenav */
+  :is(.p-dialog-mask, .p-drawer-mask, .p-image-mask, .p-galleria-mask) {
     z-index: 10000 !important;
   }
 
-  /* Ensure the dialog itself (not just mask) is above sidenav */
-  .p-dialog {
+  /* All PrimeNG overlay content - above mask */
+  :is(.p-dialog, .p-drawer, .p-image-preview, .p-galleria) {
     z-index: 10001 !important;
-  }
-
-  /* When a dialog is open, lower the sidenav z-index so backdrop covers it */
-  body:has(.p-dialog-mask) .sidebar {
-    z-index: 1 !important;
   }
 
   /* ============================================================================
