@@ -1,4 +1,4 @@
-import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {ComponentFixture, TestBed, tick} from '@angular/core/testing';
 import {FormBuilder, ReactiveFormsModule} from '@angular/forms';
 import {RouterTestingModule} from '@angular/router/testing';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
@@ -17,6 +17,7 @@ import {ItemImage} from './itemImage';
 import {Emprestimo} from '../emprestimo/emprestimo';
 import {EmprestimoService} from '../emprestimo/emprestimo.service';
 import {Usuario} from '../usuario/usuario';
+import {PageResponse} from '../framework/service/crud.service';
 
 /**
  * Testes abrangentes para ItemFormComponent
@@ -86,9 +87,9 @@ describe('ItemFormComponent', () => {
     mockEmprestimos = [
       {
         id: 1,
-        dataEmprestimo: '2023-01-10',
-        prazoDevolucao: '2023-01-20',
-        dataDevolucao: '2023-01-20',
+        dataEmprestimo: '10/01/2023',
+        prazoDevolucao: '20/01/2023',
+        dataDevolucao: '20/01/2023',
         usuarioResponsavel: {
           id: 1,
           nome: 'Responsável Teste',
@@ -769,6 +770,161 @@ describe('ItemFormComponent', () => {
       expect(formGroup?.get('tipoItem')?.value).toBe('P');
       expect(formGroup?.get('saldo')?.value).toBe(5);
       expect(formGroup?.get('grupo')?.value).toBe(mockGrupos[1]);
+    });
+  });
+
+  describe('Emprestimos Modal Functionality', () => {
+    const mockPageResponse: PageResponse<Emprestimo> = {
+      content: mockEmprestimos,
+      totalElements: 1,
+      totalPages: 1,
+      size: 10,
+      number: 0
+    };
+
+    beforeEach(() => {
+      component.ngOnInit();
+      fixture.detectChanges();
+    });
+
+    it('should open emprestimos modal and load data when item has ID', () => {
+      emprestimoService.findByItemPaged.mockReturnValue(of(mockPageResponse));
+
+      component['object'].set(mockItem);
+      component['emprestimosRequestCancelled'] = false; // Ensure request is not cancelled
+      component.openEmprestimosModal();
+
+      // Wait for async operations to complete
+      tick();
+
+      expect(component['emprestimosModalVisible']()).toBe(true);
+      expect(component['loadingEmprestimos']()).toBe(false);
+      expect(component['emprestimos']()).toEqual(mockEmprestimos);
+      expect(component['emprestimosTotalRecords']()).toBe(1);
+      expect(emprestimoService.findByItemPaged).toHaveBeenCalledWith(
+        mockItem.id, 0, 10, 'id', true
+      );
+    });
+
+    it('should show warning message when trying to open modal without item ID', () => {
+      component['object'].set({} as Item);
+      component.openEmprestimosModal();
+
+      expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'warn',
+        detail: 'Salve o item primeiro para visualizar os empréstimos.'
+      }));
+      expect(component['emprestimosModalVisible']()).toBe(false);
+    });
+
+    it('should handle error when loading emprestimos', () => {
+      const error = new Error('Failed to load emprestimos');
+      emprestimoService.findByItemPaged.mockReturnValue(throwError(() => error));
+
+      component['object'].set(mockItem);
+      component.openEmprestimosModal();
+
+      expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'error',
+        detail: 'Erro ao carregar empréstimos do item.'
+      }));
+      expect(loggerService.error).toHaveBeenCalledWith('Erro ao carregar empréstimos do item', error);
+    });
+
+    it('should handle pagination changes', () => {
+      emprestimoService.findByItemPaged.mockReturnValue(of(mockPageResponse));
+
+      component['object'].set(mockItem);
+      component.onEmprestimosPageChange({
+        first: 10,
+        rows: 5,
+        page: 2,
+        pageCount: 3
+      } as any);
+
+      expect(component['emprestimosFirst']()).toBe(10);
+      expect(component['emprestimosRows']()).toBe(5);
+      expect(component['emprestimosPage']()).toBe(2);
+      expect(component['loadingEmprestimos']()).toBe(false);
+      expect(emprestimoService.findByItemPaged).toHaveBeenCalledWith(
+        mockItem.id, 2, 5, 'id', true
+      );
+    });
+
+    it('should handle sorting changes', () => {
+      emprestimoService.findByItemPaged.mockReturnValue(of(mockPageResponse));
+
+      component['object'].set(mockItem);
+      component.onEmprestimosSort({
+        field: 'dataEmprestimo',
+        order: -1
+      } as any);
+
+      expect(component['emprestimosSortField']()).toBe('dataEmprestimo');
+      expect(component['emprestimosSortOrder']()).toBe(-1);
+      expect(component['loadingEmprestimos']()).toBe(false);
+      expect(emprestimoService.findByItemPaged).toHaveBeenCalledWith(
+        mockItem.id, 0, 10, 'dataEmprestimo', false
+      );
+    });
+
+    it('should navigate to emprestimo detail when viewing emprestimo', () => {
+      const emprestimoId = 123;
+      const navigateSpy = jest.spyOn(component['router'], 'navigate');
+
+      component.viewEmprestimo(emprestimoId);
+
+      expect(component['emprestimosModalVisible']()).toBe(false);
+      expect(navigateSpy).toHaveBeenCalledWith(['emprestimo/form', emprestimoId]);
+    });
+
+    it('should close emprestimos modal and cancel requests', () => {
+      component['emprestimosModalVisible'].set(true);
+      component['emprestimos'].set(mockEmprestimos);
+      component['loadingEmprestimos'].set(true);
+
+      component.closeEmprestimosModal();
+
+      expect(component['emprestimosModalVisible']()).toBe(false);
+      expect(component['emprestimos']()).toEqual([]);
+      expect(component['loadingEmprestimos']()).toBe(false);
+      expect(component['emprestimosRequestCancelled']).toBe(true);
+    });
+
+    it('should cancel ongoing emprestimos request', () => {
+      emprestimoService.findByItemPaged.mockReturnValue(of(mockPageResponse));
+
+      component['object'].set(mockItem);
+      component.openEmprestimosModal();
+
+      const subscription = component['emprestimosSubscription'];
+      expect(subscription).toBeDefined();
+
+      component['cancelEmprestimosRequest']();
+
+      expect(subscription?.closed).toBe(true);
+    });
+
+    it('should not update data when request is cancelled', () => {
+      const slowResponse: PageResponse<Emprestimo> = {
+        content: [],
+        totalElements: 0,
+        totalPages: 0,
+        size: 10,
+        number: 0
+      };
+
+      emprestimoService.findByItemPaged.mockReturnValue(of(slowResponse));
+
+      component['object'].set(mockItem);
+      component.openEmprestimosModal();
+
+      // Simulate request cancellation
+      component['emprestimosRequestCancelled'] = true;
+
+      // The subscription should still exist but data shouldn't be updated
+      expect(component['emprestimos']()).toEqual([]);
+      expect(component['loadingEmprestimos']()).toBe(false);
     });
   });
 });
