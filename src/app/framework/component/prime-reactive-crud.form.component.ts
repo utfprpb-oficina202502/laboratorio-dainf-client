@@ -1,6 +1,14 @@
 import {ActivatedRoute, Router} from '@angular/router';
 import {CrudService} from '../service/crud.service';
-import {Directive, inject, Injector, OnDestroy, OnInit, signal} from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Directive,
+  inject,
+  Injector,
+  OnDestroy,
+  OnInit,
+  signal
+} from '@angular/core';
 import {FormGroup} from '@angular/forms';
 import {MessageService} from 'primeng/api';
 import {LoaderService} from '../loader/loader.service';
@@ -29,6 +37,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
   protected readonly loginService: LoginService;
   protected readonly logger: LoggerService;
   protected readonly injector: Injector;
+  protected readonly cdr: ChangeDetectorRef;
   protected readonly formValidation: FormValidationService;
   protected readonly formStateManager: FormStateManagerService;
   protected readonly formBusinessRules: FormBusinessRulesService;
@@ -54,6 +63,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
     this.loaderService = inject(LoaderService);
     this.loginService = inject(LoginService);
     this.logger = inject(LoggerService);
+    this.cdr = inject(ChangeDetectorRef);
     this.formValidation = inject(FormValidationService);
     this.formStateManager = inject(FormStateManagerService);
     this.formBusinessRules = inject(FormBusinessRulesService);
@@ -137,16 +147,18 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
           // Se houver erros de validacao por campo, aplica ao formulario
           if (result.fieldErrors && formGroup) {
             this.errorHandler.applyFieldErrors(formGroup, result.fieldErrors);
+            // Força atualização da view para exibir erros (OnPush)
+            this.cdr.markForCheck();
             this.messageService.add({
               severity: 'warn',
-              summary: result.title || 'Erro de validacao',
-              detail: 'Verifique os campos destacados no formulario',
+              summary: result.title || 'Erro de validação',
+              detail: 'Verifique os campos destacados no formulário',
               life: 5000
             });
           } else {
             this.messageService.add({
               severity: 'error',
-              summary: result.title || 'Atencao!',
+              summary: result.title || 'Atenção!',
               detail: result.message || 'Ocorreu um erro ao salvar o registro!',
               life: 5000
             });

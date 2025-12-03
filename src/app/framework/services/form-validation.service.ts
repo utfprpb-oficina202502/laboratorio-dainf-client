@@ -41,66 +41,123 @@ import {AbstractControl, FormGroup} from '@angular/forms';
 })
 export class FormValidationService {
   /**
+   * Mapeamento de tipos de erro para funções que geram mensagens.
+   * A ordem define a prioridade (required primeiro).
+   */
+  private readonly errorMessageGenerators: readonly {
+    key: string;
+    getMessage: (errorValue: unknown) => string;
+  }[] = [
+    {key: 'required', getMessage: () => 'Este campo é obrigatório'},
+    {
+      key: 'minlength',
+      getMessage: (err) => `Mínimo de ${(err as {
+        requiredLength: number
+      }).requiredLength} caracteres`
+    },
+    {
+      key: 'maxlength',
+      getMessage: (err) => `Máximo de ${(err as {
+        requiredLength: number
+      }).requiredLength} caracteres`
+    },
+    {key: 'email', getMessage: () => 'E-mail inválido'},
+    {key: 'pattern', getMessage: () => 'Formato inválido'},
+    {key: 'min', getMessage: (err) => `Valor mínimo: ${(err as { min: number }).min}`},
+    {key: 'max', getMessage: (err) => `Valor máximo: ${(err as { max: number }).max}`},
+    {key: 'serverError', getMessage: (err) => err as string}
+  ];
+
+  /**
    * Obtém mensagem de erro apropriada para um controle de formulário
    *
    * @param control Controle de formulário a ser validado
+   * @param customMessages Mapa opcional de mensagens customizadas por tipo de erro
+   * @param options Opções adicionais (checkTouched: se deve verificar touched, default true)
    * @returns Mensagem de erro em pt-BR ou string vazia se não houver erro
    *
    * @example
    * ```typescript
+   * // Uso básico
    * const nameControl = this.form.get('name');
    * const errorMsg = this.validationService.getErrorMessage(nameControl);
    * // Se required: 'Este campo é obrigatório'
    * // Se minlength: 'Mínimo de X caracteres'
    * // Se email: 'E-mail inválido'
+   *
+   * // Com mensagens customizadas
+   * const customMessages = {
+   *   pattern: 'O RA/SIAPE deve conter apenas números',
+   *   utfprEmail: 'Digite um email válido da UTFPR'
+   * };
+   * const errorMsg = this.validationService.getErrorMessage(control, customMessages);
    * ```
    */
-  getErrorMessage(control: AbstractControl | null | undefined): string {
-    if (!control?.errors || !control?.touched) {
+  getErrorMessage(
+    control: AbstractControl | null | undefined,
+    customMessages?: Record<string, string>,
+    options?: { checkTouched?: boolean }
+  ): string {
+    const errors = this.getDisplayableErrors(control, options?.checkTouched ?? true);
+    if (!errors) {
       return '';
     }
 
-    const errors = control.errors;
-
-    // Validadores nativos do Angular
-    if (errors['required']) {
-      return 'Este campo é obrigatório';
+    // Verifica mensagens customizadas primeiro (permite sobrescrever padrões)
+    const customMessage = this.findCustomMessage(errors, customMessages);
+    if (customMessage) {
+      return customMessage;
     }
 
-    if (errors['minlength']) {
-      const requiredLength = errors['minlength'].requiredLength;
-      return `Mínimo de ${requiredLength} caracteres`;
+    // Busca mensagem padrão baseada no tipo de erro
+    return this.findStandardMessage(errors);
+  }
+
+  /**
+   * Retorna os erros do controle se devem ser exibidos, ou null caso contrário.
+   * Encapsula a lógica de verificação de touched e existência de erros.
+   */
+  private getDisplayableErrors(
+    control: AbstractControl | null | undefined,
+    checkTouched: boolean
+  ): Record<string, unknown> | null {
+    if (!control?.errors) {
+      return null;
+    }
+    if (checkTouched && !control.touched) {
+      return null;
+    }
+    return control.errors;
+  }
+
+  /**
+   * Busca mensagem customizada para os erros do controle
+   */
+  private findCustomMessage(
+    errors: Record<string, unknown>,
+    customMessages?: Record<string, string>
+  ): string | null {
+    if (!customMessages) {
+      return null;
     }
 
-    if (errors['maxlength']) {
-      const requiredLength = errors['maxlength'].requiredLength;
-      return `Máximo de ${requiredLength} caracteres`;
+    for (const errorKey of Object.keys(errors)) {
+      if (customMessages[errorKey]) {
+        return customMessages[errorKey];
+      }
     }
+    return null;
+  }
 
-    if (errors['email']) {
-      return 'E-mail inválido';
+  /**
+   * Busca mensagem padrão baseada no tipo de erro
+   */
+  private findStandardMessage(errors: Record<string, unknown>): string {
+    for (const generator of this.errorMessageGenerators) {
+      if (errors[generator.key]) {
+        return generator.getMessage(errors[generator.key]);
+      }
     }
-
-    if (errors['pattern']) {
-      return 'Formato inválido';
-    }
-
-    if (errors['min']) {
-      const min = errors['min'].min;
-      return `Valor mínimo: ${min}`;
-    }
-
-    if (errors['max']) {
-      const max = errors['max'].max;
-      return `Valor máximo: ${max}`;
-    }
-
-    // Erro retornado pelo servidor (RFC 9457)
-    if (errors['serverError']) {
-      return errors['serverError'];
-    }
-
-    // Mensagem genérica para validadores customizados
     return 'Campo inválido';
   }
 

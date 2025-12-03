@@ -104,8 +104,11 @@ export class ErrorHandlerService {
     for (const [fieldName, errorMessage] of Object.entries(fieldErrors)) {
       const control = form.get(fieldName);
       if (control) {
-        control.setErrors({serverError: errorMessage});
+        // Preserva erros existentes e adiciona serverError
+        const currentErrors = control.errors || {};
+        control.setErrors({...currentErrors, serverError: errorMessage});
         control.markAsTouched();
+        control.markAsDirty();
       } else {
         // Campo nao encontrado no form - log para debugging
         this.logger.warn(`Campo '${fieldName}' nao encontrado no formulario`);
