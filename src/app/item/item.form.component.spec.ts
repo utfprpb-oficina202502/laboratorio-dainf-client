@@ -1,4 +1,4 @@
-import {ComponentFixture, TestBed, fakeAsync, tick} from '@angular/core/testing';
+import {ComponentFixture, fakeAsync, TestBed, tick} from '@angular/core/testing';
 import {FormBuilder, ReactiveFormsModule} from '@angular/forms';
 import {provideRouter} from '@angular/router';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
@@ -18,6 +18,8 @@ import {Emprestimo} from '../emprestimo/emprestimo';
 import {EmprestimoService} from '../emprestimo/emprestimo.service';
 import {Usuario} from '../usuario/usuario';
 import {PageResponse} from '../framework/service/crud.service';
+import {CartService} from '../framework/services/cart.service';
+import {signal} from '@angular/core';
 
 /**
  * Testes abrangentes para ItemFormComponent
@@ -34,6 +36,7 @@ describe('ItemFormComponent', () => {
   let confirmationService: jest.Mocked<ConfirmationService>;
   let loggerService: jest.Mocked<LoggerService>;
   let emprestimoService: jest.Mocked<EmprestimoService>;
+  let cartService: jest.Mocked<CartService>;
 
   // Mock data moved to beforeAll for performance
   let mockGrupos: Grupo[];
@@ -160,6 +163,20 @@ describe('ItemFormComponent', () => {
       findByItemPaged: jest.fn()
     };
 
+    const cartServiceMock = {
+      items: signal([]),
+      totalItems: signal(0),
+      totalUnits: signal(0),
+      isEmpty: signal(true),
+      hasItems: signal(false),
+      addItem: jest.fn().mockReturnValue(true),
+      removeItem: jest.fn(),
+      updateQuantity: jest.fn().mockReturnValue(true),
+      clear: jest.fn(),
+      getItemQuantity: jest.fn().mockReturnValue(0),
+      isInCart: jest.fn().mockReturnValue(false)
+    };
+
     await TestBed.configureTestingModule({
       imports: [
         ItemFormComponent,
@@ -177,7 +194,8 @@ describe('ItemFormComponent', () => {
         {provide: LoaderService, useValue: loaderServiceMock},
         {provide: ConfirmationService, useValue: confirmationServiceMock},
         {provide: LoggerService, useValue: loggerServiceMock},
-        {provide: EmprestimoService, useValue: emprestimoServiceMock}
+        {provide: EmprestimoService, useValue: emprestimoServiceMock},
+        {provide: CartService, useValue: cartServiceMock}
       ]
     }).compileComponents();
 
@@ -189,6 +207,7 @@ describe('ItemFormComponent', () => {
     confirmationService = TestBed.inject(ConfirmationService) as jest.Mocked<ConfirmationService>;
     loggerService = TestBed.inject(LoggerService) as jest.Mocked<LoggerService>;
     emprestimoService = TestBed.inject(EmprestimoService) as jest.Mocked<EmprestimoService>;
+    cartService = TestBed.inject(CartService) as jest.Mocked<CartService>;
 
     fixture = TestBed.createComponent(ItemFormComponent);
     component = fixture.componentInstance;
@@ -1002,4 +1021,243 @@ describe('ItemFormComponent', () => {
       expect(component.getImageUrl(null as any)).toBe('no-image.svg');
     });
   });
+
+  describe('Funcionalidade de Carrinho', () => {
+    beforeEach(() => {
+      component.ngOnInit();
+      fixture.detectChanges();
+      component['object'].set(mockItem);
+    });
+
+    describe('Computed Signals do Carrinho', () => {
+      it('deve calcular disponibilidade corretamente', () => {
+        expect(component['disponibilidade']()).toBe(8); // disponivelEmprestimoCalculado
+      });
+
+      it('deve usar saldo como fallback quando disponivelEmprestimoCalculado não existe', () => {
+        component['object'].set({
+          ...mockItem,
+          disponivelEmprestimoCalculado: undefined as unknown as number,
+          saldo: 15
+        });
+
+        expect(component['disponibilidade']()).toBe(15);
+      });
+
+      it('deve retornar 0 quando objeto não existe', () => {
+        component['object'].set(null as unknown as Item);
+
+        expect(component['disponibilidade']()).toBe(0);
+      });
+
+      it('deve verificar se item está no carrinho', () => {
+        cartService.isInCart.mockReturnValue(true);
+
+        expect(component['isInCart']()).toBe(true);
+        expect(cartService.isInCart).toHaveBeenCalledWith(mockItem.id);
+      });
+
+      it('deve retornar false quando item não tem id', () => {
+        component['object'].set({} as Item);
+
+        expect(component['isInCart']()).toBe(false);
+      });
+
+      it('deve retornar quantidade do item no carrinho', () => {
+        cartService.getItemQuantity.mockReturnValue(5);
+
+        expect(component['inCartQuantity']()).toBe(5);
+        expect(cartService.getItemQuantity).toHaveBeenCalledWith(mockItem.id);
+      });
+
+      it('deve calcular máximo a adicionar corretamente', () => {
+        // disponibilidade: 8, no carrinho: 3 => max: 5
+        cartService.getItemQuantity.mockReturnValue(3);
+
+        expect(component['maxToAdd']()).toBe(5);
+      });
+
+      it('deve retornar 0 quando não há disponibilidade', () => {
+        component['object'].set({...mockItem, disponivelEmprestimoCalculado: 0});
+
+        expect(component['maxToAdd']()).toBe(0);
+      });
+
+      it('deve verificar hasAvailability corretamente', () => {
+        cartService.getItemQuantity.mockReturnValue(0);
+
+        expect(component['hasAvailability']()).toBe(true);
+      });
+
+      it('deve retornar false para hasAvailability quando não há disponibilidade', () => {
+        cartService.getItemQuantity.mockReturnValue(8); // igual à disponibilidade
+
+        expect(component['hasAvailability']()).toBe(false);
+      });
+
+      it('deve retornar severity danger quando disponibilidade é 0', () => {
+        component['object'].set({...mockItem, disponivelEmprestimoCalculado: 0});
+
+        expect(component['availabilitySeverity']()).toBe('danger');
+      });
+
+      it('deve retornar severity warn quando disponibilidade é baixa (1-2)', () => {
+        component['object'].set({...mockItem, disponivelEmprestimoCalculado: 2});
+
+        expect(component['availabilitySeverity']()).toBe('warn');
+      });
+
+      it('deve retornar severity success quando disponibilidade é boa (>2)', () => {
+        expect(component['availabilitySeverity']()).toBe('success');
+      });
+    });
+
+    describe('Adicionar ao Carrinho', () => {
+      it('deve adicionar item ao carrinho com quantidade selecionada', () => {
+        component['cartQuantity'].set(3);
+
+        component.addToCart();
+
+        expect(cartService.addItem).toHaveBeenCalledWith(mockItem, 3);
+      });
+
+      it('deve resetar quantidade para 1 após adicionar', () => {
+        component['cartQuantity'].set(5);
+
+        component.addToCart();
+
+        expect(component['cartQuantity']()).toBe(1);
+      });
+
+      it('deve exibir mensagem de sucesso ao adicionar', () => {
+        component.addToCart();
+
+        expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+          severity: 'success',
+          summary: 'Adicionado'
+        }));
+      });
+
+      it('deve usar singular para 1 unidade na mensagem', () => {
+        component['cartQuantity'].set(1);
+
+        component.addToCart();
+
+        expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+          detail: '1 unidade adicionada ao carrinho'
+        }));
+      });
+
+      it('deve usar plural para múltiplas unidades na mensagem', () => {
+        component['cartQuantity'].set(3);
+
+        component.addToCart();
+
+        expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+          detail: '3 unidades adicionadas ao carrinho'
+        }));
+      });
+
+      it('não deve adicionar quando item não tem id', () => {
+        component['object'].set({} as Item);
+
+        component.addToCart();
+
+        expect(cartService.addItem).not.toHaveBeenCalled();
+      });
+
+      it('não deve adicionar quando quantidade é 0', () => {
+        component['cartQuantity'].set(0);
+
+        component.addToCart();
+
+        expect(cartService.addItem).not.toHaveBeenCalled();
+      });
+
+      it('não deve adicionar quando quantidade excede máximo', () => {
+        cartService.getItemQuantity.mockReturnValue(8); // igual à disponibilidade
+        component['cartQuantity'].set(1);
+
+        component.addToCart();
+
+        expect(cartService.addItem).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('Remover do Carrinho', () => {
+      it('deve remover item do carrinho', () => {
+        component.removeFromCart();
+
+        expect(cartService.removeItem).toHaveBeenCalledWith(mockItem.id);
+      });
+
+      it('deve exibir mensagem de info ao remover', () => {
+        component.removeFromCart();
+
+        expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+          severity: 'info',
+          summary: 'Removido',
+          detail: 'Item removido do carrinho'
+        }));
+      });
+
+      it('não deve remover quando item não tem id', () => {
+        component['object'].set({} as Item);
+
+        component.removeFromCart();
+
+        expect(cartService.removeItem).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('Controles de Quantidade', () => {
+      it('deve incrementar quantidade', () => {
+        expect(component['cartQuantity']()).toBe(1);
+
+        component.incrementCartQuantity();
+
+        expect(component['cartQuantity']()).toBe(2);
+      });
+
+      it('não deve incrementar além do máximo disponível', () => {
+        cartService.getItemQuantity.mockReturnValue(7); // disponível: 8 - 7 = 1
+        component['cartQuantity'].set(1);
+
+        component.incrementCartQuantity();
+
+        expect(component['cartQuantity']()).toBe(1);
+      });
+
+      it('deve decrementar quantidade', () => {
+        component['cartQuantity'].set(3);
+
+        component.decrementCartQuantity();
+
+        expect(component['cartQuantity']()).toBe(2);
+      });
+
+      it('não deve decrementar abaixo de 1', () => {
+        component['cartQuantity'].set(1);
+
+        component.decrementCartQuantity();
+
+        expect(component['cartQuantity']()).toBe(1);
+      });
+    });
+
+    describe('Navegação para Reserva', () => {
+      it('deve navegar para reserva com itens do carrinho', () => {
+        const navigateSpy = jest.spyOn(component['router'], 'navigate');
+        const cartItems = [{...mockItem}];
+        (cartService.items as any) = signal(cartItems);
+
+        component.goToReserva();
+
+        expect(navigateSpy).toHaveBeenCalledWith(['/reserva/new'], {
+          state: {cartItems}
+        });
+      });
+    });
+  });
 });
+

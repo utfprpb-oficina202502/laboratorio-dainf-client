@@ -1,7 +1,7 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {FornecedorListComponent} from './fornecedor.list.component';
 import {FornecedorService} from './fornecedor.service';
-import {ConfirmationService, MessageService} from 'primeng/api';
+import {ConfirmationService, MenuItemCommandEvent, MessageService} from 'primeng/api';
 import {provideRouter} from '@angular/router';
 import {of} from 'rxjs';
 import {Fornecedor} from './fornecedor';
@@ -381,7 +381,7 @@ describe('FornecedorListComponent', () => {
       const editSpy = jest.spyOn(component, 'edit');
 
       component.openOptions(mockEvent, fornecedor);
-      component.contextMenuItems[0].command!({} as any);
+      component.contextMenuItems[0].command?.({} as MenuItemCommandEvent);
 
       expect(editSpy).toHaveBeenCalledWith(123);
     });
@@ -391,7 +391,7 @@ describe('FornecedorListComponent', () => {
       const deleteSpy = jest.spyOn(component, 'delete');
 
       component.openOptions(mockEvent, fornecedor);
-      component.contextMenuItems[1].command!({} as any);
+      component.contextMenuItems[1].command?.({} as MenuItemCommandEvent);
 
       expect(deleteSpy).toHaveBeenCalledWith(456);
     });

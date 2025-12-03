@@ -1,5 +1,6 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {provideRouter} from '@angular/router';
+import {MessageService} from 'primeng/api';
 import {NavbarComponent} from './navbar.component';
 import {LoginService} from '../login/login.service';
 import {SidenavService} from '../sidenav/sidenav.service';
@@ -60,7 +61,8 @@ describe('NavbarComponent', () => {
         {provide: LoginService, useValue: mockLoginService},
         {provide: SidenavService, useValue: mockSidenavService},
         {provide: StorageService, useValue: mockStorageService},
-        {provide: LoggerService, useValue: mockLoggerService}
+        {provide: LoggerService, useValue: mockLoggerService},
+        {provide: MessageService, useValue: {add: jest.fn()}}
       ]
     }).compileComponents();
 

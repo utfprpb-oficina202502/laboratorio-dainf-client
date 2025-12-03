@@ -6,7 +6,7 @@ export const environment = {
   api_url: 'https://dainf-server-dev-e1c111fedbcc.herokuapp.com/',
   //api_url: 'http://localhost:8099/',
   google_client_id: '726155933363-am0vqngulv5soqerhhprndt5kj4judtl.apps.googleusercontent.com',
-  minio_url: 'http://localhost:9000/dainf-labs/',
+  minio_url: 'https://kirinus.tec.br:9000/utfpr-bucket/',
   charts: {
     colors: defaultChartColors
   }

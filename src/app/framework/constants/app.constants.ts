@@ -179,3 +179,31 @@ export const SORT_ORDER = {
 
 /** Tipo para valores de ordenação */
 export type SortOrderType = typeof SORT_ORDER[keyof typeof SORT_ORDER];
+
+/**
+ * Navigation Constants
+ * Valores para controle de navegação e debounce
+ *
+ * @example
+ * // Uso em componentes com navegação
+ * setTimeout(() => {
+ *   this.navigating = false;
+ * }, NAVIGATION.DEBOUNCE_MS);
+ */
+export const NAVIGATION = {
+  /** Tempo de debounce para navegação (1 segundo) */
+  DEBOUNCE_MS: 1000,
+} as const;
+
+/**
+ * Image Constants
+ * Caminhos e configurações de imagens
+ *
+ * @example
+ * // Uso em componentes de item
+ * return item.imagemUrl || IMAGE.PLACEHOLDER;
+ */
+export const IMAGE = {
+  /** Caminho para imagem placeholder quando item não possui imagem */
+  PLACEHOLDER: 'no-image.svg',
+} as const;

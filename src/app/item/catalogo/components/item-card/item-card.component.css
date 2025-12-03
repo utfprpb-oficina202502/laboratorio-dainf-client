@@ -1,0 +1,54 @@
+/* Estilos do card de item para o catálogo */
+
+:host {
+  display: block;
+}
+
+/* Container da imagem */
+.item-card-image-container {
+  overflow: hidden;
+  border-radius: var(--p-card-border-radius, 6px) var(--p-card-border-radius, 6px) 0 0;
+}
+
+/* Imagem com transição suave */
+.item-card-image {
+  transition: transform 0.3s ease;
+}
+
+.item-card-image:hover {
+  transform: scale(1.05);
+}
+
+/* Limita texto a 2 linhas com ellipsis */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Ajustes para o card do PrimeNG */
+:host ::ng-deep .item-card {
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+:host ::ng-deep .item-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Remove padding padrão do header para imagem full-width */
+:host ::ng-deep .item-card .p-card-header {
+  padding: 0;
+}
+
+/* Ajusta padding do body */
+:host ::ng-deep .item-card .p-card-body {
+  padding: 1rem;
+}
+
+/* Ajusta padding do footer */
+:host ::ng-deep .item-card .p-card-footer {
+  padding: 0.75rem 1rem 1rem;
+  border-top: 1px solid var(--p-surface-200);
+}

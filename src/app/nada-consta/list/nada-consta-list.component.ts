@@ -548,13 +548,12 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
   /**
    * Abre menu suspenso para linha com ações baseadas no status.
    * @param event Evento do clique
-   * @param id ID do registro
+   * @param itemOrId O registro NadaConsta
    */
-  public openOptions(event: Event, id: number): void {
-    const nadaConsta = this.objects.find(e => e.id === id);
-    if (!nadaConsta) return;
+  public override openOptions(event: Event, itemOrId: NadaConsta): void {
+    if (!itemOrId) return;
 
-    this.contextMenuItems = this.buildContextMenuItems(nadaConsta);
+    this.contextMenuItems = this.buildContextMenuItems(itemOrId);
 
     if (this.contextMenuItems.length > 0) {
       this.openActionsMenu(event);

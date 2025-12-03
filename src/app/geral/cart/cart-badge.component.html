@@ -1,0 +1,15 @@
+<p-button
+  (onClick)="openCart()"
+  [badge]="cartService.hasItems() ? cartService.totalItems().toString() : ''"
+  [rounded]="true"
+  [text]="true"
+  aria-label="Abrir carrinho de reserva"
+  badgeSeverity="danger"
+  icon="pi pi-shopping-cart"
+  pTooltip="Carrinho de reserva"
+  severity="secondary"
+  tooltipPosition="bottom">
+</p-button>
+
+<!-- Modal do carrinho -->
+<app-cart-modal [(visible)]="cartVisible"/>

@@ -1,11 +1,10 @@
-import {TestBed, fakeAsync, tick} from '@angular/core/testing';
+import {fakeAsync, TestBed, tick} from '@angular/core/testing';
 import {NadaConstaListComponent} from './nada-consta-list.component';
 import {NadaConstaService} from '../nada-consta.service';
 import {of, throwError} from 'rxjs';
-import { MessageService } from 'primeng/api';
-import { ConfirmationService } from 'primeng/api';
-import { Router } from '@angular/router';
-import { LoaderService} from "../../framework/loader/loader.service";
+import {ConfirmationService, MessageService} from 'primeng/api';
+import {Router} from '@angular/router';
+import {LoaderService} from "../../framework/loader/loader.service";
 import {LoginService} from "../../login/login.service";
 
 describe('NadaConstaListComponent', () => {
@@ -16,7 +15,7 @@ describe('NadaConstaListComponent', () => {
   let messageService: MessageService;
 
   beforeEach(async () => {
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation();
     const serviceMock = {
       solicitar: jest.fn(),
       findAll: jest.fn().mockReturnValue(of([])),
@@ -352,12 +351,11 @@ describe('NadaConstaListComponent', () => {
     });
 
     it('deve abrir menu com opções completas para status COMPLETED', () => {
-      component.objects = [
-        { id: 15, status: 'COMPLETED', usuario: { nome: 'João' } } as any
-      ];
+      const row = {id: 15, status: 'COMPLETED', usuario: {nome: 'João'}} as any;
+      component.objects = [row];
 
       const mockEvent = new Event('click');
-      component.openOptions(mockEvent, 15);
+      component.openOptions(mockEvent, row);
 
       expect(component.contextMenuItems).toHaveLength(4);
       expect(component.contextMenuItems[0].label).toBe('Imprimir');
@@ -368,12 +366,11 @@ describe('NadaConstaListComponent', () => {
     });
 
     it('deve abrir menu com opções completas para status CONCLUIDO (variante)', () => {
-      component.objects = [
-        { id: 16, status: 'CONCLUIDO', usuario: { nome: 'Maria' } } as any
-      ];
+      const row = {id: 16, status: 'CONCLUIDO', usuario: {nome: 'Maria'}} as any;
+      component.objects = [row];
 
       const mockEvent = new Event('click');
-      component.openOptions(mockEvent, 16);
+      component.openOptions(mockEvent, row);
 
       expect(component.contextMenuItems).toHaveLength(4);
       expect(component.contextMenuItems[0].label).toBe('Imprimir');
@@ -381,12 +378,11 @@ describe('NadaConstaListComponent', () => {
     });
 
     it('deve abrir menu apenas com Revalidar para status PENDING', () => {
-      component.objects = [
-        { id: 17, status: 'PENDING', usuario: { nome: 'Pedro' } } as any
-      ];
+      const row = {id: 17, status: 'PENDING', usuario: {nome: 'Pedro'}} as any;
+      component.objects = [row];
 
       const mockEvent = new Event('click');
-      component.openOptions(mockEvent, 17);
+      component.openOptions(mockEvent, row);
 
       expect(component.contextMenuItems).toHaveLength(2);
       expect(component.contextMenuItems[0].label).toBe('Revalidar');
@@ -395,12 +391,11 @@ describe('NadaConstaListComponent', () => {
     });
 
     it('deve abrir menu apenas com Revalidar para status PENDENTE (variante)', () => {
-      component.objects = [
-        { id: 18, status: 'PENDENTE', usuario: { nome: 'Ana' } } as any
-      ];
+      const row = {id: 18, status: 'PENDENTE', usuario: {nome: 'Ana'}} as any;
+      component.objects = [row];
 
       const mockEvent = new Event('click');
-      component.openOptions(mockEvent, 18);
+      component.openOptions(mockEvent, row);
 
       expect(component.contextMenuItems).toHaveLength(2);
       expect(component.contextMenuItems[0].label).toBe('Revalidar');
@@ -408,22 +403,21 @@ describe('NadaConstaListComponent', () => {
     });
 
     it('não deve abrir menu para status INVALIDATED', () => {
-      component.objects = [
-        { id: 19, status: 'INVALIDATED', usuario: { nome: 'Carlos' } } as any
-      ];
+      const row = {id: 19, status: 'INVALIDATED', usuario: {nome: 'Carlos'}} as any;
+      component.objects = [row];
 
       const mockEvent = new Event('click');
-      component.openOptions(mockEvent, 19);
+      component.openOptions(mockEvent, row);
 
       expect(component.contextMenuItems).toHaveLength(0);
       expect(actionsMenuMock.toggle).not.toHaveBeenCalled();
     });
 
-    it('não deve fazer nada se o registro não for encontrado', () => {
+    it('não deve fazer nada se o registro for null/undefined', () => {
       component.objects = [];
 
       const mockEvent = new Event('click');
-      component.openOptions(mockEvent, 999);
+      component.openOptions(mockEvent, null as any);
 
       expect(component.contextMenuItems).toHaveLength(0);
       expect(actionsMenuMock.toggle).not.toHaveBeenCalled();
@@ -435,7 +429,7 @@ describe('NadaConstaListComponent', () => {
       const imprimirSpy = jest.spyOn(component, 'imprimirNadaConsta').mockImplementation(() => undefined);
 
       const mockEvent = new Event('click');
-      component.openOptions(mockEvent, 20);
+      component.openOptions(mockEvent, row);
 
       const imprimirItem = component.contextMenuItems.find(item => item.label === 'Imprimir');
       imprimirItem?.command?.({});
@@ -450,7 +444,7 @@ describe('NadaConstaListComponent', () => {
       const reenviarSpy = jest.spyOn(component, 'reenviarEmailNadaConsta').mockImplementation(() => undefined);
 
       const mockEvent = new Event('click');
-      component.openOptions(mockEvent, 21);
+      component.openOptions(mockEvent, row);
 
       const reenviarItem = component.contextMenuItems.find(item => item.label === '2ª via email');
       reenviarItem?.command?.({});
@@ -465,7 +459,7 @@ describe('NadaConstaListComponent', () => {
       const invalidarSpy = jest.spyOn(component, 'abrirDialogConfirmarInvalidar').mockImplementation(() => undefined);
 
       const mockEvent = new Event('click');
-      component.openOptions(mockEvent, 22);
+      component.openOptions(mockEvent, row);
 
       const invalidarItem = component.contextMenuItems.find(item => item.label === 'Invalidar');
       invalidarItem?.command?.({});
@@ -481,7 +475,7 @@ describe('NadaConstaListComponent', () => {
       const revalidarSpy = jest.spyOn(component, 'verificarPendencias').mockImplementation(() => undefined);
 
       const mockEvent = new Event('click');
-      component.openOptions(mockEvent, 23);
+      component.openOptions(mockEvent, row);
 
       const revalidarItem = component.contextMenuItems.find(item => item.label === 'Revalidar');
       revalidarItem?.command?.({});
@@ -496,7 +490,7 @@ describe('NadaConstaListComponent', () => {
       component.objects = [row];
 
       const mockEvent = new Event('click');
-      component.openOptions(mockEvent, 24);
+      component.openOptions(mockEvent, row);
 
       const cancelarItem = component.contextMenuItems.find(item => item.label === 'Cancelar');
       cancelarItem?.command?.({});
@@ -505,17 +499,16 @@ describe('NadaConstaListComponent', () => {
     });
 
     it('deve normalizar status em lowercase para uppercase na comparação', () => {
-      component.objects = [
-        { id: 25, status: 'completed', usuario: { nome: 'Baixo' } } as any,
-        { id: 26, status: 'pending', usuario: { nome: 'Pendente' } } as any
-      ];
+      const row1 = {id: 25, status: 'completed', usuario: {nome: 'Baixo'}} as any;
+      const row2 = {id: 26, status: 'pending', usuario: {nome: 'Pendente'}} as any;
+      component.objects = [row1, row2];
 
       const mockEvent1 = new Event('click');
-      component.openOptions(mockEvent1, 25);
+      component.openOptions(mockEvent1, row1);
       expect(component.contextMenuItems[0].label).toBe('Imprimir');
 
       const mockEvent2 = new Event('click');
-      component.openOptions(mockEvent2, 26);
+      component.openOptions(mockEvent2, row2);
       expect(component.contextMenuItems[0].label).toBe('Revalidar');
     });
   });

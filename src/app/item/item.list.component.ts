@@ -1,4 +1,11 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject, viewChild} from "@angular/core";
+import {
+  ChangeDetectionStrategy,
+  Component,
+  forwardRef,
+  inject,
+  OnInit,
+  viewChild
+} from "@angular/core";
 import {NgOptimizedImage} from "@angular/common";
 import {Z_INDEX} from '../framework/constants';
 import {Item} from "./item";
@@ -18,6 +25,8 @@ import {BreakpointService} from '../framework/services/breakpoint.service';
 import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
 import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
 import {createTableConfig} from '../framework/utils/table-config.factory';
+import {CartService} from '../framework/services/cart.service';
+import {ItemViewModeToggleComponent} from './components/item-view-mode-toggle.component';
 
 @Component({
     selector: "app-list-item",
@@ -32,11 +41,12 @@ import {createTableConfig} from '../framework/utils/table-config.factory';
     TableEmptyStateComponent,
     TableLoadingStateComponent,
     NgOptimizedImage,
+    ItemViewModeToggleComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => ItemListComponent) }]
 })
-export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
+export class ItemListComponent extends PrimeCrudListComponent<Item, number> implements OnInit {
   readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
 
   protected override service = inject(ItemService);
@@ -44,6 +54,8 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
 
   private readonly reservaService = inject(ReservaService);
   protected readonly breakpointService = inject(BreakpointService);
+  protected readonly cartService = inject(CartService);
+
   // Constants for template
   protected readonly Z_INDEX = Z_INDEX;
   protected override urlForm = "item/form";
@@ -126,6 +138,19 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
     this.configureTable();
   }
 
+  /**
+   * Redireciona alunos e professores para o catálogo automaticamente.
+   * Usuários com perfil de aluno ou professor têm uma experiência
+   * otimizada através da visualização em catálogo.
+   */
+  override ngOnInit(): void {
+    if (this.isAlunoOrProfessor()) {
+      this.router.navigate(['/item/catalogo'], {replaceUrl: true});
+      return;
+    }
+    super.ngOnInit();
+  }
+
   protected override getEntityName(): string {
     return 'Item';
   }
@@ -202,7 +227,13 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
     });
 
     // Add standard actions based on permissions
-    if (!isReadOnly) {
+    if (isReadOnly) {
+      this.contextMenuItems.push({
+        label: 'Visualizar',
+        icon: 'pi pi-eye',
+        command: () => this.edit(this.getItemId(item))
+      });
+    } else {
       if (this.canEdit()) {
         this.contextMenuItems.push({
           label: 'Editar',
@@ -218,12 +249,6 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
           command: () => this.delete(this.getItemId(item))
         });
       }
-    } else {
-      this.contextMenuItems.push({
-        label: 'Visualizar',
-        icon: 'pi pi-eye',
-        command: () => this.edit(this.getItemId(item))
-      });
     }
 
     this.actionsMenu().toggle(event);
@@ -263,5 +288,4 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
   copyItem(id: number): void {
     this.router.navigate(["item/form/copy", id]);
   }
-
 }

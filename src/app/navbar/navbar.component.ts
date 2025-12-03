@@ -9,6 +9,7 @@ import {TooltipModule} from 'primeng/tooltip';
 import {TieredMenuModule} from 'primeng/tieredmenu';
 import {LoggerService} from '../framework/services/logger.service';
 import {StorageService} from '../framework/services/storage.service';
+import {CartBadgeComponent} from '../geral/cart';
 
 @Component({
     selector: "app-navbar",
@@ -21,7 +22,8 @@ import {StorageService} from '../framework/services/storage.service';
       PrimeToolbarModule,
       ButtonModule,
       TooltipModule,
-      TieredMenuModule
+      TieredMenuModule,
+      CartBadgeComponent
     ]
 })
 export class NavbarComponent implements OnInit {

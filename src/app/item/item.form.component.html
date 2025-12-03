@@ -6,17 +6,33 @@
           <app-voltar (backClick)="back()"></app-voltar>
           <h2 class="text-xl font-semibold m-0">Cadastro de Item</h2>
         </div>
-        @if (canShowImagens()) {
-          <p-button
-            type="button"
-            icon="pi pi-images"
-            [text]="true"
-            pTooltip="Imagens"
-            tooltipPosition="bottom"
-            [attr.aria-label]="'Ver imagens do item'"
-            (onClick)="showDialogImagens()">
-          </p-button>
-        }
+        <div class="flex items-center gap-2">
+          @if (canShowImagens()) {
+            <p-button
+              (onClick)="showDialogImagens()"
+              [attr.aria-label]="'Ver imagens do item'"
+              [text]="true"
+              icon="pi pi-images"
+              pTooltip="Imagens"
+              tooltipPosition="bottom"
+              type="button">
+            </p-button>
+          }
+          <!-- Botão do carrinho no header -->
+          @if (cartService.totalItems() > 0) {
+            <p-button
+              (onClick)="goToReserva()"
+              [attr.aria-label]="'Carrinho com ' + cartService.totalItems() + ' itens'"
+              [badge]="cartService.totalItems().toString()"
+              [text]="true"
+              badgeSeverity="danger"
+              icon="pi pi-shopping-cart"
+              pTooltip="Ir para reserva"
+              tooltipPosition="bottom"
+              type="button">
+            </p-button>
+          }
+        </div>
       </div>
     </ng-template>
 
@@ -266,6 +282,104 @@
               </app-form-field>
             </div>
           </div>
+
+          <!-- Seção Adicionar ao Carrinho (somente para itens existentes) -->
+          @if (canShowImagens()) {
+            <div class="grid grid-cols-12 gap-4">
+              <div class="col-span-12">
+                <div class="border border-surface-200 rounded-lg p-4 bg-surface-50">
+                  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <!-- Info de disponibilidade -->
+                    <div class="flex items-center gap-3">
+                      <i class="pi pi-box text-2xl text-primary"></i>
+                      <div>
+                        <span class="text-sm text-color-secondary">Disponível para empréstimo</span>
+                        <div class="flex items-center gap-2 mt-1">
+                          <p-tag
+                            [rounded]="true"
+                            [severity]="availabilitySeverity()"
+                            [value]="disponibilidade() + (disponibilidade() === 1 ? ' unidade' : ' unidades')"/>
+                          @if (isInCart()) {
+                            <span class="text-sm text-color-secondary">
+                              ({{ inCartQuantity() }} no carrinho)
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Controles do carrinho -->
+                    <div class="flex items-center gap-3">
+                      @if (isInCart()) {
+                        <div
+                          class="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 px-4 py-2 rounded-full">
+                          <i class="pi pi-check-circle text-green-600"></i>
+                          <span class="font-medium text-green-700 dark:text-green-400">
+                            {{ inCartQuantity() }} no carrinho
+                          </span>
+                          <p-button
+                            (onClick)="removeFromCart()"
+                            [rounded]="true"
+                            [text]="true"
+                            aria-label="Remover do carrinho"
+                            icon="pi pi-times"
+                            pTooltip="Remover do carrinho"
+                            severity="danger"
+                            size="small"
+                            tooltipPosition="top">
+                          </p-button>
+                        </div>
+                      } @else if (hasAvailability()) {
+                        <div class="flex items-center gap-2">
+                          <!-- Controle de quantidade -->
+                          <div
+                            class="flex items-center gap-1 border border-surface-200 rounded-full px-2 bg-white dark:bg-surface-800">
+                            <p-button
+                              (onClick)="decrementCartQuantity()"
+                              [disabled]="cartQuantity() <= 1"
+                              [rounded]="true"
+                              [text]="true"
+                              aria-label="Diminuir quantidade"
+                              icon="pi pi-minus"
+                              size="small">
+                            </p-button>
+                            <span class="font-semibold min-w-[2rem] text-center">
+                              {{ cartQuantity() }}
+                            </span>
+                            <p-button
+                              (onClick)="incrementCartQuantity()"
+                              [disabled]="cartQuantity() >= maxToAdd()"
+                              [rounded]="true"
+                              [text]="true"
+                              aria-label="Aumentar quantidade"
+                              icon="pi pi-plus"
+                              size="small">
+                            </p-button>
+                          </div>
+                          <!-- Botão adicionar -->
+                          <p-button
+                            (onClick)="addToCart()"
+                            [rounded]="true"
+                            aria-label="Adicionar ao carrinho"
+                            icon="pi pi-shopping-cart"
+                            label="Adicionar"
+                            pTooltip="Adicionar ao carrinho"
+                            tooltipPosition="top">
+                          </p-button>
+                        </div>
+                      } @else {
+                        <p-tag
+                          [rounded]="true"
+                          icon="pi pi-ban"
+                          severity="secondary"
+                          value="Indisponível para empréstimo"/>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
 
           <!-- File Upload Section -->
           @if (!isAlunoOrProfessor()) {
