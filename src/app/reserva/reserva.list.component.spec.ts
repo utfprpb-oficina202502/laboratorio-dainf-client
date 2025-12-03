@@ -129,6 +129,25 @@ describe('ReservaListComponent', () => {
     let mockEvent: Event;
     let mockReserva: Reserva;
 
+    const setAdminPermissions = () => {
+      Object.defineProperty(component, 'canEdit', {
+        value: () => true,
+        writable: true
+      });
+      Object.defineProperty(component, 'canDelete', {
+        value: () => true,
+        writable: true
+      });
+      Object.defineProperty(component, 'isReadOnly', {
+        value: () => false,
+        writable: true
+      });
+      Object.defineProperty(component, 'isAlunoOrProfessor', {
+        value: () => false,
+        writable: true
+      });
+    };
+
     beforeEach(() => {
       mockEvent = new Event('click');
       mockReserva = ReservaTestFactory.create({id: 1});
@@ -147,22 +166,7 @@ describe('ReservaListComponent', () => {
 
     it('deve mostrar todas as opções para admin/laboratorista', () => {
       // Mock permission methods to return true for admin
-      Object.defineProperty(component, 'canEdit', {
-        value: () => true,
-        writable: true
-      });
-      Object.defineProperty(component, 'canDelete', {
-        value: () => true,
-        writable: true
-      });
-      Object.defineProperty(component, 'isReadOnly', {
-        value: () => false,
-        writable: true
-      });
-      Object.defineProperty(component, 'isAlunoOrProfessor', {
-        value: () => false,
-        writable: true
-      });
+      setAdminPermissions();
 
       component.openOptions(mockEvent, mockReserva);
 
@@ -281,6 +285,7 @@ describe('ReservaListComponent', () => {
     });
 
     it('deve definir selectedReserva corretamente', () => {
+      setAdminPermissions();
       const reserva = ReservaTestFactory.createFutura();
       component.openOptions(mockEvent, reserva);
 
@@ -288,6 +293,7 @@ describe('ReservaListComponent', () => {
     });
 
     it('deve chamar actionsMenu.toggle() com o evento correto', () => {
+      setAdminPermissions();
       const mockEvent = new Event('click');
       const mockPopover = { toggle: jest.fn() };
       Object.defineProperty(component, 'actionsMenu', {
@@ -301,6 +307,7 @@ describe('ReservaListComponent', () => {
     });
 
     it('deve chamar cdr.markForCheck() para atualização da view', () => {
+      setAdminPermissions();
       const mockCdr = { markForCheck: jest.fn() };
       Object.defineProperty(component, 'cdr', {
         value: mockCdr,
