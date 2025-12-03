@@ -115,13 +115,13 @@ export class CadastrarUsuarioComponent implements OnInit {
       },
       error: (error) => {
         this.showProgress = false;
-        this.cdr.markForCheck();
 
         // Processa erro RFC 9457 e aplica erros de campo ao formulário
         const result = this.errorHandler.handleHttpError(error, false);
 
         if (result.fieldErrors) {
           this.errorHandler.applyFieldErrors(this.form, result.fieldErrors);
+          this.cdr.markForCheck(); // Necessário após applyFieldErrors para OnPush
           this.messageService.add({
             severity: "warn",
             summary: result.title || "Erro de validação",
@@ -129,6 +129,7 @@ export class CadastrarUsuarioComponent implements OnInit {
             life: 5000
           });
         } else {
+          this.cdr.markForCheck(); // Atualiza showProgress
           this.messageService.add({
             severity: "error",
             summary: result.title || "Atenção",
