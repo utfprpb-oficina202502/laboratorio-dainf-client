@@ -27,6 +27,7 @@ import {InputTextModule} from 'primeng/inputtext';
 import {ScrollPanelModule} from 'primeng/scrollpanel';
 import {TagModule} from 'primeng/tag';
 import {TextareaModule} from 'primeng/textarea';
+import {TooltipModule} from 'primeng/tooltip';
 
 // Custom components
 import {VoltarComponent} from '../geral/voltar/voltar.component';
@@ -53,6 +54,7 @@ import {FormFieldComponent} from '../framework/component/form-field.component';
     ScrollPanelModule,
     TagModule,
     TextareaModule,
+    TooltipModule,
     // Angular CDK
     DragDropModule,
     // Custom
