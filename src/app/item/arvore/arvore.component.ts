@@ -1,4 +1,12 @@
-import {ChangeDetectionStrategy, Component, computed, inject, OnInit, signal} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal
+} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {Router} from '@angular/router';
 
@@ -106,13 +114,25 @@ export class ArvoreComponent implements OnInit {
   private readonly grupoService = inject(GrupoService);
   private readonly router = inject(Router);
   private readonly logger = inject(LoggerService);
+  private readonly destroyRef = inject(DestroyRef);
   /**
    * Controle de debounce para navegação ao carrinho.
    */
   private navigatingToReserva = false;
+  /**
+   * Timer ID para cleanup do debounce de navegação.
+   */
+  private navigationTimerId: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
     this.loadGroups();
+
+    // Cleanup do timer de navegação ao destruir componente
+    this.destroyRef.onDestroy(() => {
+      if (this.navigationTimerId) {
+        clearTimeout(this.navigationTimerId);
+      }
+    });
   }
 
   /**
@@ -267,8 +287,9 @@ export class ArvoreComponent implements OnInit {
     });
 
     // Reset após navegação para permitir uso futuro (caso volte)
-    setTimeout(() => {
+    this.navigationTimerId = setTimeout(() => {
       this.navigatingToReserva = false;
+      this.navigationTimerId = null;
     }, NAVIGATION.DEBOUNCE_MS);
   }
 

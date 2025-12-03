@@ -806,6 +806,10 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
    * Controle de debounce para navegação ao carrinho.
    */
   private navigatingToReserva = false;
+  /**
+   * Timer ID para cleanup do debounce de navegação.
+   */
+  private navigationTimerId: ReturnType<typeof setTimeout> | null = null;
 
   /**
    * Adiciona o item ao carrinho com a quantidade selecionada.
@@ -888,8 +892,9 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     });
 
     // Reset após navegação para permitir uso futuro (caso volte)
-    setTimeout(() => {
+    this.navigationTimerId = setTimeout(() => {
       this.navigatingToReserva = false;
+      this.navigationTimerId = null;
     }, NAVIGATION.DEBOUNCE_MS);
   }
 
@@ -900,5 +905,8 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     this.cancelGrupoRequest();
     this.cancelImagesRequest();
     this.cancelEmprestimosRequest();
+    if (this.navigationTimerId) {
+      clearTimeout(this.navigationTimerId);
+    }
   }
 }

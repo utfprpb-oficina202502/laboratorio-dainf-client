@@ -2,21 +2,22 @@
   <!-- Imagem do item -->
   <ng-template pTemplate="header">
     <div class="item-card-image-container relative">
-      <img
+      <button
         (click)="onViewDetails()"
-        (keydown.enter)="onViewDetails()"
-        [alt]="item().nome"
         [attr.aria-label]="'Ver detalhes de ' + item().nome"
-        [src]="imageUrl()"
-        class="item-card-image w-full h-40 object-cover cursor-pointer"
-        role="button"
-        tabindex="0"/>
+        class="w-full p-0 border-0 bg-transparent cursor-pointer"
+        type="button">
+        <img
+          [alt]="item().nome"
+          [src]="imageUrl()"
+          class="item-card-image w-full h-40 object-cover"/>
+      </button>
 
       <!-- Tag de grupo -->
-      @if (item().grupo.descricao) {
+      @if (item().grupo?.descricao) {
         <p-tag
           [rounded]="true"
-          [value]="item().grupo.descricao"
+          [value]="item().grupo!.descricao"
           class="absolute top-2 left-2"
           severity="info"/>
       }
@@ -34,15 +35,14 @@
   <!-- Conteúdo do card -->
   <div class="flex flex-col gap-2">
     <!-- Nome do item -->
-    <h3
+    <button
       (click)="onViewDetails()"
-      (keydown.enter)="onViewDetails()"
       [pTooltip]="item().nome"
-      class="text-base font-semibold m-0 line-clamp-2 cursor-pointer hover:text-primary transition-colors"
-      tabindex="0"
-      tooltipPosition="top">
-      {{ item().nome }}
-    </h3>
+      class="text-left text-base font-semibold m-0 p-0 border-0 bg-transparent cursor-pointer hover:text-primary transition-colors"
+      tooltipPosition="top"
+      type="button">
+      <h3 class="m-0 line-clamp-2">{{ item().nome }}</h3>
+    </button>
 
     <!-- Localização -->
     @if (item().localizacao) {
