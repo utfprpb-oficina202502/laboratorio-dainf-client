@@ -5,7 +5,6 @@ import {
   forwardRef,
   inject,
   signal,
-  untracked,
   viewChild
 } from '@angular/core';
 import {Z_INDEX} from '../framework/constants';
@@ -155,15 +154,12 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     effect(() => {
       // Rastreia mudanças de permissão (trigger do effect)
       this.isReadOnly();
-
-      // Usa untracked para evitar dependências circulares ao modificar tableConfig
-      untracked(() => {
-        const actionsColumn = this.tableConfig.columns?.find(col => col.field === 'actions');
-        if (actionsColumn && actionsColumn.visible === false) {
-          actionsColumn.visible = true;
-          this.cdr?.markForCheck();
-        }
-      });
+      // Busca a coluna de ações corretamente dentro do effect
+      const actionsColumn = this.tableConfig.columns?.find(col => col.field === 'actions');
+      if (actionsColumn?.visible === false) {
+        actionsColumn.visible = true;
+        this.cdr?.markForCheck();
+      }
     });
   }
 
