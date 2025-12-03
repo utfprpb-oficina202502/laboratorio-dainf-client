@@ -136,10 +136,81 @@
                         {{ formatGruposAcesso(row[column.field]) }}
                       </span>
                   }
-                  @default {
-                    <span [attr.aria-label]="column.header + ': ' + row[column.field]">
+                  @case ('id') {
+                    @if (!displayedColumns.includes('actions')) {
+                      <button
+                        type="button"
+                        class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                        (click)="openOptions($event, row)"
+                        [attr.aria-label]="column.header + ': ' + row[column.field]">
+                        {{ row[column.field] }}
+                      </button>
+                    } @else {
+                      <span [attr.aria-label]="column.header + ': ' + row[column.field]">
                         {{ row[column.field] }}
                       </span>
+                    }
+                  }
+                  @case ('nome') {
+                    @if (!displayedColumns.includes('actions')) {
+                      <button
+                        type="button"
+                        class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                        (click)="openOptions($event, row)"
+                        [attr.aria-label]="column.header + ': ' + row[column.field]">
+                        {{ row[column.field] }}
+                      </button>
+                    } @else {
+                      <span [attr.aria-label]="column.header + ': ' + row[column.field]">
+                        {{ row[column.field] }}
+                      </span>
+                    }
+                  }
+                  @case ('email') {
+                    @if (!displayedColumns.includes('actions')) {
+                      <button
+                        type="button"
+                        class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                        (click)="openOptions($event, row)"
+                        [attr.aria-label]="column.header + ': ' + row[column.field]">
+                        {{ row[column.field] }}
+                      </button>
+                    } @else {
+                      <span [attr.aria-label]="column.header + ': ' + row[column.field]">
+                        {{ row[column.field] }}
+                      </span>
+                    }
+                  }
+                  @case ('permissoes') {
+                    @if (!displayedColumns.includes('actions')) {
+                      <button
+                        type="button"
+                        class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                        (click)="openOptions($event, row)"
+                        [attr.aria-label]="column.header + ': ' + formatGruposAcesso(row[column.field])">
+                        {{ formatGruposAcesso(row[column.field]) }}
+                      </button>
+                    } @else {
+                      <span
+                        [attr.aria-label]="column.header + ': ' + formatGruposAcesso(row[column.field])">
+                        {{ formatGruposAcesso(row[column.field]) }}
+                      </span>
+                    }
+                  }
+                  @default {
+                    @if (!displayedColumns.includes('actions')) {
+                      <button
+                        type="button"
+                        class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                        (click)="openOptions($event, row)"
+                        [attr.aria-label]="column.header + ': ' + row[column.field]">
+                        {{ row[column.field] }}
+                      </button>
+                    } @else {
+                      <span [attr.aria-label]="column.header + ': ' + row[column.field]">
+                        {{ row[column.field] }}
+                      </span>
+                    }
                   }
                 }
               }
@@ -181,3 +252,8 @@
     </ng-template>
   </p-card>
 </div>
+
+<!-- Actions Popover -->
+<p-popover #actionsMenu>
+  <p-menu [model]="contextMenuItems" [style]="{border: 'none'}"></p-menu>
+</p-popover>

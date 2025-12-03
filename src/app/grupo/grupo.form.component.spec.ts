@@ -1,6 +1,6 @@
 import {ComponentFixture, fakeAsync, TestBed, tick} from '@angular/core/testing';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {RouterTestingModule} from '@angular/router/testing';
+import {provideRouter} from '@angular/router';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import {provideNoopAnimations} from '@angular/platform-browser/animations';
 import {MessageService} from 'primeng/api';
@@ -96,10 +96,10 @@ describe('GrupoFormComponent', () => {
         GrupoFormComponent,
         ReactiveFormsModule,
         FormsModule,
-        RouterTestingModule,
         HttpClientTestingModule
       ],
       providers: [
+        provideRouter([]),
         provideNoopAnimations(),
         {provide: GrupoService, useValue: grupoServiceMock},
         {provide: MessageService, useValue: messageServiceMock},

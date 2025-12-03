@@ -1,36 +1,37 @@
-import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {ReservaListComponent} from './reserva.list.component';
-import {ReservaService} from './reserva.service';
-import {ConfirmationService, MessageService} from 'primeng/api';
+import {TestBed, ComponentFixture} from '@angular/core/testing';
 import {provideRouter} from '@angular/router';
-import {of} from 'rxjs';
-import {Reserva} from './reserva';
+import {ConfirmationService, MessageService} from 'primeng/api';
+import {RelatorioListComponent} from './relatorio.list.component';
+import {RelatorioService} from './relatorio.service';
 import {LoginService} from '../login/login.service';
-import {ReservaTestFactory} from './reserva.test-factory';
+import {RelatorioTestFactory} from './relatorio.test-factory';
 import {createServiceMock} from '../framework/testing/test-helpers';
 import {PermissionService} from '../framework/service/permission.service';
+import {LoaderService} from '../framework/loader/loader.service';
+import {of} from 'rxjs';
+import {Relatorio} from './relatorio';
 
 // Services injetados no TestBed mas não referenciados diretamente nos testes
 // São necessários para o componente funcionar mas não são assertados
 
 /**
- * Testes abrangentes para ReservaListComponent
- * Cobre lógica de permissões, menu de ações e integração com serviços
+ * Testes abrangentes para RelatorioListComponent
+ * Cobre lógica de permissões, menu de ações customizado e integração com serviços
  */
-describe('ReservaListComponent', () => {
-  let component: ReservaListComponent;
-  let fixture: ComponentFixture<ReservaListComponent>;
-  let reservaService: jest.Mocked<ReservaService>;
+describe('RelatorioListComponent', () => {
+  let component: RelatorioListComponent;
+  let fixture: ComponentFixture<RelatorioListComponent>;
+  let relatorioService: jest.Mocked<RelatorioService>;
   let loginService: jest.Mocked<LoginService>;
 
-  let mockReservas: Reserva[];
+  let mockRelatorios: Relatorio[];
 
   beforeAll(() => {
-    mockReservas = ReservaTestFactory.createList(3);
+    mockRelatorios = RelatorioTestFactory.createList(3);
   });
 
   beforeEach(async () => {
-    const reservaServiceSpy = createServiceMock<ReservaService>([
+    const relatorioServiceSpy = createServiceMock<RelatorioService>([
       'findAll',
       'findAllPaged',
       'delete',
@@ -43,32 +44,34 @@ describe('ReservaListComponent', () => {
     const permissionServiceSpy = createServiceMock<PermissionService>([
       'canCreate', 'canEdit', 'canDelete', 'canExport', 'isReadOnly', 'userRole', 'isAlunoOrProfessor'
     ]);
+    const loaderServiceSpy = createServiceMock<LoaderService>(['show', 'hide']);
 
     await TestBed.configureTestingModule({
-      imports: [ReservaListComponent],
+      imports: [RelatorioListComponent],
       providers: [
         provideRouter([]),
-        {provide: ReservaService, useValue: reservaServiceSpy},
+        {provide: RelatorioService, useValue: relatorioServiceSpy},
         {provide: ConfirmationService, useValue: confirmationServiceSpy},
         {provide: MessageService, useValue: messageServiceSpy},
         {provide: LoginService, useValue: loginServiceSpy},
-        {provide: PermissionService, useValue: permissionServiceSpy}
+        {provide: PermissionService, useValue: permissionServiceSpy},
+        {provide: LoaderService, useValue: loaderServiceSpy}
       ]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(ReservaListComponent);
+    fixture = TestBed.createComponent(RelatorioListComponent);
     component = fixture.componentInstance;
 
-    reservaService = TestBed.inject(ReservaService) as jest.Mocked<ReservaService>;
+    relatorioService = TestBed.inject(RelatorioService) as jest.Mocked<RelatorioService>;
     loginService = TestBed.inject(LoginService) as jest.Mocked<LoginService>;
 
     // Setup default return values
-    reservaService.findAll.mockReturnValue(of(mockReservas));
-    reservaService.findAllPaged.mockReturnValue(of({
-      content: mockReservas,
-      totalElements: mockReservas.length,
+    relatorioService.findAll.mockReturnValue(of(mockRelatorios));
+    relatorioService.findAllPaged.mockReturnValue(of({
+      content: mockRelatorios,
+      totalElements: mockRelatorios.length,
       totalPages: 1,
-      size: mockReservas.length,
+      size: mockRelatorios.length,
       number: 0
     }));
 
@@ -85,7 +88,7 @@ describe('ReservaListComponent', () => {
       fixture.destroy();
     }
     jest.clearAllMocks();
-    ReservaTestFactory.resetIdCounter();
+    RelatorioTestFactory.resetIdCounter();
   });
 
   // ============================================================================
@@ -97,39 +100,53 @@ describe('ReservaListComponent', () => {
     });
 
     it('deve injetar serviços corretamente', () => {
-      expect(component['service']).toBe(reservaService);
+      expect(component['service']).toBe(relatorioService);
     });
 
     it('deve configurar tabela com colunas corretas', () => {
       expect(component['columnsTable']).toEqual([
         'id',
-        'descricao',
-        'dataReserva',
-        'dataRetirada',
-        'usuarioNome',
+        'nome',
         'actions'
       ]);
     });
 
     it('deve definir urlForm corretamente', () => {
-      expect(component['urlForm']).toBe('reserva/form');
+      expect(component['urlForm']).toBe('relatorio/form');
     });
 
     it('deve configurar tableConfig corretamente', () => {
       expect(component['tableConfig'].columns).toBeDefined();
-      expect(component['tableConfig'].columns.length).toBe(6);
-      expect(component['tableConfig'].stateKey).toBe('reserva-list');
+      expect(component['tableConfig'].columns.length).toBe(3);
+      expect(component['tableConfig'].stateKey).toBe('relatorio-list');
     });
   });
 
   // ============================================================================
-  // openOptions() - Permission Logic (12 tests)
+  // openOptions() - Custom Permission Logic (15 tests)
   // ============================================================================
-  describe('openOptions() - Permission Logic', () => {
+  describe('openOptions() - Custom Permission Logic', () => {
     let mockEvent: Event;
-    let mockReserva: Reserva;
+    let mockRelatorio: Relatorio;
 
-    const setAdminPermissions = () => {
+    beforeEach(() => {
+      mockEvent = new Event('click');
+      mockRelatorio = RelatorioTestFactory.create({id: 1});
+
+      // Mock do viewChild actionsMenu - usar Object.defineProperty para signals
+      const mockActionsMenu = {
+        toggle: jest.fn(),
+        hide: jest.fn()
+      };
+      Object.defineProperty(component, 'actionsMenu', {
+        value: () => mockActionsMenu,
+        writable: true,
+        configurable: true
+      });
+    });
+
+    it('deve mostrar todas as opções para admin/laboratorista', () => {
+      // Mock permission methods to return true for admin
       Object.defineProperty(component, 'canEdit', {
         value: () => true,
         writable: true
@@ -146,37 +163,16 @@ describe('ReservaListComponent', () => {
         value: () => false,
         writable: true
       });
-    };
 
-    beforeEach(() => {
-      mockEvent = new Event('click');
-      mockReserva = ReservaTestFactory.create({id: 1});
-
-      // Mock do viewChild actionsMenu
-      const mockActionsMenu = {
-        toggle: jest.fn(),
-        hide: jest.fn()
-      };
-      Object.defineProperty(component, 'actionsMenu', {
-        value: jest.fn().mockReturnValue(mockActionsMenu),
-        writable: true,
-        configurable: true
-      });
-    });
-
-    it('deve mostrar todas as opções para admin/laboratorista', () => {
-      // Mock permission methods to return true for admin
-      setAdminPermissions();
-
-      component.openOptions(mockEvent, mockReserva);
+      component.openOptions(mockEvent, mockRelatorio);
 
       expect(component.contextMenuItems.length).toBe(3);
-      expect(component.contextMenuItems[0].label).toBe('Gerar Empréstimo');
-      expect(component.contextMenuItems[1].label).toBe('Editar');
-      expect(component.contextMenuItems[2].label).toBe('Remover');
+      expect(component.contextMenuItems[0].label).toBe('Editar');
+      expect(component.contextMenuItems[1].label).toBe('Remover');
+      expect(component.contextMenuItems[2].label).toBe('Gerar Relatório');
     });
 
-    it('deve mostrar apenas Visualizar para aluno/professor', () => {
+    it('deve mostrar apenas Visualizar e Gerar Relatório para aluno/professor', () => {
       // Mock permission methods to return false for student/professor
       Object.defineProperty(component, 'canEdit', {
         value: () => false,
@@ -195,38 +191,39 @@ describe('ReservaListComponent', () => {
         writable: true
       });
 
-      component.openOptions(mockEvent, mockReserva);
+      component.openOptions(mockEvent, mockRelatorio);
 
-      expect(component.contextMenuItems.length).toBe(1);
+      expect(component.contextMenuItems.length).toBe(2);
       expect(component.contextMenuItems[0].label).toBe('Visualizar');
+      expect(component.contextMenuItems[1].label).toBe('Gerar Relatório');
     });
 
-    it('deve incluir "Gerar Empréstimo" apenas para admin/laboratorista', () => {
+    it('deve mostrar apenas Visualizar e Gerar Relatório para usuário read-only', () => {
+      Object.defineProperty(component, 'canEdit', {
+        value: () => false,
+        writable: true
+      });
+      Object.defineProperty(component, 'canDelete', {
+        value: () => false,
+        writable: true
+      });
+      Object.defineProperty(component, 'isReadOnly', {
+        value: () => true,
+        writable: true
+      });
       Object.defineProperty(component, 'isAlunoOrProfessor', {
         value: () => false,
         writable: true
       });
 
-      component.openOptions(mockEvent, mockReserva);
+      component.openOptions(mockEvent, mockRelatorio);
 
-      const gerarEmprestimoItem = component.contextMenuItems.find(item => item.label === 'Gerar Empréstimo');
-      expect(gerarEmprestimoItem).toBeTruthy();
-      expect(gerarEmprestimoItem?.icon).toBe('pi pi-handshake');
+      expect(component.contextMenuItems.length).toBe(2);
+      expect(component.contextMenuItems[0].label).toBe('Visualizar');
+      expect(component.contextMenuItems[1].label).toBe('Gerar Relatório');
     });
 
-    it('não deve incluir "Gerar Empréstimo" para aluno/professor', () => {
-      Object.defineProperty(component, 'isAlunoOrProfessor', {
-        value: () => true,
-        writable: true
-      });
-
-      component.openOptions(mockEvent, mockReserva);
-
-      const gerarEmprestimoItem = component.contextMenuItems.find(item => item.label === 'Gerar Empréstimo');
-      expect(gerarEmprestimoItem).toBeUndefined();
-    });
-
-    it('deve mostrar ícone "Editar" para admin/laboratorista', () => {
+    it('deve incluir "Editar" apenas para admin/laboratorista', () => {
       Object.defineProperty(component, 'canEdit', {
         value: () => true,
         writable: true
@@ -236,9 +233,10 @@ describe('ReservaListComponent', () => {
         writable: true
       });
 
-      component.openOptions(mockEvent, mockReserva);
+      component.openOptions(mockEvent, mockRelatorio);
 
       const editItem = component.contextMenuItems.find(item => item.label === 'Editar');
+      expect(editItem).toBeTruthy();
       expect(editItem?.icon).toBe('pi pi-pencil');
     });
 
@@ -252,23 +250,53 @@ describe('ReservaListComponent', () => {
         writable: true
       });
 
-      component.openOptions(mockEvent, mockReserva);
+      component.openOptions(mockEvent, mockRelatorio);
 
       const removeItem = component.contextMenuItems.find(item => item.label === 'Remover');
       expect(removeItem).toBeTruthy();
       expect(removeItem?.icon).toBe('pi pi-trash');
     });
 
-    it('não deve incluir "Remover" para aluno/professor', () => {
+    it('deve incluir "Gerar Relatório" para todos os usuários', () => {
+      // Teste com admin
+      Object.defineProperty(component, 'isAlunoOrProfessor', {
+        value: () => false,
+        writable: true
+      });
+
+      component.openOptions(mockEvent, mockRelatorio);
+
+      const generateItem = component.contextMenuItems.find(item => item.label === 'Gerar Relatório');
+      expect(generateItem).toBeTruthy();
+      expect(generateItem?.icon).toBe('pi pi-file-pdf');
+    });
+
+    it('deve incluir "Gerar Relatório" para alunos/professores', () => {
+      // Teste com aluno/professor
       Object.defineProperty(component, 'isAlunoOrProfessor', {
         value: () => true,
         writable: true
       });
 
-      component.openOptions(mockEvent, mockReserva);
+      component.openOptions(mockEvent, mockRelatorio);
 
-      const removeItem = component.contextMenuItems.find(item => item.label === 'Remover');
-      expect(removeItem).toBeUndefined();
+      const generateItem = component.contextMenuItems.find(item => item.label === 'Gerar Relatório');
+      expect(generateItem).toBeTruthy();
+      expect(generateItem?.icon).toBe('pi pi-file-pdf');
+    });
+
+    it('deve incluir "Gerar Relatório" para usuários read-only', () => {
+      // Teste com read-only
+      Object.defineProperty(component, 'isReadOnly', {
+        value: () => true,
+        writable: true
+      });
+
+      component.openOptions(mockEvent, mockRelatorio);
+
+      const generateItem = component.contextMenuItems.find(item => item.label === 'Gerar Relatório');
+      expect(generateItem).toBeTruthy();
+      expect(generateItem?.icon).toBe('pi pi-file-pdf');
     });
 
     it('deve limpar contextMenuItems antes de adicionar novos', () => {
@@ -278,22 +306,14 @@ describe('ReservaListComponent', () => {
         writable: true
       });
 
-      component.openOptions(mockEvent, mockReserva);
+      component.openOptions(mockEvent, mockRelatorio);
 
-      expect(component.contextMenuItems.length).toBe(1);
+      expect(component.contextMenuItems.length).toBe(2);
       expect(component.contextMenuItems[0].label).toBe('Visualizar');
-    });
-
-    it('deve definir selectedReserva corretamente', () => {
-      setAdminPermissions();
-      const reserva = ReservaTestFactory.createFutura();
-      component.openOptions(mockEvent, reserva);
-
-      expect(component.selectedReserva).toBe(reserva);
+      expect(component.contextMenuItems[1].label).toBe('Gerar Relatório');
     });
 
     it('deve chamar actionsMenu.toggle() com o evento correto', () => {
-      setAdminPermissions();
       const mockEvent = new Event('click');
       const mockPopover = { toggle: jest.fn() };
       Object.defineProperty(component, 'actionsMenu', {
@@ -301,63 +321,62 @@ describe('ReservaListComponent', () => {
         writable: true
       });
 
-      component.openOptions(mockEvent, mockReserva);
+      component.openOptions(mockEvent, mockRelatorio);
 
       expect(mockPopover.toggle).toHaveBeenCalledWith(mockEvent);
     });
 
     it('deve chamar cdr.markForCheck() para atualização da view', () => {
-      setAdminPermissions();
       const mockCdr = { markForCheck: jest.fn() };
       Object.defineProperty(component, 'cdr', {
         value: mockCdr,
         writable: true
       });
 
-      component.openOptions(mockEvent, mockReserva);
+      component.openOptions(mockEvent, mockRelatorio);
 
       expect(mockCdr.markForCheck).toHaveBeenCalled();
     });
   });
 
   // ============================================================================
-  // finalizarReserva() (3 tests)
+  // generateReport() (3 tests)
   // ============================================================================
-  describe('finalizarReserva()', () => {
-    let mockReserva: Reserva;
-    let setItemSpy: jest.SpyInstance;
+  describe('generateReport()', () => {
+    let navigateSpy: jest.SpyInstance;
 
     beforeEach(() => {
-      mockReserva = ReservaTestFactory.create({id: 123});
-      jest.spyOn(component['router'], 'navigate').mockImplementation(() => Promise.resolve(true));
-      // No-op: localStorage.setItem é mockado para evitar efeitos colaterais
-      setItemSpy = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => undefined);
+      navigateSpy = jest.spyOn(component['router'], 'navigate').mockImplementation(() => Promise.resolve(true));
     });
 
     afterEach(() => {
-      setItemSpy.mockRestore();
+      navigateSpy.mockRestore();
     });
 
-    it('deve salvar reserva no localStorage', () => {
-      component.finalizarReserva(mockReserva);
+    it('deve navegar para relatorio/view com o ID correto', () => {
+      const relatorioId = 123;
 
-      expect(setItemSpy).toHaveBeenCalledWith(
-        'reserva-to-emprestimo',
-        JSON.stringify(mockReserva)
-      );
+      component.generateReport(relatorioId);
+
+      expect(navigateSpy).toHaveBeenCalledWith(['relatorio/view', relatorioId]);
     });
 
-    it('deve navegar para emprestimo/form/reserva', () => {
-      component.finalizarReserva(mockReserva);
+    it('deve mostrar loader durante a navegação', () => {
+      const loaderService = TestBed.inject(LoaderService);
+      const showSpy = jest.spyOn(loaderService, 'show');
 
-      expect(component['router'].navigate).toHaveBeenCalledWith(['emprestimo/form/reserva']);
+      component.generateReport(123);
+
+      expect(showSpy).toHaveBeenCalled();
     });
 
-    it('deve passar dados corretos da reserva', () => {
-      component.finalizarReserva(mockReserva);
+    it('deve funcionar com diferentes IDs', () => {
+      const testIds = [1, 42, 999];
 
-      const savedData = JSON.parse(setItemSpy.mock.calls[0][1]);
-      expect(savedData.id).toBe(123);
+      testIds.forEach(id => {
+        component.generateReport(id);
+        expect(navigateSpy).toHaveBeenCalledWith(['relatorio/view', id]);
+      });
     });
   });
 
@@ -368,19 +387,19 @@ describe('ReservaListComponent', () => {
     it('deve retornar nome de arquivo de exportação correto', () => {
       const filename = component['getExportFileName']();
 
-      expect(filename).toBe('reservas');
+      expect(filename).toBe('relatorios');
     });
 
     it('deve retornar nome da entidade correto', () => {
       const entityName = component['getEntityName']();
 
-      expect(entityName).toBe('Reserva');
+      expect(entityName).toBe('Relatório');
     });
 
     it('deve retornar nome plural da entidade correto', () => {
       const pluralName = component['getEntityPluralName']();
 
-      expect(pluralName).toBe('Reservas');
+      expect(pluralName).toBe('Relatórios');
     });
 
     it('deve lidar com postFindAll (implementação vazia)', () => {
@@ -425,7 +444,7 @@ describe('ReservaListComponent', () => {
   // Integration Tests (4 tests)
   // ============================================================================
   describe('Integration Tests', () => {
-    it('deve integrar com ReservaService', () => {
+    it('deve integrar com RelatorioService', () => {
       expect(component['service']).toBeTruthy();
     });
 
@@ -435,7 +454,7 @@ describe('ReservaListComponent', () => {
 
     it('deve ter tableConfig com campos de filtro global', () => {
       expect(component['tableConfig'].globalFilterFields).toContain('id');
-      expect(component['tableConfig'].globalFilterFields).toContain('descricao');
+      expect(component['tableConfig'].globalFilterFields).toContain('nome');
     });
 
     it('deve ter campo de ordenação padrão definido', () => {
@@ -444,7 +463,7 @@ describe('ReservaListComponent', () => {
   });
 
   // ============================================================================
-  // Configuração de Ordenação (6 tests)
+  // Configuração de Ordenação (3 tests)
   // ============================================================================
   describe('Configuração de Ordenação', () => {
     it('deve ter coluna id com sortable true', () => {
@@ -452,23 +471,8 @@ describe('ReservaListComponent', () => {
       expect(column?.sortable).toBe(true);
     });
 
-    it('deve ter coluna descricao com sortable true', () => {
-      const column = component['tableConfig'].columns.find(c => c.field === 'descricao');
-      expect(column?.sortable).toBe(true);
-    });
-
-    it('deve ter coluna dataReserva com sortable true', () => {
-      const column = component['tableConfig'].columns.find(c => c.field === 'dataReserva');
-      expect(column?.sortable).toBe(true);
-    });
-
-    it('deve ter coluna dataRetirada com sortable true', () => {
-      const column = component['tableConfig'].columns.find(c => c.field === 'dataRetirada');
-      expect(column?.sortable).toBe(true);
-    });
-
-    it('deve ter coluna usuarioNome com sortable true', () => {
-      const column = component['tableConfig'].columns.find(c => c.field === 'usuarioNome');
+    it('deve ter coluna nome com sortable true', () => {
+      const column = component['tableConfig'].columns.find(c => c.field === 'nome');
       expect(column?.sortable).toBe(true);
     });
 

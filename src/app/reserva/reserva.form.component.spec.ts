@@ -1,6 +1,6 @@
 import {TestBed} from '@angular/core/testing';
 import {FormBuilder, ReactiveFormsModule} from '@angular/forms';
-import {RouterTestingModule} from '@angular/router/testing';
+import {provideRouter} from '@angular/router';
 import {MessageService} from 'primeng/api';
 import {of} from 'rxjs';
 import {ReservaFormComponent} from './reserva.form.component';
@@ -54,8 +54,9 @@ describe('ReservaFormComponent', () => {
     } as any;
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule, ReactiveFormsModule, ReservaFormComponent],
+      imports: [ReactiveFormsModule, ReservaFormComponent],
       providers: [
+        provideRouter([]),
         FormBuilder,
         {provide: MessageService, useValue: messageServiceMock},
         {provide: ReservaService, useValue: {save: jest.fn()}},
@@ -306,7 +307,7 @@ describe('ReservaFormComponent', () => {
 
       // Mock the service save to prevent actual HTTP call
       reservaService.save.mockReturnValue(of({id: 1} as Reserva));
-      
+
       // Spy on the parent save implementation to verify it's called
       const superSaveSpy = jest.spyOn(Object.getPrototypeOf(Object.getPrototypeOf(component)), 'save');
 

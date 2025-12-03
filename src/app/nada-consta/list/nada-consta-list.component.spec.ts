@@ -16,6 +16,7 @@ describe('NadaConstaListComponent', () => {
   let messageService: MessageService;
 
   beforeEach(async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
     const serviceMock = {
       solicitar: jest.fn(),
       findAll: jest.fn().mockReturnValue(of([])),
@@ -43,6 +44,10 @@ describe('NadaConstaListComponent', () => {
     component = fixture.componentInstance;
     service = TestBed.inject(NadaConstaService);
     messageService = TestBed.inject(MessageService);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('deve ser criado', () => {

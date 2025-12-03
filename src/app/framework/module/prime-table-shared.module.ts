@@ -13,6 +13,8 @@ import {IconFieldModule} from 'primeng/iconfield';
 import {InputIconModule} from 'primeng/inputicon';
 import {TooltipModule} from 'primeng/tooltip';
 import {TagModule} from 'primeng/tag';
+import {PopoverModule} from 'primeng/popover';
+import {MenuModule} from 'primeng/menu';
 
 // Framework Components - Common for all lists
 import {PrimeCrudToolbarComponent} from '../component/prime-crud-toolbar.component';
@@ -45,6 +47,8 @@ import {PrimeCrudTableWrapperComponent} from '../component/prime-crud-table-wrap
     InputIconModule,
     TooltipModule,
     TagModule,
+    PopoverModule,
+    MenuModule,
 
     // Framework Components
     PrimeCrudToolbarComponent,
@@ -72,6 +76,8 @@ import {PrimeCrudTableWrapperComponent} from '../component/prime-crud-table-wrap
     TableFilterCaptionComponent,
     SkeletonTableComponent,
     PrimeCrudTableWrapperComponent,
+    PopoverModule,
+    MenuModule,
   ]
 })
 export class PrimeTableSharedModule {

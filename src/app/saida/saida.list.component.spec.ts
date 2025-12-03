@@ -2,7 +2,7 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {SaidaListComponent} from './saida.list.component';
 import {SaidaService} from './saida.service';
 import {ConfirmationService, MessageService} from 'primeng/api';
-import {RouterTestingModule} from '@angular/router/testing';
+import {provideRouter} from '@angular/router';
 import {of} from 'rxjs';
 import {Saida} from './saida';
 import {LoginService} from '../login/login.service';
@@ -73,8 +73,9 @@ describe('SaidaListComponent', () => {
     const loginServiceSpy = createServiceMock<LoginService>(['isAlunoOrProfessor']);
 
     await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, SaidaListComponent],
+      imports: [SaidaListComponent],
       providers: [
+        provideRouter([]),
         {provide: SaidaService, useValue: saidaServiceSpy},
         {provide: ConfirmationService, useValue: confirmationServiceSpy},
         {provide: MessageService, useValue: messageServiceSpy},

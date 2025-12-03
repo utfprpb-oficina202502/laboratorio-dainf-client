@@ -16,9 +16,10 @@ import {
 } from '@angular/core';
 import {Router} from '@angular/router';
 import {CrudService, PageResponse} from '../service/crud.service';
-import {ConfirmationService, MessageService, SortEvent} from 'primeng/api';
+import {ConfirmationService, MessageService, MenuItem, SortEvent} from 'primeng/api';
 import {Table, TablePageEvent, TableRowCollapseEvent, TableRowExpandEvent} from 'primeng/table';
 import {MultiSelect} from 'primeng/multiselect';
+import {Popover} from 'primeng/popover';
 import {Exception} from '../../exception/exception';
 import {LoaderService} from '../loader/loader.service';
 import {LoginService} from '../../login/login.service';
@@ -68,6 +69,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   readonly dataTable = viewChild<Table>('dt');
   readonly globalFilterInput = viewChild<ElementRef<HTMLInputElement>>('globalFilterInput');
   readonly columnToggleComponent = viewChild<MultiSelect>('columnToggleRef');
+  readonly actionsMenu = viewChild<Popover>('actionsMenu');
 
   // Template overrides for flexibility
   // Enhanced filtering and sorting
@@ -163,6 +165,9 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   public columnToggleModel: string[] = [];
   public columnToggleOptions: { label: string; value: string }[] = [];
   public readonly self = this as PrimeCrudListComponent<T, ID>;
+
+  // Popover functionality for mobile actions
+  public contextMenuItems: MenuItem[] = [];
 
   // Advanced features
   protected readonly injector: Injector;
@@ -623,6 +628,57 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     return this.tableColumnManager.getColumnWidth(column);
   }
 
+  /**
+   * Opens the actions popover menu for mobile/tablet users.
+   * Can be overridden in child components for custom menu items.
+   *
+   * @param event The click event that triggered the menu
+   * @param itemOrId The data item or ID for which to show actions
+   */
+  openOptions(event: Event, itemOrId: T | any): void {
+    const isReadOnly = this.isReadOnly() || this.isAlunoOrProfessor();
+
+    this.contextMenuItems = [];
+
+    if (!isReadOnly) {
+      if (this.canEdit()) {
+        this.contextMenuItems.push({
+          label: 'Editar',
+          icon: 'pi pi-pencil',
+          command: () => this.edit(this.getItemId(itemOrId))
+        });
+      }
+
+      if (this.canDelete()) {
+        this.contextMenuItems.push({
+          label: 'Remover',
+          icon: 'pi pi-trash',
+          command: () => this.delete(this.getItemId(itemOrId))
+        });
+      }
+    } else {
+      this.contextMenuItems.push({
+        label: 'Visualizar',
+        icon: 'pi pi-eye',
+        command: () => this.edit(this.getItemId(itemOrId))
+      });
+    }
+
+    this.actionsMenu()?.toggle(event);
+    this.cdr?.markForCheck();
+  }
+
+  /**
+   * Extracts the ID from a data item.
+   * Can be overridden in child components if the ID field is not 'id'.
+   *
+   * @param item The data item
+   * @returns The ID of the item
+   */
+  protected getItemId(item: T): any {
+    return (item as any).id;
+  }
+
 
   // Override this method in child components for a custom filename
   protected getExportFileName(): string {
@@ -1028,4 +1084,3 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     this.saveTableState();
   }
 }
-

@@ -1,6 +1,6 @@
 import {ComponentFixture, TestBed, fakeAsync, tick} from '@angular/core/testing';
 import {FormBuilder, ReactiveFormsModule} from '@angular/forms';
-import {RouterTestingModule} from '@angular/router/testing';
+import {provideRouter} from '@angular/router';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import {provideNoopAnimations} from '@angular/platform-browser/animations';
 import {ConfirmationService, MessageService} from 'primeng/api';
@@ -164,10 +164,10 @@ describe('ItemFormComponent', () => {
       imports: [
         ItemFormComponent,
         HttpClientTestingModule,
-        RouterTestingModule,
         ReactiveFormsModule
       ],
       providers: [
+        provideRouter([]),
         provideNoopAnimations(),
         FormBuilder,
         {provide: ItemService, useValue: itemServiceMock},

@@ -1,5 +1,5 @@
 import {TestBed} from '@angular/core/testing';
-import {RouterTestingModule} from '@angular/router/testing';
+import {provideRouter} from '@angular/router';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import {EmprestimoDevolucaoComponent} from './emprestimo.devolucao.component';
 import {EmprestimoService} from './emprestimo.service';
@@ -42,8 +42,9 @@ function createComponentWithEmprestimo(): {
   emprestimo: Emprestimo
 } {
   TestBed.configureTestingModule({
-    imports: [RouterTestingModule, EmprestimoDevolucaoComponent],
+    imports: [EmprestimoDevolucaoComponent],
     providers: [
+      provideRouter([]),
       MessageService,
       ConfirmationService,
       {provide: EmprestimoService, useValue: {}},

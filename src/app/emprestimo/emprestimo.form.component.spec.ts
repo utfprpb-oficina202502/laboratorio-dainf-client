@@ -1,6 +1,6 @@
 import {TestBed} from '@angular/core/testing';
 import {FormBuilder, ReactiveFormsModule} from '@angular/forms';
-import {RouterTestingModule} from '@angular/router/testing';
+import {provideRouter} from '@angular/router';
 import {MessageService} from 'primeng/api';
 import {EmprestimoFormComponent} from './emprestimo.form.component';
 import {EmprestimoService} from './emprestimo.service';
@@ -24,8 +24,9 @@ describe('EmprestimoFormComponent', () => {
     } as any;
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule, ReactiveFormsModule, EmprestimoFormComponent],
+      imports: [ReactiveFormsModule, EmprestimoFormComponent],
       providers: [
+        provideRouter([]),
         FormBuilder,
         MessageService,
         {provide: EmprestimoService, useValue: {saveEmprestimo: jest.fn()}},

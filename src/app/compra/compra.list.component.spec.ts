@@ -2,7 +2,7 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {CompraListComponent} from './compra.list.component';
 import {CompraService} from './compra.service';
 import {ConfirmationService, MessageService} from 'primeng/api';
-import {RouterTestingModule} from '@angular/router/testing';
+import {provideRouter} from '@angular/router';
 import {of} from 'rxjs';
 import {Compra} from './compra';
 import {LoginService} from '../login/login.service';
@@ -62,8 +62,9 @@ describe('CompraListComponent', () => {
     const loginServiceSpy = createServiceMock<LoginService>(['isAlunoOrProfessor']);
 
     await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, CompraListComponent],
+      imports: [CompraListComponent],
       providers: [
+        provideRouter([]),
         {provide: CompraService, useValue: compraServiceSpy},
         {provide: ConfirmationService, useValue: confirmationServiceSpy},
         {provide: MessageService, useValue: messageServiceSpy},

@@ -111,8 +111,85 @@
                     [viewTooltip]="'Visualizar saída'">
                   </app-action-buttons>
                 }
+                @case ('id') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </button>
+                  } @else {
+                    <span>{{ rowData[column.field] }}</span>
+                  }
+                }
+                @case ('dataSaida') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </button>
+                  } @else {
+                    <span>{{ rowData[column.field] }}</span>
+                  }
+                }
+                @case ('qtdeTotal') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </button>
+                  } @else {
+                    <span>{{ rowData[column.field] }}</span>
+                  }
+                }
+                @case ('usuarioResponsavelNome') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + (rowData?.usuarioResponsavelNome || 'Não informado')">
+                      {{ rowData?.usuarioResponsavelNome || 'Não informado' }}
+                    </button>
+                  } @else {
+                    <span>{{ rowData?.usuarioResponsavelNome || 'Não informado' }}</span>
+                  }
+                }
+                @case ('observacao') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + (rowData?.observacao || 'Nenhuma observação')">
+                      {{ rowData?.observacao || 'Nenhuma observação' }}
+                    </button>
+                  } @else {
+                    <span class="text-truncate d-block" [title]="rowData?.observacao">
+                      {{ rowData?.observacao || 'Nenhuma observação' }}
+                    </span>
+                  }
+                }
                 @default {
-                  <span>{{ rowData[column.field] }}</span>
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </button>
+                  } @else {
+                    <span>{{ rowData[column.field] }}</span>
+                  }
                 }
               }
             </td>
@@ -139,3 +216,8 @@
     </ng-template>
   </p-card>
 </div>
+
+<!-- Actions Popover -->
+<p-popover #actionsMenu>
+  <p-menu [model]="contextMenuItems" [style]="{border: 'none'}"></p-menu>
+</p-popover>

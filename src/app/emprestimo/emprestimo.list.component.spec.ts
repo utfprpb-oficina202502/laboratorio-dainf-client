@@ -3,7 +3,7 @@ import {EmprestimoListComponent} from './emprestimo.list.component';
 import {EmprestimoService} from './emprestimo.service';
 import {UsuarioService} from '../usuario/usuario.service';
 import {ConfirmationService, MessageService} from 'primeng/api';
-import {RouterTestingModule} from '@angular/router/testing';
+import {provideRouter} from '@angular/router';
 import {of, throwError} from 'rxjs';
 import {Emprestimo} from './emprestimo';
 import {Usuario} from '../usuario/usuario';
@@ -90,8 +90,9 @@ describe('EmprestimoListComponent', () => {
     const loginServiceSpy = createServiceMock<LoginService>(['isAlunoOrProfessor']);
 
     await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, EmprestimoListComponent],
+      imports: [EmprestimoListComponent],
       providers: [
+        provideRouter([]),
         {provide: EmprestimoService, useValue: emprestimoServiceSpy},
         {provide: UsuarioService, useValue: usuarioServiceSpy},
         {provide: ConfirmationService, useValue: confirmationServiceSpy},

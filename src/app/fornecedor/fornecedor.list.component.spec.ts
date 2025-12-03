@@ -2,7 +2,7 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {FornecedorListComponent} from './fornecedor.list.component';
 import {FornecedorService} from './fornecedor.service';
 import {ConfirmationService, MessageService} from 'primeng/api';
-import {RouterTestingModule} from '@angular/router/testing';
+import {provideRouter} from '@angular/router';
 import {of} from 'rxjs';
 import {Fornecedor} from './fornecedor';
 import {LoginService} from '../login/login.service';
@@ -66,8 +66,9 @@ describe('FornecedorListComponent', () => {
     const loginServiceSpy = createServiceMock<LoginService>(['isAlunoOrProfessor']);
 
     await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, FornecedorListComponent],
+      imports: [FornecedorListComponent],
       providers: [
+        provideRouter([]),
         {provide: FornecedorService, useValue: fornecedorServiceSpy},
         {provide: ConfirmationService, useValue: confirmationServiceSpy},
         {provide: MessageService, useValue: messageServiceSpy},

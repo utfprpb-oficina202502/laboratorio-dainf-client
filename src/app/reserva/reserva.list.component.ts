@@ -122,11 +122,12 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
 
   openOptions(event: Event, reserva: Reserva): void {
     this.selectedReserva = reserva;
-    const isAlunoOrProfessor = this.isAlunoOrProfessor();
+    const isReadOnly = this.isReadOnly() || this.isAlunoOrProfessor();
 
     this.contextMenuItems = [];
 
-    if (!isAlunoOrProfessor) {
+    // Add custom actions first
+    if (!isReadOnly) {
       this.contextMenuItems.push({
         label: 'Gerar Empréstimo',
         icon: 'pi pi-handshake',
@@ -134,19 +135,28 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
       });
     }
 
-    // Editar/Visualizar - altera label e ícone baseado na permissão
-    this.contextMenuItems.push({
-      label: isAlunoOrProfessor ? 'Visualizar' : 'Editar',
-      icon: isAlunoOrProfessor ? 'pi pi-eye' : 'pi pi-pencil',
-      command: () => this.edit(reserva.id)
-    });
+    // Add standard actions based on permissions
+    if (!isReadOnly) {
+      if (this.canEdit()) {
+        this.contextMenuItems.push({
+          label: 'Editar',
+          icon: 'pi pi-pencil',
+          command: () => this.edit(this.getItemId(reserva))
+        });
+      }
 
-    // Remover - apenas para admin/laboratorista
-    if (!isAlunoOrProfessor) {
+      if (this.canDelete()) {
+        this.contextMenuItems.push({
+          label: 'Remover',
+          icon: 'pi pi-trash',
+          command: () => this.delete(this.getItemId(reserva))
+        });
+      }
+    } else {
       this.contextMenuItems.push({
-        label: 'Remover',
-        icon: 'pi pi-trash',
-        command: () => this.delete(reserva.id)
+        label: 'Visualizar',
+        icon: 'pi pi-eye',
+        command: () => this.edit(this.getItemId(reserva))
       });
     }
 

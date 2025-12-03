@@ -182,12 +182,12 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
 
   openOptions(event: Event, item: Item): void {
     this.selectedItem = item;
-    const isAlunoOrProfessor = this.isAlunoOrProfessor();
-    const isMobile = !this.breakpointService.isDesktop();
+    const isReadOnly = this.isReadOnly() || this.isAlunoOrProfessor();
 
     this.contextMenuItems = [];
 
-    if (!isAlunoOrProfessor) {
+    // Add custom actions first
+    if (!isReadOnly) {
       this.contextMenuItems.push({
         label: 'Copiar',
         icon: 'pi pi-copy',
@@ -201,24 +201,29 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> {
       command: () => this.findReservasItem(item.id)
     });
 
-    if (isMobile) {
-      const mobileMenuItems = [
-        {
-          label: isAlunoOrProfessor ? 'Visualizar' : 'Editar',
-          icon: isAlunoOrProfessor ? 'pi pi-eye' : 'pi pi-pencil',
-          command: () => this.edit(item.id)
-        }
-      ];
-
-      if (!isAlunoOrProfessor) {
-        mobileMenuItems.push({
-          label: 'Remover',
-          icon: 'pi pi-trash',
-          command: () => this.delete(item.id)
+    // Add standard actions based on permissions
+    if (!isReadOnly) {
+      if (this.canEdit()) {
+        this.contextMenuItems.push({
+          label: 'Editar',
+          icon: 'pi pi-pencil',
+          command: () => this.edit(this.getItemId(item))
         });
       }
 
-      this.contextMenuItems.push(...mobileMenuItems);
+      if (this.canDelete()) {
+        this.contextMenuItems.push({
+          label: 'Remover',
+          icon: 'pi pi-trash',
+          command: () => this.delete(this.getItemId(item))
+        });
+      }
+    } else {
+      this.contextMenuItems.push({
+        label: 'Visualizar',
+        icon: 'pi pi-eye',
+        command: () => this.edit(this.getItemId(item))
+      });
     }
 
     this.actionsMenu().toggle(event);
