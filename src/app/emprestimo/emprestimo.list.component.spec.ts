@@ -451,11 +451,7 @@ describe('EmprestimoListComponent', () => {
   // onKeyDown() - Keyboard Accessibility (2 tests)
   // ============================================================================
   describe('onKeyDown() - Keyboard Accessibility', () => {
-    let mockEvent: KeyboardEvent;
-
     beforeEach(() => {
-      mockEvent = new KeyboardEvent('keydown');
-      // Mock do viewChild actionsMenu
       const mockActionsMenu = {
         toggle: jest.fn()
       };
@@ -469,19 +465,15 @@ describe('EmprestimoListComponent', () => {
     it('deve chamar openOptions ao pressionar Enter', () => {
       const emprestimo = EmprestimoTestFactory.createPendente({id: 1});
       const openOptionsSpy = jest.spyOn(component, 'openOptions');
-
       component.onKeyDown(new KeyboardEvent('keydown', {key: 'Enter'}), emprestimo);
-
-      expect(openOptionsSpy).toHaveBeenCalledWith(mockEvent, emprestimo);
+      expect(openOptionsSpy).toHaveBeenCalledWith(expect.any(KeyboardEvent), emprestimo);
     });
 
     it('deve chamar openOptions ao pressionar Espaço', () => {
       const emprestimo = EmprestimoTestFactory.createPendente({id: 1});
       const openOptionsSpy = jest.spyOn(component, 'openOptions');
-
       component.onKeyDown(new KeyboardEvent('keydown', {key: ' '}), emprestimo);
-
-      expect(openOptionsSpy).toHaveBeenCalledWith(mockEvent, emprestimo);
+      expect(openOptionsSpy).toHaveBeenCalledWith(expect.any(KeyboardEvent), emprestimo);
     });
   });
 
@@ -926,6 +918,34 @@ describe('EmprestimoListComponent', () => {
       expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
         severity: 'error',
         detail: expect.stringContaining('Falha')
+      }));
+    });
+
+    it('deve exibir erro se nova data for anterior ou igual ao prazo atual', async () => {
+      // Cria um empréstimo com prazo atual em 10/12/2025
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/12/2025'});
+      // Nova data igual ao prazo atual
+      component.novaDataPrazo = '10/12/2025';
+      const addSpy = jest.spyOn(component['messageService'], 'add');
+      await component.enviarNovoPrazo();
+      expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'error',
+        summary: 'Data inválida',
+        detail: expect.stringContaining('posterior ao prazo de devolução atual.')
+      }));
+    });
+
+    it('deve exibir erro se nova data for anterior ao prazo atual', async () => {
+      // Cria um empréstimo com prazo atual em 10/12/2025
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/12/2025'});
+      // Nova data anterior ao prazo atual
+      component.novaDataPrazo = '09/12/2025';
+      const addSpy = jest.spyOn(component['messageService'], 'add');
+      await component.enviarNovoPrazo();
+      expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'error',
+        summary: 'Data inválida',
+        detail: expect.stringContaining('posterior ao prazo de devolução atual.')
       }));
     });
   });

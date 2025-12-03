@@ -407,11 +407,7 @@ describe('SolicitacaoCompraListComponent', () => {
   // onKeyDown() - Keyboard Accessibility (2 tests)
   // ============================================================================
   describe('onKeyDown() - Keyboard Accessibility', () => {
-    let mockEvent: KeyboardEvent;
-
     beforeEach(() => {
-      mockEvent = new KeyboardEvent('keydown');
-      // Mock do viewChild actionsMenu
       const mockActionsMenu = {
         toggle: jest.fn()
       };
@@ -425,19 +421,15 @@ describe('SolicitacaoCompraListComponent', () => {
     it('deve chamar openOptions ao pressionar Enter', () => {
       const solicitacao = SolicitacaoCompraTestFactory.create({id: 1});
       const openOptionsSpy = jest.spyOn(component, 'openOptions');
-
       component.onKeyDown(new KeyboardEvent('keydown', {key: 'Enter'}), solicitacao);
-
-      expect(openOptionsSpy).toHaveBeenCalledWith(mockEvent, solicitacao);
+      expect(openOptionsSpy).toHaveBeenCalledWith(expect.any(KeyboardEvent), solicitacao);
     });
 
     it('deve chamar openOptions ao pressionar Espaço', () => {
       const solicitacao = SolicitacaoCompraTestFactory.create({id: 1});
       const openOptionsSpy = jest.spyOn(component, 'openOptions');
-
       component.onKeyDown(new KeyboardEvent('keydown', {key: ' '}), solicitacao);
-
-      expect(openOptionsSpy).toHaveBeenCalledWith(mockEvent, solicitacao);
+      expect(openOptionsSpy).toHaveBeenCalledWith(expect.any(KeyboardEvent), solicitacao);
     });
   });
 });

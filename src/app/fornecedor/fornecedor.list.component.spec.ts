@@ -401,11 +401,7 @@ describe('FornecedorListComponent', () => {
   // onKeyDown() - Keyboard Accessibility (2 tests)
   // ============================================================================
   describe('onKeyDown() - Keyboard Accessibility', () => {
-    let mockEvent: KeyboardEvent;
-
     beforeEach(() => {
-      mockEvent = new KeyboardEvent('keydown');
-      // Mock do viewChild actionsMenu
       const mockActionsMenu = {
         toggle: jest.fn()
       };
@@ -422,7 +418,7 @@ describe('FornecedorListComponent', () => {
 
       component.onKeyDown(new KeyboardEvent('keydown', {key: 'Enter'}), fornecedor);
 
-      expect(openOptionsSpy).toHaveBeenCalledWith(mockEvent, fornecedor);
+      expect(openOptionsSpy).toHaveBeenCalledWith(expect.any(KeyboardEvent), fornecedor);
     });
 
     it('deve chamar openOptions ao pressionar Espaço', () => {
@@ -431,7 +427,7 @@ describe('FornecedorListComponent', () => {
 
       component.onKeyDown(new KeyboardEvent('keydown', {key: ' '}), fornecedor);
 
-      expect(openOptionsSpy).toHaveBeenCalledWith(mockEvent, fornecedor);
+      expect(openOptionsSpy).toHaveBeenCalledWith(expect.any(KeyboardEvent), fornecedor);
     });
   });
 });
