@@ -395,6 +395,59 @@ describe('EmprestimoListComponent', () => {
   });
 
   // ============================================================================
+  // openOptions() - menu de contexto (linhas 185-200)
+  // ============================================================================
+  describe('openOptions() - menu de contexto (linhas 185-200)', () => {
+    let mockEvent: Event;
+    beforeEach(() => {
+      mockEvent = new Event('click');
+      const mockActionsMenu = { toggle: jest.fn() };
+      Object.defineProperty(component, 'actionsMenu', {
+        value: jest.fn().mockReturnValue(mockActionsMenu),
+        writable: true,
+        configurable: true
+      });
+    });
+
+    it('deve incluir "Novo Prazo" apenas se status for P', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+      const emprestimo = EmprestimoTestFactory.createPendente({id: 1});
+      jest.spyOn(component, 'getStatusEmprestimo').mockReturnValue('P');
+      component.openOptions(mockEvent, emprestimo);
+      const novoPrazoItem = component.contextMenuItems.find(i => i.label === 'Novo Prazo');
+      expect(novoPrazoItem).toBeTruthy();
+      expect(novoPrazoItem?.icon).toBe('pi pi-clock');
+    });
+
+    it('não deve incluir "Novo Prazo" se status não for P', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+      const emprestimo = EmprestimoTestFactory.createFinalizado({id: 2});
+      jest.spyOn(component, 'getStatusEmprestimo').mockReturnValue('F');
+      component.openOptions(mockEvent, emprestimo);
+      const novoPrazoItem = component.contextMenuItems.find(i => i.label === 'Novo Prazo');
+      expect(novoPrazoItem).toBeUndefined();
+    });
+
+    it('deve incluir comandos corretos para Editar e Remover', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+      const emprestimo = EmprestimoTestFactory.createPendente({id: 3});
+      jest.spyOn(component, 'getStatusEmprestimo').mockReturnValue('P');
+      const editSpy = jest.spyOn(component, 'edit');
+      const deleteSpy = jest.spyOn(component, 'delete');
+      component.openOptions(mockEvent, emprestimo);
+      const editItem = component.contextMenuItems.find(i => i.label === 'Editar');
+      const removeItem = component.contextMenuItems.find(i => i.label === 'Remover');
+      expect(editItem).toBeTruthy();
+      expect(removeItem).toBeTruthy();
+      // Executa comandos
+      editItem?.command?.({} as any);
+      removeItem?.command?.({} as any);
+      expect(editSpy).toHaveBeenCalledWith(3);
+      expect(deleteSpy).toHaveBeenCalledWith(3);
+    });
+  });
+
+  // ============================================================================
   // onKeyDown() - Keyboard Accessibility (2 tests)
   // ============================================================================
   describe('onKeyDown() - Keyboard Accessibility', () => {
