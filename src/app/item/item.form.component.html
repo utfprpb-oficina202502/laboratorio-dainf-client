@@ -300,9 +300,23 @@
 
           <!-- Action Buttons -->
           @if (!isAlunoOrProfessor()) {
-            <div class="flex justify-end gap-2 mt-4">
-              <app-cancelar (cancelClick)="back()"></app-cancelar>
-              <app-salvar [typeButton]="'submit'" [disabled]="isLoading()"></app-salvar>
+            <div class="flex justify-between items-center gap-2 mt-4">
+              @if (canShowImagens()) {
+                <p-button
+                  type="button"
+                  severity="info"
+                  [outlined]="true"
+                  icon="pi pi-list"
+                  label="Listar Empréstimos"
+                  pTooltip="Ver empréstimos deste item"
+                  tooltipPosition="top"
+                  (onClick)="openEmprestimosModal()">
+                </p-button>
+              }
+              <div class="flex gap-2">
+                <app-cancelar (cancelClick)="back()"></app-cancelar>
+                <app-salvar [typeButton]="'submit'" [disabled]="isLoading()"></app-salvar>
+              </div>
             </div>
           }
         </form>
@@ -403,5 +417,102 @@
         [src]="getImageUrl(selectedImage()!.nameImage)"
         class="max-w-full max-h-[80vh] object-contain rounded"/>
     </div>
+  }
+</p-dialog>
+
+<!-- Modal de Empréstimos do Item -->
+<p-dialog
+  header="Empréstimos do Item"
+  [modal]="true"
+  [(visible)]="emprestimosModalVisible"
+  [baseZIndex]="Z_INDEX.DIALOG"
+  [appendTo]="'body'"
+  [style]="{'width': '90vw', 'max-width': '1200px'}"
+  [focusOnShow]="false"
+  (onHide)="closeEmprestimosModal()">
+  @if (loadingEmprestimos()) {
+    <div class="flex items-center justify-center p-8">
+      <p-progressBar mode="indeterminate" style="width: 200px;"></p-progressBar>
+    </div>
+  } @else {
+    @if (emprestimos().length === 0) {
+      <div class="flex flex-col items-center justify-center p-8 text-center">
+        <i class="pi pi-info-circle text-4xl text-gray-400 mb-4"></i>
+        <h3 class="text-lg font-semibold text-gray-600 mb-2">Nenhum empréstimo encontrado</h3>
+        <p class="text-gray-500">Este item ainda não foi emprestado.</p>
+      </div>
+    } @else {
+      <p-table
+        [value]="emprestimos()"
+        [rows]="emprestimosRows()"
+        [totalRecords]="emprestimosTotalRecords()"
+        [paginator]="emprestimosTotalRecords() > emprestimosRows()"
+        [rowsPerPageOptions]="[5, 10, 25, 50]"
+        [lazy]="true"
+        [lazyLoadOnInit]="false"
+        (onPage)="onEmprestimosPageChange($event)"
+        (onSort)="onEmprestimosSort($event)"
+        [first]="emprestimosFirst()"
+        [loading]="loadingEmprestimos()"
+        responsiveLayout="scroll"
+        [tableStyleClass]="'compact-table'"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} empréstimos"
+        [showCurrentPageReport]="true">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th scope="col" style="width: 8rem" pSortableColumn="id">Código <p-sortIcon field="id"></p-sortIcon></th>
+            <th scope="col" style="min-width: 12rem" pSortableColumn="nomeUsuarioEmprestimo">Usuário <p-sortIcon field="nomeUsuarioEmprestimo"></p-sortIcon></th>
+            <th scope="col" style="width: 10rem" pSortableColumn="dataEmprestimo">Data Empréstimo <p-sortIcon field="dataEmprestimo"></p-sortIcon></th>
+            <th scope="col" style="width: 10rem" pSortableColumn="prazoDevolucao">Prazo Devolução <p-sortIcon field="prazoDevolucao"></p-sortIcon></th>
+            <th scope="col" style="width: 10rem" pSortableColumn="dataDevolucao">Data Devolução <p-sortIcon field="dataDevolucao"></p-sortIcon></th>
+            <th scope="col" style="width: 8rem" pSortableColumn="status">Status <p-sortIcon field="status"></p-sortIcon></th>
+            <th scope="col" style="width: 10rem">Ações</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-emprestimo>
+          <tr>
+            <td>{{ emprestimo.id }}</td>
+            <td>{{ emprestimo.nomeUsuarioEmprestimo || emprestimo.usuarioEmprestimo?.nome }}</td>
+            <td>{{ emprestimo.dataEmprestimo | date:'dd/MM/yyyy' }}</td>
+            <td>{{ emprestimo.prazoDevolucao | date:'dd/MM/yyyy' }}</td>
+            <td>{{ emprestimo.dataDevolucao ? (emprestimo.dataDevolucao | date:'dd/MM/yyyy') : '-' }}</td>
+            <td>
+              @if (emprestimo.status === 'P') {
+                <p-tag value="Pendente" severity="warn"></p-tag>
+              } @else if (emprestimo.status === 'A') {
+                <p-tag value="Atrasado" severity="danger"></p-tag>
+              } @else if (emprestimo.status === 'F') {
+                <p-tag value="Finalizado" severity="success"></p-tag>
+              } @else {
+                <p-tag value="Desconhecido" severity="secondary"></p-tag>
+              }
+            </td>
+            <td>
+              <p-button
+                type="button"
+                icon="pi pi-eye"
+                severity="info"
+                size="small"
+                pTooltip="Ver detalhes do empréstimo"
+                tooltipPosition="top"
+                [attr.aria-label]="'Ver detalhes do empréstimo ' + emprestimo.id"
+                (onClick)="viewEmprestimo(emprestimo.id)">
+              </p-button>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center p-4">
+              <i class="pi pi-info-circle text-2xl text-gray-400"></i>
+              <p class="mt-2 text-gray-500">Nenhum empréstimo encontrado para este item.</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
   }
 </p-dialog>

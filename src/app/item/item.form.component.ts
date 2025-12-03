@@ -15,10 +15,13 @@ import {Z_INDEX} from '../framework/constants';
 import {
   PrimeReactiveCrudFormComponent
 } from '../framework/component/prime-reactive-crud.form.component';
+import {PageResponse} from '../framework/service/crud.service';
 import {Item} from './item';
 import {ItemService} from './item.service';
 import {Grupo} from '../grupo/grupo';
 import {GrupoService} from '../grupo/grupo.service';
+import {Emprestimo} from '../emprestimo/emprestimo';
+import {EmprestimoService} from '../emprestimo/emprestimo.service';
 import {FileUpload, FileUploadModule} from 'primeng/fileupload';
 import {environment} from '../../environments/environment';
 import {ItemImage} from './itemImage';
@@ -35,7 +38,11 @@ import {InputTextModule} from "primeng/inputtext";
 import {TextareaModule} from "primeng/textarea";
 import {InputNumberModule} from "primeng/inputnumber";
 import {SelectModule} from "primeng/select";
+import {TableModule, TablePageEvent} from "primeng/table";
+import {SortEvent} from "primeng/api";
 import {TooltipModule} from "primeng/tooltip";
+import {ProgressBarModule} from 'primeng/progressbar';
+import {TagModule} from 'primeng/tag';
 
 // Framework
 import {FormFieldComponent} from "../framework/component/form-field.component";
@@ -69,7 +76,10 @@ interface TipoItemOption {
     TextareaModule,
     InputNumberModule,
     SelectModule,
+    TableModule,
     TooltipModule,
+    ProgressBarModule,
+    TagModule,
     // Framework
     FormFieldComponent,
     // Geral
@@ -88,10 +98,12 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   protected override type = Item;
   private readonly fb = inject(FormBuilder);
   private readonly grupoService = inject(GrupoService);
+  private readonly emprestimoService = inject(EmprestimoService);
   // Constants for template
   protected readonly Z_INDEX = Z_INDEX;
   private grupoSubscription?: Subscription;
   private imagesSubscription?: Subscription;
+  private emprestimosSubscription?: Subscription;
   protected readonly logger = inject(LoggerService);
   private readonly confirmationService = inject(ConfirmationService);
 
@@ -108,6 +120,20 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   protected readonly images = signal<ItemImage[]>([]);
   protected readonly selectedImage = signal<ItemImage | null>(null);
   protected readonly loadingImages = signal(false);
+
+  // Empréstimos modal signals
+  protected readonly emprestimosModalVisible = signal(false);
+  protected readonly emprestimos = signal<Emprestimo[]>([]);
+  protected readonly loadingEmprestimos = signal(false);
+  private emprestimosRequestCancelled = false;
+
+  // Pagination state for empréstimos
+  protected readonly emprestimosPage = signal(0);
+  protected readonly emprestimosRows = signal(10);
+  protected readonly emprestimosTotalRecords = signal(0);
+  protected readonly emprestimosFirst = signal(0);
+  protected readonly emprestimosSortField = signal('id');
+  protected readonly emprestimosSortOrder = signal(1); // 1 for ascending, -1 for descending
 
   // Pagination state for Grupo autocomplete
   private readonly GRUPO_PAGE_SIZE = 10;
@@ -374,7 +400,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
    */
   deleteImage(image: ItemImage): void {
     this.confirmationService.confirm({
-      message: 'Tem certeza que deseja remover a imagem? A ação não poderá ser desfeita.',
+      message: 'Tem certeza que deseja remover a imagem? Ação não poderá ser desfeita.',
       header: 'Confirmação',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sim',
@@ -601,10 +627,136 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   }
 
   /**
+   * Abre o modal de empréstimos do item
+   */
+  openEmprestimosModal(): void {
+    const obj = this.object();
+    if (!obj || !('id' in obj) || !obj.id) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Atenção',
+        detail: 'Salve o item primeiro para visualizar os empréstimos.',
+        life: 4000
+      });
+      return;
+    }
+
+    // Reset cancelled flag and open modal with loading state
+    this.emprestimosRequestCancelled = false;
+    this.emprestimosModalVisible.set(true);
+    this.loadingEmprestimos.set(true);
+    this.emprestimos.set([]);
+
+    // Reset pagination state
+    this.emprestimosPage.set(0);
+    this.emprestimosFirst.set(0);
+    this.emprestimosTotalRecords.set(0);
+    this.emprestimosSortField.set('id');
+    this.emprestimosSortOrder.set(1);
+
+    // Start the HTTP request
+    this.loadEmprestimosByItem(obj.id);
+  }
+
+  /**
+   * Carrega empréstimos do item via API
+   * @param itemId ID do item
+   */
+  private loadEmprestimosByItem(itemId: number): void {
+    this.cancelEmprestimosRequest();
+
+    this.emprestimosSubscription = this.emprestimoService
+      .findByItemPaged(itemId, this.emprestimosPage(), this.emprestimosRows(), this.emprestimosSortField(), this.emprestimosSortOrder() === 1)
+      .subscribe({
+        next: (response: PageResponse<Emprestimo>) => {
+          // Only update data if request wasn't cancelled
+          if (!this.emprestimosRequestCancelled) {
+            this.emprestimos.set(response.content);
+            this.emprestimosTotalRecords.set(response.totalElements);
+          }
+          this.loadingEmprestimos.set(false);
+        },
+        error: (error) => {
+          if (!this.emprestimosRequestCancelled) {
+            this.loadingEmprestimos.set(false);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erro',
+              detail: 'Erro ao carregar empréstimos do item.',
+              life: 5000
+            });
+            this.logger.error('Erro ao carregar empréstimos do item', error);
+          }
+        }
+      });
+  }
+
+  /**
+   * Handle pagination changes for empréstimos table
+   * @param event Pagination event from p-table
+   */
+  onEmprestimosPageChange(event: TablePageEvent): void {
+    this.emprestimosFirst.set(event.first ?? 0);
+    this.emprestimosRows.set(event.rows ?? 10);
+    this.emprestimosPage.set(Math.floor((event.first ?? 0) / (event.rows ?? 10)));
+
+    const obj = this.object();
+    if (obj && 'id' in obj && obj.id) {
+      this.loadingEmprestimos.set(true);
+      this.loadEmprestimosByItem(obj.id);
+    }
+  }
+
+  /**
+   * Handle sorting changes for empréstimos table
+   * @param event Sort event from p-table
+   */
+  onEmprestimosSort(event: SortEvent): void {
+    this.emprestimosSortField.set(event.field ?? 'id');
+    this.emprestimosSortOrder.set(event.order ?? 1);
+
+    const obj = this.object();
+    if (obj && 'id' in obj && obj.id) {
+      this.loadingEmprestimos.set(true);
+      this.loadEmprestimosByItem(obj.id);
+    }
+  }
+
+  /**
+   * Navega para o detalhamento do empréstimo
+   * @param emprestimoId ID do empréstimo
+   */
+  viewEmprestimo(emprestimoId: number): void {
+    this.emprestimosModalVisible.set(false);
+    this.router.navigate(['emprestimo/form', emprestimoId]);
+  }
+
+  /**
+   * Fecha o modal de empréstimos
+   */
+  closeEmprestimosModal(): void {
+    this.emprestimosRequestCancelled = true;
+    this.emprestimosModalVisible.set(false);
+    this.emprestimos.set([]);
+    this.loadingEmprestimos.set(false);
+    this.cancelEmprestimosRequest();
+  }
+
+  /**
+   * Cancel ongoing emprestimos request
+   */
+  private cancelEmprestimosRequest(): void {
+    if (this.emprestimosSubscription && !this.emprestimosSubscription.closed) {
+      this.emprestimosSubscription.unsubscribe();
+    }
+  }
+
+  /**
    * Cleanup on component destroy
    */
   ngOnDestroy(): void {
     this.cancelGrupoRequest();
     this.cancelImagesRequest();
+    this.cancelEmprestimosRequest();
   }
 }

@@ -1,9 +1,9 @@
 import {inject, Injectable} from '@angular/core';
-import {CrudService} from '../framework/service/crud.service';
+import {CrudService, PageResponse} from '../framework/service/crud.service';
 import {Emprestimo} from './emprestimo';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {environment} from '../../environments/environment';
-import {Observable} from 'rxjs';
+import {Observable, throwError} from 'rxjs';
 import {EmprestimoFilter} from './emprestimo.filter';
 
 @Injectable()
@@ -29,5 +29,30 @@ export class EmprestimoService extends CrudService<Emprestimo, number> {
 
   changePrazoDevolucao(id: number, novaData: string): Observable<void> {
     return this.http.get<void>(this.getUrl() + `change-prazo-devolucao?id=${id}&novaData=${novaData}`);
+  }
+
+  findByItem(itemId: number): Observable<Emprestimo[]> {
+    return this.http.get<Emprestimo[]>(this.getUrl() + `find-by-item/${itemId}`);
+  }
+
+  /**
+   * Busca empréstimos de um item com paginação
+   * @param itemId ID do item
+   * @param page Número da página (0-indexed)
+   * @param size Tamanho da página
+   * @param order Campo para ordenação (default: 'id')
+   * @param asc Ordem ascendente (default: true)
+   * @returns Observable de PageResponse<Emprestimo>
+   */
+  findByItemPaged(itemId: number, page = 0, size = 10, order = 'id', asc = true): Observable<PageResponse<Emprestimo>> {
+    if (typeof itemId !== 'number' || isNaN(itemId) || itemId <= 0) {
+      return throwError(() => new Error('itemId inválido'));
+    }
+    const params = new HttpParams()
+      .set('page', String(page))
+      .set('size', String(size))
+      .set('order', order)
+      .set('asc', String(asc));
+    return this.http.get<PageResponse<Emprestimo>>(this.getUrl() + `find-by-item/${itemId}`, { params });
   }
 }
