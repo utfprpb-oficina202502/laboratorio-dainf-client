@@ -128,25 +128,25 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
   }
 
   openOptions(event: Event, solicitacaoCompra: SolicitacaoCompra): void {
-    this.contextMenuItems = [];
+    const isAluno = this.isAlunoOrProfessor();
 
-    this.contextMenuItems.push({
-      label: 'Editar',
-      icon: 'pi pi-pencil',
-      command: () => this.edit(solicitacaoCompra.id)
-    });
-    if (this.isAlunoOrProfessor()) {
-      this.contextMenuItems.push({
+    this.contextMenuItems = [
+      {
+        label: 'Editar',
+        icon: 'pi pi-pencil',
+        command: () => this.edit(solicitacaoCompra.id)
+      },
+      ...(isAluno ? [{
         label: 'Visualizar',
         icon: 'pi pi-eye',
         command: () => this.edit(solicitacaoCompra.id)
-      });
-    }
-    this.contextMenuItems.push({
-      label: 'Remover',
-      icon: 'pi pi-trash',
-      command: () => this.delete(solicitacaoCompra.id)
-    });
+      }] : []),
+      {
+        label: 'Remover',
+        icon: 'pi pi-trash',
+        command: () => this.delete(solicitacaoCompra.id)
+      }
+    ];
 
     this.actionsMenu().toggle(event);
   }

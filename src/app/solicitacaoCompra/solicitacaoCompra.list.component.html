@@ -93,6 +93,7 @@
                 @case ('actions') {
                   <app-action-buttons
                     (click)="$event.stopPropagation()"
+                    (keydown)="$event.stopPropagation()"
                     (delete)="delete(rowData.id)"
                     (view)="edit(rowData.id)"
                     [deleteAriaLabel]="'Remover solicitação ' + rowData.id"
@@ -113,6 +114,7 @@
                       type="button"
                       class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
                       (click)="openOptions($event, rowData); $event.stopPropagation()"
+                      (keydown)="$event.stopPropagation()"
                       [attr.aria-label]="column.header + ': ' + rowData[column.field]">
                       {{ rowData[column.field] }}
                     </button>
@@ -126,6 +128,7 @@
                       type="button"
                       class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
                       (click)="openOptions($event, rowData); $event.stopPropagation()"
+                      (keydown)="$event.stopPropagation()"
                       [attr.aria-label]="column.header + ': ' + rowData[column.field]">
                       {{ rowData[column.field] }}
                     </button>
@@ -139,6 +142,7 @@
                       type="button"
                       class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
                       (click)="openOptions($event, rowData); $event.stopPropagation()"
+                      (keydown)="$event.stopPropagation()"
                       [attr.aria-label]="column.header + ': ' + rowData[column.field]">
                       {{ rowData[column.field] }}
                     </button>
@@ -152,6 +156,7 @@
                       type="button"
                       class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
                       (click)="openOptions($event, rowData); $event.stopPropagation()"
+                      (keydown)="$event.stopPropagation()"
                       [attr.aria-label]="column.header + ': ' + (rowData.usuarioNome || 'Não informado')">
                       {{ rowData.usuarioNome || 'Não informado' }}
                     </button>
@@ -165,6 +170,7 @@
                       type="button"
                       class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
                       (click)="openOptions($event, rowData); $event.stopPropagation()"
+                      (keydown)="$event.stopPropagation()"
                       [attr.aria-label]="column.header + ': ' + rowData[column.field]">
                       {{ rowData[column.field] }}
                     </button>

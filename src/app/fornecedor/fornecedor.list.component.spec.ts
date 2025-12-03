@@ -344,4 +344,94 @@ describe('FornecedorListComponent', () => {
       expect(column?.toggleable).toBe(false);
     });
   });
+
+  // ============================================================================
+  // openOptions() - Menu Context (3 tests)
+  // ============================================================================
+  describe('openOptions() - Menu Context', () => {
+    let mockEvent: Event;
+
+    beforeEach(() => {
+      mockEvent = new Event('click');
+      // Mock do viewChild actionsMenu
+      const mockActionsMenu = {
+        toggle: jest.fn()
+      };
+      Object.defineProperty(component, 'actionsMenu', {
+        value: jest.fn().mockReturnValue(mockActionsMenu),
+        writable: true,
+        configurable: true
+      });
+    });
+
+    it('deve configurar menu de contexto com opções de editar e remover', () => {
+      const fornecedor = FornecedorTestFactory.create({id: 1});
+
+      component.openOptions(mockEvent, fornecedor);
+
+      expect(component.contextMenuItems.length).toBe(2);
+      expect(component.contextMenuItems[0].label).toBe('Editar');
+      expect(component.contextMenuItems[0].icon).toBe('pi pi-pencil');
+      expect(component.contextMenuItems[1].label).toBe('Remover');
+      expect(component.contextMenuItems[1].icon).toBe('pi pi-trash');
+    });
+
+    it('deve chamar comando de editar com id correto', () => {
+      const fornecedor = FornecedorTestFactory.create({id: 123});
+      const editSpy = jest.spyOn(component, 'edit');
+
+      component.openOptions(mockEvent, fornecedor);
+      component.contextMenuItems[0].command!({} as any);
+
+      expect(editSpy).toHaveBeenCalledWith(123);
+    });
+
+    it('deve chamar comando de remover com id correto', () => {
+      const fornecedor = FornecedorTestFactory.create({id: 456});
+      const deleteSpy = jest.spyOn(component, 'delete');
+
+      component.openOptions(mockEvent, fornecedor);
+      component.contextMenuItems[1].command!({} as any);
+
+      expect(deleteSpy).toHaveBeenCalledWith(456);
+    });
+  });
+
+  // ============================================================================
+  // onKeyDown() - Keyboard Accessibility (2 tests)
+  // ============================================================================
+  describe('onKeyDown() - Keyboard Accessibility', () => {
+    let mockEvent: KeyboardEvent;
+
+    beforeEach(() => {
+      mockEvent = new KeyboardEvent('keydown');
+      // Mock do viewChild actionsMenu
+      const mockActionsMenu = {
+        toggle: jest.fn()
+      };
+      Object.defineProperty(component, 'actionsMenu', {
+        value: jest.fn().mockReturnValue(mockActionsMenu),
+        writable: true,
+        configurable: true
+      });
+    });
+
+    it('deve chamar openOptions ao pressionar Enter', () => {
+      const fornecedor = FornecedorTestFactory.create({id: 1});
+      const openOptionsSpy = jest.spyOn(component, 'openOptions');
+
+      component.onKeyDown(new KeyboardEvent('keydown', {key: 'Enter'}), fornecedor);
+
+      expect(openOptionsSpy).toHaveBeenCalledWith(mockEvent, fornecedor);
+    });
+
+    it('deve chamar openOptions ao pressionar Espaço', () => {
+      const fornecedor = FornecedorTestFactory.create({id: 1});
+      const openOptionsSpy = jest.spyOn(component, 'openOptions');
+
+      component.onKeyDown(new KeyboardEvent('keydown', {key: ' '}), fornecedor);
+
+      expect(openOptionsSpy).toHaveBeenCalledWith(mockEvent, fornecedor);
+    });
+  });
 });

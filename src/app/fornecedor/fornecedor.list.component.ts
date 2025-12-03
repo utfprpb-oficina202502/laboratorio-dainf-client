@@ -100,18 +100,18 @@ export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, 
   }
 
   openOptions(event: Event, fornecedor: Fornecedor): void {
-    this.contextMenuItems = [];
-
-    this.contextMenuItems.push({
-      label: 'Editar',
-      icon: 'pi pi-pencil',
-      command: () => this.edit(fornecedor.id)
-    });
-    this.contextMenuItems.push({
-      label: 'Remover',
-      icon: 'pi pi-trash',
-      command: () => this.delete(fornecedor.id)
-    });
+    this.contextMenuItems = [
+      {
+        label: 'Editar',
+        icon: 'pi pi-pencil',
+        command: () => this.edit(fornecedor.id)
+      },
+      {
+        label: 'Remover',
+        icon: 'pi pi-trash',
+        command: () => this.delete(fornecedor.id)
+      }
+    ];
 
     this.actionsMenu().toggle(event);
   }

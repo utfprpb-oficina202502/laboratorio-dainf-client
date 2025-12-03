@@ -182,6 +182,7 @@
                         </p-button>
                         <app-action-buttons
                           (click)="$event.stopPropagation()"
+                          (keydown)="onKeyDown($event, row)"
                           (delete)="delete(row.id)"
                           (edit)="edit(row.id)"
                           [deleteAriaLabel]="'Remover empréstimo ' + row.id"

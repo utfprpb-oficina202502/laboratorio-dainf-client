@@ -93,6 +93,7 @@
                 @case ('actions') {
                   <app-action-buttons
                     (click)="$event.stopPropagation()"
+                    (keydown)="$event.stopPropagation()"
                     [showEdit]="canEdit()"
                     [showDelete]="canDelete()"
                     [editTooltip]="'Editar fornecedor'"
@@ -109,6 +110,7 @@
                       type="button"
                       class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
                       (click)="openOptions($event, rowData); $event.stopPropagation()"
+                      (keydown)="$event.stopPropagation()"
                       [attr.aria-label]="column.header + ': ' + rowData[column.field]">
                       {{ rowData[column.field] }}
                     </button>
@@ -124,6 +126,7 @@
                       type="button"
                       class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
                       (click)="openOptions($event, rowData); $event.stopPropagation()"
+                      (keydown)="$event.stopPropagation()"
                       [attr.aria-label]="column.header + ': ' + rowData[column.field]">
                       {{ rowData[column.field] }}
                     </button>
@@ -139,6 +142,7 @@
                       type="button"
                       class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
                       (click)="openOptions($event, rowData); $event.stopPropagation()"
+                      (keydown)="$event.stopPropagation()"
                       [attr.aria-label]="column.header + ': ' + rowData[column.field]">
                       {{ rowData[column.field] }}
                     </button>
@@ -154,6 +158,7 @@
                       type="button"
                       class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
                       (click)="openOptions($event, rowData); $event.stopPropagation()"
+                      (keydown)="$event.stopPropagation()"
                       [attr.aria-label]="column.header + ': ' + (rowData.cnpj | cpfCnpj)">
                       {{ rowData.cnpj | cpfCnpj }}
                     </button>
@@ -169,6 +174,7 @@
                       type="button"
                       class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
                       (click)="openOptions($event, rowData); $event.stopPropagation()"
+                      (keydown)="$event.stopPropagation()"
                       [attr.aria-label]="column.header + ': ' + rowData[column.field]">
                       {{ rowData[column.field] }}
                     </button>

@@ -395,6 +395,44 @@ describe('EmprestimoListComponent', () => {
   });
 
   // ============================================================================
+  // onKeyDown() - Keyboard Accessibility (2 tests)
+  // ============================================================================
+  describe('onKeyDown() - Keyboard Accessibility', () => {
+    let mockEvent: KeyboardEvent;
+
+    beforeEach(() => {
+      mockEvent = new KeyboardEvent('keydown');
+      // Mock do viewChild actionsMenu
+      const mockActionsMenu = {
+        toggle: jest.fn()
+      };
+      Object.defineProperty(component, 'actionsMenu', {
+        value: jest.fn().mockReturnValue(mockActionsMenu),
+        writable: true,
+        configurable: true
+      });
+    });
+
+    it('deve chamar openOptions ao pressionar Enter', () => {
+      const emprestimo = EmprestimoTestFactory.createPendente({id: 1});
+      const openOptionsSpy = jest.spyOn(component, 'openOptions');
+
+      component.onKeyDown(new KeyboardEvent('keydown', {key: 'Enter'}), emprestimo);
+
+      expect(openOptionsSpy).toHaveBeenCalledWith(mockEvent, emprestimo);
+    });
+
+    it('deve chamar openOptions ao pressionar Espaço', () => {
+      const emprestimo = EmprestimoTestFactory.createPendente({id: 1});
+      const openOptionsSpy = jest.spyOn(component, 'openOptions');
+
+      component.onKeyDown(new KeyboardEvent('keydown', {key: ' '}), emprestimo);
+
+      expect(openOptionsSpy).toHaveBeenCalledWith(mockEvent, emprestimo);
+    });
+  });
+
+  // ============================================================================
   // Filter Operations (8 tests)
   // ============================================================================
   describe('Filter Operations', () => {
