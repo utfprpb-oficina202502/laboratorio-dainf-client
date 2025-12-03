@@ -133,7 +133,7 @@
                   [style.width]="column.width"
                   [style.min-width]="column.minWidth"
                   [attr.headers]="'col-' + column.field"
-                  (click)="openOptions($event, row.id)"
+                  (click)="openOptions($event, row)"
                   class="cursor-pointer">
                   @switch (column.field) {
                     @case ('usuarioEmprestimoNome') {

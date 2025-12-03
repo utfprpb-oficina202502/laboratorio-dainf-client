@@ -172,11 +172,11 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     return this.service;
   }
 
-  openOptions(event: Event, id: number): void {
-    this.selectedEmprestimoId = id;
+  openOptions(event: Event, row: any): void {
+    this.selectedEmprestimoId = row.id;
     const isAlunoOrProfessor = this.isAlunoOrProfessor();
     this.contextMenuItems = [];
-    const emprestimo = this.objects.find(e => e.id === id);
+    const emprestimo = this.objects.find(e => e.id === row.id);
     const status = emprestimo ? this.getStatusEmprestimo(emprestimo) : undefined;
 
     // Opção Ver Itens - disponível para todos
@@ -192,7 +192,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
       this.contextMenuItems.push({
         label: 'Devolução',
         icon: 'pi pi-undo',
-        command: () => this.openDevolucao(id)
+        command: () => this.openDevolucao(row.id)
       });
       if (emprestimo && status === 'P') {
         this.contextMenuItems.push({
@@ -205,13 +205,13 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     this.contextMenuItems.push({
       label: isAlunoOrProfessor ? 'Visualizar' : 'Editar',
       icon: isAlunoOrProfessor ? 'pi pi-eye' : 'pi pi-pencil',
-      command: () => this.edit(id)
+      command: () => this.edit(row.id)
     });
     if (!isAlunoOrProfessor) {
       this.contextMenuItems.push({
         label: 'Remover',
         icon: 'pi pi-trash',
-        command: () => this.delete(id)
+        command: () => this.delete(row.id)
       });
     }
     this.actionsMenu().toggle(event);

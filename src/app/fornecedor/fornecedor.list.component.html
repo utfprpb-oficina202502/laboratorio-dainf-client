@@ -85,7 +85,9 @@
             <td
               [style.text-align]="column.align || 'left'"
               [style.width]="column.width"
-              [style.min-width]="column.minWidth">
+              [style.min-width]="column.minWidth"
+              (click)="openOptions($event, rowData)"
+              class="cursor-pointer">
               @switch (column.field) {
                 @case ('actions') {
                   <app-action-buttons
