@@ -131,6 +131,53 @@ describe('ItemListComponent', () => {
   });
 
   // ============================================================================
+  // Redirecionamento para Catálogo (3 tests)
+  // ============================================================================
+  describe('Redirecionamento para Catálogo', () => {
+    let navigateSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      navigateSpy = jest.spyOn(component['router'], 'navigate').mockImplementation(() => Promise.resolve(true));
+    });
+
+    it('deve redirecionar alunos para o catálogo no ngOnInit', () => {
+      Object.defineProperty(component, 'isAlunoOrProfessor', {
+        value: () => true,
+        writable: true,
+        configurable: true
+      });
+
+      component.ngOnInit();
+
+      expect(navigateSpy).toHaveBeenCalledWith(['/item/catalogo'], {replaceUrl: true});
+    });
+
+    it('deve redirecionar professores para o catálogo no ngOnInit', () => {
+      Object.defineProperty(component, 'isAlunoOrProfessor', {
+        value: () => true,
+        writable: true,
+        configurable: true
+      });
+
+      component.ngOnInit();
+
+      expect(navigateSpy).toHaveBeenCalledWith(['/item/catalogo'], {replaceUrl: true});
+    });
+
+    it('não deve redirecionar admin/laboratorista para o catálogo', () => {
+      Object.defineProperty(component, 'isAlunoOrProfessor', {
+        value: () => false,
+        writable: true,
+        configurable: true
+      });
+
+      component.ngOnInit();
+
+      expect(navigateSpy).not.toHaveBeenCalledWith(['/item/catalogo'], expect.anything());
+    });
+  });
+
+  // ============================================================================
   // openOptions() - Custom Permission Logic (15 tests)
   // ============================================================================
   describe('openOptions() - Custom Permission Logic', () => {

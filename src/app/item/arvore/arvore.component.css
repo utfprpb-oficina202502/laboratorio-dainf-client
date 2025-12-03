@@ -1,0 +1,140 @@
+/* Estilos do componente de árvore de itens */
+
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+/* Estiliza a árvore */
+:host ::ng-deep .tree-custom.p-tree {
+  border: 1px solid var(--p-surface-200);
+  border-radius: 8px;
+  padding: 0;
+}
+
+:host ::ng-deep .tree-custom .p-tree-root-children {
+  padding: 0.5rem;
+}
+
+/* Nós da árvore */
+:host ::ng-deep .tree-custom .p-tree-node {
+  padding: 0;
+}
+
+:host ::ng-deep .tree-custom .p-tree-node-content {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+:host ::ng-deep .tree-custom .p-tree-node-content:hover {
+  background-color: var(--p-surface-100);
+}
+
+:host ::ng-deep .tree-custom .p-tree-node-content:focus {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 2px;
+}
+
+/* Toggler do nó */
+:host ::ng-deep .tree-custom .p-tree-node-toggler {
+  margin-right: 0.5rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+}
+
+:host ::ng-deep .tree-custom .p-tree-node-toggler:hover {
+  background-color: var(--p-surface-200);
+}
+
+/* Remove ícones padrão para usar customizados */
+:host ::ng-deep .tree-custom .p-tree-node-icon {
+  display: none;
+}
+
+/* Estilos para nós de grupo */
+.grupo-node {
+  width: 100%;
+}
+
+.grupo-icon {
+  transition: transform 0.2s;
+}
+
+:host ::ng-deep .p-tree-node-expanded > .p-tree-node-content .grupo-icon {
+  transform: scale(1.05);
+}
+
+:host ::ng-deep .p-tree-node-expanded > .p-tree-node-content .grupo-icon i {
+  color: var(--p-primary-600);
+}
+
+/* Estilos para nós de item */
+.item-node {
+  width: 100%;
+  border-left: 3px solid transparent;
+  padding-left: 0.5rem;
+  margin-left: -0.5rem;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.item-node:hover {
+  border-left-color: var(--p-primary-color);
+  background-color: var(--p-surface-50);
+}
+
+.item-thumbnail img {
+  transition: transform 0.2s;
+}
+
+.item-thumbnail:hover img {
+  transform: scale(1.05);
+}
+
+/* Indentação dos filhos */
+:host ::ng-deep .tree-custom .p-tree-node-children {
+  padding-left: 1.5rem;
+}
+
+/* Separador visual entre grupos */
+:host ::ng-deep .tree-custom > .p-tree-root-children > .p-tree-node:not(:last-child) {
+  border-bottom: 1px solid var(--p-surface-200);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* FAB do carrinho em mobile */
+.fab-cart {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+:host ::ng-deep .fab-cart .p-button {
+  width: 56px;
+  height: 56px;
+}
+
+/* Estado de loading no nó */
+:host ::ng-deep .tree-custom .p-tree-node-content:has(.pi-spinner) {
+  opacity: 0.7;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  :host ::ng-deep .tree-custom .p-tree-node-content {
+    padding: 0.5rem 0.75rem;
+  }
+
+  :host ::ng-deep .tree-custom .p-tree-node-children {
+    padding-left: 1rem;
+  }
+
+  .item-node {
+    gap: 0.5rem;
+  }
+
+  .item-thumbnail img {
+    width: 40px;
+    height: 40px;
+  }
+}

@@ -16,7 +16,7 @@ import {
 } from '@angular/core';
 import {Router} from '@angular/router';
 import {CrudService, PageResponse} from '../service/crud.service';
-import {ConfirmationService, MessageService, MenuItem, SortEvent} from 'primeng/api';
+import {ConfirmationService, MenuItem, MessageService, SortEvent} from 'primeng/api';
 import {Table, TablePageEvent, TableRowCollapseEvent, TableRowExpandEvent} from 'primeng/table';
 import {MultiSelect} from 'primeng/multiselect';
 import {Popover} from 'primeng/popover';
@@ -596,7 +596,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
     return this.tableColumnManager.getFilterableColumns(this.tableConfig.columns);
   }
 
-  edit(id: number) {
+  edit(id: ID) {
     this.router.navigate([this.urlForm, id]);
   }
 
@@ -635,12 +635,18 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
    * @param event The click event that triggered the menu
    * @param itemOrId The data item or ID for which to show actions
    */
-  openOptions(event: Event, itemOrId: T | any): void {
+  openOptions(event: Event, itemOrId: T): void {
     const isReadOnly = this.isReadOnly() || this.isAlunoOrProfessor();
 
     this.contextMenuItems = [];
 
-    if (!isReadOnly) {
+    if (isReadOnly) {
+      this.contextMenuItems.push({
+        label: 'Visualizar',
+        icon: 'pi pi-eye',
+        command: () => this.edit(this.getItemId(itemOrId))
+      });
+    } else {
       if (this.canEdit()) {
         this.contextMenuItems.push({
           label: 'Editar',
@@ -656,12 +662,6 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
           command: () => this.delete(this.getItemId(itemOrId))
         });
       }
-    } else {
-      this.contextMenuItems.push({
-        label: 'Visualizar',
-        icon: 'pi pi-eye',
-        command: () => this.edit(this.getItemId(itemOrId))
-      });
     }
 
     this.actionsMenu()?.toggle(event);
@@ -675,8 +675,8 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
    * @param item The data item
    * @returns The ID of the item
    */
-  protected getItemId(item: T): any {
-    return (item as any).id;
+  protected getItemId(item: T): ID {
+    return (item as Record<string, ID>)['id'];
   }
 
 

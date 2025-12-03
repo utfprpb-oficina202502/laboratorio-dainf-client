@@ -1,0 +1,123 @@
+<!-- Desktop: Drawer lateral -->
+@if (!breakpointService.isMobile()) {
+  <p-drawer
+    [(visible)]="visible"
+    [closeOnEscape]="true"
+    [modal]="true"
+    [showCloseIcon]="true"
+    [style]="{width: '400px'}"
+    position="right"
+    styleClass="cart-drawer">
+    <ng-template pTemplate="header">
+      <div class="flex items-center gap-2">
+        <i class="pi pi-shopping-cart text-xl"></i>
+        <span class="font-semibold text-lg">Meu Carrinho</span>
+      </div>
+    </ng-template>
+
+    <ng-container *ngTemplateOutlet="cartContent"></ng-container>
+
+    <ng-template pTemplate="footer">
+      <ng-container *ngTemplateOutlet="cartFooter"></ng-container>
+    </ng-template>
+  </p-drawer>
+}
+
+<!-- Mobile: Dialog fullscreen -->
+@if (breakpointService.isMobile()) {
+  <p-dialog
+    [(visible)]="visible"
+    [closable]="true"
+    [closeOnEscape]="true"
+    [contentStyle]="{padding: '0', overflow: 'auto'}"
+    [draggable]="false"
+    [focusOnShow]="false"
+    [modal]="true"
+    [resizable]="false"
+    [showHeader]="true"
+    [style]="{width: '100vw', height: '100vh', maxHeight: '100vh'}"
+    styleClass="cart-dialog-mobile">
+    <ng-template pTemplate="header">
+      <div class="flex items-center gap-2">
+        <i class="pi pi-shopping-cart text-xl"></i>
+        <span class="font-semibold text-lg">Meu Carrinho</span>
+      </div>
+    </ng-template>
+
+    <ng-container *ngTemplateOutlet="cartContent"></ng-container>
+
+    <ng-template pTemplate="footer">
+      <ng-container *ngTemplateOutlet="cartFooter"></ng-container>
+    </ng-template>
+  </p-dialog>
+}
+
+<!-- Template reutilizável: Conteúdo do carrinho -->
+<ng-template #cartContent>
+  <div class="flex flex-col h-full">
+    @if (cartService.isEmpty()) {
+      <!-- Estado vazio -->
+      <div class="flex flex-col items-center justify-center py-12 px-4 text-center">
+        <i class="pi pi-shopping-cart text-6xl text-gray-300 mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-600 mb-2">Carrinho vazio</h3>
+        <p class="text-sm text-gray-500 mb-4">
+          Adicione itens do catálogo para criar uma reserva.
+        </p>
+        <p-button
+          (onClick)="goToCatalog()"
+          [outlined]="true"
+          icon="pi pi-search"
+          label="Explorar Catálogo">
+        </p-button>
+      </div>
+    } @else {
+      <!-- Lista de itens -->
+      <div class="flex-1 overflow-auto">
+        @for (cartItem of cartService.items(); track cartItem.item.id) {
+          <app-cart-item
+            (quantityChange)="onQuantityChange($event)"
+            (remove)="onRemove($event)"
+            [cartItem]="cartItem">
+          </app-cart-item>
+        }
+      </div>
+
+      <!-- Resumo -->
+      <div class="p-4 border-t border-gray-200 bg-gray-50">
+        <div class="flex justify-between items-center text-sm">
+          <span class="text-gray-600">Total de itens:</span>
+          <span class="font-semibold">{{ cartService.totalItems() }}</span>
+        </div>
+        <div class="flex justify-between items-center text-sm mt-1">
+          <span class="text-gray-600">Total de unidades:</span>
+          <span class="font-semibold">{{ cartService.totalUnits() }}</span>
+        </div>
+      </div>
+    }
+  </div>
+</ng-template>
+
+<!-- Template reutilizável: Footer do carrinho -->
+<ng-template #cartFooter>
+  @if (cartService.hasItems()) {
+    <div class="flex gap-2 w-full">
+      <p-button
+        (onClick)="clearCart()"
+        [outlined]="true"
+        class="flex-1"
+        icon="pi pi-trash"
+        label="Limpar"
+        pTooltip="Remover todos os itens"
+        severity="secondary"
+        tooltipPosition="top">
+      </p-button>
+      <p-button
+        (onClick)="goToReserva()"
+        class="flex-1"
+        icon="pi pi-arrow-right"
+        iconPos="right"
+        label="Ir para Reserva">
+      </p-button>
+    </div>
+  }
+</ng-template>

@@ -11,7 +11,7 @@ import {
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
-import {Z_INDEX} from '../framework/constants';
+import {NAVIGATION, Z_INDEX} from '../framework/constants';
 import {
   PrimeReactiveCrudFormComponent
 } from '../framework/component/prime-reactive-crud.form.component';
@@ -26,7 +26,9 @@ import {FileUpload, FileUploadModule} from 'primeng/fileupload';
 import {environment} from '../../environments/environment';
 import {ItemImage} from './itemImage';
 import {LoggerService} from '../framework/services/logger.service';
-import {ConfirmationService} from 'primeng/api';
+import {ConfirmationService, SortEvent} from 'primeng/api';
+import {CartService} from '../framework/services/cart.service';
+import {ItemAvailabilityUtil} from '../framework/utils/item-availability.util';
 
 // PrimeNG
 import {AutoCompleteCompleteEvent, AutoCompleteModule} from "primeng/autocomplete";
@@ -39,7 +41,6 @@ import {TextareaModule} from "primeng/textarea";
 import {InputNumberModule} from "primeng/inputnumber";
 import {SelectModule} from "primeng/select";
 import {TableModule, TablePageEvent} from "primeng/table";
-import {SortEvent} from "primeng/api";
 import {TooltipModule} from "primeng/tooltip";
 import {ProgressBarModule} from 'primeng/progressbar';
 import {TagModule} from 'primeng/tag';
@@ -106,6 +107,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   private emprestimosSubscription?: Subscription;
   protected readonly logger = inject(LoggerService);
   private readonly confirmationService = inject(ConfirmationService);
+  protected readonly cartService = inject(CartService);
 
   // Signals for component state
   protected readonly grupoList = signal<Grupo[]>([]);
@@ -140,6 +142,8 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   private grupoPage = 0;
   private grupoQuery = '';
 
+  // Cart signals
+  protected readonly cartQuantity = signal(1);
 
   // Computed signals
   protected readonly canShowImagens = computed(() => {
@@ -156,6 +160,52 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     const patrimonio = formGroup?.get('patrimonio')?.value;
     const tipoItem = formGroup?.get('tipoItem')?.value;
     return (patrimonio !== null && patrimonio !== undefined && patrimonio !== '') || tipoItem === 'P';
+  });
+
+  /**
+   * Disponibilidade do item para empréstimo.
+   */
+  protected readonly disponibilidade = computed(() => {
+    return ItemAvailabilityUtil.getDisponibilidade(this.object());
+  });
+
+  /**
+   * Verifica se o item está no carrinho.
+   */
+  protected readonly isInCart = computed(() => {
+    const obj = this.object();
+    if (!obj?.id) return false;
+    return this.cartService.isInCart(obj.id);
+  });
+
+  /**
+   * Quantidade do item já no carrinho.
+   */
+  protected readonly inCartQuantity = computed(() => {
+    const obj = this.object();
+    if (!obj?.id) return 0;
+    return this.cartService.getItemQuantity(obj.id);
+  });
+
+  /**
+   * Máximo que pode ser adicionado ao carrinho.
+   */
+  protected readonly maxToAdd = computed(() => {
+    const disponivel = this.disponibilidade();
+    const inCart = this.inCartQuantity();
+    return Math.max(0, disponivel - inCart);
+  });
+
+  /**
+   * Verifica se há disponibilidade para adicionar ao carrinho.
+   */
+  protected readonly hasAvailability = computed(() => this.maxToAdd() > 0);
+
+  /**
+   * Severity do badge de disponibilidade.
+   */
+  protected readonly availabilitySeverity = computed(() => {
+    return ItemAvailabilityUtil.getAvailabilitySeverity(this.object());
   });
 
   private callback?: () => void;
@@ -751,6 +801,103 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     }
   }
 
+  // ===== Métodos do Carrinho =====
+  /**
+   * Controle de debounce para navegação ao carrinho.
+   */
+  private navigatingToReserva = false;
+  /**
+   * Timer ID para cleanup do debounce de navegação.
+   */
+  private navigationTimerId: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * Adiciona o item ao carrinho com a quantidade selecionada.
+   */
+  addToCart(): void {
+    const obj = this.object();
+    if (!obj?.id) return;
+
+    const qtde = this.cartQuantity();
+    const maxToAdd = this.maxToAdd();
+
+    if (qtde > 0 && qtde <= maxToAdd) {
+      const success = this.cartService.addItem(obj, qtde);
+      if (success) {
+        this.cartQuantity.set(1);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Adicionado',
+          detail: `${qtde} ${qtde === 1 ? 'unidade adicionada' : 'unidades adicionadas'} ao carrinho`,
+          life: 3000
+        });
+      } else {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Não foi possível adicionar ao carrinho. Verifique a disponibilidade.',
+          life: 5000
+        });
+      }
+    }
+  }
+
+  /**
+   * Remove o item do carrinho.
+   */
+  removeFromCart(): void {
+    const obj = this.object();
+    if (!obj?.id) return;
+
+    this.cartService.removeItem(obj.id);
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Removido',
+      detail: 'Item removido do carrinho',
+      life: 3000
+    });
+  }
+
+  /**
+   * Incrementa a quantidade para adicionar ao carrinho.
+   */
+  incrementCartQuantity(): void {
+    const current = this.cartQuantity();
+    const max = this.maxToAdd();
+    if (current < max) {
+      this.cartQuantity.set(current + 1);
+    }
+  }
+
+  /**
+   * Decrementa a quantidade para adicionar ao carrinho.
+   */
+  decrementCartQuantity(): void {
+    const current = this.cartQuantity();
+    if (current > 1) {
+      this.cartQuantity.set(current - 1);
+    }
+  }
+
+  /**
+   * Navega para a tela de reserva com os itens do carrinho.
+   * Inclui proteção contra cliques múltiplos (debounce).
+   */
+  goToReserva(): void {
+    if (this.navigatingToReserva) return;
+
+    this.navigatingToReserva = true;
+    this.router.navigate(['/reserva/new'], {
+      state: {cartItems: this.cartService.items()}
+    });
+
+    // Reset após navegação para permitir uso futuro (caso volte)
+    this.navigationTimerId = setTimeout(() => {
+      this.navigatingToReserva = false;
+      this.navigationTimerId = null;
+    }, NAVIGATION.DEBOUNCE_MS);
+  }
+
   /**
    * Cleanup on component destroy
    */
@@ -758,5 +905,8 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
     this.cancelGrupoRequest();
     this.cancelImagesRequest();
     this.cancelEmprestimosRequest();
+    if (this.navigationTimerId) {
+      clearTimeout(this.navigationTimerId);
+    }
   }
 }

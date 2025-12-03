@@ -76,10 +76,21 @@ export const routes: Routes = [
     canActivate: [LoginService],
     loadComponent: () => import('./item/item.list.component').then(m => m.ItemListComponent)
   },
+  {
+    path: 'item/catalogo',
+    canActivate: [LoginService],
+    loadComponent: () => import('./item/catalogo/catalogo.component').then(m => m.CatalogoComponent)
+  },
+  {
+    path: 'item/arvore',
+    canActivate: [LoginService],
+    loadComponent: () => import('./item/arvore/arvore.component').then(m => m.ArvoreComponent)
+  },
   {path: 'item/form', canActivate: [LoginService], component: ItemFormComponent},
   {path: 'item/form/:id', canActivate: [LoginService], component: ItemFormComponent},
   {path: 'item/form/copy/:id', canActivate: [LoginService], component: ItemFormComponent},
   {path: 'item/view', canActivate: [LoginService], component: ItemViewComponent},
+  {path: 'item/view/:id', canActivate: [LoginService], component: ItemViewComponent},
 
   // Compra
   {
@@ -124,6 +135,7 @@ export const routes: Routes = [
     canActivate: [LoginService],
     loadComponent: () => import('./reserva/reserva.list.component').then(m => m.ReservaListComponent)
   },
+  {path: 'reserva/new', canActivate: [LoginService], component: ReservaFormComponent},
   {path: 'reserva/form', canActivate: [LoginService], component: ReservaFormComponent},
   {path: 'reserva/form/:id', canActivate: [LoginService], component: ReservaFormComponent},
 

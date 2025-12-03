@@ -1008,7 +1008,8 @@ describe('EmprestimoListComponent', () => {
       const actionsColumn = component['tableConfig'].columns?.find(col => col.field === 'actions');
       if (actionsColumn) {
         actionsColumn.visible = false;
-        const markSpy = jest.spyOn(component['cdr']!, 'markForCheck');
+        const cdr = component['cdr'];
+        const markSpy = cdr ? jest.spyOn(cdr, 'markForCheck') : jest.fn();
         // Simula execução do effect manualmente
         if (actionsColumn.visible === false) {
           actionsColumn.visible = true;

@@ -172,9 +172,9 @@
                 [attr.headers]="'col-' + column.field"
                 [attr.role]="column.field !== 'acoes' ? 'button' : null"
                 [attr.tabindex]="column.field !== 'acoes' ? '0' : null"
-                (click)="column.field !== 'acoes' ? openOptions($event, row.id) : null"
-                (keydown.enter)="column.field !== 'acoes' ? openOptions($event, row.id) : null"
-                (keydown.space)="column.field !== 'acoes' && $event.preventDefault(); column.field !== 'acoes' ? openOptions($event, row.id) : null"
+                (click)="column.field !== 'acoes' ? openOptions($event, row) : null"
+                (keydown.enter)="column.field !== 'acoes' ? openOptions($event, row) : null"
+                (keydown.space)="column.field !== 'acoes' && $event.preventDefault(); column.field !== 'acoes' ? openOptions($event, row) : null"
                 [class.cursor-pointer]="column.field !== 'acoes'">
                 @switch (column.field) {
                   @case ('status') {
@@ -198,7 +198,7 @@
                           [rounded]="true"
                           pTooltip="Menu de ações"
                           tooltipPosition="top"
-                          (onClick)="openOptions($event, row.id); $event.stopPropagation()"
+                          (onClick)="openOptions($event, row); $event.stopPropagation()"
                           [attr.aria-label]="'Abrir menu de ações ' + row.id">
                         </p-button>
                       } @else if (row.status?.toUpperCase() === 'PENDING' || row.status?.toUpperCase() === 'PENDENTE') {

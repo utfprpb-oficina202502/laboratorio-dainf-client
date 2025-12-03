@@ -1,0 +1,71 @@
+<div class="flex items-center gap-3 p-3 border-b border-gray-200 last:border-b-0">
+  <!-- Imagem do item -->
+  <div class="relative w-16 h-12 flex-shrink-0">
+    <img
+      [alt]="cartItem().item.nome"
+      [ngSrc]="imageUrl()"
+      class="object-cover rounded"
+      fill
+      loading="lazy"
+    />
+  </div>
+
+  <!-- Informações do item -->
+  <div class="flex-1 min-w-0">
+    <h4 [title]="cartItem().item.nome" class="text-sm font-medium text-gray-900 truncate">
+      {{ cartItem().item.nome }}
+    </h4>
+    <p class="text-xs text-gray-500">
+      @if (isUnavailable()) {
+        <span class="text-red-500">Indisponível</span>
+      } @else {
+        Disponível: {{ maxQuantity() }}
+      }
+    </p>
+  </div>
+
+  <!-- Controle de quantidade -->
+  <div class="flex items-center gap-1">
+    <p-button
+      (onClick)="decrement()"
+      [attr.aria-label]="'Diminuir quantidade de ' + cartItem().item.nome"
+      [rounded]="true"
+      [text]="true"
+      icon="pi pi-minus"
+      pTooltip="Diminuir quantidade"
+      severity="secondary"
+      size="small"
+      tooltipPosition="top">
+    </p-button>
+
+    <span class="w-8 text-center text-sm font-medium">
+      {{ cartItem().qtde }}
+    </span>
+
+    <p-button
+      (onClick)="increment()"
+      [attr.aria-label]="'Aumentar quantidade de ' + cartItem().item.nome"
+      [disabled]="cartItem().qtde >= maxQuantity()"
+      [rounded]="true"
+      [text]="true"
+      icon="pi pi-plus"
+      pTooltip="Aumentar quantidade"
+      severity="secondary"
+      size="small"
+      tooltipPosition="top">
+    </p-button>
+  </div>
+
+  <!-- Botão remover -->
+  <p-button
+    (onClick)="onRemove()"
+    [attr.aria-label]="'Remover ' + cartItem().item.nome + ' do carrinho'"
+    [rounded]="true"
+    [text]="true"
+    icon="pi pi-trash"
+    pTooltip="Remover do carrinho"
+    severity="danger"
+    size="small"
+    tooltipPosition="top">
+  </p-button>
+</div>

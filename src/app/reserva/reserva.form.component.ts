@@ -1,6 +1,15 @@
-import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  OnInit,
+  signal
+} from '@angular/core';
 import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import {Router} from '@angular/router';
 import {Z_INDEX} from '../framework/constants';
 
 import {Reserva} from './reserva';
@@ -13,6 +22,7 @@ import {ItemService} from '../item/item.service';
 import {ReservaItem} from './reservaItem';
 import {ItemImage} from '../item/itemImage';
 import {BreakpointService} from '../framework/services/breakpoint.service';
+import {CartItem, CartService} from '../framework/services/cart.service';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
@@ -62,7 +72,7 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva, number> {
+export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva, number> implements OnInit {
   // Constants for template
   protected readonly Z_INDEX = Z_INDEX;
 
@@ -72,6 +82,8 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
   private readonly fb = inject(FormBuilder);
   private readonly itemService = inject(ItemService);
   protected readonly breakpointService = inject(BreakpointService);
+  private readonly cartService = inject(CartService);
+  private readonly routerRef = inject(Router);
 
   // Signals for state management
   protected readonly itemList = signal<Item[]>([]);
@@ -104,8 +116,100 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
 
   protected readonly hasItems = computed(() => this.reservaItems().length > 0);
 
+  private readonly RESERVA_ITEMS_KEY = 'reserva_items_draft';
+
   constructor() {
     super();
+
+    // Auto-save dos itens da reserva quando mudam
+    effect(() => {
+      const items = this.reservaItems();
+      if (items.length > 0) {
+        this.saveReservaItemsToStorage(items);
+      }
+    });
+  }
+
+  /**
+   * Lifecycle hook - loads cart items if navigating from cart.
+   */
+  override ngOnInit(): void {
+    super.ngOnInit();
+    this.loadCartItems();
+  }
+
+  /**
+   * Override back para limpar o storage ao voltar.
+   */
+  override back(): void {
+    this.clearReservaItemsFromStorage();
+    super.back();
+  }
+
+  /**
+   * Override postSave para limpar o storage após salvar com sucesso.
+   */
+  protected override postSave(callback: () => void): void {
+    this.clearReservaItemsFromStorage();
+    super.postSave(callback);
+  }
+
+  /**
+   * Carrega itens do carrinho se vieram via Router state,
+   * ou recupera do SessionStorage se for refresh da página.
+   */
+  private loadCartItems(): void {
+    // 1. Tenta carregar do Router state (navegação do carrinho)
+    const navigation = this.routerRef.getCurrentNavigation();
+    const state = navigation?.extras?.state as { cartItems?: CartItem[] } | undefined;
+    const historyState = history.state as { cartItems?: CartItem[] } | undefined;
+    const cartItems = state?.cartItems || historyState?.cartItems;
+
+    if (cartItems?.length) {
+      const reservaItems = this.convertCartItemsToReservaItems(cartItems);
+      this.reservaItems.set(reservaItems);
+
+      // Salva no SessionStorage para sobreviver refresh
+      this.saveReservaItemsToStorage(reservaItems);
+
+      // Limpa o carrinho após carregar os itens
+      this.cartService.clear();
+
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Itens carregados',
+        detail: `${cartItems.length} item(ns) foram adicionados do carrinho.`,
+        life: 4000
+      });
+      return;
+    }
+
+    // 2. Se não veio do carrinho, tenta recuperar do SessionStorage (refresh)
+    this.loadReservaItemsFromStorage();
+  }
+
+  /**
+   * Salva itens da reserva em SessionStorage.
+   */
+  private saveReservaItemsToStorage(items: ReservaItem[]): void {
+    sessionStorage.setItem(this.RESERVA_ITEMS_KEY, JSON.stringify(items));
+  }
+
+  /**
+   * Carrega itens da reserva do SessionStorage.
+   */
+  private loadReservaItemsFromStorage(): void {
+    const stored = sessionStorage.getItem(this.RESERVA_ITEMS_KEY);
+    if (stored) {
+      try {
+        const items = JSON.parse(stored) as ReservaItem[];
+        if (items?.length) {
+          this.reservaItems.set(items);
+        }
+      } catch {
+        // Ignora erro de parse
+      }
+    }
   }
 
   /**
@@ -237,6 +341,25 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
 
     this.validExtra = true;
     super.save();
+  }
+
+  /**
+   * Limpa itens salvos do SessionStorage.
+   */
+  private clearReservaItemsFromStorage(): void {
+    sessionStorage.removeItem(this.RESERVA_ITEMS_KEY);
+  }
+
+  /**
+   * Converte CartItems em ReservaItems.
+   */
+  private convertCartItemsToReservaItems(cartItems: CartItem[]): ReservaItem[] {
+    return cartItems.map(cartItem => {
+      const reservaItem = new ReservaItem();
+      reservaItem.item = cartItem.item;
+      reservaItem.qtde = cartItem.qtde;
+      return reservaItem;
+    });
   }
 
   /**
