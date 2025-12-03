@@ -1,5 +1,5 @@
 import {TestBed, ComponentFixture} from '@angular/core/testing';
-import {RouterTestingModule} from '@angular/router/testing';
+import {provideRouter} from '@angular/router';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import {RelatorioListComponent} from './relatorio.list.component';
 import {RelatorioService} from './relatorio.service';
@@ -47,8 +47,9 @@ describe('RelatorioListComponent', () => {
     const loaderServiceSpy = createServiceMock<LoaderService>(['show', 'hide']);
 
     await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, RelatorioListComponent],
+      imports: [RelatorioListComponent],
       providers: [
+        provideRouter([]),
         {provide: RelatorioService, useValue: relatorioServiceSpy},
         {provide: ConfirmationService, useValue: confirmationServiceSpy},
         {provide: MessageService, useValue: messageServiceSpy},
@@ -132,13 +133,13 @@ describe('RelatorioListComponent', () => {
       mockEvent = new Event('click');
       mockRelatorio = RelatorioTestFactory.create({id: 1});
 
-      // Mock do viewChild actionsMenu
+      // Mock do viewChild actionsMenu - usar Object.defineProperty para signals
       const mockActionsMenu = {
         toggle: jest.fn(),
         hide: jest.fn()
       };
       Object.defineProperty(component, 'actionsMenu', {
-        value: jest.fn().mockReturnValue(mockActionsMenu),
+        value: () => mockActionsMenu,
         writable: true,
         configurable: true
       });

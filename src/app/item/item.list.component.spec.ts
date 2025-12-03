@@ -1,5 +1,5 @@
-import {TestBed, ComponentFixture} from '@angular/core/testing';
-import {RouterTestingModule} from '@angular/router/testing';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {provideRouter} from '@angular/router';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import {ItemListComponent} from './item.list.component';
 import {ItemService} from './item.service';
@@ -53,8 +53,9 @@ describe('ItemListComponent', () => {
     const loaderServiceSpy = createServiceMock<LoaderService>(['show', 'hide']);
 
     await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, ItemListComponent],
+      imports: [ItemListComponent],
       providers: [
+        provideRouter([]),
         {provide: ItemService, useValue: itemServiceSpy},
         {provide: ReservaService, useValue: reservaServiceSpy},
         {provide: ConfirmationService, useValue: confirmationServiceSpy},
@@ -459,14 +460,12 @@ describe('ItemListComponent', () => {
       navigateSpy.mockRestore();
     });
 
-    it('deve navegar para item/form com o ID correto', () => {
+    it('deve navegar para item/form/copy com o ID correto', () => {
       const itemId = 456;
 
       component.copyItem(itemId);
 
-      expect(navigateSpy).toHaveBeenCalledWith(['item/form'], {
-        queryParams: { copyFrom: itemId }
-      });
+      expect(navigateSpy).toHaveBeenCalledWith(['item/form/copy', itemId]);
     });
 
     it('deve funcionar com diferentes IDs', () => {
@@ -474,18 +473,16 @@ describe('ItemListComponent', () => {
 
       testIds.forEach(id => {
         component.copyItem(id);
-        expect(navigateSpy).toHaveBeenCalledWith(['item/form'], {
-          queryParams: { copyFrom: id }
-        });
+        expect(navigateSpy).toHaveBeenCalledWith(['item/form/copy', id]);
       });
     });
 
-    it('deve passar queryParams corretos', () => {
+    it('deve passar o ID correto na rota', () => {
       component.copyItem(123);
 
-      const [route, config] = navigateSpy.mock.calls[0];
-      expect(route).toEqual(['item/form']);
-      expect(config.queryParams).toEqual({ copyFrom: 123 });
+      const [routeArray] = navigateSpy.mock.calls[0];
+      expect(routeArray[0]).toBe('item/form/copy');
+      expect(routeArray[1]).toBe(123);
     });
   });
 
@@ -499,60 +496,60 @@ describe('ItemListComponent', () => {
       expect(severity).toBe('secondary');
     });
 
-    it('deve retornar "info" (azul) para grupo com ID 1', () => {
+    it('deve retornar "success" (verde) para grupo com ID 1', () => {
       const grupo = {id: 1, descricao: 'Eletrônicos'};
-
-      const severity = component.getGrupoBadgeSeverity(grupo);
-
-      expect(severity).toBe('info');
-    });
-
-    it('deve retornar "success" (verde) para grupo com ID 2', () => {
-      const grupo = {id: 2, descricao: 'Ferramentas'};
 
       const severity = component.getGrupoBadgeSeverity(grupo);
 
       expect(severity).toBe('success');
     });
 
-    it('deve retornar "warn" (laranja) para grupo com ID 3', () => {
-      const grupo = {id: 3, descricao: 'Materiais'};
+    it('deve retornar "warn" (laranja) para grupo com ID 2', () => {
+      const grupo = {id: 2, descricao: 'Ferramentas'};
 
       const severity = component.getGrupoBadgeSeverity(grupo);
 
       expect(severity).toBe('warn');
     });
 
-    it('deve retornar "danger" (vermelho) para grupo com ID 4', () => {
-      const grupo = {id: 4, descricao: 'Químicos'};
+    it('deve retornar "danger" (vermelho) para grupo com ID 3', () => {
+      const grupo = {id: 3, descricao: 'Materiais'};
 
       const severity = component.getGrupoBadgeSeverity(grupo);
 
       expect(severity).toBe('danger');
     });
 
-    it('deve retornar "secondary" (cinza) para grupo com ID 5', () => {
-      const grupo = {id: 5, descricao: 'Outros'};
+    it('deve retornar "secondary" (cinza) para grupo com ID 4', () => {
+      const grupo = {id: 4, descricao: 'Químicos'};
 
       const severity = component.getGrupoBadgeSeverity(grupo);
 
       expect(severity).toBe('secondary');
     });
 
-    it('deve retornar "contrast" (preto/branco) para grupo com ID 6', () => {
-      const grupo = {id: 6, descricao: 'Especiais'};
+    it('deve retornar "contrast" (preto/branco) para grupo com ID 5', () => {
+      const grupo = {id: 5, descricao: 'Outros'};
 
       const severity = component.getGrupoBadgeSeverity(grupo);
 
       expect(severity).toBe('contrast');
     });
 
-    it('deve usar módulo para IDs maiores que array de cores', () => {
-      const grupo = {id: 8, descricao: 'Teste'}; // 8 % 7 = 1, deve retornar 'info'
+    it('deve retornar "info" (azul) para grupo com ID 6', () => {
+      const grupo = {id: 6, descricao: 'Especiais'};
 
       const severity = component.getGrupoBadgeSeverity(grupo);
 
       expect(severity).toBe('info');
+    });
+
+    it('deve usar módulo para IDs maiores que array de cores', () => {
+      const grupo = {id: 8, descricao: 'Teste'}; // 8 % 6 = 2, deve retornar 'warn'
+
+      const severity = component.getGrupoBadgeSeverity(grupo);
+
+      expect(severity).toBe('warn');
     });
   });
 
@@ -583,7 +580,7 @@ describe('ItemListComponent', () => {
     });
 
     it('deve ter hostListenerColumnEnable habilitado', () => {
-      expect(component['hostListenerColumnEnable']).toBeUndefined();
+      expect(component['hostListenerColumnEnable']).toBe(true);
     });
   });
 

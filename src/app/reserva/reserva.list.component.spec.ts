@@ -2,7 +2,7 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ReservaListComponent} from './reserva.list.component';
 import {ReservaService} from './reserva.service';
 import {ConfirmationService, MessageService} from 'primeng/api';
-import {RouterTestingModule} from '@angular/router/testing';
+import {provideRouter} from '@angular/router';
 import {of} from 'rxjs';
 import {Reserva} from './reserva';
 import {LoginService} from '../login/login.service';
@@ -45,8 +45,9 @@ describe('ReservaListComponent', () => {
     ]);
 
     await TestBed.configureTestingModule({
-      imports: [RouterTestingModule, ReservaListComponent],
+      imports: [ReservaListComponent],
       providers: [
+        provideRouter([]),
         {provide: ReservaService, useValue: reservaServiceSpy},
         {provide: ConfirmationService, useValue: confirmationServiceSpy},
         {provide: MessageService, useValue: messageServiceSpy},

@@ -1,6 +1,6 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {ReactiveFormsModule} from '@angular/forms';
-import {RouterTestingModule} from '@angular/router/testing';
+import {provideRouter} from '@angular/router';
 import {MessageService} from 'primeng/api';
 import {CadastrarUsuarioComponent} from './cadastrarUsuario.component';
 import {CadastrarUsuarioService} from './cadastrarUsuario.service';
@@ -65,8 +65,9 @@ describe('CadastrarUsuarioComponent', () => {
     messageService = ServiceMockFactory.createMessageServiceMock();
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule, ReactiveFormsModule, CadastrarUsuarioComponent],
+      imports: [ReactiveFormsModule, CadastrarUsuarioComponent],
       providers: [
+        provideRouter([]),
         {provide: CadastrarUsuarioService, useValue: cadastrarUsuarioServiceMock},
         {provide: MessageService, useValue: messageService}
       ]
