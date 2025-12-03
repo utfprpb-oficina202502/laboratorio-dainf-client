@@ -91,6 +91,49 @@ export class RelatorioListComponent extends PrimeCrudListComponent<Relatorio, nu
     this.displayedColumns = [...this.columnsTable];
   }
 
+  /**
+   * Custom openOptions for relatorio with generate report action
+   */
+  openOptions(event: Event, relatorio: Relatorio): void {
+    const isReadOnly = this.isReadOnly() || this.isAlunoOrProfessor();
+
+    this.contextMenuItems = [];
+
+    if (!isReadOnly) {
+      if (this.canEdit()) {
+        this.contextMenuItems.push({
+          label: 'Editar',
+          icon: 'pi pi-pencil',
+          command: () => this.edit(this.getItemId(relatorio))
+        });
+      }
+
+      if (this.canDelete()) {
+        this.contextMenuItems.push({
+          label: 'Remover',
+          icon: 'pi pi-trash',
+          command: () => this.delete(this.getItemId(relatorio))
+        });
+      }
+    } else {
+      this.contextMenuItems.push({
+        label: 'Visualizar',
+        icon: 'pi pi-eye',
+        command: () => this.edit(this.getItemId(relatorio))
+      });
+    }
+
+    // Add generate report action for all users
+    this.contextMenuItems.push({
+      label: 'Gerar Relatório',
+      icon: 'pi pi-file-pdf',
+      command: () => this.generateReport(this.getItemId(relatorio))
+    });
+
+    this.actionsMenu()?.toggle(event);
+    this.cdr?.markForCheck();
+  }
+
   generateReport(id: number): void {
     this.loaderService.show();
     this.router.navigate(['relatorio/view', id]);

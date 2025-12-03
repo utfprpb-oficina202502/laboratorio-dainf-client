@@ -87,9 +87,6 @@
               [style.width]="column.width"
               [style.min-width]="column.minWidth">
               @switch (column.field) {
-                @case ('usuarioNome') {
-                  <span>{{ rowData.usuarioNome || 'Não informado' }}</span>
-                }
                 @case ('actions') {
                   <app-action-buttons
                     (delete)="delete(rowData.id)"
@@ -106,8 +103,70 @@
                     [viewTooltip]="'Visualizar solicitação'">
                   </app-action-buttons>
                 }
+                @case ('id') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </button>
+                  } @else {
+                    <span>{{ rowData[column.field] }}</span>
+                  }
+                }
+                @case ('descricao') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </button>
+                  } @else {
+                    <span>{{ rowData[column.field] }}</span>
+                  }
+                }
+                @case ('dataSolicitacao') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </button>
+                  } @else {
+                    <span>{{ rowData[column.field] }}</span>
+                  }
+                }
+                @case ('usuarioNome') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + (rowData.usuarioNome || 'Não informado')">
+                      {{ rowData.usuarioNome || 'Não informado' }}
+                    </button>
+                  } @else {
+                    <span>{{ rowData.usuarioNome || 'Não informado' }}</span>
+                  }
+                }
                 @default {
-                  <span>{{ rowData[column.field] }}</span>
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </button>
+                  } @else {
+                    <span>{{ rowData[column.field] }}</span>
+                  }
                 }
               }
             </td>
@@ -134,3 +193,8 @@
     </ng-template>
   </p-card>
 </div>
+
+<!-- Actions Popover -->
+<p-popover #actionsMenu>
+  <p-menu [model]="contextMenuItems" [style]="{border: 'none'}"></p-menu>
+</p-popover>

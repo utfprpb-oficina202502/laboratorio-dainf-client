@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, viewChild} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Fornecedor} from './fornecedor';
@@ -8,6 +8,8 @@ import {TableEmptyStateComponent} from '../framework/component/table-empty-state
 import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
 import {CpfCnpjPipe} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe";
 import {createTableConfig} from '../framework/utils/table-config.factory';
+import {MenuItem} from 'primeng/api';
+import {Popover} from 'primeng/popover';
 
 @Component({
     selector: 'app-list-fornecedor',
@@ -26,6 +28,9 @@ export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, 
   protected override service = inject(FornecedorService);
   protected override columnsTable = ['id', 'razaoSocial', 'nomeFantasia', 'cnpj', 'actions'];
   protected override urlForm = 'fornecedor/form';
+
+  readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
+  contextMenuItems: MenuItem[] = [];
 
   private readonly tableColumns: TableColumn[] = [
     {

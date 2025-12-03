@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, OnInit, viewChild} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {SolicitacaoCompra} from './solicitacaoCompra';
@@ -7,6 +7,8 @@ import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.mod
 import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
 import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
 import {createTableConfig} from '../framework/utils/table-config.factory';
+import {MenuItem} from 'primeng/api';
+import {Popover} from 'primeng/popover';
 
 @Component({
     selector: 'app-list-solicitacao-compra',
@@ -23,6 +25,9 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
   protected override service = inject(SolicitacaoCompraService);
   protected override columnsTable = ['id', 'descricao', 'dataSolicitacao', 'usuarioNome', 'actions'];
   protected override urlForm = 'solicitacao-compra/form';
+
+  readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
+  contextMenuItems: MenuItem[] = [];
 
   private readonly tableColumns: TableColumn[] = [
     {

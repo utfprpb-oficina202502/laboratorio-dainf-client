@@ -85,20 +85,6 @@
               [style.width]="column.width"
               [style.min-width]="column.minWidth">
               @switch (column.field) {
-                @case ('fornecedorNomeFantasia') {
-                  <span
-                    [attr.aria-label]="'Nome Fantasia: ' + (rowData.fornecedorNomeFantasia || 'Não informado')"
-                    class="font-semibold">
-                    {{ rowData.fornecedorNomeFantasia || 'Não informado' }}
-                  </span>
-                }
-                @case ('fornecedorRazaoSocial') {
-                  <span
-                    [attr.aria-label]="'Razão Social: ' + (rowData.fornecedorRazaoSocial || 'Não informado')"
-                    class="text-gray-600">
-                    {{ rowData.fornecedorRazaoSocial || 'Não informado' }}
-                  </span>
-                }
                 @case ('actions') {
                   <app-action-buttons
                     (delete)="delete(rowData.id)"
@@ -115,9 +101,84 @@
                     [viewTooltip]="'Visualizar compra'">
                   </app-action-buttons>
                 }
+                @case ('id') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </button>
+                  } @else {
+                    <span [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </span>
+                  }
+                }
+                @case ('fornecedorNomeFantasia') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + (rowData.fornecedorNomeFantasia || 'Não informado')">
+                      {{ rowData.fornecedorNomeFantasia || 'Não informado' }}
+                    </button>
+                  } @else {
+                    <span
+                      [attr.aria-label]="column.header + ': ' + (rowData.fornecedorNomeFantasia || 'Não informado')"
+                      class="font-semibold">
+                      {{ rowData.fornecedorNomeFantasia || 'Não informado' }}
+                    </span>
+                  }
+                }
+                @case ('fornecedorRazaoSocial') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + (rowData.fornecedorRazaoSocial || 'Não informado')">
+                      {{ rowData.fornecedorRazaoSocial || 'Não informado' }}
+                    </button>
+                  } @else {
+                    <span
+                      [attr.aria-label]="column.header + ': ' + (rowData.fornecedorRazaoSocial || 'Não informado')"
+                      class="text-gray-600">
+                      {{ rowData.fornecedorRazaoSocial || 'Não informado' }}
+                    </span>
+                  }
+                }
+                @case ('dataCompra') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </button>
+                  } @else {
+                    <span [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </span>
+                  }
+                }
                 @default {
-                  <span
-                    [attr.aria-label]="column.header + ': ' + rowData[column.field]">{{ rowData[column.field] }}</span>
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </button>
+                  } @else {
+                    <span [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </span>
+                  }
                 }
               }
             </td>
@@ -144,3 +205,8 @@
     </ng-template>
   </p-card>
 </div>
+
+<!-- Actions Popover -->
+<p-popover #actionsMenu>
+  <p-menu [model]="contextMenuItems" [style]="{border: 'none'}"></p-menu>
+</p-popover>

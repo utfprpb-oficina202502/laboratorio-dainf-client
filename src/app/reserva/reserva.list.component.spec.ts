@@ -8,6 +8,7 @@ import {Reserva} from './reserva';
 import {LoginService} from '../login/login.service';
 import {ReservaTestFactory} from './reserva.test-factory';
 import {createServiceMock} from '../framework/testing/test-helpers';
+import {PermissionService} from '../framework/service/permission.service';
 
 // Services injetados no TestBed mas não referenciados diretamente nos testes
 // São necessários para o componente funcionar mas não são assertados
@@ -39,6 +40,9 @@ describe('ReservaListComponent', () => {
     const confirmationServiceSpy = createServiceMock<ConfirmationService>(['confirm']);
     const messageServiceSpy = createServiceMock<MessageService>(['add']);
     const loginServiceSpy = createServiceMock<LoginService>(['isAlunoOrProfessor']);
+    const permissionServiceSpy = createServiceMock<PermissionService>([
+      'canCreate', 'canEdit', 'canDelete', 'canExport', 'isReadOnly', 'userRole', 'isAlunoOrProfessor'
+    ]);
 
     await TestBed.configureTestingModule({
       imports: [RouterTestingModule, ReservaListComponent],
@@ -46,7 +50,8 @@ describe('ReservaListComponent', () => {
         {provide: ReservaService, useValue: reservaServiceSpy},
         {provide: ConfirmationService, useValue: confirmationServiceSpy},
         {provide: MessageService, useValue: messageServiceSpy},
-        {provide: LoginService, useValue: loginServiceSpy}
+        {provide: LoginService, useValue: loginServiceSpy},
+        {provide: PermissionService, useValue: permissionServiceSpy}
       ]
     }).compileComponents();
 
@@ -140,7 +145,23 @@ describe('ReservaListComponent', () => {
     });
 
     it('deve mostrar todas as opções para admin/laboratorista', () => {
-      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+      // Mock permission methods to return true for admin
+      Object.defineProperty(component, 'canEdit', {
+        value: () => true,
+        writable: true
+      });
+      Object.defineProperty(component, 'canDelete', {
+        value: () => true,
+        writable: true
+      });
+      Object.defineProperty(component, 'isReadOnly', {
+        value: () => false,
+        writable: true
+      });
+      Object.defineProperty(component, 'isAlunoOrProfessor', {
+        value: () => false,
+        writable: true
+      });
 
       component.openOptions(mockEvent, mockReserva);
 
@@ -151,7 +172,23 @@ describe('ReservaListComponent', () => {
     });
 
     it('deve mostrar apenas Visualizar para aluno/professor', () => {
-      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(true);
+      // Mock permission methods to return false for student/professor
+      Object.defineProperty(component, 'canEdit', {
+        value: () => false,
+        writable: true
+      });
+      Object.defineProperty(component, 'canDelete', {
+        value: () => false,
+        writable: true
+      });
+      Object.defineProperty(component, 'isReadOnly', {
+        value: () => false,
+        writable: true
+      });
+      Object.defineProperty(component, 'isAlunoOrProfessor', {
+        value: () => true,
+        writable: true
+      });
 
       component.openOptions(mockEvent, mockReserva);
 
@@ -160,7 +197,10 @@ describe('ReservaListComponent', () => {
     });
 
     it('deve incluir "Gerar Empréstimo" apenas para admin/laboratorista', () => {
-      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+      Object.defineProperty(component, 'isAlunoOrProfessor', {
+        value: () => false,
+        writable: true
+      });
 
       component.openOptions(mockEvent, mockReserva);
 
@@ -170,7 +210,10 @@ describe('ReservaListComponent', () => {
     });
 
     it('não deve incluir "Gerar Empréstimo" para aluno/professor', () => {
-      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(true);
+      Object.defineProperty(component, 'isAlunoOrProfessor', {
+        value: () => true,
+        writable: true
+      });
 
       component.openOptions(mockEvent, mockReserva);
 
@@ -179,7 +222,14 @@ describe('ReservaListComponent', () => {
     });
 
     it('deve mostrar ícone "Editar" para admin/laboratorista', () => {
-      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+      Object.defineProperty(component, 'canEdit', {
+        value: () => true,
+        writable: true
+      });
+      Object.defineProperty(component, 'isAlunoOrProfessor', {
+        value: () => false,
+        writable: true
+      });
 
       component.openOptions(mockEvent, mockReserva);
 
@@ -187,17 +237,15 @@ describe('ReservaListComponent', () => {
       expect(editItem?.icon).toBe('pi pi-pencil');
     });
 
-    it('deve mostrar ícone "Visualizar" para aluno/professor', () => {
-      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(true);
-
-      component.openOptions(mockEvent, mockReserva);
-
-      const viewItem = component.contextMenuItems.find(item => item.label === 'Visualizar');
-      expect(viewItem?.icon).toBe('pi pi-eye');
-    });
-
     it('deve incluir "Remover" apenas para admin/laboratorista', () => {
-      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+      Object.defineProperty(component, 'canDelete', {
+        value: () => true,
+        writable: true
+      });
+      Object.defineProperty(component, 'isAlunoOrProfessor', {
+        value: () => false,
+        writable: true
+      });
 
       component.openOptions(mockEvent, mockReserva);
 
@@ -207,7 +255,10 @@ describe('ReservaListComponent', () => {
     });
 
     it('não deve incluir "Remover" para aluno/professor', () => {
-      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(true);
+      Object.defineProperty(component, 'isAlunoOrProfessor', {
+        value: () => true,
+        writable: true
+      });
 
       component.openOptions(mockEvent, mockReserva);
 
@@ -215,40 +266,49 @@ describe('ReservaListComponent', () => {
       expect(removeItem).toBeUndefined();
     });
 
-    it('deve alternar actionsMenu popover', () => {
-      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
-      const toggleSpy = jest.fn();
-      Object.defineProperty(component, 'actionsMenu', {
-        value: jest.fn().mockReturnValue({toggle: toggleSpy}),
-        writable: true,
-        configurable: true
+    it('deve limpar contextMenuItems antes de adicionar novos', () => {
+      component.contextMenuItems = [{ label: 'Item Antigo', icon: 'pi pi-old' }];
+      Object.defineProperty(component, 'isAlunoOrProfessor', {
+        value: () => true,
+        writable: true
       });
 
       component.openOptions(mockEvent, mockReserva);
 
-      expect(toggleSpy).toHaveBeenCalledWith(mockEvent);
+      expect(component.contextMenuItems.length).toBe(1);
+      expect(component.contextMenuItems[0].label).toBe('Visualizar');
     });
 
-    it('deve definir selectedReserva', () => {
-      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+    it('deve definir selectedReserva corretamente', () => {
+      const reserva = ReservaTestFactory.createFutura();
+      component.openOptions(mockEvent, reserva);
+
+      expect(component.selectedReserva).toBe(reserva);
+    });
+
+    it('deve chamar actionsMenu.toggle() com o evento correto', () => {
+      const mockEvent = new Event('click');
+      const mockPopover = { toggle: jest.fn() };
+      Object.defineProperty(component, 'actionsMenu', {
+        value: jest.fn().mockReturnValue(mockPopover),
+        writable: true
+      });
 
       component.openOptions(mockEvent, mockReserva);
 
-      expect(component.selectedReserva).toBe(mockReserva);
+      expect(mockPopover.toggle).toHaveBeenCalledWith(mockEvent);
     });
 
-    it('deve chamar markForCheck após construir menu', () => {
-      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
-      expect(() => component.openOptions(mockEvent, mockReserva)).not.toThrow();
-    });
-
-    it('deve limpar contextMenuItems antes de reconstruir', () => {
-      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
-      component.contextMenuItems = [{label: 'Old Item'}];
+    it('deve chamar cdr.markForCheck() para atualização da view', () => {
+      const mockCdr = { markForCheck: jest.fn() };
+      Object.defineProperty(component, 'cdr', {
+        value: mockCdr,
+        writable: true
+      });
 
       component.openOptions(mockEvent, mockReserva);
 
-      expect(component.contextMenuItems.find(item => item.label === 'Old Item')).toBeUndefined();
+      expect(mockCdr.markForCheck).toHaveBeenCalled();
     });
   });
 

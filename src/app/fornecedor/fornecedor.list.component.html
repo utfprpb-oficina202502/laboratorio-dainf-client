@@ -87,21 +87,6 @@
               [style.width]="column.width"
               [style.min-width]="column.minWidth">
               @switch (column.field) {
-                @case ('id') {
-                  <span [attr.aria-label]="'Código: ' + rowData.id">{{ rowData.id }}</span>
-                }
-                @case ('razaoSocial') {
-                  <span
-                    [attr.aria-label]="'Razão Social: ' + rowData.razaoSocial">{{ rowData.razaoSocial }}</span>
-                }
-                @case ('nomeFantasia') {
-                  <span
-                    [attr.aria-label]="'Nome Fantasia: ' + rowData.nomeFantasia">{{ rowData.nomeFantasia }}</span>
-                }
-                @case ('cnpj') {
-                  <span
-                    [attr.aria-label]="'CNPJ: ' + (rowData.cnpj | cpfCnpj)">{{ rowData.cnpj | cpfCnpj }}</span>
-                }
                 @case ('actions') {
                   <app-action-buttons
                     [showEdit]="canEdit()"
@@ -114,9 +99,80 @@
                     (delete)="delete(rowData.id)">
                   </app-action-buttons>
                 }
+                @case ('id') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </button>
+                  } @else {
+                    <span [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </span>
+                  }
+                }
+                @case ('razaoSocial') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </button>
+                  } @else {
+                    <span [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </span>
+                  }
+                }
+                @case ('nomeFantasia') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </button>
+                  } @else {
+                    <span [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </span>
+                  }
+                }
+                @case ('cnpj') {
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + (rowData.cnpj | cpfCnpj)">
+                      {{ rowData.cnpj | cpfCnpj }}
+                    </button>
+                  } @else {
+                    <span [attr.aria-label]="column.header + ': ' + (rowData.cnpj | cpfCnpj)">
+                      {{ rowData.cnpj | cpfCnpj }}
+                    </span>
+                  }
+                }
                 @default {
-                  <span
-                    [attr.aria-label]="column.header + ': ' + rowData[column.field]">{{ rowData[column.field] }}</span>
+                  @if (!displayedColumns.includes('actions')) {
+                    <button
+                      type="button"
+                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                      (click)="openOptions($event, rowData)"
+                      [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </button>
+                  } @else {
+                    <span [attr.aria-label]="column.header + ': ' + rowData[column.field]">
+                      {{ rowData[column.field] }}
+                    </span>
+                  }
                 }
               }
             </td>
@@ -143,3 +199,8 @@
     </ng-template>
   </p-card>
 </div>
+
+<!-- Actions Popover -->
+<p-popover #actionsMenu>
+  <p-menu [model]="contextMenuItems" [style]="{border: 'none'}"></p-menu>
+</p-popover>

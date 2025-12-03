@@ -127,10 +127,35 @@
                         (delete)="delete(row.id)">
                       </app-action-buttons>
                     }
+                    @case ('id') {
+                      @if (!displayedColumns.includes('actions')) {
+                        <button
+                          type="button"
+                          class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                          (click)="openOptions($event, row)"
+                          [attr.aria-label]="column.header + ': ' + row[column.field]">
+                          {{ row[column.field] }}
+                        </button>
+                      } @else {
+                        <span [attr.aria-label]="column.header + ': ' + row[column.field]">
+                          {{ row[column.field] }}
+                        </span>
+                      }
+                    }
                     @default {
-                      <span [attr.aria-label]="column.header + ': ' + row[column.field]">
-                        {{ row[column.field] }}
-                      </span>
+                      @if (!displayedColumns.includes('actions')) {
+                        <button
+                          type="button"
+                          class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
+                          (click)="openOptions($event, row)"
+                          [attr.aria-label]="column.header + ': ' + row[column.field]">
+                          {{ row[column.field] }}
+                        </button>
+                      } @else {
+                        <span [attr.aria-label]="column.header + ': ' + row[column.field]">
+                          {{ row[column.field] }}
+                        </span>
+                      }
                     }
                   }
                 </td>
@@ -169,3 +194,8 @@
     </ng-template>
   </p-card>
 </div>
+
+<!-- Actions Popover -->
+<p-popover #actionsMenu>
+  <p-menu [model]="contextMenuItems" [style]="{border: 'none'}"></p-menu>
+</p-popover>
