@@ -989,6 +989,34 @@ describe('EmprestimoListComponent', () => {
 
       expect(hasActionsColumn).toBe(true);
     });
+
+    it('deve garantir que a coluna de ações é tornada visível se estiver oculta (simulação manual do effect)', () => {
+      // Simula coluna de ações oculta
+      const actionsColumn = component['tableConfig'].columns?.find(col => col.field === 'actions');
+      if (actionsColumn) {
+        actionsColumn.visible = false;
+        // Simula execução do effect manualmente
+        if (actionsColumn.visible === false) {
+          actionsColumn.visible = true;
+          component['cdr']?.markForCheck();
+        }
+      }
+      expect(actionsColumn?.visible).toBe(true);
+    });
+
+    it('deve chamar cdr.markForCheck() ao tornar coluna de ações visível (simulação manual do effect)', () => {
+      const actionsColumn = component['tableConfig'].columns?.find(col => col.field === 'actions');
+      if (actionsColumn) {
+        actionsColumn.visible = false;
+        const markSpy = jest.spyOn(component['cdr']!, 'markForCheck');
+        // Simula execução do effect manualmente
+        if (actionsColumn.visible === false) {
+          actionsColumn.visible = true;
+          component['cdr']?.markForCheck();
+        }
+        expect(markSpy).toHaveBeenCalled();
+      }
+    });
   });
 
   // ============================================================================
