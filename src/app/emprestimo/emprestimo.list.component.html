@@ -134,6 +134,7 @@
                   [style.min-width]="column.minWidth"
                   [attr.headers]="'col-' + column.field"
                   (click)="openOptions($event, row)"
+                  (keydown)="onKeyDown($event, row)"
                   class="cursor-pointer">
                   @switch (column.field) {
                     @case ('usuarioEmprestimoNome') {
@@ -180,6 +181,7 @@
                           type="button">
                         </p-button>
                         <app-action-buttons
+                          (click)="$event.stopPropagation()"
                           (delete)="delete(row.id)"
                           (edit)="edit(row.id)"
                           [deleteAriaLabel]="'Remover empréstimo ' + row.id"

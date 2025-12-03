@@ -172,21 +172,18 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     return this.service;
   }
 
-  openOptions(event: Event, row: any): void {
+  openOptions(event: Event, row: Emprestimo): void {
     this.selectedEmprestimoId = row.id;
     const isAlunoOrProfessor = this.isAlunoOrProfessor();
     this.contextMenuItems = [];
-    const emprestimo = this.objects.find(e => e.id === row.id);
-    const status = emprestimo ? this.getStatusEmprestimo(emprestimo) : undefined;
+    const status = this.getStatusEmprestimo(row);
 
     // Opção Ver Itens - disponível para todos
-    if (emprestimo) {
-      this.contextMenuItems.push({
-        label: 'Ver Itens',
-        icon: 'pi pi-list',
-        command: () => this.abrirDialogItens(emprestimo)
-      });
-    }
+    this.contextMenuItems.push({
+      label: 'Ver Itens',
+      icon: 'pi pi-list',
+      command: () => this.abrirDialogItens(row)
+    });
 
     if (!isAlunoOrProfessor) {
       this.contextMenuItems.push({
@@ -194,28 +191,39 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
         icon: 'pi pi-undo',
         command: () => this.openDevolucao(row.id)
       });
-      if (emprestimo && status === 'P') {
+      if (status === 'P') {
         this.contextMenuItems.push({
           label: 'Novo Prazo',
           icon: 'pi pi-clock',
-          command: () => this.abrirModalNovoPrazo(emprestimo)
+          command: () => this.abrirModalNovoPrazo(row)
         });
       }
-    }
-    this.contextMenuItems.push({
-      label: isAlunoOrProfessor ? 'Visualizar' : 'Editar',
-      icon: isAlunoOrProfessor ? 'pi pi-eye' : 'pi pi-pencil',
-      command: () => this.edit(row.id)
-    });
-    if (!isAlunoOrProfessor) {
+      this.contextMenuItems.push({
+        label: 'Editar',
+        icon: 'pi pi-pencil',
+        command: () => this.edit(row.id)
+      });
       this.contextMenuItems.push({
         label: 'Remover',
         icon: 'pi pi-trash',
         command: () => this.delete(row.id)
       });
+    } else {
+      this.contextMenuItems.push({
+        label: 'Visualizar',
+        icon: 'pi pi-eye',
+        command: () => this.view(row.id)
+      });
     }
+
     this.actionsMenu().toggle(event);
-    this.cdr?.markForCheck();
+  }
+
+  onKeyDown(event: KeyboardEvent, row: Emprestimo): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.openOptions(event, row);
+    }
   }
 
   abrirModalNovoPrazo(emprestimo: Emprestimo) {
@@ -378,6 +386,10 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
 
   openCalendarNewDate() {
     this.novaData().overlayVisible = true;
+  }
+
+  view(id: number) {
+    this.router.navigate([this.urlForm, id, 'view']);
   }
 
   /**
