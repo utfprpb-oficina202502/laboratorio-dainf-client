@@ -5,7 +5,6 @@ import {
   forwardRef,
   inject,
   signal,
-  untracked,
   viewChild
 } from '@angular/core';
 import {Z_INDEX} from '../framework/constants';
@@ -155,15 +154,12 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     effect(() => {
       // Rastreia mudanças de permissão (trigger do effect)
       this.isReadOnly();
-
-      // Usa untracked para evitar dependências circulares ao modificar tableConfig
-      untracked(() => {
-        const actionsColumn = this.tableConfig.columns?.find(col => col.field === 'actions');
-        if (actionsColumn && !actionsColumn.visible) {
-          actionsColumn.visible = true;
-          this.cdr?.markForCheck();
-        }
-      });
+      // Busca a coluna de ações corretamente dentro do effect
+      const actionsColumn = this.tableConfig.columns?.find(col => col.field === 'actions');
+      if (actionsColumn?.visible === false) {
+        actionsColumn.visible = true;
+        this.cdr?.markForCheck();
+      }
     });
   }
 
@@ -172,50 +168,60 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     return this.service;
   }
 
-  openOptions(event: Event, id: number): void {
-    this.selectedEmprestimoId = id;
+  openOptions(event: Event, row: Emprestimo): void {
+    this.selectedEmprestimoId = row.id;
     const isAlunoOrProfessor = this.isAlunoOrProfessor();
-    this.contextMenuItems = [];
-    const emprestimo = this.objects.find(e => e.id === id);
-    const status = emprestimo ? this.getStatusEmprestimo(emprestimo) : undefined;
+    const status = this.getStatusEmprestimo(row);
 
-    // Opção Ver Itens - disponível para todos
-    if (emprestimo) {
-      this.contextMenuItems.push({
-        label: 'Ver Itens',
-        icon: 'pi pi-list',
-        command: () => this.abrirDialogItens(emprestimo)
-      });
-    }
-
-    if (!isAlunoOrProfessor) {
-      this.contextMenuItems.push({
+    // Build menu items array
+    const adminItems = isAlunoOrProfessor ? [] : [
+      {
         label: 'Devolução',
         icon: 'pi pi-undo',
-        command: () => this.openDevolucao(id)
-      });
-      if (emprestimo && status === 'P') {
-        this.contextMenuItems.push({
-          label: 'Novo Prazo',
-          icon: 'pi pi-clock',
-          command: () => this.abrirModalNovoPrazo(emprestimo)
-        });
-      }
-    }
-    this.contextMenuItems.push({
-      label: isAlunoOrProfessor ? 'Visualizar' : 'Editar',
-      icon: isAlunoOrProfessor ? 'pi pi-eye' : 'pi pi-pencil',
-      command: () => this.edit(id)
-    });
-    if (!isAlunoOrProfessor) {
-      this.contextMenuItems.push({
+        command: () => this.openDevolucao(row.id)
+      },
+      ...(status === 'P' ? [{
+        label: 'Novo Prazo',
+        icon: 'pi pi-clock',
+        command: () => this.abrirModalNovoPrazo(row)
+      }] : []),
+      {
+        label: 'Editar',
+        icon: 'pi pi-pencil',
+        command: () => this.edit(row.id)
+      },
+      {
         label: 'Remover',
         icon: 'pi pi-trash',
-        command: () => this.delete(id)
-      });
-    }
+        command: () => this.delete(row.id)
+      }
+    ];
+
+    const alunoItems = isAlunoOrProfessor ? [{
+      label: 'Visualizar',
+      icon: 'pi pi-eye',
+      command: () => this.view(row.id)
+    }] : [];
+
+    this.contextMenuItems = [
+      // Opção Ver Itens - disponível para todos
+      {
+        label: 'Ver Itens',
+        icon: 'pi pi-list',
+        command: () => this.abrirDialogItens(row)
+      },
+      ...adminItems,
+      ...alunoItems
+    ];
+
     this.actionsMenu().toggle(event);
-    this.cdr?.markForCheck();
+  }
+
+  onKeyDown(event: KeyboardEvent, row: Emprestimo): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.openOptions(event, row);
+    }
   }
 
   abrirModalNovoPrazo(emprestimo: Emprestimo) {
@@ -380,6 +386,10 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     this.novaData().overlayVisible = true;
   }
 
+  view(id: number) {
+    this.router.navigate([this.urlForm, id, 'view']);
+  }
+
   /**
    * Calcula o status do empréstimo baseado nas datas.
    *
@@ -392,11 +402,11 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
    */
   getStatusEmprestimo(emprestimo: Emprestimo): EmprestimoStatus {
     // Handle null/undefined prazoDevolucao gracefully
-    if (!emprestimo.prazoDevolucao) {
+    if (emprestimo.prazoDevolucao === null || emprestimo.prazoDevolucao === undefined) {
       return 'P'; // Default to pending if no due date
     }
 
-    if (DateUtil.dtIsBeforeToday(emprestimo.prazoDevolucao) && !emprestimo.dataDevolucao) {
+    if (DateUtil.dtIsBeforeToday(emprestimo.prazoDevolucao) && (emprestimo.dataDevolucao === null || emprestimo.dataDevolucao === undefined)) {
       return 'A';
     } else if (emprestimo.dataDevolucao) {
       return 'F';

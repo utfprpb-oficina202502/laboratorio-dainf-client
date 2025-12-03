@@ -85,10 +85,15 @@
             <td
               [style.text-align]="column.align || 'left'"
               [style.width]="column.width"
-              [style.min-width]="column.minWidth">
+              [style.min-width]="column.minWidth"
+              (click)="openOptions($event, rowData)"
+              (keydown)="onKeyDown($event, rowData)"
+              class="cursor-pointer">
               @switch (column.field) {
                 @case ('actions') {
                   <app-action-buttons
+                    (click)="$event.stopPropagation()"
+                    (keydown)="$event.stopPropagation()"
                     [showEdit]="canEdit()"
                     [showDelete]="canDelete()"
                     [editTooltip]="'Editar fornecedor'"
@@ -104,7 +109,8 @@
                     <button
                       type="button"
                       class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
-                      (click)="openOptions($event, rowData)"
+                      (click)="openOptions($event, rowData); $event.stopPropagation()"
+                      (keydown)="$event.stopPropagation()"
                       [attr.aria-label]="column.header + ': ' + rowData[column.field]">
                       {{ rowData[column.field] }}
                     </button>
@@ -119,7 +125,8 @@
                     <button
                       type="button"
                       class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
-                      (click)="openOptions($event, rowData)"
+                      (click)="openOptions($event, rowData); $event.stopPropagation()"
+                      (keydown)="$event.stopPropagation()"
                       [attr.aria-label]="column.header + ': ' + rowData[column.field]">
                       {{ rowData[column.field] }}
                     </button>
@@ -134,7 +141,8 @@
                     <button
                       type="button"
                       class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
-                      (click)="openOptions($event, rowData)"
+                      (click)="openOptions($event, rowData); $event.stopPropagation()"
+                      (keydown)="$event.stopPropagation()"
                       [attr.aria-label]="column.header + ': ' + rowData[column.field]">
                       {{ rowData[column.field] }}
                     </button>
@@ -149,7 +157,8 @@
                     <button
                       type="button"
                       class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
-                      (click)="openOptions($event, rowData)"
+                      (click)="openOptions($event, rowData); $event.stopPropagation()"
+                      (keydown)="$event.stopPropagation()"
                       [attr.aria-label]="column.header + ': ' + (rowData.cnpj | cpfCnpj)">
                       {{ rowData.cnpj | cpfCnpj }}
                     </button>
@@ -164,7 +173,8 @@
                     <button
                       type="button"
                       class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
-                      (click)="openOptions($event, rowData)"
+                      (click)="openOptions($event, rowData); $event.stopPropagation()"
+                      (keydown)="$event.stopPropagation()"
                       [attr.aria-label]="column.header + ': ' + rowData[column.field]">
                       {{ rowData[column.field] }}
                     </button>

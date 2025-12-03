@@ -127,4 +127,35 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
     // Custom sorting for nested properties is handled in the template
   }
 
+  openOptions(event: Event, solicitacaoCompra: SolicitacaoCompra): void {
+    const isAluno = this.isAlunoOrProfessor();
+
+    this.contextMenuItems = [
+      {
+        label: 'Editar',
+        icon: 'pi pi-pencil',
+        command: () => this.edit(solicitacaoCompra.id)
+      },
+      ...(isAluno ? [{
+        label: 'Visualizar',
+        icon: 'pi pi-eye',
+        command: () => this.edit(solicitacaoCompra.id)
+      }] : []),
+      {
+        label: 'Remover',
+        icon: 'pi pi-trash',
+        command: () => this.delete(solicitacaoCompra.id)
+      }
+    ];
+
+    this.actionsMenu().toggle(event);
+  }
+
+  onKeyDown(event: KeyboardEvent, solicitacaoCompra: SolicitacaoCompra): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.openOptions(event, solicitacaoCompra);
+    }
+  }
+
 }

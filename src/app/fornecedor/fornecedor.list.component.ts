@@ -99,6 +99,30 @@ export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, 
     return 'fornecedores';
   }
 
+  openOptions(event: Event, fornecedor: Fornecedor): void {
+    this.contextMenuItems = [
+      {
+        label: 'Editar',
+        icon: 'pi pi-pencil',
+        command: () => this.edit(fornecedor.id)
+      },
+      {
+        label: 'Remover',
+        icon: 'pi pi-trash',
+        command: () => this.delete(fornecedor.id)
+      }
+    ];
+
+    this.actionsMenu().toggle(event);
+  }
+
+  onKeyDown(event: KeyboardEvent, fornecedor: Fornecedor): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.openOptions(event, fornecedor);
+    }
+  }
+
   private configureTable(): void {
     this.tableConfig = createTableConfig({
       columns: this.tableColumns,
