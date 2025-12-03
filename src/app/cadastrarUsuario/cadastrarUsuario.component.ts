@@ -13,6 +13,8 @@ import {MessageService} from "primeng/api";
 import {ProgressBar} from "primeng/progressbar";
 import {InputTextModule} from "primeng/inputtext";
 import {CadastrarUsuarioService} from "./cadastrarUsuario.service";
+import {ErrorHandlerService} from "../framework/services/error-handler.service";
+import {FormValidationService} from "../framework/services/form-validation.service";
 
 @Component({
     selector: "app-cadastrar-usuario",
@@ -33,9 +35,17 @@ export class CadastrarUsuarioComponent implements OnInit {
   private readonly cadastrarUsuarioService = inject(CadastrarUsuarioService);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly errorHandler = inject(ErrorHandlerService);
+  private readonly formValidation = inject(FormValidationService);
 
   form!: FormGroup;
   showProgress = false;
+
+  /** Mensagens customizadas para validadores específicos deste formulário */
+  private readonly customErrorMessages: Record<string, string> = {
+    pattern: 'O RA/SIAPE deve conter apenas números',
+    utfprEmail: 'Digite um email válido da UTFPR (@utfpr.edu.br ou @alunos.utfpr.edu.br)'
+  };
 
   ngOnInit() {
     this.buildForm();
@@ -103,15 +113,29 @@ export class CadastrarUsuarioComponent implements OnInit {
         });
         this.router.navigate(["/login"]);
       },
-      error: () => {
+      error: (error) => {
         this.showProgress = false;
         this.cdr.markForCheck();
-        this.messageService.add({
-          severity: "error",
-          summary: "Atenção",
-          detail:
-            "Verifique o formulário, os dados de cadastro estão incorretos",
-        });
+
+        // Processa erro RFC 9457 e aplica erros de campo ao formulário
+        const result = this.errorHandler.handleHttpError(error, false);
+
+        if (result.fieldErrors) {
+          this.errorHandler.applyFieldErrors(this.form, result.fieldErrors);
+          this.messageService.add({
+            severity: "warn",
+            summary: result.title || "Erro de validação",
+            detail: "Verifique os campos destacados no formulário",
+            life: 5000
+          });
+        } else {
+          this.messageService.add({
+            severity: "error",
+            summary: result.title || "Atenção",
+            detail: result.message || "Verifique o formulário, os dados de cadastro estão incorretos",
+            life: 5000
+          });
+        }
       },
     });
   }
@@ -122,37 +146,15 @@ export class CadastrarUsuarioComponent implements OnInit {
 
   /**
    * Retorna a mensagem de erro apropriada para um campo do formulário.
-   * A ordem das verificações é importante para exibir a mensagem mais relevante.
+   * Delega para FormValidationService com mensagens customizadas para validadores específicos.
    * @param fieldName Nome do campo no formulário
    * @returns Mensagem de erro em pt-BR ou string vazia se não houver erro
-   * @example
-   * getErrorMessage('documento') // 'O RA/SIAPE deve conter apenas números'
-   * getErrorMessage('email') // 'Digite um email válido da UTFPR...'
    */
   getErrorMessage(fieldName: string): string {
-    const control = this.form.get(fieldName);
-    if (!control?.errors || !control?.touched) {
-      return '';
-    }
-
-    if (control.errors['required']) {
-      return 'Este campo é obrigatório';
-    }
-    // Pattern é verificado antes de minlength para documento,
-    // pois "abc" deve mostrar "apenas números" e não "mínimo 3 caracteres"
-    if (control.errors['pattern']) {
-      return 'O RA/SIAPE deve conter apenas números';
-    }
-    if (control.errors['minlength']) {
-      return `Mínimo de ${control.errors['minlength'].requiredLength} caracteres`;
-    }
-    if (control.errors['email']) {
-      return 'Email inválido';
-    }
-    if (control.errors['utfprEmail']) {
-      return 'Digite um email válido da UTFPR (@utfpr.edu.br ou @alunos.utfpr.edu.br)';
-    }
-    return '';
+    return this.formValidation.getErrorMessage(
+      this.form.get(fieldName),
+      this.customErrorMessages
+    );
   }
 
   /**

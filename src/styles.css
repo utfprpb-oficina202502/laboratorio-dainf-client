@@ -369,6 +369,48 @@
   }
 
   /* ============================================================================
+     Toast Responsive Styles
+     Ensures toast messages don't exceed viewport on mobile devices
+     ============================================================================ */
+  .p-toast {
+    /* Ensures toast respects viewport bounds */
+    max-width: calc(100vw - var(--spacing-lg));
+  }
+
+  /* Mobile: Full width toast with proper margins */
+  @media (max-width: 480px) {
+    .p-toast {
+      --p-toast-width: calc(100vw - var(--spacing-xl));
+      left: 50% !important;
+      right: auto !important;
+      transform: translateX(-50%);
+    }
+
+    /* Adjust message content for smaller screens */
+    .p-toast-message-content {
+      padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .p-toast-detail {
+      font-size: var(--font-size-sm);
+      line-height: 1.4;
+      /* Prevent very long messages from breaking layout */
+      word-break: break-word;
+    }
+
+    .p-toast-summary {
+      font-size: var(--font-size-sm);
+    }
+  }
+
+  /* Tablet: Slightly narrower toast */
+  @media (min-width: 481px) and (max-width: 768px) {
+    .p-toast {
+      --p-toast-width: min(22rem, calc(100vw - var(--spacing-xl)));
+    }
+  }
+
+  /* ============================================================================
      Theme-Specific Button Overrides
      NOTE: !important needed to override PrimeNG's high specificity
      ============================================================================ */

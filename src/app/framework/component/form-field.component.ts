@@ -1,6 +1,7 @@
-import {ChangeDetectionStrategy, Component, input} from '@angular/core';
+import {Component, inject, input} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {AbstractControl} from '@angular/forms';
+import {FormValidationService} from '../services/form-validation.service';
 
 /**
  * Reusable form field wrapper component that handles validation display
@@ -9,11 +10,13 @@ import {AbstractControl} from '@angular/forms';
  * <app-form-field [control]="form().get('name')" label="Nome" [required]="true">
  *   <input pInputText formControlName="name" />
  * </app-form-field>
+ *
+ * Nota: Este componente NAO usa OnPush para poder reagir a mudanças
+ * imperativas no estado do controle (ex: serverError via setErrors()).
  */
 @Component({
   selector: 'app-form-field',
   imports: [CommonModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col gap-2">
       @if (label()) {
@@ -65,6 +68,8 @@ import {AbstractControl} from '@angular/forms';
   `]
 })
 export class FormFieldComponent {
+  private readonly formValidation = inject(FormValidationService);
+
   // Inputs using new signal-based API
   readonly control = input<AbstractControl | null>(null);
   readonly label = input('');
@@ -81,24 +86,16 @@ export class FormFieldComponent {
   }
 
   /**
-   * Get appropriate error message
+   * Get appropriate error message using centralized FormValidationService.
+   * Suporta validadores nativos do Angular e erros do servidor (RFC 9457).
+   * Nota: showError() já valida dirty/touched antes de chamar este método,
+   * então desabilitamos a verificação de touched no service.
    */
   protected errorMessage(): string {
-    const ctrl = this.control();
-    if (!ctrl?.errors) return '';
-
-    const errors = ctrl.errors;
-
-    if (errors['required']) return 'Este campo é obrigatório';
-    if (errors['minlength'])
-      return `Mínimo de ${errors['minlength'].requiredLength} caracteres`;
-    if (errors['maxlength'])
-      return `Máximo de ${errors['maxlength'].requiredLength} caracteres`;
-    if (errors['email']) return 'E-mail inválido';
-    if (errors['pattern']) return 'Formato inválido';
-    if (errors['min']) return `Valor mínimo: ${errors['min'].min}`;
-    if (errors['max']) return `Valor máximo: ${errors['max'].max}`;
-
-    return 'Campo inválido';
+    return this.formValidation.getErrorMessage(
+      this.control(),
+      undefined,
+      {checkTouched: false}
+    );
   }
 }

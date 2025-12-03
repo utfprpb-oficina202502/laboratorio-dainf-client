@@ -132,13 +132,30 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
         error: (error) => {
           this.loaderService.hide();
           this.isLoading.set(false);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Atenção!',
-            detail: 'Ocorreu um erro ao salvar o registro!',
-            life: 5000
-          });
-          this.logger.error('Erro ao trocar senha', error);
+
+          // Processa erro RFC 9457 e aplica erros de campo ao formulário
+          const result = this.errorHandler.handleHttpError(error, false);
+
+          if (result.fieldErrors) {
+            this.errorHandler.applyFieldErrors(formGroup, result.fieldErrors);
+            // Força atualização da view para exibir erros (OnPush)
+            this.cdr.markForCheck();
+            this.messageService.add({
+              severity: 'warn',
+              summary: result.title || 'Erro de validação',
+              detail: 'Verifique os campos destacados no formulário',
+              life: 5000
+            });
+          } else {
+            this.messageService.add({
+              severity: 'error',
+              summary: result.title || 'Atenção!',
+              detail: result.message || 'Ocorreu um erro ao salvar o registro!',
+              life: 5000
+            });
+          }
+
+          this.logger.error('Erro ao atualizar usuário', error);
         }
       });
     } else {

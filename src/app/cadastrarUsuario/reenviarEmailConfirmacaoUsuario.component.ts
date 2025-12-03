@@ -6,6 +6,8 @@ import {MessageService} from "primeng/api";
 import {ProgressBar} from "primeng/progressbar";
 import {InputTextModule} from "primeng/inputtext";
 import {CadastrarUsuarioService} from "./cadastrarUsuario.service";
+import {ErrorHandlerService} from "../framework/services/error-handler.service";
+import {FormValidationService} from "../framework/services/form-validation.service";
 
 @Component({
     selector: "app-reenviar-email-confirmacao-usuario",
@@ -26,6 +28,8 @@ export class ReenviarEmailConfirmacaoUsuarioComponent implements OnInit {
   private readonly cadastrarUsuarioService = inject(CadastrarUsuarioService);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly errorHandler = inject(ErrorHandlerService);
+  private readonly formValidation = inject(FormValidationService);
 
   form!: FormGroup;
   showProgress = false;
@@ -67,14 +71,29 @@ export class ReenviarEmailConfirmacaoUsuarioComponent implements OnInit {
         });
         this.router.navigate(["/login"]);
       },
-      error: () => {
+      error: (error) => {
         this.showProgress = false;
         this.cdr.markForCheck();
-        this.messageService.add({
-          severity: "error",
-          summary: "Atenção",
-          detail: "O email informado não está cadastrado no sistema ou já foi confirmado.",
-        });
+
+        // Processa erro RFC 9457 e aplica erros de campo ao formulário
+        const result = this.errorHandler.handleHttpError(error, false);
+
+        if (result.fieldErrors) {
+          this.errorHandler.applyFieldErrors(this.form, result.fieldErrors);
+          this.messageService.add({
+            severity: "warn",
+            summary: result.title || "Erro de validação",
+            detail: "Verifique os campos destacados no formulário",
+            life: 5000
+          });
+        } else {
+          this.messageService.add({
+            severity: "error",
+            summary: result.title || "Atenção",
+            detail: result.message || "O email informado não está cadastrado no sistema ou já foi confirmado.",
+            life: 5000
+          });
+        }
       },
     });
   }
@@ -83,18 +102,11 @@ export class ReenviarEmailConfirmacaoUsuarioComponent implements OnInit {
     this.router.navigate(["/login"]);
   }
 
+  /**
+   * Retorna a mensagem de erro apropriada para um campo do formulário.
+   * Delega para FormValidationService centralizado.
+   */
   getErrorMessage(fieldName: string): string {
-    const control = this.form.get(fieldName);
-    if (!control?.errors || !control?.touched) {
-      return '';
-    }
-
-    if (control.errors['required']) {
-      return 'Este campo é obrigatório';
-    }
-    if (control.errors['email']) {
-      return 'Email inválido';
-    }
-    return '';
+    return this.formValidation.getErrorMessage(this.form.get(fieldName));
   }
 }
