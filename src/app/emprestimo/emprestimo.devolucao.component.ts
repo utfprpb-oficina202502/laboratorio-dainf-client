@@ -153,7 +153,7 @@ export class EmprestimoDevolucaoComponent implements OnInit {
 
     const itemDuplicado = structuredClone(editingItem);
     itemDuplicado.qtde = this.qtdeItemDuplicado;
-    itemDuplicado.id = 0;
+    itemDuplicado.id = null as unknown as number;
 
     // Atualiza a lista de pendentes
     this.itensPendentes.update(list => [...list, itemDuplicado]);
@@ -264,16 +264,16 @@ export class EmprestimoDevolucaoComponent implements OnInit {
     const uniqueMatchingItems = new Set<EmprestimoDevolucaoItem>();
     const duplicatesSet = new Set<EmprestimoDevolucaoItem>();
 
-    allLists.forEach(list => {
-      list.forEach(empDevItem => {
+    for (const list of allLists) {
+      for (const empDevItem of list) {
         if (empDevItem.item.id === item.item.id) {
           uniqueMatchingItems.add(empDevItem);
           if (this.isDuplicate(empDevItem)) {
             duplicatesSet.add(empDevItem);
           }
         }
-      });
-    });
+      }
+    }
 
     return {
       matchingItems: Array.from(uniqueMatchingItems),
@@ -327,12 +327,12 @@ export class EmprestimoDevolucaoComponent implements OnInit {
   ): void {
     const duplicatesToRemove = duplicates.filter(dup => dup !== canonicalItem);
 
-    duplicatesToRemove.forEach(duplicate => {
+    for (const duplicate of duplicatesToRemove) {
       this.removeFromList(emp.emprestimoDevolucaoItem, duplicate);
       this.removeFromList(pendentes, duplicate);
       this.removeFromList(devolvidos, duplicate);
       this.removeFromList(saida, duplicate);
-    });
+    }
   }
 
   /**
