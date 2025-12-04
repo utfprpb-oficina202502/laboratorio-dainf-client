@@ -151,6 +151,7 @@ export class EmprestimoDevolucaoComponent implements OnInit {
       return;
     }
 
+    // Duplica o EmprestimoDevolucaoItem
     const itemDuplicado = structuredClone(editingItem);
     itemDuplicado.qtde = this.qtdeItemDuplicado;
     itemDuplicado.id = null as unknown as number;
@@ -160,9 +161,25 @@ export class EmprestimoDevolucaoComponent implements OnInit {
 
     // Atualiza o empréstimo
     emp.emprestimoDevolucaoItem.push(itemDuplicado);
+
+    // Encontra e duplica o EmprestimoItem correspondente
+    const emprestimoItem = emp.emprestimoItem.find(ei => ei.item.id === editingItem.item.id);
+    if (emprestimoItem) {
+      // Cria uma duplicata do EmprestimoItem
+      const emprestimoItemDuplicado = structuredClone(emprestimoItem);
+      emprestimoItemDuplicado.qtde = this.qtdeItemDuplicado;
+      emprestimoItemDuplicado.id = null as unknown as number;
+
+      // Adiciona à lista de emprestimoItem
+      emp.emprestimoItem.push(emprestimoItemDuplicado);
+
+      // Atualiza a quantidade do item original
+      emprestimoItem.qtde = emprestimoItem.qtde - this.qtdeItemDuplicado;
+    }
+
     this.emprestimo.set({...emp});
 
-    // Atualiza o item original
+    // Atualiza o item original de devolução
     editingItem.qtde = editingItem.qtde - this.qtdeItemDuplicado;
 
     // Reset dialog state
@@ -229,6 +246,7 @@ export class EmprestimoDevolucaoComponent implements OnInit {
     const devolvidos = [...this.itensDevolvidos()];
     const saida = [...this.itensSaida()];
 
+    // Consolidar EmprestimoDevolucaoItem
     const {
       matchingItems,
       duplicates
@@ -240,6 +258,26 @@ export class EmprestimoDevolucaoComponent implements OnInit {
     canonicalItem.qtde = this.calculateTotalQuantity(matchingItems);
 
     this.removeDuplicatesFromAllLists(duplicates, canonicalItem, emp, pendentes, devolvidos, saida);
+
+    // Consolidar EmprestimoItem correspondente
+    const emprestimoItems = emp.emprestimoItem.filter(ei => ei.item.id === item.item.id);
+    if (emprestimoItems.length > 1) {
+      // Encontra o item canônico (com ID válido) ou o primeiro
+      const canonicalEmprestimoItem = emprestimoItems.find(ei => ei.id && ei.id > 0) ?? emprestimoItems[0];
+
+      // Soma todas as quantidades
+      const totalQtde = emprestimoItems.reduce((sum, ei) => sum + Number(ei.qtde), 0);
+      canonicalEmprestimoItem.qtde = totalQtde;
+
+      // Remove duplicatas
+      const duplicatesToRemove = emprestimoItems.filter(ei => ei !== canonicalEmprestimoItem);
+      for (const duplicate of duplicatesToRemove) {
+        const index = emp.emprestimoItem.indexOf(duplicate);
+        if (index >= 0) {
+          emp.emprestimoItem.splice(index, 1);
+        }
+      }
+    }
 
     this.updateAllSignals(emp, pendentes, devolvidos, saida);
   }
