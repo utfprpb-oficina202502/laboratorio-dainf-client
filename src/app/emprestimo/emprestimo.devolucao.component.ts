@@ -179,8 +179,9 @@ export class EmprestimoDevolucaoComponent implements OnInit {
 
     this.emprestimo.set({...emp});
 
-    // Atualiza o item original de devolução
+    // Atualiza o item original de devolução e força atualização do signal
     editingItem.qtde = editingItem.qtde - this.qtdeItemDuplicado;
+    this.itensPendentes.update(list => [...list]);
 
     // Reset dialog state
     this.qtdeItemDuplicado = undefined;

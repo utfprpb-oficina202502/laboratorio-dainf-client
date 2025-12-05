@@ -486,7 +486,7 @@ describe('EmprestimoDevolucaoComponent - duplicarItem', () => {
     expect(emprestimo.emprestimoDevolucaoItem).toHaveLength(2);
     const duplicata = emprestimo.emprestimoDevolucaoItem[1];
     expect(duplicata.qtde).toBe(3);
-    expect(duplicata.id).toBe(0);
+    expect(duplicata.id).toBeNull();
   });
 
   it('deve reduzir quantidade do item original', () => {
