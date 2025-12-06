@@ -58,7 +58,8 @@ function createComponentWithEmprestimo(): {
   const component = fixture.componentInstance;
 
   const emprestimo = {
-    emprestimoDevolucaoItem: []
+    emprestimoDevolucaoItem: [],
+    emprestimoItem: []
   } as unknown as Emprestimo;
   component.emprestimo.set(emprestimo);
 
@@ -93,6 +94,24 @@ function createDevolucaoItem(
     item: createItem(itemId),
     emprestimo: emprestimo
   } as EmprestimoDevolucaoItem;
+}
+
+/**
+ * Factory para criar objetos EmprestimoItem de teste
+ */
+function createEmprestimoItem(
+  emprestimo: Emprestimo,
+  id: number | null,
+  itemId: number,
+  qtde: number
+): any {
+  return {
+    id: id,
+    qtde: qtde,
+    devolver: true,
+    item: createItem(itemId),
+    emprestimo: emprestimo
+  };
 }
 
 describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
@@ -228,6 +247,107 @@ describe('EmprestimoDevolucaoComponent - removeItensDuplicadosByItem', () => {
       expect(emprestimo.emprestimoDevolucaoItem).not.toContain(item100Dup);
 
       expect(item200.qtde).toBe(7); // Quantidade do item 200 inalterada
+    });
+  });
+
+  describe('Consolidação de EmprestimoItem correspondente', () => {
+    it('deve consolidar EmprestimoItem quando há duplicatas', () => {
+      // Arrange
+      const devItem1 = createDevolucaoItem(emprestimo, 1, 100, 5);
+      const devItem2 = createDevolucaoItem(emprestimo, 0, 100, 3);
+
+      const empItem1 = createEmprestimoItem(emprestimo, 1, 100, 5);
+      const empItem2 = createEmprestimoItem(emprestimo, null, 100, 3);
+
+      emprestimo.emprestimoDevolucaoItem = [devItem1, devItem2];
+      emprestimo.emprestimoItem = [empItem1, empItem2];
+      component.itensPendentes.set([devItem1, devItem2]);
+
+      // Act
+      component.removeItensDuplicadosByItem(devItem1);
+
+      // Assert
+      expect(emprestimo.emprestimoItem).toHaveLength(1);
+      expect(emprestimo.emprestimoItem[0].qtde).toBe(8); // 5 + 3
+      expect(emprestimo.emprestimoItem[0].id).toBe(1); // Item canônico preservado
+    });
+
+  it('deve priorizar EmprestimoItem com ID válido como canônico', () => {
+      // Arrange
+      const devItem1 = createDevolucaoItem(emprestimo, 1, 100, 3);
+      const devItem2 = createDevolucaoItem(emprestimo, 0, 100, 2);
+
+      const empItem1 = createEmprestimoItem(emprestimo, null, 100, 2);
+      const empItem2 = createEmprestimoItem(emprestimo, 5, 100, 3);
+      const empItem3 = createEmprestimoItem(emprestimo, 0, 100, 4);
+
+      emprestimo.emprestimoDevolucaoItem = [devItem1, devItem2];
+      emprestimo.emprestimoItem = [empItem1, empItem2, empItem3];
+      component.itensPendentes.set([devItem1, devItem2]);
+
+      // Act
+      component.removeItensDuplicadosByItem(devItem1);
+
+      // Assert
+      expect(emprestimo.emprestimoItem).toHaveLength(1);
+      expect(emprestimo.emprestimoItem[0].id).toBe(5); // Item com ID válido
+      expect(emprestimo.emprestimoItem[0].qtde).toBe(9); // 2 + 3 + 4
+    });    it('não deve falhar se não há EmprestimoItem correspondente', () => {
+      // Arrange
+      const devItem1 = createDevolucaoItem(emprestimo, 1, 100, 5);
+      const devItem2 = createDevolucaoItem(emprestimo, 0, 100, 3);
+
+      emprestimo.emprestimoDevolucaoItem = [devItem1, devItem2];
+      emprestimo.emprestimoItem = []; // Sem items
+      component.itensPendentes.set([devItem1, devItem2]);
+
+      // Act & Assert
+      expect(() => component.removeItensDuplicadosByItem(devItem1)).not.toThrow();
+      expect(emprestimo.emprestimoItem).toHaveLength(0);
+    });
+
+    it('não deve consolidar EmprestimoItem se há apenas um', () => {
+      // Arrange
+      const devItem1 = createDevolucaoItem(emprestimo, 1, 100, 5);
+      const devItem2 = createDevolucaoItem(emprestimo, 0, 100, 3);
+
+      const empItem = createEmprestimoItem(emprestimo, 1, 100, 8);
+
+      emprestimo.emprestimoDevolucaoItem = [devItem1, devItem2];
+      emprestimo.emprestimoItem = [empItem];
+      component.itensPendentes.set([devItem1, devItem2]);
+
+      // Act
+      component.removeItensDuplicadosByItem(devItem1);
+
+      // Assert
+      expect(emprestimo.emprestimoItem).toHaveLength(1);
+      expect(emprestimo.emprestimoItem[0].qtde).toBe(8); // Quantidade não alterada
+    });
+
+    it('deve manter outros EmprestimoItem intactos', () => {
+      // Arrange
+      const devItem1 = createDevolucaoItem(emprestimo, 1, 100, 3);
+      const devItem2 = createDevolucaoItem(emprestimo, 0, 100, 2);
+
+      const empItem1 = createEmprestimoItem(emprestimo, 1, 100, 3);
+      const empItem2 = createEmprestimoItem(emprestimo, 0, 100, 2);
+      const empItem3 = createEmprestimoItem(emprestimo, 2, 200, 7); // Item diferente
+
+      emprestimo.emprestimoDevolucaoItem = [devItem1, devItem2];
+      emprestimo.emprestimoItem = [empItem1, empItem2, empItem3];
+      component.itensPendentes.set([devItem1, devItem2]);
+
+      // Act
+      component.removeItensDuplicadosByItem(devItem1);
+
+      // Assert: Deve ter 2 items - 1 de item 100 consolidado e 1 de item 200
+      expect(emprestimo.emprestimoItem).toHaveLength(2);
+      expect(emprestimo.emprestimoItem).toContain(empItem3);
+      expect(empItem3.qtde).toBe(7); // Não alterado
+      // Verifica que item 100 foi consolidado
+      const item100 = emprestimo.emprestimoItem.find(ei => ei.item.id === 100);
+      expect(item100?.qtde).toBe(5); // 3 + 2
     });
   });
 
@@ -487,10 +607,10 @@ describe('EmprestimoDevolucaoComponent - duplicarItem', () => {
     expect(emprestimo.emprestimoDevolucaoItem).toHaveLength(2);
     const duplicata = emprestimo.emprestimoDevolucaoItem[1];
     expect(duplicata.qtde).toBe(3);
-    expect(duplicata.id).toBe(0);
+    expect(duplicata.id).toBeNull();
   });
 
-  it('deve reduzir quantidade do item original', () => {
+  it('deve criar novo item com quantidade reduzida na lista de pendentes', () => {
     const original = createDevolucaoItem(emprestimo, 1, 100, 10);
     emprestimo.emprestimoDevolucaoItem = [original];
     component.itensPendentes.set([original]);
@@ -499,7 +619,11 @@ describe('EmprestimoDevolucaoComponent - duplicarItem', () => {
 
     component.duplicarItem();
 
-    expect(original.qtde).toBe(6); // 10 - 4 = 6
+    // Verifica que um novo item foi criado na lista de pendentes
+    const pendentes = component.itensPendentes();
+    const itemAtualizado = pendentes.find(item => item.id === 1);
+    expect(itemAtualizado?.qtde).toBe(6); // 10 - 4 = 6
+    expect(itemAtualizado).not.toBe(original); // Deve ser um novo objeto
   });
 
   it('deve adicionar duplicata à lista de pendentes', () => {
@@ -576,6 +700,50 @@ describe('EmprestimoDevolucaoComponent - duplicarItem', () => {
     expect(duplicata).not.toBe(original);
     expect(duplicata.item.id).toBe(original.item.id);
     expect(duplicata.item.descricao).toBe(original.item.descricao);
+  });
+
+  it('deve duplicar EmprestimoItem correspondente quando existe', () => {
+    const original = createDevolucaoItem(emprestimo, 1, 100, 10);
+    const emprestimoItem = createEmprestimoItem(emprestimo, 1, 100, 10);
+    emprestimo.emprestimoDevolucaoItem = [original];
+    emprestimo.emprestimoItem = [emprestimoItem];
+    component.itensPendentes.set([original]);
+    component.itemIsEditing.set(original);
+    component.qtdeItemDuplicado = 3;
+
+    component.duplicarItem();
+
+    expect(emprestimo.emprestimoItem).toHaveLength(2);
+    const duplicata = emprestimo.emprestimoItem[1];
+    expect(duplicata.qtde).toBe(3);
+    expect(duplicata.id).toBeNull();
+    expect(duplicata.item.id).toBe(100);
+  });
+
+  it('deve reduzir quantidade do EmprestimoItem original', () => {
+    const original = createDevolucaoItem(emprestimo, 1, 100, 10);
+    const emprestimoItem = createEmprestimoItem(emprestimo, 1, 100, 10);
+    emprestimo.emprestimoDevolucaoItem = [original];
+    emprestimo.emprestimoItem = [emprestimoItem];
+    component.itensPendentes.set([original]);
+    component.itemIsEditing.set(original);
+    component.qtdeItemDuplicado = 4;
+
+    component.duplicarItem();
+
+    expect(emprestimoItem.qtde).toBe(6); // 10 - 4 = 6
+  });
+
+  it('não deve falhar se EmprestimoItem correspondente não existe', () => {
+    const original = createDevolucaoItem(emprestimo, 1, 100, 10);
+    emprestimo.emprestimoDevolucaoItem = [original];
+    emprestimo.emprestimoItem = []; // Sem items
+    component.itensPendentes.set([original]);
+    component.itemIsEditing.set(original);
+    component.qtdeItemDuplicado = 3;
+
+    expect(() => component.duplicarItem()).not.toThrow();
+    expect(emprestimo.emprestimoItem).toHaveLength(0);
   });
 });
 

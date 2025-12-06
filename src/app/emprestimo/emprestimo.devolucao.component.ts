@@ -27,6 +27,7 @@ import {InputTextModule} from 'primeng/inputtext';
 import {ScrollPanelModule} from 'primeng/scrollpanel';
 import {TagModule} from 'primeng/tag';
 import {TextareaModule} from 'primeng/textarea';
+import {TooltipModule} from 'primeng/tooltip';
 
 // Custom components
 import {VoltarComponent} from '../geral/voltar/voltar.component';
@@ -53,6 +54,7 @@ import {FormFieldComponent} from '../framework/component/form-field.component';
     ScrollPanelModule,
     TagModule,
     TextareaModule,
+    TooltipModule,
     // Angular CDK
     DragDropModule,
     // Custom
@@ -149,19 +151,39 @@ export class EmprestimoDevolucaoComponent implements OnInit {
       return;
     }
 
+    // Duplica o EmprestimoDevolucaoItem
     const itemDuplicado = structuredClone(editingItem);
     itemDuplicado.qtde = this.qtdeItemDuplicado;
-    itemDuplicado.id = 0;
+    itemDuplicado.id = null as unknown as number;
 
     // Atualiza a lista de pendentes
     this.itensPendentes.update(list => [...list, itemDuplicado]);
 
     // Atualiza o empréstimo
     emp.emprestimoDevolucaoItem.push(itemDuplicado);
+
+    // Encontra e duplica o EmprestimoItem correspondente
+    const emprestimoItem = emp.emprestimoItem.find(ei => ei.item.id === editingItem.item.id);
+    if (emprestimoItem) {
+      // Cria uma duplicata do EmprestimoItem
+      const emprestimoItemDuplicado = structuredClone(emprestimoItem);
+      emprestimoItemDuplicado.qtde = this.qtdeItemDuplicado;
+      emprestimoItemDuplicado.id = null as unknown as number;
+
+      // Adiciona à lista de emprestimoItem
+      emp.emprestimoItem.push(emprestimoItemDuplicado);
+
+      // Atualiza a quantidade do item original
+      emprestimoItem.qtde = emprestimoItem.qtde - this.qtdeItemDuplicado;
+    }
+
     this.emprestimo.set({...emp});
 
-    // Atualiza o item original
-    editingItem.qtde = editingItem.qtde - this.qtdeItemDuplicado;
+    // Atualiza o item original de devolução criando um novo objeto para disparar change detection
+    const updatedOriginalItem = {...editingItem, qtde: editingItem.qtde - this.qtdeItemDuplicado};
+    this.itensPendentes.update(list =>
+      list.map(item => item === editingItem ? updatedOriginalItem : item)
+    );
 
     // Reset dialog state
     this.qtdeItemDuplicado = undefined;
@@ -227,6 +249,7 @@ export class EmprestimoDevolucaoComponent implements OnInit {
     const devolvidos = [...this.itensDevolvidos()];
     const saida = [...this.itensSaida()];
 
+    // Consolidar EmprestimoDevolucaoItem
     const {
       matchingItems,
       duplicates
@@ -238,6 +261,26 @@ export class EmprestimoDevolucaoComponent implements OnInit {
     canonicalItem.qtde = this.calculateTotalQuantity(matchingItems);
 
     this.removeDuplicatesFromAllLists(duplicates, canonicalItem, emp, pendentes, devolvidos, saida);
+
+    // Consolidar EmprestimoItem correspondente
+    const emprestimoItems = emp.emprestimoItem.filter(ei => ei.item.id === item.item.id);
+    if (emprestimoItems.length > 1) {
+      // Encontra o item canônico (com ID válido) ou o primeiro
+      const canonicalEmprestimoItem = emprestimoItems.find(ei => ei.id && ei.id > 0) ?? emprestimoItems[0];
+
+      // Soma todas as quantidades
+      const totalQtde = emprestimoItems.reduce((sum, ei) => sum + Number(ei.qtde), 0);
+      canonicalEmprestimoItem.qtde = totalQtde;
+
+      // Remove duplicatas
+      const duplicatesToRemove = emprestimoItems.filter(ei => ei !== canonicalEmprestimoItem);
+      for (const duplicate of duplicatesToRemove) {
+        const index = emp.emprestimoItem.indexOf(duplicate);
+        if (index >= 0) {
+          emp.emprestimoItem.splice(index, 1);
+        }
+      }
+    }
 
     this.updateAllSignals(emp, pendentes, devolvidos, saida);
   }
@@ -262,16 +305,16 @@ export class EmprestimoDevolucaoComponent implements OnInit {
     const uniqueMatchingItems = new Set<EmprestimoDevolucaoItem>();
     const duplicatesSet = new Set<EmprestimoDevolucaoItem>();
 
-    allLists.forEach(list => {
-      list.forEach(empDevItem => {
+    for (const list of allLists) {
+      for (const empDevItem of list) {
         if (empDevItem.item.id === item.item.id) {
           uniqueMatchingItems.add(empDevItem);
           if (this.isDuplicate(empDevItem)) {
             duplicatesSet.add(empDevItem);
           }
         }
-      });
-    });
+      }
+    }
 
     return {
       matchingItems: Array.from(uniqueMatchingItems),
@@ -325,12 +368,12 @@ export class EmprestimoDevolucaoComponent implements OnInit {
   ): void {
     const duplicatesToRemove = duplicates.filter(dup => dup !== canonicalItem);
 
-    duplicatesToRemove.forEach(duplicate => {
+    for (const duplicate of duplicatesToRemove) {
       this.removeFromList(emp.emprestimoDevolucaoItem, duplicate);
       this.removeFromList(pendentes, duplicate);
       this.removeFromList(devolvidos, duplicate);
       this.removeFromList(saida, duplicate);
-    });
+    }
   }
 
   /**

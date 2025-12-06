@@ -164,7 +164,21 @@
                     (contextmenu)="onContextMenu($event, item)"
                     cdkDrag>
                     <span class="text-color">{{ item?.item?.nome }}</span>
-                    <p-tag [value]="item.qtde.toString()" severity="secondary"></p-tag>
+                    <div class="flex items-center gap-2">
+                      @if (item.qtde > 1 && !emprestimo()?.dataDevolucao) {
+                        <p-button
+                          icon="pi pi-copy"
+                          [rounded]="true"
+                          [text]="true"
+                          severity="secondary"
+                          size="small"
+                          pTooltip="Fracionar quantidade"
+                          tooltipPosition="top"
+                          (onClick)="openDialogDuplicarItem(item); $event.stopPropagation()">
+                        </p-button>
+                      }
+                      <p-tag [value]="item.qtde.toString()" severity="secondary"></p-tag>
+                    </div>
                   </div>
                 }
 
@@ -206,7 +220,21 @@
                        [cdkDragDisabled]="emprestimo()?.dataDevolucao"
                     cdkDrag>
                     <span class="text-color">{{ item.item.nome }}</span>
-                    <p-tag [value]="item.qtde.toString()" severity="secondary"></p-tag>
+                    <div class="flex items-center gap-2">
+                      @if (item.qtde > 1 && !emprestimo()?.dataDevolucao) {
+                        <p-button
+                          icon="pi pi-copy"
+                          [rounded]="true"
+                          [text]="true"
+                          severity="secondary"
+                          size="small"
+                          pTooltip="Fracionar quantidade"
+                          tooltipPosition="top"
+                          (onClick)="openDialogDuplicarItem(item); $event.stopPropagation()">
+                        </p-button>
+                      }
+                      <p-tag [value]="item.qtde.toString()" severity="secondary"></p-tag>
+                    </div>
                   </div>
                 }
 
@@ -241,7 +269,21 @@
                     [cdkDragDisabled]="emprestimo()?.dataDevolucao"
                     cdkDrag>
                     <span class="text-color">{{ item.item.nome }}</span>
-                    <p-tag [value]="item.qtde.toString()" severity="secondary"></p-tag>
+                    <div class="flex items-center gap-2">
+                      @if (item.qtde > 1 && !emprestimo()?.dataDevolucao) {
+                        <p-button
+                          icon="pi pi-copy"
+                          [rounded]="true"
+                          [text]="true"
+                          severity="secondary"
+                          size="small"
+                          pTooltip="Fracionar quantidade"
+                          tooltipPosition="top"
+                          (onClick)="openDialogDuplicarItem(item); $event.stopPropagation()">
+                        </p-button>
+                      }
+                      <p-tag [value]="item.qtde.toString()" severity="secondary"></p-tag>
+                    </div>
                   </div>
                 }
                 @if (itensSaida().length === 0) {
