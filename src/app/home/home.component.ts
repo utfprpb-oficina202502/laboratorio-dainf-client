@@ -35,6 +35,23 @@ import {StatCardComponent} from '../components/stat-card/stat-card.component';
 import {SkeletonCardComponent} from '../framework/component/skeleton-card.component';
 import {SkeletonChartComponent} from '../framework/component/skeleton-chart.component';
 
+// Dashboard Aluno/Professor Components
+import {
+  ActivityTimelineComponent,
+  AlertCenterComponent,
+  FrequentItemsComponent,
+  LoanCalendarComponent,
+  LoanStatCardsComponent,
+  UsageChartComponent
+} from './components';
+import {
+  AtividadeUsuario,
+  EstatisticasUsuario,
+  EventoCalendario,
+  HistoricoUsoMensal,
+  ItemFrequenteUsuario
+} from './models/dashboard.models';
+
 @Component({
   selector: "app-home",
   templateUrl: "./home.component.html",
@@ -50,10 +67,17 @@ import {SkeletonChartComponent} from '../framework/component/skeleton-chart.comp
     DatePickerModule,
     PanelModule,
     ButtonModule,
-    // Custom
+    // Custom - Dashboard Admin
     StatCardComponent,
     SkeletonCardComponent,
     SkeletonChartComponent,
+    // Custom - Dashboard Aluno/Professor
+    AlertCenterComponent,
+    LoanStatCardsComponent,
+    LoanCalendarComponent,
+    ActivityTimelineComponent,
+    UsageChartComponent,
+    FrequentItemsComponent
   ]
 })
 export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -83,6 +107,21 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   protected readonly hasPie2ChartData = signal(false);
   private readonly logger = inject(LoggerService);
   private readonly messageService = inject(MessageService);
+
+  // =============================================
+  // Signals - Dashboard Aluno/Professor
+  // =============================================
+  protected readonly userStats = signal<EstatisticasUsuario | null>(null);
+  protected readonly userFrequentItems = signal<ItemFrequenteUsuario[]>([]);
+  protected readonly userUsageHistory = signal<HistoricoUsoMensal[]>([]);
+  protected readonly userActivities = signal<AtividadeUsuario[]>([]);
+  protected readonly userCalendarEvents = signal<EventoCalendario[]>([]);
+  protected readonly loadingUserStats = signal(false);
+  protected readonly loadingUserItems = signal(false);
+  protected readonly loadingUserHistory = signal(false);
+  protected readonly loadingUserActivities = signal(false);
+  protected readonly loadingUserCalendar = signal(false);
+  protected readonly userName = signal<string>('');
   // Computed - Derived State
   protected readonly disableBtnFiltrar = computed(() =>
     !this.dtIniFiltro() || !this.dtFimFiltro()
@@ -104,12 +143,16 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       }
       this.showDashboardAluno.set(value);
 
-      if (!this.showDashboardAluno()) {
-        if (this.viewInitialized) {
-          this.buildDashboards();
-        } else {
-          this.pendingDashboardBuild = true;
-        }
+      if (this.showDashboardAluno()) {
+        // Dashboard do Aluno/Professor
+        this.loadUserName();
+        this.loadUserDashboard();
+      } else if (this.viewInitialized) {
+        // Dashboard do Admin - view já inicializada
+        this.buildDashboards();
+      } else {
+        // Dashboard do Admin - aguarda ngAfterViewInit
+        this.pendingDashboardBuild = true;
       }
     }).catch(() => {
       // Error handled, signal update is automatic
@@ -370,6 +413,89 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       adquiridos.length > 0 ||
       saidas.length > 0
     );
+  }
+
+  // =============================================
+  // Dashboard Aluno/Professor - Métodos
+  // =============================================
+
+  /**
+   * Carrega o nome do usuário logado.
+   */
+  private loadUserName(): void {
+    this.loginService.getCurrentUser().subscribe({
+      next: (user) => {
+        if (user?.nome) {
+          // Pega apenas o primeiro nome
+          const firstName = user.nome.split(' ')[0];
+          this.userName.set(firstName);
+        }
+      }
+    });
+  }
+
+  /**
+   * Carrega todos os dados do dashboard do aluno/professor.
+   */
+  private loadUserDashboard(): void {
+    // Carrega estatísticas
+    this.loadingUserStats.set(true);
+    this.homeService.getMyStats()
+    .pipe(finalize(() => this.loadingUserStats.set(false)))
+    .subscribe({
+      next: (stats) => this.userStats.set(stats),
+      error: (err) => this.logger.error('Erro ao carregar estatísticas do usuário', err)
+    });
+
+    // Carrega itens frequentes
+    this.loadingUserItems.set(true);
+    this.homeService.getMyFrequentItems()
+    .pipe(finalize(() => this.loadingUserItems.set(false)))
+    .subscribe({
+      next: (items) => this.userFrequentItems.set(items),
+      error: (err) => this.logger.error('Erro ao carregar itens frequentes', err)
+    });
+
+    // Carrega histórico de uso
+    this.loadingUserHistory.set(true);
+    this.homeService.getMyUsageHistory()
+    .pipe(finalize(() => this.loadingUserHistory.set(false)))
+    .subscribe({
+      next: (history) => this.userUsageHistory.set(history),
+      error: (err) => this.logger.error('Erro ao carregar histórico de uso', err)
+    });
+
+    // Carrega atividades recentes
+    this.loadingUserActivities.set(true);
+    this.homeService.getMyActivity()
+    .pipe(finalize(() => this.loadingUserActivities.set(false)))
+    .subscribe({
+      next: (activities) => this.userActivities.set(activities),
+      error: (err) => this.logger.error('Erro ao carregar atividades', err)
+    });
+
+    // Carrega eventos do calendário (mês atual + próximo mês)
+    this.loadCalendarEvents();
+  }
+
+  /**
+   * Carrega os eventos do calendário para o mês atual e próximo.
+   */
+  private loadCalendarEvents(): void {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 2, 0); // Último dia do próximo mês
+
+    const dtIni = this.datepipe.transform(startDate, 'dd/MM/yyyy') ?? '';
+    const dtFim = this.datepipe.transform(endDate, 'dd/MM/yyyy') ?? '';
+
+    this.loadingUserCalendar.set(true);
+    this.homeService.getMyCalendarEvents(dtIni, dtFim)
+    .pipe(finalize(() => this.loadingUserCalendar.set(false)))
+    .subscribe({
+      next: (events) => this.userCalendarEvents.set(events),
+      error: (err) => this.logger.error('Erro ao carregar eventos do calendário', err)
+    });
   }
 }
 

@@ -1,6 +1,39 @@
 @if (showDashboardAluno()) {
-  <div class="p-3" id="container-dashboard-aluno">
-    <h1 class="text-xl font-semibold">Bem vindo!</h1>
+  <div class="p-3 space-y-6" id="container-dashboard-aluno">
+    <!-- Saudação -->
+    <h1 class="text-xl md:text-2xl font-semibold">
+      👋 Olá{{ userName() ? ', ' + userName() : '' }}!
+    </h1>
+
+    <!-- Alertas (full width) -->
+    <app-alert-center [stats]="userStats()"/>
+
+    <!-- Cards de Status (1→2→4 colunas) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <app-loan-stat-cards [loading]="loadingUserStats()" [stats]="userStats()"/>
+    </div>
+
+    <!-- Calendário + Timeline (1→2 colunas) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <app-loan-calendar [events]="userCalendarEvents()" [loading]="loadingUserCalendar()"/>
+      <app-activity-timeline [activities]="userActivities()" [loading]="loadingUserActivities()"/>
+    </div>
+
+    <!-- Gráfico + Itens Frequentes (1→2 colunas) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <app-usage-chart [history]="userUsageHistory()" [loading]="loadingUserHistory()"/>
+      <app-frequent-items [items]="userFrequentItems()" [loading]="loadingUserItems()"/>
+    </div>
+
+    <!-- CTA Catálogo -->
+    <a
+      class="block w-full p-4 text-center bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors"
+      routerLink="/item/catalogo"
+    >
+      <span class="text-blue-700 font-medium">
+        🛒 Explorar Catálogo de Itens
+      </span>
+    </a>
   </div>
 }
 

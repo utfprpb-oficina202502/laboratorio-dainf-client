@@ -17,7 +17,7 @@
       @if (item().grupo?.descricao) {
         <p-tag
           [rounded]="true"
-          [value]="item().grupo!.descricao"
+          [value]="item().grupo?.descricao ?? ''"
           class="absolute top-2 left-2"
           severity="info"/>
       }

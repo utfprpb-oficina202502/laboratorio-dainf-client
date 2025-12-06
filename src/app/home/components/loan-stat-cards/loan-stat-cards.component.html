@@ -1,0 +1,35 @@
+@if (loading()) {
+  <app-skeleton-card/>
+  <app-skeleton-card/>
+  <app-skeleton-card/>
+  <app-skeleton-card/>
+} @else {
+  <app-stat-card
+    [value]="stats()?.emprestimosEmAberto ?? 0"
+    accentColor="#3B82F6"
+    icon="clock"
+    iconLibrary="pi"
+    title="Em Aberto"
+  />
+  <app-stat-card
+    [value]="stats()?.emprestimosEmAtraso ?? 0"
+    accentColor="#EF4444"
+    icon="exclamation-triangle"
+    iconLibrary="pi"
+    title="Em Atraso"
+  />
+  <app-stat-card
+    [value]="proximaDevolucaoText()"
+    accentColor="#F59E0B"
+    icon="calendar"
+    iconLibrary="pi"
+    title="Próx. Devolução"
+  />
+  <app-stat-card
+    [value]="stats()?.emprestimosTotal ?? 0"
+    accentColor="#22C55E"
+    icon="check-circle"
+    iconLibrary="pi"
+    title="Total"
+  />
+}

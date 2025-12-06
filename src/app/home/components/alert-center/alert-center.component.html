@@ -1,0 +1,46 @@
+@if (hasAlerts()) {
+  <div aria-live="polite" class="space-y-2" role="alert">
+    @for (alert of alerts(); track alert.type) {
+      <div
+        [class.bg-amber-50]="alert.severity === 'warn'"
+        [class.bg-red-50]="alert.severity === 'danger'"
+        [class.border-amber-200]="alert.severity === 'warn'"
+        [class.border-red-200]="alert.severity === 'danger'"
+        class="flex items-center gap-3 p-3 rounded-lg border"
+      >
+        <i
+          [class.text-amber-600]="alert.severity === 'warn'"
+          [class.text-red-600]="alert.severity === 'danger'"
+          [class]="alert.icon"
+          aria-hidden="true"
+          class="text-xl"
+        ></i>
+        <div class="flex-1">
+          <p
+            [class.text-amber-800]="alert.severity === 'warn'"
+            [class.text-red-800]="alert.severity === 'danger'"
+            class="font-semibold text-sm"
+          >
+            {{ alert.title }}
+          </p>
+          <p
+            [class.text-amber-700]="alert.severity === 'warn'"
+            [class.text-red-700]="alert.severity === 'danger'"
+            class="text-sm"
+          >
+            {{ alert.message }}
+          </p>
+        </div>
+        <p-button
+          [rounded]="true"
+          [routerLink]="['/emprestimo']"
+          [severity]="alert.severity === 'danger' ? 'danger' : 'warn'"
+          [text]="true"
+          aria-label="Ver empréstimos"
+          icon="pi pi-arrow-right"
+          pTooltip="Ver empréstimos"
+        />
+      </div>
+    }
+  </div>
+}

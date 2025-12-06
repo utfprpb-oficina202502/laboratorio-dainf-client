@@ -1,0 +1,65 @@
+<p-card>
+  <ng-template pTemplate="header">
+    <div class="flex items-center gap-2 px-4 pt-4">
+      <i aria-hidden="true" class="pi pi-calendar text-lg text-gray-600"></i>
+      <h3 class="text-lg font-semibold m-0">Meu Calendário</h3>
+    </div>
+  </ng-template>
+
+  @if (loading()) {
+    <div class="p-4">
+      <p-skeleton height="18rem" width="100%"/>
+    </div>
+  } @else {
+    <div class="p-4">
+      <p-datepicker
+        [(ngModel)]="selectedDate"
+        [inline]="true"
+        [showWeek]="false"
+        [style]="{ width: '100%' }"
+        class="loan-calendar"
+        dateFormat="dd/mm/yy"
+      >
+        <ng-template let-date pTemplate="date">
+          @if (hasEvents(date)) {
+            <span
+              [pTooltip]="getTooltip(date)"
+              [style.background-color]="getDominantColor(date) + '30'"
+              [style.border]="'2px solid ' + getDominantColor(date)"
+              class="flex items-center justify-center w-8 h-8 rounded-full cursor-pointer transition-all"
+              tooltipPosition="top"
+            >
+              {{ date.day }}
+            </span>
+          } @else {
+            <span class="flex items-center justify-center w-8 h-8">
+              {{ date.day }}
+            </span>
+          }
+        </ng-template>
+      </p-datepicker>
+
+      <!-- Legenda -->
+      <div class="flex flex-wrap gap-3 mt-4 pt-4 border-t border-gray-200">
+        <div class="flex items-center gap-1">
+          <span [style.background-color]="eventColors.RETIRADA" class="w-3 h-3 rounded-full"></span>
+          <span class="text-xs text-gray-600">Retirada</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span [style.background-color]="eventColors.DEVOLUCAO_PREVISTA"
+                class="w-3 h-3 rounded-full"></span>
+          <span class="text-xs text-gray-600">Devolução prevista</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span [style.background-color]="eventColors.DEVOLUCAO_REALIZADA"
+                class="w-3 h-3 rounded-full"></span>
+          <span class="text-xs text-gray-600">Devolvido</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span [style.background-color]="eventColors.ATRASADO" class="w-3 h-3 rounded-full"></span>
+          <span class="text-xs text-gray-600">Atrasado</span>
+        </div>
+      </div>
+    </div>
+  }
+</p-card>
