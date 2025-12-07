@@ -630,4 +630,7 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
       this.createCancelMenuItem()
     ];
   }
+
+  // Sobrescreve permissão de exclusão para nunca permitir exclusão nesta tela
+  override readonly canDelete = signal(false);
 }
