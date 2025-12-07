@@ -10,6 +10,7 @@ import {LoaderService} from '../framework/loader/loader.service';
 import {LoginService} from '../login/login.service';
 import {LoggerService} from '../framework/services/logger.service';
 import {Emprestimo} from './emprestimo';
+import {StatusDevolucao} from './emprestimoDevolucaoItem';
 import {of} from 'rxjs';
 
 describe('EmprestimoFormComponent', () => {
@@ -270,6 +271,223 @@ describe('EmprestimoFormComponent', () => {
       component.object.set(null);
 
       expect(component.isEmprestimoFinalizado()).toBe(false);
+    });
+  });
+
+  describe('removeItemByIndex', () => {
+    it('should remove only the specific item by index', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+      const item2 = {id: 2, nome: 'Item B'};
+      const item3 = {id: 1, nome: 'Item A'}; // Same item as item1 (fractioned)
+
+      component.emprestimoItems.set([
+        {item: item1, qtde: 5, devolver: true},
+        {item: item2, qtde: 3, devolver: true},
+        {item: item3, qtde: 2, devolver: true}
+      ]);
+
+      component.removeItemByIndex(1);
+
+      const remainingItems = component.emprestimoItems();
+      expect(remainingItems.length).toBe(2);
+      expect(remainingItems[0].item.id).toBe(1);
+      expect(remainingItems[0].qtde).toBe(5);
+      expect(remainingItems[1].item.id).toBe(1);
+      expect(remainingItems[1].qtde).toBe(2);
+    });
+
+    it('should not remove anything if index is out of bounds (negative)', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+      component.emprestimoItems.set([
+        {item: item1, qtde: 5, devolver: true}
+      ]);
+
+      component.removeItemByIndex(-1);
+
+      expect(component.emprestimoItems().length).toBe(1);
+    });
+
+    it('should not remove anything if index is out of bounds (too large)', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+      component.emprestimoItems.set([
+        {item: item1, qtde: 5, devolver: true}
+      ]);
+
+      component.removeItemByIndex(5);
+
+      expect(component.emprestimoItems().length).toBe(1);
+    });
+
+    it('should sync with EmprestimoItem in emprestimo object when editing', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+      const item2 = {id: 2, nome: 'Item B'};
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {item: item1, qtde: 5, devolver: true},
+          {item: item2, qtde: 3, devolver: true},
+          {item: item1, qtde: 2, devolver: true}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      // Remove second item (item2)
+      component.removeItemByIndex(1);
+
+      // Check emprestimoItems signal
+      expect(component.emprestimoItems().length).toBe(2);
+
+      // Check emprestimo.emprestimoItem array is also updated
+      expect(emprestimo.emprestimoItem.length).toBe(2);
+      expect(emprestimo.emprestimoItem[0].item.id).toBe(1);
+      expect(emprestimo.emprestimoItem[0].qtde).toBe(5);
+      expect(emprestimo.emprestimoItem[1].item.id).toBe(1);
+      expect(emprestimo.emprestimoItem[1].qtde).toBe(2);
+    });
+
+    it('should handle fractioned items correctly when syncing with EmprestimoItem', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {item: item1, qtde: 5, devolver: true},
+          {item: item1, qtde: 3, devolver: true},
+          {item: item1, qtde: 2, devolver: true}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      // Remove the item with qtde=3 (middle one)
+      component.removeItemByIndex(1);
+
+      // Should keep items with qtde=5 and qtde=2
+      expect(component.emprestimoItems().length).toBe(2);
+      expect(component.emprestimoItems()[0].qtde).toBe(5);
+      expect(component.emprestimoItems()[1].qtde).toBe(2);
+
+      // emprestimo.emprestimoItem should also be synced
+      expect(emprestimo.emprestimoItem.length).toBe(2);
+      expect(emprestimo.emprestimoItem[0].qtde).toBe(5);
+      expect(emprestimo.emprestimoItem[1].qtde).toBe(2);
+    });
+
+    it('should not fail if emprestimo object does not have emprestimoItem array', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+
+      const emprestimo = {
+        id: 100
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([
+        {item: item1, qtde: 5, devolver: true}
+      ]);
+
+      expect(() => component.removeItemByIndex(0)).not.toThrow();
+      expect(component.emprestimoItems().length).toBe(0);
+    });
+
+    it('should not fail if emprestimo object is null', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+
+      component.object.set(null);
+      component.emprestimoItems.set([
+        {item: item1, qtde: 5, devolver: true}
+      ]);
+
+      expect(() => component.removeItemByIndex(0)).not.toThrow();
+      expect(component.emprestimoItems().length).toBe(0);
+    });
+
+    it('should remove corresponding emprestimoDevolucaoItem with matching status', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {item: item1, qtde: 5, devolver: true},
+          {item: item1, qtde: 3, devolver: true}
+        ],
+        emprestimoDevolucaoItem: [
+          {id: 201, item: item1, qtde: 5, statusDevolucao: StatusDevolucao.P},
+          {id: 202, item: item1, qtde: 3, statusDevolucao: StatusDevolucao.D}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      // Remove the item with qtde=3 and status D
+      component.removeItemByIndex(1);
+
+      // Check emprestimoItems signal
+      expect(component.emprestimoItems().length).toBe(1);
+      expect(component.emprestimoItems()[0].qtde).toBe(5);
+
+      // Check emprestimo.emprestimoItem array
+      expect(emprestimo.emprestimoItem.length).toBe(1);
+      expect(emprestimo.emprestimoItem[0].qtde).toBe(5);
+
+      // Check emprestimoDevolucaoItem array - should remove the one with status D
+      expect(emprestimo.emprestimoDevolucaoItem.length).toBe(1);
+      expect(emprestimo.emprestimoDevolucaoItem[0].qtde).toBe(5);
+      expect(emprestimo.emprestimoDevolucaoItem[0].statusDevolucao).toBe(StatusDevolucao.P);
+    });
+
+    it('should remove correct emprestimoDevolucaoItem when multiple items have same item.id but different quantities', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {item: item1, qtde: 1, devolver: true},
+          {item: item1, qtde: 2, devolver: true}
+        ],
+        emprestimoDevolucaoItem: [
+          {id: 301, item: item1, qtde: 2, statusDevolucao: StatusDevolucao.P},
+          {id: 302, item: item1, qtde: 1, statusDevolucao: StatusDevolucao.D}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      // Remove first item (qtde=1, status D)
+      component.removeItemByIndex(0);
+
+      // Check arrays
+      expect(component.emprestimoItems().length).toBe(1);
+      expect(emprestimo.emprestimoItem.length).toBe(1);
+      expect(emprestimo.emprestimoDevolucaoItem.length).toBe(1);
+
+      // Only item with qtde=2 and status P should remain
+      expect(emprestimo.emprestimoItem[0].qtde).toBe(2);
+      expect(emprestimo.emprestimoDevolucaoItem[0].qtde).toBe(2);
+      expect(emprestimo.emprestimoDevolucaoItem[0].statusDevolucao).toBe(StatusDevolucao.P);
+    });
+
+    it('should not fail if emprestimoDevolucaoItem array does not exist', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {item: item1, qtde: 5, devolver: true}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      expect(() => component.removeItemByIndex(0)).not.toThrow();
+      expect(component.emprestimoItems().length).toBe(0);
+      expect(emprestimo.emprestimoItem.length).toBe(0);
     });
   });
 });

@@ -151,19 +151,29 @@ export class EmprestimoDevolucaoComponent implements OnInit {
       return;
     }
 
+    // Calcula a nova quantidade do item original antes de qualquer mutação
+    const novaQtdeOriginal = editingItem.qtde - this.qtdeItemDuplicado;
+
     // Duplica o EmprestimoDevolucaoItem
     const itemDuplicado = structuredClone(editingItem);
     itemDuplicado.qtde = this.qtdeItemDuplicado;
     itemDuplicado.id = null as unknown as number;
 
-    // Atualiza a lista de pendentes
-    this.itensPendentes.update(list => [...list, itemDuplicado]);
+    // Atualiza a quantidade do item original no array do empréstimo
+    const itemOriginalNoEmprestimo = emp.emprestimoDevolucaoItem.find(item => item === editingItem);
+    if (itemOriginalNoEmprestimo) {
+      itemOriginalNoEmprestimo.qtde = novaQtdeOriginal;
+    }
 
-    // Atualiza o empréstimo
+    // Adiciona o duplicado ao empréstimo
     emp.emprestimoDevolucaoItem.push(itemDuplicado);
 
     // Encontra e duplica o EmprestimoItem correspondente
-    const emprestimoItem = emp.emprestimoItem.find(ei => ei.item.id === editingItem.item.id);
+    // Busca pelo item.id E pela quantidade original (antes de fracionar)
+    const qtdeOriginalAntesDeFracionar = novaQtdeOriginal + this.qtdeItemDuplicado;
+    const emprestimoItem = emp.emprestimoItem.find(ei =>
+      ei.item.id === editingItem.item.id && ei.qtde === qtdeOriginalAntesDeFracionar
+    );
     if (emprestimoItem) {
       // Cria uma duplicata do EmprestimoItem
       const emprestimoItemDuplicado = structuredClone(emprestimoItem);
@@ -174,15 +184,15 @@ export class EmprestimoDevolucaoComponent implements OnInit {
       emp.emprestimoItem.push(emprestimoItemDuplicado);
 
       // Atualiza a quantidade do item original
-      emprestimoItem.qtde = emprestimoItem.qtde - this.qtdeItemDuplicado;
+      emprestimoItem.qtde = novaQtdeOriginal;
     }
 
     this.emprestimo.set({...emp});
 
-    // Atualiza o item original de devolução criando um novo objeto para disparar change detection
-    const updatedOriginalItem = {...editingItem, qtde: editingItem.qtde - this.qtdeItemDuplicado};
+    // Atualiza a lista de pendentes: substitui o item original com quantidade reduzida e adiciona o duplicado
+    const updatedOriginalItem = {...editingItem, qtde: novaQtdeOriginal};
     this.itensPendentes.update(list =>
-      list.map(item => item === editingItem ? updatedOriginalItem : item)
+      list.map(item => item === editingItem ? updatedOriginalItem : item).concat(itemDuplicado)
     );
 
     // Reset dialog state

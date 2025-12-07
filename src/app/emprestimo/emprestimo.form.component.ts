@@ -16,6 +16,7 @@ import {
   PrimeReactiveCrudFormComponent
 } from '../framework/component/prime-reactive-crud.form.component';
 import {EmprestimoItem} from './emprestimoItem';
+import {EmprestimoDevolucaoItem, StatusDevolucao} from './emprestimoDevolucaoItem';
 import {Item} from '../item/item';
 import {ItemService} from '../item/item.service';
 import {UsuarioService} from '../usuario/usuario.service';
@@ -38,6 +39,7 @@ import {TooltipModule} from 'primeng/tooltip';
 import {SelectModule} from 'primeng/select';
 import {DialogModule} from 'primeng/dialog';
 import {ScrollPanelModule} from 'primeng/scrollpanel';
+import {TagModule} from 'primeng/tag';
 
 // Custom components
 import {FormFieldComponent} from '../framework/component/form-field.component';
@@ -69,6 +71,7 @@ import {LoggerService} from '../framework/services/logger.service';
     SelectModule,
     DialogModule,
     ScrollPanelModule,
+    TagModule,
     // Custom
     FormFieldComponent,
     VoltarComponent,
@@ -401,30 +404,190 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
     }
 
     const currentItems = [...this.emprestimoItems()];
-    const existingIndex = currentItems.findIndex(ei => ei.item.id === item.id);
+    const pendingItemIndex = this.findPendingItemIndex(currentItems, item.id);
 
-    if (existingIndex >= 0) {
-      const novaQtde = Number(currentItems[existingIndex].qtde) + Number(qtde);
-      if (this.validateItemSaldo(item, novaQtde)) {
-        currentItems[existingIndex].qtde = novaQtde;
-      }
+    if (pendingItemIndex >= 0) {
+      this.addQuantityToPendingItem(currentItems, pendingItemIndex, item, qtde);
     } else {
-      const newEmprestimoItem = new EmprestimoItem();
-      newEmprestimoItem.item = item;
-      newEmprestimoItem.qtde = qtde;
-      newEmprestimoItem.devolver = this.tempDevolver() ?? false;
-      currentItems.push(newEmprestimoItem);
+      this.createNewEmprestimoItem(currentItems, item, qtde);
     }
 
     this.emprestimoItems.set(currentItems);
+    this.resetTempValues();
+  }
 
-    // Reset temp values
+  /**
+   * Add quantity to an existing pending item
+   */
+  private addQuantityToPendingItem(currentItems: EmprestimoItem[], index: number, item: Item, qtde: number): void {
+    const novaQtde = Number(currentItems[index].qtde) + Number(qtde);
+    if (!this.validateItemSaldo(item, novaQtde)) {
+      return;
+    }
+
+    currentItems[index].qtde = novaQtde;
+
+    // Sync with emprestimoDevolucaoItem if editing
+    const emprestimo = this.object();
+    if (emprestimo?.emprestimoDevolucaoItem) {
+      const devolucaoItem = this.findCorrespondingDevolucaoItem(currentItems[index]);
+      if (devolucaoItem) {
+        devolucaoItem.qtde = novaQtde;
+      }
+    }
+  }
+
+  /**
+   * Create a new EmprestimoItem and sync with backend if editing
+   */
+  private createNewEmprestimoItem(currentItems: EmprestimoItem[], item: Item, qtde: number): void {
+    const newEmprestimoItem = new EmprestimoItem();
+    newEmprestimoItem.item = item;
+    newEmprestimoItem.qtde = qtde;
+    newEmprestimoItem.devolver = this.tempDevolver() ?? false;
+    currentItems.push(newEmprestimoItem);
+
+    // Sync with emprestimo object if editing
+    const emprestimo = this.object();
+    if (emprestimo?.emprestimoItem) {
+      emprestimo.emprestimoItem.push(newEmprestimoItem);
+      this.createCorrespondingDevolucaoItem(emprestimo, item, qtde);
+    }
+  }
+
+  /**
+   * Create corresponding EmprestimoDevolucaoItem with status 'P'
+   */
+  private createCorrespondingDevolucaoItem(emprestimo: Emprestimo, item: Item, qtde: number): void {
+    if (!emprestimo.emprestimoDevolucaoItem) {
+      return;
+    }
+
+    const newDevolucaoItem = new EmprestimoDevolucaoItem();
+    newDevolucaoItem.item = item;
+    newDevolucaoItem.qtde = qtde;
+    newDevolucaoItem.statusDevolucao = StatusDevolucao.P;
+    emprestimo.emprestimoDevolucaoItem.push(newDevolucaoItem);
+  }
+
+  /**
+   * Reset temporary form values
+   */
+  private resetTempValues(): void {
     this.tempItem.set(null);
     this.tempQtde.set(1);
     this.tempDevolver.set(null);
   }
 
   /**
+   * Find the corresponding EmprestimoDevolucaoItem for a given EmprestimoItem
+   */
+  private findCorrespondingDevolucaoItem(emprestimoItem: EmprestimoItem): EmprestimoDevolucaoItem | null {
+    const emprestimo = this.object();
+    if (!emprestimo?.emprestimoDevolucaoItem || !emprestimo?.emprestimoItem) {
+      return null;
+    }
+
+    const emprestimoItemsArray = this.emprestimoItems();
+    const index = emprestimoItemsArray.indexOf(emprestimoItem);
+
+    if (index === -1) {
+      return null;
+    }
+
+    // Get all emprestimoDevolucaoItem that match this item
+    const matchingDevolucaoItems = emprestimo.emprestimoDevolucaoItem.filter(
+      edi => edi.item.id === emprestimoItem.item.id
+    );
+
+    // Count how many matching items come before this index
+    let matchIndex = 0;
+    for (let i = 0; i < index; i++) {
+      if (emprestimoItemsArray[i].item.id === emprestimoItem.item.id) {
+        matchIndex++;
+      }
+    }
+
+    return matchingDevolucaoItems[matchIndex] || null;
+  }
+
+  /**
+   * Find the index of a pending item (status 'P') with the given item ID
+   * Returns -1 if no pending item is found
+   */
+  private findPendingItemIndex(emprestimoItems: EmprestimoItem[], itemId: number): number {
+    const emprestimo = this.object();
+
+    // If no emprestimo or no devolucao items, treat all items as pending (can add to existing)
+    if (!emprestimo?.emprestimoDevolucaoItem) {
+      return emprestimoItems.findIndex(ei => ei.item.id === itemId);
+    }
+
+    // Find all items with the same item.id
+    for (let i = 0; i < emprestimoItems.length; i++) {
+      const emprestimoItem = emprestimoItems[i];
+      if (emprestimoItem.item.id === itemId) {
+        const status = this.getStatusDevolucao(emprestimoItem);
+
+        // If status is 'P' (Pendente) or null (new item), we can add to this one
+        if (status === StatusDevolucao.P || status === null) {
+          return i;
+        }
+      }
+    }
+
+    return -1;
+  }
+
+  /**
+   * Remove item from the list by index
+   * Only removes the specific instance, not all items with the same item.id
+   * Also syncs with EmprestimoItem and EmprestimoDevolucaoItem in the emprestimo object if in edit mode
+   * Removes the item with the matching status
+   */
+  removeItemByIndex(index: number): void {
+    const currentItems = [...this.emprestimoItems()];
+
+    if (index < 0 || index >= currentItems.length) {
+      return;
+    }
+
+    const itemToRemove = currentItems[index];
+    const statusToRemove = this.getStatusDevolucao(itemToRemove);
+
+    currentItems.splice(index, 1);
+    this.emprestimoItems.set(currentItems);
+
+    // Sync with EmprestimoItem and EmprestimoDevolucaoItem in emprestimo object if editing
+    const emprestimo = this.object();
+    if (emprestimo?.emprestimoItem) {
+      // Find and remove the corresponding EmprestimoItem
+      // Match by item.id and quantity to handle fractioned items correctly
+      const emprestimoItemIndex = emprestimo.emprestimoItem.findIndex(
+        ei => ei.item.id === itemToRemove.item.id && Number(ei.qtde) === Number(itemToRemove.qtde)
+      );
+
+      if (emprestimoItemIndex >= 0) {
+        emprestimo.emprestimoItem.splice(emprestimoItemIndex, 1);
+      }
+
+      // Also remove the corresponding EmprestimoDevolucaoItem with matching status
+      if (emprestimo.emprestimoDevolucaoItem && statusToRemove) {
+        const devolucaoItemIndex = emprestimo.emprestimoDevolucaoItem.findIndex(
+          edi => edi.item.id === itemToRemove.item.id &&
+                 Number(edi.qtde) === Number(itemToRemove.qtde) &&
+                 edi.statusDevolucao === statusToRemove
+        );
+
+        if (devolucaoItemIndex >= 0) {
+          emprestimo.emprestimoDevolucaoItem.splice(devolucaoItemIndex, 1);
+        }
+      }
+    }
+  }
+
+  /**
+   * @deprecated Use removeItemByIndex instead to avoid removing all items with same id
    * Remove item from the list
    */
   removeItem(id: number): void {
@@ -445,6 +608,88 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
         const minDate = new Date(Number.parseInt(parts[2]), Number.parseInt(parts[1]) - 1, Number.parseInt(parts[0]));
         this.minDatePrazoDevolucao.set(minDate);
       }
+    }
+  }
+
+  /**
+   * Get the status of EmprestimoDevolucaoItem for a given EmprestimoItem
+   * First tries to match by item.id AND qtde, then falls back to positional matching
+   */
+  getStatusDevolucao(emprestimoItem: EmprestimoItem): StatusDevolucao | null {
+    const emprestimo = this.object();
+    if (!emprestimo?.emprestimoDevolucaoItem || !emprestimo?.emprestimoItem) {
+      return null;
+    }
+
+    // First try to match by item.id AND quantity
+    const devolucaoItemByQtde = emprestimo.emprestimoDevolucaoItem.find(
+      edi => edi.item.id === emprestimoItem.item.id &&
+             Number(edi.qtde) === Number(emprestimoItem.qtde)
+    );
+
+    if (devolucaoItemByQtde) {
+      return devolucaoItemByQtde.statusDevolucao;
+    }
+
+    // Fallback to positional matching if no quantity match found
+    const emprestimoItemsArray = this.emprestimoItems();
+    const index = emprestimoItemsArray.indexOf(emprestimoItem);
+
+    if (index === -1) {
+      return null;
+    }
+
+    // Get all emprestimoDevolucaoItem that match this item
+    const matchingDevolucaoItems = emprestimo.emprestimoDevolucaoItem.filter(
+      edi => edi.item.id === emprestimoItem.item.id
+    );
+
+    // If we have a matching index in the filtered array, use it
+    // Count how many matching items come before this index
+    let matchIndex = 0;
+    for (let i = 0; i < index; i++) {
+      if (emprestimoItemsArray[i].item.id === emprestimoItem.item.id) {
+        matchIndex++;
+      }
+    }
+
+    const devolucaoItem = matchingDevolucaoItems[matchIndex];
+    return devolucaoItem?.statusDevolucao ?? null;
+  }
+
+  /**
+   * Get status label for display
+   */
+  getStatusLabel(status: StatusDevolucao | null): string {
+    if (!status) return '';
+
+    switch (status) {
+      case StatusDevolucao.P:
+        return 'Pendente';
+      case StatusDevolucao.D:
+        return 'Devolvido';
+      case StatusDevolucao.S:
+        return 'Saída';
+      default:
+        return '';
+    }
+  }
+
+  /**
+   * Get status severity for tag styling
+   */
+  getStatusSeverity(status: StatusDevolucao | null): 'success' | 'warn' | 'secondary' | 'info' {
+    if (!status) return 'secondary';
+
+    switch (status) {
+      case StatusDevolucao.P:
+        return 'warn';
+      case StatusDevolucao.D:
+        return 'success';
+      case StatusDevolucao.S:
+        return 'info';
+      default:
+        return 'secondary';
     }
   }
 
