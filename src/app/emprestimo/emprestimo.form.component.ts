@@ -553,7 +553,6 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
     }
 
     const itemToRemove = currentItems[index];
-    const statusToRemove = this.getStatusDevolucao(itemToRemove);
 
     currentItems.splice(index, 1);
     this.emprestimoItems.set(currentItems);
@@ -561,27 +560,43 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
     // Sync with EmprestimoItem and EmprestimoDevolucaoItem in emprestimo object if editing
     const emprestimo = this.object();
     if (emprestimo?.emprestimoItem) {
-      // Find and remove the corresponding EmprestimoItem
-      // Match by item.id and quantity to handle fractioned items correctly
-      const emprestimoItemIndex = emprestimo.emprestimoItem.findIndex(
-        ei => ei.item.id === itemToRemove.item.id && Number(ei.qtde) === Number(itemToRemove.qtde)
-      );
+      // If item has an ID, find and remove by ID for exact match
+      let emprestimoItemIndex = -1;
+      let devolucaoItemIndex = -1;
 
+      if (itemToRemove.id) {
+        emprestimoItemIndex = emprestimo.emprestimoItem.findIndex(ei => ei.id === itemToRemove.id);
+        // Use the same index for devolucaoItem since they are correlated by position
+        if (emprestimoItemIndex >= 0 && emprestimo.emprestimoDevolucaoItem) {
+          devolucaoItemIndex = emprestimoItemIndex;
+        }
+      } else {
+        // For new items without ID, match by item.id and quantity
+        emprestimoItemIndex = emprestimo.emprestimoItem.findIndex(
+          ei => ei.item.id === itemToRemove.item.id && Number(ei.qtde) === Number(itemToRemove.qtde)
+        );
+
+        // For devolucaoItem, use status matching as well
+        if (emprestimo.emprestimoDevolucaoItem) {
+          const statusToRemove = this.getStatusDevolucao(itemToRemove);
+          if (statusToRemove) {
+            devolucaoItemIndex = emprestimo.emprestimoDevolucaoItem.findIndex(
+              edi => edi.item.id === itemToRemove.item.id &&
+                     Number(edi.qtde) === Number(itemToRemove.qtde) &&
+                     edi.statusDevolucao === statusToRemove
+            );
+          }
+        }
+      }
+
+      // Remove emprestimoItem
       if (emprestimoItemIndex >= 0) {
         emprestimo.emprestimoItem.splice(emprestimoItemIndex, 1);
       }
 
-      // Also remove the corresponding EmprestimoDevolucaoItem with matching status
-      if (emprestimo.emprestimoDevolucaoItem && statusToRemove) {
-        const devolucaoItemIndex = emprestimo.emprestimoDevolucaoItem.findIndex(
-          edi => edi.item.id === itemToRemove.item.id &&
-                 Number(edi.qtde) === Number(itemToRemove.qtde) &&
-                 edi.statusDevolucao === statusToRemove
-        );
-
-        if (devolucaoItemIndex >= 0) {
-          emprestimo.emprestimoDevolucaoItem.splice(devolucaoItemIndex, 1);
-        }
+      // Remove emprestimoDevolucaoItem
+      if (devolucaoItemIndex >= 0 && emprestimo.emprestimoDevolucaoItem) {
+        emprestimo.emprestimoDevolucaoItem.splice(devolucaoItemIndex, 1);
       }
     }
   }
@@ -613,7 +628,7 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
 
   /**
    * Get the status of EmprestimoDevolucaoItem for a given EmprestimoItem
-   * First tries to match by item.id AND qtde, then falls back to positional matching
+   * Matches by finding the corresponding index in the backend arrays
    */
   getStatusDevolucao(emprestimoItem: EmprestimoItem): StatusDevolucao | null {
     const emprestimo = this.object();
@@ -621,17 +636,16 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
       return null;
     }
 
-    // First try to match by item.id AND quantity
-    const devolucaoItemByQtde = emprestimo.emprestimoDevolucaoItem.find(
-      edi => edi.item.id === emprestimoItem.item.id &&
-             Number(edi.qtde) === Number(emprestimoItem.qtde)
-    );
-
-    if (devolucaoItemByQtde) {
-      return devolucaoItemByQtde.statusDevolucao;
+    // If the emprestimoItem has an ID, find its index in the backend array
+    // and use the same index in emprestimoDevolucaoItem array
+    if (emprestimoItem.id) {
+      const backendIndex = emprestimo.emprestimoItem.findIndex(ei => ei.id === emprestimoItem.id);
+      if (backendIndex >= 0 && backendIndex < emprestimo.emprestimoDevolucaoItem.length) {
+        return emprestimo.emprestimoDevolucaoItem[backendIndex].statusDevolucao;
+      }
     }
 
-    // Fallback to positional matching if no quantity match found
+    // Fallback to positional matching for new items without ID
     const emprestimoItemsArray = this.emprestimoItems();
     const index = emprestimoItemsArray.indexOf(emprestimoItem);
 
@@ -644,7 +658,6 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
       edi => edi.item.id === emprestimoItem.item.id
     );
 
-    // If we have a matching index in the filtered array, use it
     // Count how many matching items come before this index
     let matchIndex = 0;
     for (let i = 0; i < index; i++) {

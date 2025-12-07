@@ -10,6 +10,7 @@ import {LoaderService} from '../framework/loader/loader.service';
 import {LoginService} from '../login/login.service';
 import {LoggerService} from '../framework/services/logger.service';
 import {Emprestimo} from './emprestimo';
+import {EmprestimoItem} from './emprestimoItem';
 import {StatusDevolucao} from './emprestimoDevolucaoItem';
 import {of} from 'rxjs';
 
@@ -411,8 +412,8 @@ describe('EmprestimoFormComponent', () => {
       const emprestimo = {
         id: 100,
         emprestimoItem: [
-          {item: item1, qtde: 5, devolver: true},
-          {item: item1, qtde: 3, devolver: true}
+          {id: 800, item: item1, qtde: 5, devolver: true},
+          {id: 801, item: item1, qtde: 3, devolver: true}
         ],
         emprestimoDevolucaoItem: [
           {id: 201, item: item1, qtde: 5, statusDevolucao: StatusDevolucao.P},
@@ -423,7 +424,8 @@ describe('EmprestimoFormComponent', () => {
       component.object.set(emprestimo);
       component.emprestimoItems.set([...emprestimo.emprestimoItem]);
 
-      // Remove the item with qtde=3 and status D
+      // Remove the item with qtde=3 and status D (index 1)
+      // Since items have IDs, it will remove by matching backend array position
       component.removeItemByIndex(1);
 
       // Check emprestimoItems signal
@@ -434,7 +436,7 @@ describe('EmprestimoFormComponent', () => {
       expect(emprestimo.emprestimoItem.length).toBe(1);
       expect(emprestimo.emprestimoItem[0].qtde).toBe(5);
 
-      // Check emprestimoDevolucaoItem array - should remove the one with status D
+      // Check emprestimoDevolucaoItem array - should remove at same index (1)
       expect(emprestimo.emprestimoDevolucaoItem.length).toBe(1);
       expect(emprestimo.emprestimoDevolucaoItem[0].qtde).toBe(5);
       expect(emprestimo.emprestimoDevolucaoItem[0].statusDevolucao).toBe(StatusDevolucao.P);
@@ -446,19 +448,19 @@ describe('EmprestimoFormComponent', () => {
       const emprestimo = {
         id: 100,
         emprestimoItem: [
-          {item: item1, qtde: 1, devolver: true},
-          {item: item1, qtde: 2, devolver: true}
+          {id: 799, item: item1, qtde: 1, devolver: true},
+          {id: 800, item: item1, qtde: 2, devolver: true}
         ],
         emprestimoDevolucaoItem: [
-          {id: 301, item: item1, qtde: 2, statusDevolucao: StatusDevolucao.P},
-          {id: 302, item: item1, qtde: 1, statusDevolucao: StatusDevolucao.D}
+          {id: 301, item: item1, qtde: 1, statusDevolucao: StatusDevolucao.D},
+          {id: 302, item: item1, qtde: 2, statusDevolucao: StatusDevolucao.P}
         ]
       } as unknown as Emprestimo;
 
       component.object.set(emprestimo);
       component.emprestimoItems.set([...emprestimo.emprestimoItem]);
 
-      // Remove first item (qtde=1, status D)
+      // Remove first item (id=799, qtde=1, status D at backend index 0)
       component.removeItemByIndex(0);
 
       // Check arrays
@@ -488,6 +490,145 @@ describe('EmprestimoFormComponent', () => {
       expect(() => component.removeItemByIndex(0)).not.toThrow();
       expect(component.emprestimoItems().length).toBe(0);
       expect(emprestimo.emprestimoItem.length).toBe(0);
+    });
+  });
+
+  describe('getStatusLabel', () => {
+    it('should return "Pendente" for StatusDevolucao.P', () => {
+      expect(component.getStatusLabel(StatusDevolucao.P)).toBe('Pendente');
+    });
+
+    it('should return "Devolvido" for StatusDevolucao.D', () => {
+      expect(component.getStatusLabel(StatusDevolucao.D)).toBe('Devolvido');
+    });
+
+    it('should return "Saída" for StatusDevolucao.S', () => {
+      expect(component.getStatusLabel(StatusDevolucao.S)).toBe('Saída');
+    });
+
+    it('should return empty string for null', () => {
+      expect(component.getStatusLabel(null)).toBe('');
+    });
+
+    it('should return empty string for undefined', () => {
+      expect(component.getStatusLabel(undefined as any)).toBe('');
+    });
+  });
+
+  describe('getStatusSeverity', () => {
+    it('should return "warn" for StatusDevolucao.P (Pendente)', () => {
+      expect(component.getStatusSeverity(StatusDevolucao.P)).toBe('warn');
+    });
+
+    it('should return "success" for StatusDevolucao.D (Devolvido)', () => {
+      expect(component.getStatusSeverity(StatusDevolucao.D)).toBe('success');
+    });
+
+    it('should return "info" for StatusDevolucao.S (Saída)', () => {
+      expect(component.getStatusSeverity(StatusDevolucao.S)).toBe('info');
+    });
+
+    it('should return "secondary" for null', () => {
+      expect(component.getStatusSeverity(null)).toBe('secondary');
+    });
+
+    it('should return "secondary" for undefined', () => {
+      expect(component.getStatusSeverity(undefined as any)).toBe('secondary');
+    });
+  });
+
+  describe('getStatusDevolucao', () => {
+    it('should return null if emprestimo object is null', () => {
+      component.object.set(null);
+      const emprestimoItem = {item: {id: 1}, qtde: 1} as EmprestimoItem;
+
+      expect(component.getStatusDevolucao(emprestimoItem)).toBeNull();
+    });
+
+    it('should return null if emprestimoDevolucaoItem array does not exist', () => {
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: []
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      const emprestimoItem = {item: {id: 1}, qtde: 1} as EmprestimoItem;
+
+      expect(component.getStatusDevolucao(emprestimoItem)).toBeNull();
+    });
+
+    it('should return status by matching emprestimoItem.id when item has ID', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {id: 800, item: item1, qtde: 1, devolver: true},
+          {id: 801, item: item1, qtde: 1, devolver: true}
+        ],
+        emprestimoDevolucaoItem: [
+          {id: 1262, item: item1, qtde: 1, statusDevolucao: StatusDevolucao.P},
+          {id: 1263, item: item1, qtde: 1, statusDevolucao: StatusDevolucao.D}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      // First item (id: 800) should match first devolucaoItem (status: P)
+      const status0 = component.getStatusDevolucao(emprestimo.emprestimoItem[0]);
+      expect(status0).toBe(StatusDevolucao.P);
+
+      // Second item (id: 801) should match second devolucaoItem (status: D)
+      const status1 = component.getStatusDevolucao(emprestimo.emprestimoItem[1]);
+      expect(status1).toBe(StatusDevolucao.D);
+    });
+
+    it('should use positional matching for items without ID', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {item: item1, qtde: 5, devolver: true},
+          {item: item1, qtde: 3, devolver: true}
+        ],
+        emprestimoDevolucaoItem: [
+          {id: 201, item: item1, qtde: 5, statusDevolucao: StatusDevolucao.P},
+          {id: 202, item: item1, qtde: 3, statusDevolucao: StatusDevolucao.D}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      // Should use positional matching and count occurrences
+      const status0 = component.getStatusDevolucao(emprestimo.emprestimoItem[0]);
+      expect(status0).toBe(StatusDevolucao.P);
+
+      const status1 = component.getStatusDevolucao(emprestimo.emprestimoItem[1]);
+      expect(status1).toBe(StatusDevolucao.D);
+    });
+
+    it('should return null if emprestimoItem is not found in emprestimoItems signal', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+      const orphanItem = {item: item1, qtde: 10, devolver: true} as EmprestimoItem;
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {item: item1, qtde: 5, devolver: true}
+        ],
+        emprestimoDevolucaoItem: [
+          {id: 201, item: item1, qtde: 5, statusDevolucao: StatusDevolucao.P}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      // Item not in the signal
+      expect(component.getStatusDevolucao(orphanItem)).toBeNull();
     });
   });
 });
