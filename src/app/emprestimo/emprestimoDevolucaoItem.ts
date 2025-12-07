@@ -7,6 +7,7 @@ export class EmprestimoDevolucaoItem {
   statusDevolucao!: StatusDevolucao;
   item!: Item;
   emprestimo!: Emprestimo;
+  tempId?: string; // Temporary unique identifier for matching with EmprestimoItem
 }
 
 export enum StatusDevolucao {
