@@ -631,4 +631,284 @@ describe('EmprestimoFormComponent', () => {
       expect(component.getStatusDevolucao(orphanItem)).toBeNull();
     });
   });
+
+  describe('insertItem', () => {
+    let item: any;
+
+    beforeEach(() => {
+      item = {
+        id: 1,
+        nome: 'Test Item',
+        tipoItem: 'C',
+        saldo: 10
+      };
+      component.tempItem.set(item);
+      component.tempQtde.set(5);
+      component.tempDevolver.set(true);
+    });
+
+    it('should not insert item if tempItem is null', () => {
+      component.tempItem.set(null);
+      const initialLength = component.emprestimoItems().length;
+
+      component.insertItem();
+
+      expect(component.emprestimoItems().length).toBe(initialLength);
+    });
+
+    it('should not insert item if quantity is invalid (zero)', () => {
+      component.tempQtde.set(0);
+      const initialLength = component.emprestimoItems().length;
+
+      component.insertItem();
+
+      expect(component.emprestimoItems().length).toBe(initialLength);
+    });
+
+    it('should not insert item if quantity is invalid (negative)', () => {
+      component.tempQtde.set(-5);
+      const initialLength = component.emprestimoItems().length;
+
+      component.insertItem();
+
+      expect(component.emprestimoItems().length).toBe(initialLength);
+    });
+
+    it('should create new item when no items exist', () => {
+      component.emprestimoItems.set([]);
+
+      component.insertItem();
+
+      expect(component.emprestimoItems().length).toBe(1);
+      expect(component.emprestimoItems()[0].item.id).toBe(1);
+      expect(component.emprestimoItems()[0].qtde).toBe(5);
+      expect(component.emprestimoItems()[0].devolver).toBe(true);
+    });
+
+    it('should reset temp values after successful insert', () => {
+      component.emprestimoItems.set([]);
+
+      component.insertItem();
+
+      expect(component.tempItem()).toBeNull();
+      expect(component.tempQtde()).toBe(1);
+      expect(component.tempDevolver()).toBeNull();
+    });
+
+    it('should add quantity to existing pending item', () => {
+      const existingItem = {
+        id: 100,
+        item: item,
+        qtde: 3,
+        devolver: true
+      } as EmprestimoItem;
+
+      const emprestimo = {
+        id: 200,
+        emprestimoItem: [existingItem],
+        emprestimoDevolucaoItem: [
+          {
+            id: 300,
+            item: item,
+            qtde: 3,
+            statusDevolucao: StatusDevolucao.P
+          }
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([existingItem]);
+
+      component.insertItem();
+
+      // Should have same number of items (1)
+      expect(component.emprestimoItems().length).toBe(1);
+      // Quantity should be updated (3 + 5 = 8)
+      expect(component.emprestimoItems()[0].qtde).toBe(8);
+      // Devolucao item should also be updated
+      expect(emprestimo.emprestimoDevolucaoItem[0].qtde).toBe(8);
+    });
+
+    it('should create new item when existing item has status D (Devolvido)', () => {
+      const existingItem = {
+        id: 100,
+        item: item,
+        qtde: 3,
+        devolver: true
+      } as EmprestimoItem;
+
+      const emprestimo = {
+        id: 200,
+        emprestimoItem: [existingItem],
+        emprestimoDevolucaoItem: [
+          {
+            id: 300,
+            item: item,
+            qtde: 3,
+            statusDevolucao: StatusDevolucao.D // Devolvido
+          }
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([existingItem]);
+
+      component.insertItem();
+
+      // Should create a new item instead of adding to existing
+      expect(component.emprestimoItems().length).toBe(2);
+      expect(component.emprestimoItems()[1].qtde).toBe(5);
+    });
+
+    it('should sync with emprestimoDevolucaoItem when creating new item in edit mode', () => {
+      const emprestimo = {
+        id: 200,
+        emprestimoItem: [],
+        emprestimoDevolucaoItem: []
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([]);
+
+      component.insertItem();
+
+      // Should create emprestimoItem
+      expect(emprestimo.emprestimoItem.length).toBe(1);
+      expect(emprestimo.emprestimoItem[0].qtde).toBe(5);
+
+      // Should create corresponding devolucaoItem with status P
+      expect(emprestimo.emprestimoDevolucaoItem.length).toBe(1);
+      expect(emprestimo.emprestimoDevolucaoItem[0].qtde).toBe(5);
+      expect(emprestimo.emprestimoDevolucaoItem[0].statusDevolucao).toBe(StatusDevolucao.P);
+    });
+
+    it('should not exceed item saldo when adding quantity', () => {
+      const itemWithLimitedStock = {
+        id: 2,
+        nome: 'Limited Item',
+        tipoItem: 'C',
+        saldo: 5
+      };
+
+      component.tempItem.set(itemWithLimitedStock);
+      component.tempQtde.set(6); // More than available
+
+      component.insertItem();
+
+      // Should not add item if exceeds saldo
+      expect(component.emprestimoItems().length).toBe(0);
+    });
+
+    it('should handle patrimonio items (quantity = 1)', () => {
+      const patrimonioItem = {
+        id: 3,
+        nome: 'Patrimonio Item',
+        tipoItem: 'P',
+        patrimonio: 'PAT-001',
+        saldo: 1
+      };
+
+      component.tempItem.set(patrimonioItem);
+      component.tempQtde.set(1);
+
+      component.insertItem();
+
+      expect(component.emprestimoItems().length).toBe(1);
+      expect(component.emprestimoItems()[0].qtde).toBe(1);
+    });
+  });
+
+  describe('findCorrespondingDevolucaoItem (indirect test via addQuantityToPendingItem)', () => {
+    it('should find corresponding devolucaoItem by positional matching', () => {
+      const item1 = {id: 1, nome: 'Item A', saldo: 10};
+      const item2 = {id: 2, nome: 'Item B', saldo: 10};
+
+      // Items WITHOUT IDs to use positional matching
+      const emprestimoItem1 = {item: item1, qtde: 5, devolver: true} as EmprestimoItem;
+      const emprestimoItem2 = {item: item2, qtde: 3, devolver: true} as EmprestimoItem;
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [emprestimoItem1, emprestimoItem2],
+        emprestimoDevolucaoItem: [
+          {id: 201, item: item1, qtde: 5, statusDevolucao: StatusDevolucao.P},
+          {id: 202, item: item2, qtde: 3, statusDevolucao: StatusDevolucao.P}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([emprestimoItem1, emprestimoItem2]);
+
+      // Set up to add quantity to second item
+      component.tempItem.set(item2);
+      component.tempQtde.set(2);
+      component.tempDevolver.set(true);
+
+      component.insertItem();
+
+      // Second item should have updated quantity (3 + 2 = 5)
+      expect(component.emprestimoItems()[1].qtde).toBe(5);
+      // Corresponding devolucaoItem should also be updated
+      expect(emprestimo.emprestimoDevolucaoItem[1].qtde).toBe(5);
+    });
+
+    it('should handle multiple items with same item.id correctly', () => {
+      const item1 = {id: 1, nome: 'Item A', saldo: 10};
+
+      // Items WITHOUT IDs for positional matching
+      const emprestimoItem1 = {item: item1, qtde: 2, devolver: true} as EmprestimoItem;
+      const emprestimoItem2 = {item: item1, qtde: 3, devolver: true} as EmprestimoItem;
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [emprestimoItem1, emprestimoItem2],
+        emprestimoDevolucaoItem: [
+          {id: 201, item: item1, qtde: 2, statusDevolucao: StatusDevolucao.P},
+          {id: 202, item: item1, qtde: 3, statusDevolucao: StatusDevolucao.P}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([emprestimoItem1, emprestimoItem2]);
+
+      // Add to first occurrence
+      component.tempItem.set(item1);
+      component.tempQtde.set(1);
+      component.tempDevolver.set(true);
+
+      component.insertItem();
+
+      // First item should be updated (2 + 1 = 3)
+      expect(component.emprestimoItems()[0].qtde).toBe(3);
+      // First devolucaoItem should be updated
+      expect(emprestimo.emprestimoDevolucaoItem[0].qtde).toBe(3);
+      // Second items should remain unchanged
+      expect(component.emprestimoItems()[1].qtde).toBe(3);
+      expect(emprestimo.emprestimoDevolucaoItem[1].qtde).toBe(3);
+    });
+  });
+
+  describe('createCorrespondingDevolucaoItem (indirect test)', () => {
+    it('should create item in emprestimoItems even if emprestimoDevolucaoItem array does not exist', () => {
+      const item = {id: 1, nome: 'Item A', saldo: 10};
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: []
+        // No emprestimoDevolucaoItem array
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([]);
+      component.tempItem.set(item);
+      component.tempQtde.set(5);
+
+      component.insertItem();
+
+      // Should create emprestimoItem
+      expect(component.emprestimoItems().length).toBe(1);
+      expect(emprestimo.emprestimoItem.length).toBe(1);
+      // Should not fail even when devolucaoItem array doesn't exist
+      expect(() => component.insertItem()).not.toThrow();
+    });
+  });
 });
