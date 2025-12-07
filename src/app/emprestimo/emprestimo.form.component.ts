@@ -736,16 +736,24 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
       return;
     }
 
-    currentItems[index].qtde = novaQtde;
-
-    // Sync with emprestimoDevolucaoItem if editing
+    // Sync with emprestimoDevolucaoItem BEFORE updating quantity
+    // This is crucial because findCorrespondingDevolucaoItemRobust uses the current qtde to find matches
     const emprestimo = this.object();
     if (emprestimo?.emprestimoDevolucaoItem) {
-      const devolucaoItem = this.findCorrespondingDevolucaoItemRobust(currentItems[index]);
-      if (devolucaoItem) {
-        devolucaoItem.qtde = novaQtde;
+      // Use the original item from emprestimoItems() signal for robust matching
+      const originalEmprestimoItems = this.emprestimoItems();
+      const originalItem = originalEmprestimoItems[index];
+
+      if (originalItem) {
+        const devolucaoItem = this.findCorrespondingDevolucaoItemRobust(originalItem);
+        if (devolucaoItem) {
+          devolucaoItem.qtde = novaQtde;
+        }
       }
     }
+
+    // Update quantity AFTER finding and updating devolucaoItem
+    currentItems[index].qtde = novaQtde;
   }
 
   /**

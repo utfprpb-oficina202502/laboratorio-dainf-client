@@ -36,7 +36,7 @@ describe('EmprestimoFormComponent', () => {
         {provide: UsuarioService, useValue: {completeCustom: jest.fn()}},
         {provide: LoaderService, useValue: {show: jest.fn(), hide: jest.fn()}},
         {provide: LoginService, useValue: loginServiceMock},
-        {provide: LoggerService, useValue: {error: jest.fn(), warn: jest.fn()}}
+        {provide: LoggerService, useValue: {error: jest.fn(), warn: jest.fn(), debug: jest.fn()}}
       ]
     });
 
