@@ -2,31 +2,26 @@
   <div aria-live="polite" class="space-y-2" role="alert">
     @for (alert of alerts(); track alert.type) {
       <div
-        [class.bg-amber-50]="alert.severity === 'warn'"
-        [class.bg-red-50]="alert.severity === 'danger'"
-        [class.border-amber-200]="alert.severity === 'warn'"
-        [class.border-red-200]="alert.severity === 'danger'"
         class="flex items-center gap-3 p-3 rounded-lg border"
+        [style.background]="alert.severity === 'danger' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)'"
+        [style.border-color]="alert.severity === 'danger' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.3)'"
       >
         <i
-          [class.text-amber-600]="alert.severity === 'warn'"
-          [class.text-red-600]="alert.severity === 'danger'"
           [class]="alert.icon"
+          [style.color]="alert.severity === 'danger' ? '#EF4444' : '#F59E0B'"
           aria-hidden="true"
           class="text-xl"
         ></i>
         <div class="flex-1">
           <p
-            [class.text-amber-800]="alert.severity === 'warn'"
-            [class.text-red-800]="alert.severity === 'danger'"
-            class="font-semibold text-sm"
+            [style.color]="alert.severity === 'danger' ? '#DC2626' : '#D97706'"
+            class="font-semibold text-sm m-0"
           >
             {{ alert.title }}
           </p>
           <p
-            [class.text-amber-700]="alert.severity === 'warn'"
-            [class.text-red-700]="alert.severity === 'danger'"
-            class="text-sm"
+            class="text-sm m-0"
+            style="color: var(--color-text-secondary)"
           >
             {{ alert.message }}
           </p>

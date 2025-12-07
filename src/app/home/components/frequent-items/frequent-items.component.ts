@@ -29,7 +29,29 @@ import {ItemFrequenteUsuario} from '../../models/dashboard.models';
     Tag,
     TooltipModule,
     RouterLink
-  ]
+  ],
+  host: {
+    class: 'block'
+  },
+  styles: [`
+    :host ::ng-deep .p-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    :host ::ng-deep .p-card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    :host ::ng-deep .p-card-content {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 280px;
+    }
+  `]
 })
 export class FrequentItemsComponent {
   /** Lista de itens frequentes vindos do backend */

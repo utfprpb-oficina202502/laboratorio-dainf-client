@@ -9,14 +9,14 @@
     accentColor="#3B82F6"
     icon="clock"
     iconLibrary="pi"
-    title="Em Aberto"
+    title="Empréstimos Ativos"
   />
   <app-stat-card
     [value]="stats()?.emprestimosEmAtraso ?? 0"
     accentColor="#EF4444"
     icon="exclamation-triangle"
     iconLibrary="pi"
-    title="Em Atraso"
+    title="Empréstimos Atrasados"
   />
   <app-stat-card
     [value]="proximaDevolucaoText()"
@@ -30,6 +30,6 @@
     accentColor="#22C55E"
     icon="check-circle"
     iconLibrary="pi"
-    title="Total"
+    title="Total de Empréstimos"
   />
 }

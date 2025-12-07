@@ -22,7 +22,17 @@ import {EstatisticasUsuario} from '../../models/dashboard.models';
   imports: [
     StatCardComponent,
     SkeletonCardComponent
-  ]
+  ],
+  host: {
+    /**
+     * 'contents' faz o elemento host "desaparecer" do layout,
+     * permitindo que os 4 cards filhos participem diretamente do grid pai.
+     * O role="group" e aria-label mantêm a semântica para leitores de tela.
+     */
+    'class': 'contents',
+    'role': 'group',
+    'aria-label': 'Estatísticas de empréstimos do usuário'
+  }
 })
 export class LoanStatCardsComponent {
   /** Estatísticas do usuário vindas do backend */
@@ -34,7 +44,7 @@ export class LoanStatCardsComponent {
   /** Texto formatado para próxima devolução */
   protected readonly proximaDevolucaoText = computed(() => {
     const stats = this.stats();
-    if (!stats?.diasParaProximaDevolucao) {
+    if (!stats || stats.diasParaProximaDevolucao === null || stats.diasParaProximaDevolucao === undefined) {
       return '-';
     }
 

@@ -368,14 +368,28 @@ describe('LoanCalendarComponent', () => {
   });
 
   describe('Renderização do Template', () => {
-    it('deve mostrar skeleton quando loading é true', () => {
-      // Arrange & Act
+    it('deve mostrar skeleton no carregamento inicial (loading=true, initialized=false)', () => {
+      // Arrange & Act - primeiro carregamento
       fixture.componentRef.setInput('loading', true);
       fixture.detectChanges();
 
-      // Assert
+      // Assert - skeleton deve aparecer no carregamento inicial
       const skeleton = fixture.nativeElement.querySelector('p-skeleton');
       expect(skeleton).toBeTruthy();
+    });
+
+    it('deve mostrar spinner de loading após inicialização (loading=true, initialized=true)', () => {
+      // Arrange - simula que já foi inicializado
+      fixture.componentRef.setInput('loading', false);
+      fixture.detectChanges(); // Isso marca initialized=true
+
+      // Act - agora simula uma troca de mês
+      fixture.componentRef.setInput('loading', true);
+      fixture.detectChanges();
+
+      // Assert - spinner deve aparecer após inicialização
+      const spinner = fixture.nativeElement.querySelector('.pi-spinner');
+      expect(spinner).toBeTruthy();
     });
 
     it('deve mostrar calendário quando loading é false', () => {
@@ -417,6 +431,121 @@ describe('LoanCalendarComponent', () => {
       expect(CALENDAR_EVENT_COLORS.DEVOLUCAO_PREVISTA).toBe('#F59E0B'); // Amarelo
       expect(CALENDAR_EVENT_COLORS.DEVOLUCAO_REALIZADA).toBe('#22C55E'); // Verde
       expect(CALENDAR_EVENT_COLORS.ATRASADO).toBe('#EF4444'); // Vermelho
+    });
+  });
+
+  describe('Mudança de Mês (onMonthChange)', () => {
+    it('deve emitir monthChange com month convertido de 1-12 para 0-11', () => {
+      // Arrange
+      fixture.detectChanges();
+      const emitSpy = jest.spyOn(component.monthChange, 'emit');
+
+      // Act - PrimeNG envia month como 1-12
+      (component as any).onMonthChange({month: 6, year: 2025});
+
+      // Assert - Deve converter para 0-11
+      expect(emitSpy).toHaveBeenCalledWith({month: 5, year: 2025});
+    });
+
+    it('não deve emitir quando month é undefined', () => {
+      // Arrange
+      fixture.detectChanges();
+      const emitSpy = jest.spyOn(component.monthChange, 'emit');
+
+      // Act
+      (component as any).onMonthChange({year: 2025});
+
+      // Assert
+      expect(emitSpy).not.toHaveBeenCalled();
+    });
+
+    it('não deve emitir quando year é undefined', () => {
+      // Arrange
+      fixture.detectChanges();
+      const emitSpy = jest.spyOn(component.monthChange, 'emit');
+
+      // Act
+      (component as any).onMonthChange({month: 6});
+
+      // Assert
+      expect(emitSpy).not.toHaveBeenCalled();
+    });
+
+    it('não deve emitir chamadas duplicadas para o mesmo mês/ano', () => {
+      // Arrange
+      fixture.detectChanges();
+      const emitSpy = jest.spyOn(component.monthChange, 'emit');
+
+      // Act - Primeira chamada
+      (component as any).onMonthChange({month: 6, year: 2025});
+      // Segunda chamada com os mesmos valores
+      (component as any).onMonthChange({month: 6, year: 2025});
+
+      // Assert - Deve emitir apenas uma vez
+      expect(emitSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('deve emitir quando mudar para mês diferente', () => {
+      // Arrange
+      fixture.detectChanges();
+      const emitSpy = jest.spyOn(component.monthChange, 'emit');
+
+      // Act
+      (component as any).onMonthChange({month: 6, year: 2025});
+      (component as any).onMonthChange({month: 7, year: 2025});
+
+      // Assert
+      expect(emitSpy).toHaveBeenCalledTimes(2);
+      expect(emitSpy).toHaveBeenLastCalledWith({month: 6, year: 2025});
+    });
+
+    it('deve emitir quando mudar para ano diferente', () => {
+      // Arrange
+      fixture.detectChanges();
+      const emitSpy = jest.spyOn(component.monthChange, 'emit');
+
+      // Act
+      (component as any).onMonthChange({month: 6, year: 2025});
+      (component as any).onMonthChange({month: 6, year: 2026});
+
+      // Assert
+      expect(emitSpy).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('Estado de Inicialização (initialized)', () => {
+    it('deve começar com initialized como false', () => {
+      expect(component['initialized']()).toBe(false);
+    });
+
+    it('deve marcar initialized como true após primeiro carregamento', () => {
+      // Arrange - Simula carregamento inicial
+      fixture.componentRef.setInput('loading', true);
+      fixture.detectChanges();
+
+      // Act - Carregamento termina
+      fixture.componentRef.setInput('loading', false);
+      fixture.detectChanges();
+
+      // Assert
+      expect(component['initialized']()).toBe(true);
+    });
+
+    it('deve manter initialized como true após múltiplos carregamentos', () => {
+      // Arrange - Primeiro carregamento
+      fixture.componentRef.setInput('loading', true);
+      fixture.detectChanges();
+      fixture.componentRef.setInput('loading', false);
+      fixture.detectChanges();
+
+      // Act - Segundo carregamento (troca de mês)
+      fixture.componentRef.setInput('loading', true);
+      fixture.detectChanges();
+      fixture.componentRef.setInput('loading', false);
+      fixture.detectChanges();
+
+      // Assert - Deve permanecer true
+      expect(component['initialized']()).toBe(true);
     });
   });
 });

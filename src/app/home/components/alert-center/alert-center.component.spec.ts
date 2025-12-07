@@ -314,7 +314,7 @@ describe('AlertCenterComponent', () => {
       expect(alertContainer).toBeTruthy();
     });
 
-    it('deve aplicar classes de danger para alerta de atraso', () => {
+    it('deve aplicar estilos de danger para alerta de atraso', () => {
       // Arrange
       const stats = createMockStats({emprestimosEmAtraso: 1});
 
@@ -322,12 +322,13 @@ describe('AlertCenterComponent', () => {
       fixture.componentRef.setInput('stats', stats);
       fixture.detectChanges();
 
-      // Assert
-      const alertElement = fixture.nativeElement.querySelector('.bg-red-50');
+      // Assert - verifica se o alerta tem background vermelho (rgba com cor de danger)
+      const alertElement = fixture.nativeElement.querySelector('[role="alert"] .rounded-lg');
       expect(alertElement).toBeTruthy();
+      expect(alertElement.style.background).toContain('rgba(239, 68, 68');
     });
 
-    it('deve aplicar classes de warn para alerta de vencimento', () => {
+    it('deve aplicar estilos de warn para alerta de vencimento', () => {
       // Arrange
       const stats = createMockStats({
         emprestimosEmAtraso: 0,
@@ -338,9 +339,10 @@ describe('AlertCenterComponent', () => {
       fixture.componentRef.setInput('stats', stats);
       fixture.detectChanges();
 
-      // Assert
-      const alertElement = fixture.nativeElement.querySelector('.bg-amber-50');
+      // Assert - verifica se o alerta tem background amarelo (rgba com cor de warn)
+      const alertElement = fixture.nativeElement.querySelector('[role="alert"] .rounded-lg');
       expect(alertElement).toBeTruthy();
+      expect(alertElement.style.background).toContain('rgba(245, 158, 11');
     });
   });
 });

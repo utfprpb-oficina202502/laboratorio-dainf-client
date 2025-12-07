@@ -1,13 +1,10 @@
 <p-card>
   <ng-template pTemplate="header">
-    <div class="flex items-center justify-between px-4 pt-4">
-      <div class="flex items-center gap-2">
-        <i aria-hidden="true" class="pi pi-star text-lg text-gray-600"></i>
-        <h3 class="text-lg font-semibold m-0">Meus Favoritos</h3>
-      </div>
-      <a class="text-sm text-primary hover:underline" routerLink="/item/catalogo">
-        Ver catálogo →
-      </a>
+    <div class="flex items-center gap-2 px-4 pt-4">
+      <i aria-hidden="true" class="pi pi-star text-lg"
+         style="color: var(--color-text-secondary)"></i>
+      <h3 class="text-lg font-semibold m-0" style="color: var(--color-text-primary)">Meus
+        Favoritos</h3>
     </div>
   </ng-template>
 
@@ -24,10 +21,17 @@
       }
     </div>
   } @else if (!hasItems()) {
-    <div class="flex flex-col items-center justify-center py-8 text-gray-500">
-      <i aria-hidden="true" class="pi pi-star text-4xl mb-2"></i>
-      <p class="text-sm">Nenhum item emprestado ainda</p>
-      <a class="mt-2 text-sm text-primary hover:underline" routerLink="/item/catalogo">
+    <div
+      class="flex flex-col items-center justify-center h-full py-8 text-center"
+      style="color: var(--color-text-secondary, #6b7280)"
+    >
+      <i aria-hidden="true" class="pi pi-star mb-2" style="font-size: 2.5rem; opacity: 0.7"></i>
+      <p class="text-sm m-0">Nenhum item emprestado ainda</p>
+      <a
+        class="mt-2 text-sm hover:underline"
+        routerLink="/item/catalogo"
+        style="color: var(--p-primary-color, #3B82F6)"
+      >
         Explorar catálogo
       </a>
     </div>
@@ -36,18 +40,25 @@
       <ul class="space-y-3">
         @for (item of items(); track item.itemId; let i = $index) {
           <li
-            class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors">
+            class="flex items-center justify-between p-2 rounded-lg transition-colors"
+            onmouseenter="this.style.backgroundColor='var(--overlay-subtle)'"
+            onmouseleave="this.style.backgroundColor='transparent'"
+            style="--hover-bg: var(--overlay-subtle)"
+          >
             <div class="flex items-center gap-3 flex-1 min-w-0">
               <span
-                class="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+                class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium"
+                style="background: var(--overlay-subtle); color: var(--color-text-secondary)"
+              >
                 {{ i + 1 }}
               </span>
               <div class="flex-1 min-w-0">
-                <p [title]="item.itemNome" class="text-sm font-medium text-gray-800 truncate m-0">
+                <p [title]="item.itemNome" class="text-sm font-medium truncate m-0"
+                   style="color: var(--color-text-primary)">
                   {{ item.itemNome }}
                 </p>
                 <div class="flex items-center gap-2">
-                  <span class="text-xs text-gray-500">{{ item.qtde }}x emprestado</span>
+                  <span class="text-xs" style="color: var(--color-text-secondary)">{{ item.qtde }}x emprestado</span>
                   <p-tag
                     [rounded]="true"
                     [severity]="getAvailabilitySeverity(item)"

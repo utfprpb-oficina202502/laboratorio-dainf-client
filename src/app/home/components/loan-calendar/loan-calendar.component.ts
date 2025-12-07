@@ -1,4 +1,12 @@
-import {ChangeDetectionStrategy, Component, computed, input, signal} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  input,
+  output,
+  signal
+} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {DatePickerModule} from 'primeng/datepicker';
 import {Card} from 'primeng/card';
@@ -9,6 +17,14 @@ import {
   EventoCalendario,
   TipoEventoCalendario
 } from '../../models/dashboard.models';
+
+/**
+ * Interface para o evento de mudança de mês.
+ */
+export interface MonthChangeEvent {
+  month: number; // 0-11
+  year: number;
+}
 
 /**
  * Tipo para representar eventos agrupados por data no calendário.
@@ -39,7 +55,27 @@ type CalendarDateEvents = Record<string, EventoCalendario[]>;
     TooltipModule,
     Skeleton,
     FormsModule
-  ]
+  ],
+  host: {
+    class: 'block'
+  },
+  styles: [`
+    :host ::ng-deep .p-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    :host ::ng-deep .p-card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    :host ::ng-deep .p-card-content {
+      flex: 1;
+    }
+  `]
 })
 export class LoanCalendarComponent {
   /** Lista de eventos vindos do backend */
@@ -48,8 +84,31 @@ export class LoanCalendarComponent {
   /** Indica se os dados estão carregando */
   readonly loading = input<boolean>(false);
 
+  /** Evento emitido quando o mês visível do calendário muda */
+  readonly monthChange = output<MonthChangeEvent>();
+
   /** Data selecionada no calendário (apenas para visualização) */
   protected readonly selectedDate = signal<Date | null>(null);
+
+  /** Indica se o calendário já foi inicializado (primeiro carregamento concluído) */
+  protected readonly initialized = signal(false);
+
+  /** Mês atual sendo exibido (para evitar chamadas duplicadas) */
+  private currentViewMonth: number | null = null;
+  private currentViewYear: number | null = null;
+
+  constructor() {
+    // Marca como inicializado quando o primeiro carregamento terminar
+    effect(() => {
+      const isLoading = this.loading();
+      const isInitialized = this.initialized();
+
+      // Quando loading passa de true para false pela primeira vez, marca como inicializado
+      if (!isLoading && !isInitialized) {
+        this.initialized.set(true);
+      }
+    });
+  }
 
   /** Mapa de eventos agrupados por data (formato: "YYYY-MM-DD") */
   protected readonly eventsByDate = computed<CalendarDateEvents>(() => {
@@ -143,5 +202,32 @@ export class LoanCalendarComponent {
     const month = String(date.month + 1).padStart(2, '0');
     const day = String(date.day).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  /**
+   * Manipula o evento de mudança de mês do p-datepicker.
+   * Emite o evento monthChange para que o componente pai possa buscar novos dados.
+   *
+   * @param event Evento do PrimeNG contendo month (1-12) e year (ambos opcionais)
+   */
+  protected onMonthChange(event: { month?: number; year?: number }): void {
+    // Ignora se month ou year não estiverem definidos
+    if (event.month === undefined || event.year === undefined) {
+      return;
+    }
+
+    // PrimeNG envia month como 1-12, convertemos para 0-11 para consistência com Date
+    const month = event.month - 1;
+    const year = event.year;
+
+    // Evita chamadas duplicadas para o mesmo mês
+    if (this.currentViewMonth === month && this.currentViewYear === year) {
+      return;
+    }
+
+    this.currentViewMonth = month;
+    this.currentViewYear = year;
+
+    this.monthChange.emit({month, year});
   }
 }

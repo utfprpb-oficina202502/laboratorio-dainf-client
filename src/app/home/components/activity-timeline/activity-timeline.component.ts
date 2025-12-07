@@ -1,6 +1,5 @@
 import {ChangeDetectionStrategy, Component, computed, input} from '@angular/core';
 import {RouterLink} from '@angular/router';
-import {Timeline} from 'primeng/timeline';
 import {Card} from 'primeng/card';
 import {ButtonModule} from 'primeng/button';
 import {Skeleton} from 'primeng/skeleton';
@@ -16,7 +15,42 @@ interface TimelineItem {
   formattedDate: string;
   formattedTime: string;
   periodLabel: string;
+  /** Título normalizado com acentos corretos */
+  normalizedTitulo: string;
+  /** Descrição normalizada com acentos corretos */
+  normalizedDescricao: string;
 }
+
+/**
+ * Mapa de correções de acentuação para textos do backend.
+ * Corrige palavras que podem vir sem acentos corretos.
+ */
+const ACCENT_CORRECTIONS: Record<string, string> = {
+  'Devolucao': 'Devolução',
+  'devolucao': 'devolução',
+  'Emprestimo': 'Empréstimo',
+  'emprestimo': 'empréstimo',
+  'Historico': 'Histórico',
+  'historico': 'histórico',
+  'Calendario': 'Calendário',
+  'calendario': 'calendário',
+  'Proximo': 'Próximo',
+  'proximo': 'próximo',
+  'Proxima': 'Próxima',
+  'proxima': 'próxima',
+  'Numero': 'Número',
+  'numero': 'número',
+  'Codigo': 'Código',
+  'codigo': 'código',
+  'Situacao': 'Situação',
+  'situacao': 'situação',
+  'Descricao': 'Descrição',
+  'descricao': 'descrição',
+  'Informacao': 'Informação',
+  'informacao': 'informação',
+  'Orcamento': 'Orçamento',
+  'orcamento': 'orçamento'
+};
 
 /**
  * Componente que exibe a timeline de atividades recentes do usuário.
@@ -36,12 +70,35 @@ interface TimelineItem {
   templateUrl: './activity-timeline.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    Timeline,
     Card,
     ButtonModule,
     RouterLink,
     Skeleton
-  ]
+  ],
+  host: {
+    class: 'block'
+  },
+  styles: [`
+    :host ::ng-deep .p-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    :host ::ng-deep .p-card-body {
+      flex: 1 1 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    :host ::ng-deep .p-card-content {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+    }
+  `]
 })
 export class ActivityTimelineComponent {
   /** Lista de atividades vindas do backend */
@@ -90,7 +147,9 @@ export class ActivityTimelineComponent {
         color: iconConfig.color,
         formattedDate: this.formatDate(activityDate),
         formattedTime: this.formatTime(activityDate),
-        periodLabel
+        periodLabel,
+        normalizedTitulo: this.normalizeAccents(activity.titulo),
+        normalizedDescricao: this.normalizeAccents(activity.descricao)
       };
     });
   });
@@ -107,12 +166,13 @@ export class ActivityTimelineComponent {
   }
 
   /**
-   * Formata a data para exibição.
+   * Formata a data para exibição (dd/mm/aaaa).
    */
   private formatDate(date: Date): string {
     return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
-      month: '2-digit'
+      month: '2-digit',
+      year: 'numeric'
     });
   }
 
@@ -124,5 +184,23 @@ export class ActivityTimelineComponent {
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  /**
+   * Normaliza acentos em textos que podem vir incorretos do backend.
+   *
+   * @param text Texto a ser normalizado
+   * @returns Texto com acentos corrigidos
+   */
+  private normalizeAccents(text: string): string {
+    if (!text) {
+      return text;
+    }
+
+    let normalized = text;
+    for (const [incorrect, correct] of Object.entries(ACCENT_CORRECTIONS)) {
+      normalized = normalized.replaceAll(incorrect, correct);
+    }
+    return normalized;
   }
 }

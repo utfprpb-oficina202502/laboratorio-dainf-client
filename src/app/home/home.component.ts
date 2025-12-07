@@ -11,7 +11,7 @@ import {
 import {CommonModule, DatePipe} from '@angular/common';
 import {RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
-import {finalize, forkJoin} from 'rxjs';
+import {catchError, finalize, forkJoin, of} from 'rxjs';
 import {Z_INDEX} from '../framework/constants';
 
 import {DashboardEmprestimoCountRange} from "./dashboard/dashboardEmprestimoCountRange";
@@ -435,56 +435,91 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
+   * Manipula o evento de mudança de mês do calendário.
+   * Busca novos eventos para o período selecionado.
+   *
+   * @param event Evento contendo month (0-11) e year
+   */
+  protected onCalendarMonthChange(event: { month: number; year: number }): void {
+    this.loadCalendarEvents(event.month, event.year);
+  }
+
+  /**
    * Carrega todos os dados do dashboard do aluno/professor.
+   * Usa forkJoin para paralelizar as chamadas HTTP.
+   * Cada chamada tem tratamento de erro individual para resiliência.
    */
   private loadUserDashboard(): void {
-    // Carrega estatísticas
+    // Ativa todos os loading states
     this.loadingUserStats.set(true);
-    this.homeService.getMyStats()
-    .pipe(finalize(() => this.loadingUserStats.set(false)))
-    .subscribe({
-      next: (stats) => this.userStats.set(stats),
-      error: (err) => this.logger.error('Erro ao carregar estatísticas do usuário', err)
-    });
-
-    // Carrega itens frequentes
     this.loadingUserItems.set(true);
-    this.homeService.getMyFrequentItems()
-    .pipe(finalize(() => this.loadingUserItems.set(false)))
-    .subscribe({
-      next: (items) => this.userFrequentItems.set(items),
-      error: (err) => this.logger.error('Erro ao carregar itens frequentes', err)
-    });
-
-    // Carrega histórico de uso
     this.loadingUserHistory.set(true);
-    this.homeService.getMyUsageHistory()
-    .pipe(finalize(() => this.loadingUserHistory.set(false)))
-    .subscribe({
-      next: (history) => this.userUsageHistory.set(history),
-      error: (err) => this.logger.error('Erro ao carregar histórico de uso', err)
-    });
-
-    // Carrega atividades recentes
     this.loadingUserActivities.set(true);
-    this.homeService.getMyActivity()
-    .pipe(finalize(() => this.loadingUserActivities.set(false)))
-    .subscribe({
-      next: (activities) => this.userActivities.set(activities),
-      error: (err) => this.logger.error('Erro ao carregar atividades', err)
+
+    // Paraleliza todas as chamadas HTTP com tratamento de erro individual
+    forkJoin({
+      stats: this.homeService.getMyStats().pipe(
+        catchError(err => {
+          this.logger.error('Erro ao carregar estatísticas do usuário', err);
+          return of(null);
+        })
+      ),
+      items: this.homeService.getMyFrequentItems().pipe(
+        catchError(err => {
+          this.logger.error('Erro ao carregar itens frequentes', err);
+          return of([]);
+        })
+      ),
+      history: this.homeService.getMyUsageHistory().pipe(
+        catchError(err => {
+          this.logger.error('Erro ao carregar histórico de uso', err);
+          return of([]);
+        })
+      ),
+      activities: this.homeService.getMyActivity().pipe(
+        catchError(err => {
+          this.logger.error('Erro ao carregar atividades', err);
+          return of([]);
+        })
+      )
+    }).pipe(
+      finalize(() => {
+        // Desativa todos os loading states ao finalizar
+        this.loadingUserStats.set(false);
+        this.loadingUserItems.set(false);
+        this.loadingUserHistory.set(false);
+        this.loadingUserActivities.set(false);
+      })
+    ).subscribe({
+      next: ({stats, items, history, activities}) => {
+        if (this.destroyed) {
+          return;
+        }
+        this.userStats.set(stats);
+        this.userFrequentItems.set(items);
+        this.userUsageHistory.set(history);
+        this.userActivities.set(activities);
+      }
     });
 
-    // Carrega eventos do calendário (mês atual + próximo mês)
+    // Carrega eventos do calendário separadamente (usa período diferente)
     this.loadCalendarEvents();
   }
 
   /**
-   * Carrega os eventos do calendário para o mês atual e próximo.
+   * Carrega os eventos do calendário para um mês específico (ou mês atual por padrão).
+   *
+   * @param month Mês (0-11), padrão: mês atual
+   * @param year Ano, padrão: ano atual
    */
-  private loadCalendarEvents(): void {
+  private loadCalendarEvents(month?: number, year?: number): void {
     const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endDate = new Date(now.getFullYear(), now.getMonth() + 2, 0); // Último dia do próximo mês
+    const targetMonth = month ?? now.getMonth();
+    const targetYear = year ?? now.getFullYear();
+
+    // Carrega o mês anterior, atual e próximo para ter contexto nas transições
+    const startDate = new Date(targetYear, targetMonth - 1, 1);
+    const endDate = new Date(targetYear, targetMonth + 2, 0); // Último dia do mês seguinte
 
     const dtIni = this.datepipe.transform(startDate, 'dd/MM/yyyy') ?? '';
     const dtFim = this.datepipe.transform(endDate, 'dd/MM/yyyy') ?? '';

@@ -24,24 +24,64 @@ export class HomeService {
     this.url = `${environment.api_url}dashboard/`;
   }
 
+  /**
+   * Busca contagem de empréstimos no período.
+   * @param dtIni Data inicial no formato dd/MM/yyyy
+   * @param dtFim Data final no formato dd/MM/yyyy
+   */
   findDadosEmprestimoCountInRange(dtIni: string, dtFim: string): Observable<DashboardEmprestimoCountRange> {
-    return this.http.get<DashboardEmprestimoCountRange>(`${this.url}emprestimo-count-range?dtIni=${dtIni}&dtFim=${dtFim}`);
+    const params = new HttpParams()
+    .set('dtIni', dtIni)
+    .set('dtFim', dtFim);
+    return this.http.get<DashboardEmprestimoCountRange>(`${this.url}emprestimo-count-range`, {params});
   }
 
+  /**
+   * Busca empréstimos agrupados por dia no período.
+   * @param dtIni Data inicial no formato dd/MM/yyyy
+   * @param dtFim Data final no formato dd/MM/yyyy
+   */
   findDadosEmprestimoByDayInRange(dtIni: string, dtFim: string): Observable<DashboardEmprestimoDia[]> {
-    return this.http.get<DashboardEmprestimoDia[]>(`${this.url}emprestimo-count-day-range?dtIni=${dtIni}&dtFim=${dtFim}`);
+    const params = new HttpParams()
+    .set('dtIni', dtIni)
+    .set('dtFim', dtFim);
+    return this.http.get<DashboardEmprestimoDia[]>(`${this.url}emprestimo-count-day-range`, {params});
   }
 
+  /**
+   * Busca os itens mais emprestados no período.
+   * @param dtIni Data inicial no formato dd/MM/yyyy
+   * @param dtFim Data final no formato dd/MM/yyyy
+   */
   findItensMaisEmprestados(dtIni: string, dtFim: string): Observable<DashboardItensEmprestados[]> {
-    return this.http.get<DashboardItensEmprestados[]>(`${this.url}itens-mais-emprestados?dtIni=${dtIni}&dtFim=${dtFim}`);
+    const params = new HttpParams()
+    .set('dtIni', dtIni)
+    .set('dtFim', dtFim);
+    return this.http.get<DashboardItensEmprestados[]>(`${this.url}itens-mais-emprestados`, {params});
   }
 
+  /**
+   * Busca os itens mais adquiridos no período.
+   * @param dtIni Data inicial no formato dd/MM/yyyy
+   * @param dtFim Data final no formato dd/MM/yyyy
+   */
   findItensMaisAdquiridos(dtIni: string, dtFim: string): Observable<DashboardItensAdquiridos[]> {
-    return this.http.get<DashboardItensAdquiridos[]>(`${this.url}itens-mais-adquiridos?dtIni=${dtIni}&dtFim=${dtFim}`);
+    const params = new HttpParams()
+    .set('dtIni', dtIni)
+    .set('dtFim', dtFim);
+    return this.http.get<DashboardItensAdquiridos[]>(`${this.url}itens-mais-adquiridos`, {params});
   }
 
+  /**
+   * Busca os itens com mais saídas no período.
+   * @param dtIni Data inicial no formato dd/MM/yyyy
+   * @param dtFim Data final no formato dd/MM/yyyy
+   */
   findItensMaisSaidas(dtIni: string, dtFim: string): Observable<DashboardItensSaidas[]> {
-    return this.http.get<DashboardItensSaidas[]>(`${this.url}itens-mais-saidas?dtIni=${dtIni}&dtFim=${dtFim}`);
+    const params = new HttpParams()
+    .set('dtIni', dtIni)
+    .set('dtFim', dtFim);
+    return this.http.get<DashboardItensSaidas[]>(`${this.url}itens-mais-saidas`, {params});
   }
 
   // =============================================

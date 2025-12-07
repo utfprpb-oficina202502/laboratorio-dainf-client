@@ -283,19 +283,6 @@ describe('FrequentItemsComponent', () => {
   });
 
   describe('Link para Catálogo', () => {
-    it('deve ter link para catálogo no header', () => {
-      // Arrange
-      const mockItems = createMockItems();
-
-      // Act
-      fixture.componentRef.setInput('items', mockItems);
-      fixture.detectChanges();
-
-      // Assert
-      const link = fixture.nativeElement.querySelector('a[href="/item/catalogo"]');
-      expect(link).toBeTruthy();
-    });
-
     it('deve ter link para catálogo na mensagem vazia', () => {
       // Arrange
       fixture.componentRef.setInput('items', []);
