@@ -226,9 +226,8 @@
                     pInputText
                     type="number"
                     id="qtde"
-                    [(ngModel)]="tempQtde"
-                    [ngModelOptions]="{standalone: true}"
-                    [disabled]="tempItem()?.patrimonio !== null"
+                    [value]="tempQtde()"
+                    (input)="tempQtde.set(+$any($event.target).value)"
                     (keyup.enter)="insertItem()"
                     class="w-full" />
                 </app-form-field>
