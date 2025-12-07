@@ -430,6 +430,10 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           const firstName = user.nome.split(' ')[0];
           this.userName.set(firstName);
         }
+      },
+      error: (err) => {
+        this.logger.error('Erro ao carregar nome do usuário', err);
+        // Mantém userName vazio - saudação será apenas "Olá!"
       }
     });
   }

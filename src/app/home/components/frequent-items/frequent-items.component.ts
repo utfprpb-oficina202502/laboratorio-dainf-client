@@ -67,10 +67,11 @@ export class FrequentItemsComponent {
    */
   addToCart(item: ItemFrequenteUsuario): void {
     // Converte ItemFrequenteUsuario para Item (mínimo necessário para o CartService)
-    const cartItem: Item = {
+    const cartItem = {
       id: item.itemId,
       nome: item.itemNome,
-      saldo: item.saldo
+      saldo: item.saldo,
+      disponivelEmprestimoCalculado: item.saldo
     } as Item;
 
     this.cartService.addItem(cartItem, 1);

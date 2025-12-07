@@ -10,7 +10,7 @@
 
     <!-- Cards de Status (1→2→4 colunas) -->
     <section aria-label="Estatísticas de empréstimos">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <app-loan-stat-cards [loading]="loadingUserStats()" [stats]="userStats()"/>
       </div>
     </section>
@@ -69,7 +69,7 @@
         </p-button>
       </div>
     </p-panel>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       @if (loadingStats()) {
         <app-skeleton-card></app-skeleton-card>
         <app-skeleton-card></app-skeleton-card>
