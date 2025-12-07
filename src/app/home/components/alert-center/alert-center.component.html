@@ -1,0 +1,41 @@
+@if (hasAlerts()) {
+  <div aria-live="polite" class="space-y-2" role="alert">
+    @for (alert of alerts(); track alert.type) {
+      <div
+        class="flex items-center gap-3 p-3 rounded-lg border"
+        [style.background]="alert.severity === 'danger' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)'"
+        [style.border-color]="alert.severity === 'danger' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.3)'"
+      >
+        <i
+          [class]="alert.icon"
+          [style.color]="alert.severity === 'danger' ? '#EF4444' : '#F59E0B'"
+          aria-hidden="true"
+          class="text-xl"
+        ></i>
+        <div class="flex-1">
+          <p
+            [style.color]="alert.severity === 'danger' ? '#DC2626' : '#D97706'"
+            class="font-semibold text-sm m-0"
+          >
+            {{ alert.title }}
+          </p>
+          <p
+            class="text-sm m-0"
+            style="color: var(--color-text-secondary)"
+          >
+            {{ alert.message }}
+          </p>
+        </div>
+        <p-button
+          [rounded]="true"
+          [routerLink]="['/emprestimo']"
+          [severity]="alert.severity === 'danger' ? 'danger' : 'warn'"
+          [text]="true"
+          aria-label="Ver empréstimos"
+          icon="pi pi-arrow-right"
+          pTooltip="Ver empréstimos"
+        />
+      </div>
+    }
+  </div>
+}

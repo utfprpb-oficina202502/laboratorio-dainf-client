@@ -12,7 +12,8 @@ export class Item {
   tipoItem!: string;
   saldo!: number;
   descricao!: string;
-  grupo!: Grupo;
+  /** Grupo do item (opcional - pode não estar presente em listagens simplificadas) */
+  grupo?: Grupo;
   imageItem!: ItemImage[];
   /** URL da imagem (usado em listagens - DTO simplificado do backend) */
   imagemUrl?: string;

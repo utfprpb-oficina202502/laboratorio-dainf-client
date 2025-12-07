@@ -11,7 +11,7 @@ import {
 import {CommonModule, DatePipe} from '@angular/common';
 import {RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
-import {finalize, forkJoin} from 'rxjs';
+import {catchError, finalize, forkJoin, of} from 'rxjs';
 import {Z_INDEX} from '../framework/constants';
 
 import {DashboardEmprestimoCountRange} from "./dashboard/dashboardEmprestimoCountRange";
@@ -35,6 +35,23 @@ import {StatCardComponent} from '../components/stat-card/stat-card.component';
 import {SkeletonCardComponent} from '../framework/component/skeleton-card.component';
 import {SkeletonChartComponent} from '../framework/component/skeleton-chart.component';
 
+// Dashboard Aluno/Professor Components
+import {
+  ActivityTimelineComponent,
+  AlertCenterComponent,
+  FrequentItemsComponent,
+  LoanCalendarComponent,
+  LoanStatCardsComponent,
+  UsageChartComponent
+} from './components';
+import {
+  AtividadeUsuario,
+  EstatisticasUsuario,
+  EventoCalendario,
+  HistoricoUsoMensal,
+  ItemFrequenteUsuario
+} from './models/dashboard.models';
+
 @Component({
   selector: "app-home",
   templateUrl: "./home.component.html",
@@ -50,10 +67,17 @@ import {SkeletonChartComponent} from '../framework/component/skeleton-chart.comp
     DatePickerModule,
     PanelModule,
     ButtonModule,
-    // Custom
+    // Custom - Dashboard Admin
     StatCardComponent,
     SkeletonCardComponent,
     SkeletonChartComponent,
+    // Custom - Dashboard Aluno/Professor
+    AlertCenterComponent,
+    LoanStatCardsComponent,
+    LoanCalendarComponent,
+    ActivityTimelineComponent,
+    UsageChartComponent,
+    FrequentItemsComponent
   ]
 })
 export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -83,6 +107,21 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   protected readonly hasPie2ChartData = signal(false);
   private readonly logger = inject(LoggerService);
   private readonly messageService = inject(MessageService);
+
+  // =============================================
+  // Signals - Dashboard Aluno/Professor
+  // =============================================
+  protected readonly userStats = signal<EstatisticasUsuario | null>(null);
+  protected readonly userFrequentItems = signal<ItemFrequenteUsuario[]>([]);
+  protected readonly userUsageHistory = signal<HistoricoUsoMensal[]>([]);
+  protected readonly userActivities = signal<AtividadeUsuario[]>([]);
+  protected readonly userCalendarEvents = signal<EventoCalendario[]>([]);
+  protected readonly loadingUserStats = signal(false);
+  protected readonly loadingUserItems = signal(false);
+  protected readonly loadingUserHistory = signal(false);
+  protected readonly loadingUserActivities = signal(false);
+  protected readonly loadingUserCalendar = signal(false);
+  protected readonly userName = signal<string>('');
   // Computed - Derived State
   protected readonly disableBtnFiltrar = computed(() =>
     !this.dtIniFiltro() || !this.dtFimFiltro()
@@ -104,12 +143,16 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       }
       this.showDashboardAluno.set(value);
 
-      if (!this.showDashboardAluno()) {
-        if (this.viewInitialized) {
-          this.buildDashboards();
-        } else {
-          this.pendingDashboardBuild = true;
-        }
+      if (this.showDashboardAluno()) {
+        // Dashboard do Aluno/Professor
+        this.loadUserName();
+        this.loadUserDashboard();
+      } else if (this.viewInitialized) {
+        // Dashboard do Admin - view já inicializada
+        this.buildDashboards();
+      } else {
+        // Dashboard do Admin - aguarda ngAfterViewInit
+        this.pendingDashboardBuild = true;
       }
     }).catch(() => {
       // Error handled, signal update is automatic
@@ -370,6 +413,128 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       adquiridos.length > 0 ||
       saidas.length > 0
     );
+  }
+
+  // =============================================
+  // Dashboard Aluno/Professor - Métodos
+  // =============================================
+
+  /**
+   * Carrega o nome do usuário logado.
+   */
+  private loadUserName(): void {
+    this.loginService.getCurrentUser().subscribe({
+      next: (user) => {
+        if (user?.nome) {
+          // Pega apenas o primeiro nome
+          const firstName = user.nome.split(' ')[0];
+          this.userName.set(firstName);
+        }
+      },
+      error: (err) => {
+        this.logger.error('Erro ao carregar nome do usuário', err);
+        // Mantém userName vazio - saudação será apenas "Olá!"
+      }
+    });
+  }
+
+  /**
+   * Manipula o evento de mudança de mês do calendário.
+   * Busca novos eventos para o período selecionado.
+   *
+   * @param event Evento contendo month (0-11) e year
+   */
+  protected onCalendarMonthChange(event: { month: number; year: number }): void {
+    this.loadCalendarEvents(event.month, event.year);
+  }
+
+  /**
+   * Carrega todos os dados do dashboard do aluno/professor.
+   * Usa forkJoin para paralelizar as chamadas HTTP.
+   * Cada chamada tem tratamento de erro individual para resiliência.
+   */
+  private loadUserDashboard(): void {
+    // Ativa todos os loading states
+    this.loadingUserStats.set(true);
+    this.loadingUserItems.set(true);
+    this.loadingUserHistory.set(true);
+    this.loadingUserActivities.set(true);
+
+    // Paraleliza todas as chamadas HTTP com tratamento de erro individual
+    forkJoin({
+      stats: this.homeService.getMyStats().pipe(
+        catchError(err => {
+          this.logger.error('Erro ao carregar estatísticas do usuário', err);
+          return of(null);
+        })
+      ),
+      items: this.homeService.getMyFrequentItems().pipe(
+        catchError(err => {
+          this.logger.error('Erro ao carregar itens frequentes', err);
+          return of([]);
+        })
+      ),
+      history: this.homeService.getMyUsageHistory().pipe(
+        catchError(err => {
+          this.logger.error('Erro ao carregar histórico de uso', err);
+          return of([]);
+        })
+      ),
+      activities: this.homeService.getMyActivity().pipe(
+        catchError(err => {
+          this.logger.error('Erro ao carregar atividades', err);
+          return of([]);
+        })
+      )
+    }).pipe(
+      finalize(() => {
+        // Desativa todos os loading states ao finalizar
+        this.loadingUserStats.set(false);
+        this.loadingUserItems.set(false);
+        this.loadingUserHistory.set(false);
+        this.loadingUserActivities.set(false);
+      })
+    ).subscribe({
+      next: ({stats, items, history, activities}) => {
+        if (this.destroyed) {
+          return;
+        }
+        this.userStats.set(stats);
+        this.userFrequentItems.set(items);
+        this.userUsageHistory.set(history);
+        this.userActivities.set(activities);
+      }
+    });
+
+    // Carrega eventos do calendário separadamente (usa período diferente)
+    this.loadCalendarEvents();
+  }
+
+  /**
+   * Carrega os eventos do calendário para um mês específico (ou mês atual por padrão).
+   *
+   * @param month Mês (0-11), padrão: mês atual
+   * @param year Ano, padrão: ano atual
+   */
+  private loadCalendarEvents(month?: number, year?: number): void {
+    const now = new Date();
+    const targetMonth = month ?? now.getMonth();
+    const targetYear = year ?? now.getFullYear();
+
+    // Carrega o mês anterior, atual e próximo para ter contexto nas transições
+    const startDate = new Date(targetYear, targetMonth - 1, 1);
+    const endDate = new Date(targetYear, targetMonth + 2, 0); // Último dia do mês seguinte
+
+    const dtIni = this.datepipe.transform(startDate, 'dd/MM/yyyy') ?? '';
+    const dtFim = this.datepipe.transform(endDate, 'dd/MM/yyyy') ?? '';
+
+    this.loadingUserCalendar.set(true);
+    this.homeService.getMyCalendarEvents(dtIni, dtFim)
+    .pipe(finalize(() => this.loadingUserCalendar.set(false)))
+    .subscribe({
+      next: (events) => this.userCalendarEvents.set(events),
+      error: (err) => this.logger.error('Erro ao carregar eventos do calendário', err)
+    });
   }
 }
 

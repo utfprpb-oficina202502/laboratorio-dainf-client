@@ -1,6 +1,58 @@
 @if (showDashboardAluno()) {
-  <div class="p-3" id="container-dashboard-aluno">
-    <h1 class="text-xl font-semibold">Bem vindo!</h1>
+  <div class="p-3 md:p-4 lg:p-6 space-y-4 md:space-y-6" id="container-dashboard-aluno">
+    <!-- Saudação -->
+    <h1 class="text-xl md:text-2xl font-semibold" style="color: var(--color-text-primary)">
+      Olá{{ userName() ? ', ' + userName() : '' }}!
+    </h1>
+
+    <!-- Alertas (full width) -->
+    <app-alert-center [stats]="userStats()"/>
+
+    <!-- Cards de Status (1→2→4 colunas) -->
+    <section aria-label="Estatísticas de empréstimos">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <app-loan-stat-cards [loading]="loadingUserStats()" [stats]="userStats()"/>
+      </div>
+    </section>
+
+    <!-- Calendário + Timeline (1→2 colunas) -->
+    <section aria-label="Calendário e atividades">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+        <div class="dashboard-card-tall">
+          <app-loan-calendar
+            (monthChange)="onCalendarMonthChange($event)"
+            [events]="userCalendarEvents()"
+            [loading]="loadingUserCalendar()"
+            class="block h-full"
+          />
+        </div>
+        <div class="dashboard-card-tall">
+          <app-activity-timeline [activities]="userActivities()" [loading]="loadingUserActivities()"
+                                 class="block h-full"/>
+        </div>
+      </div>
+    </section>
+
+    <!-- Gráfico + Itens Frequentes (1→2 colunas) -->
+    <section aria-label="Histórico e favoritos">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+        <div class="dashboard-card-medium">
+          <app-usage-chart [history]="userUsageHistory()" [loading]="loadingUserHistory()"
+                           class="block h-full"/>
+        </div>
+        <div class="dashboard-card-medium">
+          <app-frequent-items [items]="userFrequentItems()" [loading]="loadingUserItems()"
+                              class="block h-full"/>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Catálogo -->
+    <a class="dashboard-cta" routerLink="/item/catalogo">
+      <i aria-hidden="true" class="pi pi-shopping-cart dashboard-cta__icon"></i>
+      <span class="dashboard-cta__text">Explorar Catálogo de Itens</span>
+      <i aria-hidden="true" class="pi pi-arrow-right dashboard-cta__arrow"></i>
+    </a>
   </div>
 }
 
@@ -17,7 +69,7 @@
         </p-button>
       </div>
     </p-panel>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       @if (loadingStats()) {
         <app-skeleton-card></app-skeleton-card>
         <app-skeleton-card></app-skeleton-card>

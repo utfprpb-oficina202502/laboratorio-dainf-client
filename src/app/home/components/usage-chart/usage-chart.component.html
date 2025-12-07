@@ -1,0 +1,26 @@
+<p-card>
+  <!-- Header com ícone e título -->
+  <div class="card-custom-header flex items-center gap-2 px-4 pt-4">
+    <i aria-hidden="true" class="pi pi-chart-bar text-lg"
+       style="color: var(--color-text-secondary)"></i>
+    <h3 class="text-lg font-semibold m-0" style="color: var(--color-text-primary)">Meu
+      Histórico</h3>
+  </div>
+
+  @if (loading()) {
+    <div class="p-4">
+      <p-skeleton height="16rem" width="100%"/>
+    </div>
+  } @else if (!hasData()) {
+    <div
+      class="flex flex-col items-center justify-center h-full py-8 text-center"
+      style="color: var(--color-text-secondary, #6b7280)"
+    >
+      <i aria-hidden="true" class="pi pi-chart-bar mb-2"
+         style="font-size: 2.5rem; opacity: 0.7"></i>
+      <p class="text-sm m-0">Nenhum empréstimo nos últimos 6 meses</p>
+    </div>
+  } @else {
+    <div class="h-64 p-4" id="usage-chart-container"></div>
+  }
+</p-card>
