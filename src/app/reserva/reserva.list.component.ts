@@ -39,6 +39,7 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
 
   // Override: Todos os usuários autenticados podem criar reservas (alunos/professores incluídos)
   override readonly canCreate = computed(() => true);
+  override readonly isReadOnly = computed(() => false);
 
   readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
   contextMenuItems: MenuItem[] = [];
