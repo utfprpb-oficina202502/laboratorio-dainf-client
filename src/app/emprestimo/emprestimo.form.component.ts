@@ -154,9 +154,14 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
 
   /**
    * Generate a unique temporary ID for matching items before backend persistence
+   * Uses cryptographically secure random number generator (CSPRNG)
    */
   private generateTempId(): string {
-    return `temp_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    // Use crypto.getRandomValues() for cryptographically secure random values
+    const array = new Uint32Array(2);
+    crypto.getRandomValues(array);
+    const randomPart = array[0].toString(36) + array[1].toString(36);
+    return `temp_${Date.now()}_${randomPart}`;
   }
 
   /**

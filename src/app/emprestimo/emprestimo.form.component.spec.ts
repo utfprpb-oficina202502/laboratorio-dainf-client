@@ -911,4 +911,455 @@ describe('EmprestimoFormComponent', () => {
       expect(() => component.insertItem()).not.toThrow();
     });
   });
+
+  describe('validateArraySynchronization', () => {
+    let loggerService: any;
+
+    beforeEach(() => {
+      loggerService = TestBed.inject(LoggerService);
+      jest.clearAllMocks();
+    });
+
+    it('should not log warnings when arrays are properly synchronized', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {id: 800, item: item1, qtde: 5, devolver: true}
+        ],
+        emprestimoDevolucaoItem: [
+          {id: 1200, item: item1, qtde: 5, statusDevolucao: StatusDevolucao.P}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      // Call a method that triggers validation (e.g., getStatusDevolucao)
+      component.getStatusDevolucao(emprestimo.emprestimoItem[0]);
+
+      expect(loggerService.warn).not.toHaveBeenCalled();
+    });
+
+    it('should log warning when arrays have different lengths', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {id: 800, item: item1, qtde: 5, devolver: true},
+          {id: 801, item: item1, qtde: 3, devolver: true}
+        ],
+        emprestimoDevolucaoItem: [
+          {id: 1200, item: item1, qtde: 5, statusDevolucao: StatusDevolucao.P}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      component.getStatusDevolucao(emprestimo.emprestimoItem[0]);
+
+      expect(loggerService.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Array synchronization issue detected')
+      );
+    });
+
+    it('should log warning when emprestimoItem has no matching devolucaoItem', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+      const item2 = {id: 2, nome: 'Item B'};
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {id: 800, item: item1, qtde: 5, devolver: true}
+        ],
+        emprestimoDevolucaoItem: [
+          {id: 1200, item: item2, qtde: 3, statusDevolucao: StatusDevolucao.P}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      component.getStatusDevolucao(emprestimo.emprestimoItem[0]);
+
+      expect(loggerService.warn).toHaveBeenCalledWith(
+        expect.stringContaining('No matching devolucaoItem found')
+      );
+    });
+
+    it('should not validate arrays when emprestimo has no ID (new emprestimo)', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+      const emprestimo = {
+        emprestimoItem: [
+          {item: item1, qtde: 5, devolver: true}
+        ],
+        emprestimoDevolucaoItem: [
+          {item: item1, qtde: 3, statusDevolucao: StatusDevolucao.P}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      component.getStatusDevolucao(emprestimo.emprestimoItem[0]);
+
+      // Should not log length mismatch warning for new emprestimos
+      expect(loggerService.warn).not.toHaveBeenCalledWith(
+        expect.stringContaining('Array synchronization issue detected')
+      );
+    });
+
+    it('should not log warning for items with tempId (newly created)', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {item: item1, qtde: 5, devolver: true, tempId: 'temp_123'}
+        ],
+        emprestimoDevolucaoItem: []
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      component.getStatusDevolucao(emprestimo.emprestimoItem[0]);
+
+      // Should not log warning for items with tempId
+      const warnCalls = (loggerService.warn as jest.Mock).mock.calls;
+      const hasNoMatchWarning = warnCalls.some((call: any[]) =>
+        call[0]?.includes('No matching devolucaoItem found')
+      );
+      expect(hasNoMatchWarning).toBe(false);
+    });
+  });
+
+  describe('findByTempId', () => {
+    it('should find devolucaoItem by tempId', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+      const tempId = 'temp_12345_abc';
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {item: item1, qtde: 5, devolver: true, tempId: tempId}
+        ],
+        emprestimoDevolucaoItem: [
+          {item: item1, qtde: 5, statusDevolucao: StatusDevolucao.P, tempId: tempId}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      const status = component.getStatusDevolucao(emprestimo.emprestimoItem[0]);
+
+      expect(status).toBe(StatusDevolucao.P);
+    });
+
+    it('should return null when tempId does not match', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {item: item1, qtde: 5, devolver: true, tempId: 'temp_123'}
+        ],
+        emprestimoDevolucaoItem: [
+          {item: item1, qtde: 5, statusDevolucao: StatusDevolucao.P, tempId: 'temp_456'}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      const status = component.getStatusDevolucao(emprestimo.emprestimoItem[0]);
+
+      // Should fallback to item.id + qtde matching and find it
+      expect(status).toBe(StatusDevolucao.P);
+    });
+
+    it('should return null when emprestimoItem has no tempId', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {id: 800, item: item1, qtde: 5, devolver: true}
+        ],
+        emprestimoDevolucaoItem: [
+          {item: item1, qtde: 5, statusDevolucao: StatusDevolucao.P, tempId: 'temp_123'}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      const status = component.getStatusDevolucao(emprestimo.emprestimoItem[0]);
+
+      // Should use backend ID matching since no tempId
+      expect(status).toBe(StatusDevolucao.P);
+    });
+  });
+
+  describe('findByBackendId - Robust Matching', () => {
+    let loggerService: any;
+
+    beforeEach(() => {
+      loggerService = TestBed.inject(LoggerService);
+      jest.clearAllMocks();
+    });
+
+    it('should find devolucaoItem by backend ID when single match exists', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {id: 800, item: item1, qtde: 5, devolver: true}
+        ],
+        emprestimoDevolucaoItem: [
+          {id: 1200, item: item1, qtde: 5, statusDevolucao: StatusDevolucao.P}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      const status = component.getStatusDevolucao(emprestimo.emprestimoItem[0]);
+
+      expect(status).toBe(StatusDevolucao.P);
+      expect(loggerService.warn).not.toHaveBeenCalled();
+    });
+
+    it('should handle multiple matches using occurrence counting', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {id: 800, item: item1, qtde: 5, devolver: true},
+          {id: 801, item: item1, qtde: 5, devolver: true}
+        ],
+        emprestimoDevolucaoItem: [
+          {id: 1200, item: item1, qtde: 5, statusDevolucao: StatusDevolucao.P},
+          {id: 1201, item: item1, qtde: 5, statusDevolucao: StatusDevolucao.D}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      const status0 = component.getStatusDevolucao(emprestimo.emprestimoItem[0]);
+      const status1 = component.getStatusDevolucao(emprestimo.emprestimoItem[1]);
+
+      expect(status0).toBe(StatusDevolucao.P);
+      expect(status1).toBe(StatusDevolucao.D);
+      expect(loggerService.debug).toHaveBeenCalledWith(
+        expect.stringContaining('Multiple devolucaoItems found')
+      );
+    });
+
+    it('should log warning when backend emprestimoItem not found', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+      const orphanItem = {id: 999, item: item1, qtde: 5, devolver: true} as EmprestimoItem;
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [],
+        emprestimoDevolucaoItem: []
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([orphanItem]);
+
+      component.getStatusDevolucao(orphanItem);
+
+      expect(loggerService.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Backend emprestimoItem not found for ID 999')
+      );
+    });
+
+    it('should log warning when no matching devolucaoItem found', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+      const item2 = {id: 2, nome: 'Item B'};
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {id: 800, item: item1, qtde: 5, devolver: true}
+        ],
+        emprestimoDevolucaoItem: [
+          {id: 1200, item: item2, qtde: 3, statusDevolucao: StatusDevolucao.P}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      component.getStatusDevolucao(emprestimo.emprestimoItem[0]);
+
+      expect(loggerService.warn).toHaveBeenCalledWith(
+        expect.stringContaining('No matching devolucaoItem found for emprestimoItem ID 800')
+      );
+    });
+  });
+
+  describe('findNthMatchByPosition - Occurrence Counting', () => {
+    let loggerService: any;
+
+    beforeEach(() => {
+      loggerService = TestBed.inject(LoggerService);
+      jest.clearAllMocks();
+    });
+
+    it('should correctly match first occurrence', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {id: 800, item: item1, qtde: 5, devolver: true},
+          {id: 801, item: item1, qtde: 5, devolver: true},
+          {id: 802, item: item1, qtde: 5, devolver: true}
+        ],
+        emprestimoDevolucaoItem: [
+          {id: 1200, item: item1, qtde: 5, statusDevolucao: StatusDevolucao.P},
+          {id: 1201, item: item1, qtde: 5, statusDevolucao: StatusDevolucao.D},
+          {id: 1202, item: item1, qtde: 5, statusDevolucao: StatusDevolucao.S}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      const status0 = component.getStatusDevolucao(emprestimo.emprestimoItem[0]);
+      const status1 = component.getStatusDevolucao(emprestimo.emprestimoItem[1]);
+      const status2 = component.getStatusDevolucao(emprestimo.emprestimoItem[2]);
+
+      expect(status0).toBe(StatusDevolucao.P);
+      expect(status1).toBe(StatusDevolucao.D);
+      expect(status2).toBe(StatusDevolucao.S);
+    });
+
+    it('should return status of first match and log warning when Nth occurrence not found', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {id: 800, item: item1, qtde: 5, devolver: true},
+          {id: 801, item: item1, qtde: 5, devolver: true}
+        ],
+        emprestimoDevolucaoItem: [
+          {id: 1200, item: item1, qtde: 5, statusDevolucao: StatusDevolucao.P}
+          // Missing second devolucaoItem - will cause fallback to first match
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      const status = component.getStatusDevolucao(emprestimo.emprestimoItem[1]);
+
+      // Should fallback to first matching devolucaoItem (by item.id + qtde)
+      expect(status).toBe(StatusDevolucao.P);
+
+      // Should log array synchronization warning
+      expect(loggerService.warn).toHaveBeenCalledWith(
+        expect.stringContaining('Array synchronization issue detected')
+      );
+    });
+
+    it('should handle mixed quantities correctly', () => {
+      const item1 = {id: 1, nome: 'Item A'};
+
+      const emprestimo = {
+        id: 100,
+        emprestimoItem: [
+          {id: 800, item: item1, qtde: 5, devolver: true},
+          {id: 801, item: item1, qtde: 3, devolver: true},
+          {id: 802, item: item1, qtde: 5, devolver: true}
+        ],
+        emprestimoDevolucaoItem: [
+          {id: 1200, item: item1, qtde: 5, statusDevolucao: StatusDevolucao.P},
+          {id: 1201, item: item1, qtde: 3, statusDevolucao: StatusDevolucao.D},
+          {id: 1202, item: item1, qtde: 5, statusDevolucao: StatusDevolucao.S}
+        ]
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([...emprestimo.emprestimoItem]);
+
+      // First item with qtde=5 should match first devolucaoItem with qtde=5
+      const status0 = component.getStatusDevolucao(emprestimo.emprestimoItem[0]);
+      expect(status0).toBe(StatusDevolucao.P);
+
+      // Item with qtde=3 should match devolucaoItem with qtde=3
+      const status1 = component.getStatusDevolucao(emprestimo.emprestimoItem[1]);
+      expect(status1).toBe(StatusDevolucao.D);
+
+      // Second item with qtde=5 should match second devolucaoItem with qtde=5
+      const status2 = component.getStatusDevolucao(emprestimo.emprestimoItem[2]);
+      expect(status2).toBe(StatusDevolucao.S);
+    });
+  });
+
+  describe('generateTempId', () => {
+    it('should generate unique tempIds for different items', () => {
+      const emprestimo = {
+        emprestimoItem: [],
+        emprestimoDevolucaoItem: []
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([]);
+
+      const item1 = {id: 1, nome: 'Item A', saldo: 10};
+      const item2 = {id: 2, nome: 'Item B', saldo: 10};
+
+      component.tempItem.set(item1);
+      component.tempQtde.set(1);
+      component.tempDevolver.set(true);
+
+      component.insertItem();
+      const tempId1 = emprestimo.emprestimoItem[0].tempId;
+
+      component.tempItem.set(item2);
+      component.tempQtde.set(1);
+      component.tempDevolver.set(true);
+
+      component.insertItem();
+      const tempId2 = emprestimo.emprestimoItem[1].tempId;
+
+      expect(tempId1).toBeDefined();
+      expect(tempId2).toBeDefined();
+      expect(tempId1).not.toBe(tempId2);
+      expect(tempId1).toMatch(/^temp_\d+_[a-z0-9]+$/);
+      expect(tempId2).toMatch(/^temp_\d+_[a-z0-9]+$/);
+    });
+
+    it('should use tempId for correlation between emprestimoItem and devolucaoItem', () => {
+      const emprestimo = {
+        emprestimoItem: [],
+        emprestimoDevolucaoItem: []
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([]);
+
+      const item1 = {id: 1, nome: 'Item A', saldo: 10};
+      component.tempItem.set(item1);
+      component.tempQtde.set(5);
+      component.tempDevolver.set(true);
+
+      component.insertItem();
+
+      const emprestimoItem = emprestimo.emprestimoItem[0];
+      const devolucaoItem = emprestimo.emprestimoDevolucaoItem[0];
+
+      expect(emprestimoItem.tempId).toBeDefined();
+      expect(devolucaoItem.tempId).toBeDefined();
+      expect(emprestimoItem.tempId).toBe(devolucaoItem.tempId);
+    });
+  });
 });
