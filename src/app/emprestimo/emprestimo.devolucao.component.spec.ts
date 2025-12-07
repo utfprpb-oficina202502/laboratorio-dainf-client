@@ -956,6 +956,91 @@ describe('EmprestimoDevolucaoComponent - drop (drag-and-drop)', () => {
       expect(component.itensPendentes()).not.toBe(pendentes);
       expect(component.itensDevolvidos()).not.toBe(devolvidos);
     });
+
+    it('deve sincronizar quantidade do EmprestimoItem com EmprestimoDevolucaoItem ao mover item', () => {
+      // Cria EmprestimoDevolucaoItem
+      const item1 = createDevolucaoItem(emprestimo, 1, 100, 5);
+
+      // Cria EmprestimoItem correspondente
+      const emprestimoItem1 = createEmprestimoItem(emprestimo, 1, 100, 5);
+
+      // Adiciona ao empréstimo
+      emprestimo.emprestimoItem.push(emprestimoItem1);
+
+      const pendentes = [item1];
+      const devolvidos: EmprestimoDevolucaoItem[] = [];
+
+      component.itensPendentes.set(pendentes);
+      component.itensDevolvidos.set(devolvidos);
+      component.emprestimo.set(emprestimo);
+
+      const event = {
+        previousContainer: {data: pendentes},
+        container: {data: devolvidos},
+        previousIndex: 0,
+        currentIndex: 0
+      } as CdkDragDrop<EmprestimoDevolucaoItem[]>;
+
+      component.drop(event);
+
+      // Verifica que o EmprestimoItem tem a mesma quantidade que EmprestimoDevolucaoItem
+      const emprestimoItemAtualizado = component.emprestimo()!.emprestimoItem.find(ei => ei.item.id === 100);
+      expect(emprestimoItemAtualizado?.qtde).toBe(5);
+    });
+
+    it('deve sincronizar quantidade do EmprestimoItem quando item fracionado é movido', () => {
+      // Cria EmprestimoDevolucaoItem original
+      const itemOriginal = createDevolucaoItem(emprestimo, 1, 100, 10);
+
+      // Cria EmprestimoItem correspondente
+      const emprestimoItemOriginal = createEmprestimoItem(emprestimo, 1, 100, 10);
+
+      // Adiciona ao empréstimo
+      emprestimo.emprestimoDevolucaoItem.push(itemOriginal);
+      emprestimo.emprestimoItem.push(emprestimoItemOriginal);
+
+      component.emprestimo.set(emprestimo);
+      component.itensPendentes.set([itemOriginal]);
+
+      // Fraciona o item
+      component.itemIsEditing.set(itemOriginal);
+      component.qtdeItemDuplicado = 4;
+      component.duplicarItem();
+
+      // Verifica que foram criados 2 EmprestimoDevolucaoItem
+      expect(emprestimo.emprestimoDevolucaoItem.length).toBe(2);
+
+      // Verifica que foram criados 2 EmprestimoItem
+      expect(emprestimo.emprestimoItem.filter(ei => ei.item.id === 100).length).toBe(2);
+
+      // Pega os itens fracionados
+      const [itemFracionado1, itemFracionado2] = emprestimo.emprestimoDevolucaoItem;
+
+      // Move um dos itens para devolvidos
+      const pendentes = [itemFracionado1];
+      const devolvidos = [itemFracionado2];
+
+      component.itensPendentes.set(pendentes);
+      component.itensDevolvidos.set(devolvidos);
+
+      const event = {
+        previousContainer: {data: pendentes},
+        container: {data: devolvidos},
+        previousIndex: 0,
+        currentIndex: 1
+      } as CdkDragDrop<EmprestimoDevolucaoItem[]>;
+
+      component.drop(event);
+
+      // Verifica que os EmprestimoItem têm as mesmas quantidades que os EmprestimoDevolucaoItem
+      const emprestimoItems = component.emprestimo()!.emprestimoItem.filter(ei => ei.item.id === 100);
+      expect(emprestimoItems.length).toBe(2);
+
+      const qtdesEmprestimoItem = emprestimoItems.map(ei => ei.qtde).sort((a, b) => a - b);
+      const qtdesEmprestimoDevolucaoItem = [itemFracionado1.qtde, itemFracionado2.qtde].sort((a, b) => a - b);
+
+      expect(qtdesEmprestimoItem).toEqual(qtdesEmprestimoDevolucaoItem);
+    });
   });
 });
 

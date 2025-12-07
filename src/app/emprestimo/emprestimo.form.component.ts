@@ -16,6 +16,7 @@ import {
   PrimeReactiveCrudFormComponent
 } from '../framework/component/prime-reactive-crud.form.component';
 import {EmprestimoItem} from './emprestimoItem';
+import {EmprestimoDevolucaoItem, StatusDevolucao} from './emprestimoDevolucaoItem';
 import {Item} from '../item/item';
 import {ItemService} from '../item/item.service';
 import {UsuarioService} from '../usuario/usuario.service';
@@ -38,6 +39,7 @@ import {TooltipModule} from 'primeng/tooltip';
 import {SelectModule} from 'primeng/select';
 import {DialogModule} from 'primeng/dialog';
 import {ScrollPanelModule} from 'primeng/scrollpanel';
+import {TagModule} from 'primeng/tag';
 
 // Custom components
 import {FormFieldComponent} from '../framework/component/form-field.component';
@@ -69,6 +71,7 @@ import {LoggerService} from '../framework/services/logger.service';
     SelectModule,
     DialogModule,
     ScrollPanelModule,
+    TagModule,
     // Custom
     FormFieldComponent,
     VoltarComponent,
@@ -147,6 +150,322 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
         });
       }
     });
+  }
+
+  /**
+   * Generate a unique temporary ID for matching items before backend persistence
+   * Uses cryptographically secure random number generator (CSPRNG)
+   */
+  private generateTempId(): string {
+    // Use crypto.getRandomValues() for cryptographically secure random values
+    const array = new Uint32Array(2);
+    crypto.getRandomValues(array);
+    const randomPart = array[0].toString(36) + array[1].toString(36);
+    return `temp_${Date.now()}_${randomPart}`;
+  }
+
+  /**
+   * Robust matching strategy for finding corresponding EmprestimoDevolucaoItem
+   *
+   * IMPORTANT: This method does NOT assume arrays are aligned by position.
+   * Instead, it uses multiple identification strategies to find the correct match:
+   *
+   * 1. Try matching by tempId (for newly created items) - MOST RELIABLE
+   * 2. Try matching by emprestimoItem.id (for persisted items with unique IDs) - RELIABLE
+   * 3. Fallback to matching by item.id + qtde (exact match) - LESS RELIABLE for duplicates
+   *
+   * For duplicate items (same item.id and qtde), the method uses occurrence counting
+   * to maintain positional correlation within the subset of matching items.
+   *
+   * @param emprestimoItem The emprestimo item to find the corresponding devolucao item for
+   * @returns The corresponding EmprestimoDevolucaoItem or null if not found
+   */
+  private findCorrespondingDevolucaoItemRobust(emprestimoItem: EmprestimoItem): EmprestimoDevolucaoItem | null {
+    const emprestimo = this.object();
+    if (!emprestimo?.emprestimoDevolucaoItem || !emprestimo?.emprestimoItem) {
+      return null;
+    }
+
+    // Validate array synchronization
+    this.validateArraySynchronization(emprestimo);
+
+    // Strategy 1: Try matching by tempId (for newly created items)
+    const tempIdMatch = this.findByTempId(emprestimo, emprestimoItem);
+    if (tempIdMatch) {
+      return tempIdMatch;
+    }
+
+    // Strategy 2: Try matching by backend emprestimoItem.id (unique identifier)
+    if (emprestimoItem.id) {
+      const backendMatch = this.findByBackendId(emprestimo, emprestimoItem);
+      if (backendMatch) {
+        return backendMatch;
+      }
+    }
+
+    // Strategy 3: Fallback to matching by item.id and qtde
+    return this.findByItemIdAndQtde(emprestimo, emprestimoItem);
+  }
+
+  /**
+   * Validate that emprestimoItem and emprestimoDevolucaoItem arrays are properly synchronized
+   * Logs warnings if inconsistencies are detected
+   */
+  private validateArraySynchronization(emprestimo: Emprestimo): void {
+    if (!emprestimo.emprestimoItem || !emprestimo.emprestimoDevolucaoItem) {
+      return;
+    }
+
+    const emprestimoLength = emprestimo.emprestimoItem.length;
+    const devolucaoLength = emprestimo.emprestimoDevolucaoItem.length;
+
+    // Arrays should have the same length for backend data
+    if (emprestimoLength !== devolucaoLength && emprestimo.id) {
+      this.logger.warn(
+        `Array synchronization issue detected: emprestimoItem has ${emprestimoLength} items ` +
+        `but emprestimoDevolucaoItem has ${devolucaoLength} items. Emprestimo ID: ${emprestimo.id}`
+      );
+    }
+
+    // Validate that each emprestimoItem has a corresponding devolucaoItem
+    if (emprestimo.id) {
+      for (const emprestimoItem of emprestimo.emprestimoItem) {
+        const hasMatch = emprestimo.emprestimoDevolucaoItem.some(
+          edi => edi.item.id === emprestimoItem.item.id &&
+                 Number(edi.qtde) === Number(emprestimoItem.qtde)
+        );
+        if (!hasMatch && !emprestimoItem.tempId) {
+          this.logger.warn(
+            `No matching devolucaoItem found for emprestimoItem with item.id=${emprestimoItem.item.id} ` +
+            `and qtde=${emprestimoItem.qtde}. Emprestimo ID: ${emprestimo.id}`
+          );
+        }
+      }
+    }
+  }
+
+  /**
+   * Find devolucaoItem by tempId (most reliable for newly created items)
+   */
+  private findByTempId(emprestimo: Emprestimo, emprestimoItem: EmprestimoItem): EmprestimoDevolucaoItem | null {
+    if (!emprestimoItem.tempId) {
+      return null;
+    }
+    return emprestimo.emprestimoDevolucaoItem.find(
+      edi => edi.tempId === emprestimoItem.tempId
+    ) || null;
+  }
+
+  /**
+   * Find devolucaoItem by backend emprestimoItem.id (reliable for persisted items)
+   *
+   * This method:
+   * 1. Finds the emprestimoItem in backend array by its unique ID
+   * 2. Searches for devolucaoItems with matching item.id and qtde
+   * 3. If multiple matches exist, uses occurrence counting to find the correct one
+   *
+   * @param emprestimo The emprestimo object containing both arrays
+   * @param emprestimoItem The item to find the corresponding devolucao for
+   * @returns The corresponding EmprestimoDevolucaoItem or null
+   */
+  private findByBackendId(emprestimo: Emprestimo, emprestimoItem: EmprestimoItem): EmprestimoDevolucaoItem | null {
+    const backendEmprestimoItem = emprestimo.emprestimoItem.find(ei => ei.id === emprestimoItem.id);
+    if (!backendEmprestimoItem) {
+      this.logger.warn(
+        `Backend emprestimoItem not found for ID ${emprestimoItem.id}. ` +
+        `This may indicate data inconsistency.`
+      );
+      return null;
+    }
+
+    const matches = emprestimo.emprestimoDevolucaoItem.filter(
+      edi => edi.item.id === backendEmprestimoItem.item.id &&
+             Number(edi.qtde) === Number(backendEmprestimoItem.qtde)
+    );
+
+    if (matches.length === 0) {
+      this.logger.warn(
+        `No matching devolucaoItem found for emprestimoItem ID ${emprestimoItem.id} ` +
+        `(item.id=${backendEmprestimoItem.item.id}, qtde=${backendEmprestimoItem.qtde})`
+      );
+      return null;
+    }
+
+    if (matches.length === 1) {
+      return matches[0];
+    }
+
+    // Multiple matches: use occurrence-based matching
+    if (matches.length > 1) {
+      this.logger.debug(
+        `Multiple devolucaoItems found for emprestimoItem ID ${emprestimoItem.id}. ` +
+        `Using occurrence-based matching.`
+      );
+      return this.findNthMatchByPosition(emprestimo, emprestimoItem, backendEmprestimoItem);
+    }
+
+    return null;
+  }
+
+  /**
+   * Find the Nth match by position correlation for duplicate items
+   *
+   * When multiple emprestimoItems have the same item.id and qtde, this method
+   * determines which specific one we're looking for by counting how many matching
+   * items appear before it in the emprestimoItem array, then finding the corresponding
+   * Nth occurrence in the emprestimoDevolucaoItem array.
+   *
+   * This maintains correlation for duplicates without assuming array alignment.
+   *
+   * @param emprestimo The emprestimo object
+   * @param emprestimoItem The original item being searched
+   * @param backendEmprestimoItem The backend emprestimoItem found by ID
+   * @returns The corresponding EmprestimoDevolucaoItem or null
+   */
+  private findNthMatchByPosition(
+    emprestimo: Emprestimo,
+    emprestimoItem: EmprestimoItem,
+    backendEmprestimoItem: EmprestimoItem
+  ): EmprestimoDevolucaoItem | null {
+    const backendIndex = emprestimo.emprestimoItem.findIndex(ei => ei.id === emprestimoItem.id);
+    if (backendIndex < 0) {
+      this.logger.warn(
+        `Backend index not found for emprestimoItem ID ${emprestimoItem.id} ` +
+        `despite previous successful lookup. Data may have changed.`
+      );
+      return null;
+    }
+
+    const countBefore = this.countMatchingItemsBefore(
+      emprestimo.emprestimoItem,
+      backendEmprestimoItem,
+      backendIndex
+    );
+
+    const result = this.findNthMatchingDevolucaoItem(
+      emprestimo.emprestimoDevolucaoItem,
+      backendEmprestimoItem,
+      countBefore
+    );
+
+    if (!result) {
+      this.logger.warn(
+        `Failed to find ${countBefore}th occurrence of devolucaoItem ` +
+        `for item.id=${backendEmprestimoItem.item.id}, qtde=${backendEmprestimoItem.qtde}`
+      );
+    }
+
+    return result;
+  }
+
+  /**
+   * Count matching items before a given index
+   */
+  private countMatchingItemsBefore(
+    items: EmprestimoItem[],
+    target: EmprestimoItem,
+    beforeIndex: number
+  ): number {
+    let count = 0;
+    for (let i = 0; i < beforeIndex; i++) {
+      const ei = items[i];
+      if (ei.item.id === target.item.id && Number(ei.qtde) === Number(target.qtde)) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Find the Nth matching devolucaoItem
+   */
+  private findNthMatchingDevolucaoItem(
+    devolucaoItems: EmprestimoDevolucaoItem[],
+    target: EmprestimoItem,
+    occurrenceNumber: number
+  ): EmprestimoDevolucaoItem | null {
+    let currentCount = 0;
+    for (const edi of devolucaoItems) {
+      if (edi.item.id === target.item.id && Number(edi.qtde) === Number(target.qtde)) {
+        if (currentCount === occurrenceNumber) {
+          return edi;
+        }
+        currentCount++;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Find devolucaoItem by item.id and qtde (fallback for items without unique IDs)
+   *
+   * WARNING: This is the least reliable matching strategy and should only be used
+   * when tempId and backend ID are not available (e.g., for newly created items
+   * before they're synced with backend).
+   *
+   * For duplicate items (same item.id and qtde), this uses occurrence counting
+   * which can fail if arrays become desynchronized.
+   *
+   * @param emprestimo The emprestimo object
+   * @param emprestimoItem The item to find
+   * @returns The corresponding EmprestimoDevolucaoItem or null
+   */
+  private findByItemIdAndQtde(emprestimo: Emprestimo, emprestimoItem: EmprestimoItem): EmprestimoDevolucaoItem | null {
+    const matches = emprestimo.emprestimoDevolucaoItem.filter(
+      edi => edi.item.id === emprestimoItem.item.id &&
+             Number(edi.qtde) === Number(emprestimoItem.qtde)
+    );
+
+    if (matches.length === 1) {
+      return matches[0];
+    }
+
+    if (matches.length > 1) {
+      const emprestimoItemsArray = this.emprestimoItems();
+      const index = emprestimoItemsArray.indexOf(emprestimoItem);
+
+      if (index === -1) {
+        return null;
+      }
+
+      const occurrenceNumber = this.countOccurrencesBefore(
+        emprestimoItemsArray,
+        emprestimoItem,
+        index
+      );
+
+      return this.findNthDevolucaoItemOccurrence(
+        emprestimo.emprestimoDevolucaoItem,
+        emprestimoItem,
+        occurrenceNumber
+      );
+    }
+
+    return null;
+  }
+
+  /**
+   * Find the Nth occurrence of a matching devolucaoItem
+   */
+  private findNthDevolucaoItemOccurrence(
+    devolucaoItems: EmprestimoDevolucaoItem[],
+    target: EmprestimoItem,
+    occurrenceNumber: number
+  ): EmprestimoDevolucaoItem | null {
+    let count = 0;
+    let currentIndex = 0;
+
+    for (const devolucaoItem of devolucaoItems) {
+      if (devolucaoItem.item.id === target.item.id &&
+          Number(devolucaoItem.qtde) === Number(target.qtde)) {
+        if (count === occurrenceNumber) {
+          return devolucaoItems[currentIndex];
+        }
+        count++;
+      }
+      currentIndex++;
+    }
+    return null;
   }
 
   /**
@@ -401,30 +720,281 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
     }
 
     const currentItems = [...this.emprestimoItems()];
-    const existingIndex = currentItems.findIndex(ei => ei.item.id === item.id);
+    const pendingItemIndex = this.findPendingItemIndex(currentItems, item.id);
 
-    if (existingIndex >= 0) {
-      const novaQtde = Number(currentItems[existingIndex].qtde) + Number(qtde);
-      if (this.validateItemSaldo(item, novaQtde)) {
-        currentItems[existingIndex].qtde = novaQtde;
-      }
+    if (pendingItemIndex >= 0) {
+      this.addQuantityToPendingItem(currentItems, pendingItemIndex, item, qtde);
     } else {
-      const newEmprestimoItem = new EmprestimoItem();
-      newEmprestimoItem.item = item;
-      newEmprestimoItem.qtde = qtde;
-      newEmprestimoItem.devolver = this.tempDevolver() ?? false;
-      currentItems.push(newEmprestimoItem);
+      this.createNewEmprestimoItem(currentItems, item, qtde);
     }
 
     this.emprestimoItems.set(currentItems);
+    this.resetTempValues();
+  }
 
-    // Reset temp values
+  /**
+   * Add quantity to an existing pending item
+   */
+  private addQuantityToPendingItem(currentItems: EmprestimoItem[], index: number, item: Item, qtde: number): void {
+    const novaQtde = Number(currentItems[index].qtde) + Number(qtde);
+    if (!this.validateItemSaldo(item, novaQtde)) {
+      return;
+    }
+
+    // Sync with emprestimoDevolucaoItem BEFORE updating quantity
+    // This is crucial because findCorrespondingDevolucaoItemRobust uses the current qtde to find matches
+    const emprestimo = this.object();
+    if (emprestimo?.emprestimoDevolucaoItem) {
+      // Use the original item from emprestimoItems() signal for robust matching
+      const originalEmprestimoItems = this.emprestimoItems();
+      const originalItem = originalEmprestimoItems[index];
+
+      if (originalItem) {
+        const devolucaoItem = this.findCorrespondingDevolucaoItemRobust(originalItem);
+        if (devolucaoItem) {
+          devolucaoItem.qtde = novaQtde;
+        }
+      }
+    }
+
+    // Update quantity AFTER finding and updating devolucaoItem
+    currentItems[index].qtde = novaQtde;
+  }
+
+  /**
+   * Create a new EmprestimoItem and sync with backend if editing
+   */
+  private createNewEmprestimoItem(currentItems: EmprestimoItem[], item: Item, qtde: number): void {
+    const tempId = this.generateTempId();
+    const newEmprestimoItem = new EmprestimoItem();
+    newEmprestimoItem.item = item;
+    newEmprestimoItem.qtde = qtde;
+    newEmprestimoItem.devolver = this.tempDevolver() ?? false;
+    newEmprestimoItem.tempId = tempId;
+    currentItems.push(newEmprestimoItem);
+
+    // Sync with emprestimo object if editing
+    const emprestimo = this.object();
+    if (emprestimo?.emprestimoItem) {
+      emprestimo.emprestimoItem.push(newEmprestimoItem);
+      this.createCorrespondingDevolucaoItem(emprestimo, item, qtde, tempId);
+    }
+  }
+
+  /**
+   * Create corresponding EmprestimoDevolucaoItem with status 'P'
+   */
+  private createCorrespondingDevolucaoItem(emprestimo: Emprestimo, item: Item, qtde: number, tempId: string): void {
+    if (!emprestimo.emprestimoDevolucaoItem) {
+      return;
+    }
+
+    const newDevolucaoItem = new EmprestimoDevolucaoItem();
+    newDevolucaoItem.item = item;
+    newDevolucaoItem.qtde = qtde;
+    newDevolucaoItem.statusDevolucao = StatusDevolucao.P;
+    newDevolucaoItem.tempId = tempId; // Set matching tempId for robust correlation
+    emprestimo.emprestimoDevolucaoItem.push(newDevolucaoItem);
+  }
+
+  /**
+   * Reset temporary form values
+   */
+  private resetTempValues(): void {
     this.tempItem.set(null);
     this.tempQtde.set(1);
     this.tempDevolver.set(null);
   }
 
   /**
+   * Find the index of a pending item (status 'P') with the given item ID
+   * Returns -1 if no pending item is found
+   */
+  private findPendingItemIndex(emprestimoItems: EmprestimoItem[], itemId: number): number {
+    const emprestimo = this.object();
+
+    // If no emprestimo or no devolucao items, treat all items as pending (can add to existing)
+    if (!emprestimo?.emprestimoDevolucaoItem) {
+      return emprestimoItems.findIndex(ei => ei.item.id === itemId);
+    }
+
+    // Find all items with the same item.id
+    for (let i = 0; i < emprestimoItems.length; i++) {
+      const emprestimoItem = emprestimoItems[i];
+      if (emprestimoItem.item.id === itemId) {
+        const status = this.getStatusDevolucao(emprestimoItem);
+
+        // If status is 'P' (Pendente) or null (new item), we can add to this one
+        if (status === StatusDevolucao.P || status === null) {
+          return i;
+        }
+      }
+    }
+
+    return -1;
+  }
+
+  /**
+   * Remove item from the list by index
+   * Only removes the specific instance, not all items with the same item.id
+   * Also syncs with EmprestimoItem and EmprestimoDevolucaoItem in the emprestimo object if in edit mode
+   * Uses occurrence-based matching to handle duplicate items correctly
+   */
+  removeItemByIndex(index: number): void {
+    const currentItems = [...this.emprestimoItems()];
+
+    if (index < 0 || index >= currentItems.length) {
+      return;
+    }
+
+    const itemToRemove = currentItems[index];
+
+    currentItems.splice(index, 1);
+    this.emprestimoItems.set(currentItems);
+
+    this.syncRemovalWithBackend(itemToRemove, index);
+  }
+
+  /**
+   * Sync removal with backend arrays (emprestimoItem and emprestimoDevolucaoItem)
+   * Uses occurrence-based matching to ensure the correct item is removed
+   */
+  private syncRemovalWithBackend(itemToRemove: EmprestimoItem, removalIndex: number): void {
+    const emprestimo = this.object();
+    if (!emprestimo?.emprestimoItem) {
+      return;
+    }
+
+    const emprestimoItemIndex = this.findEmprestimoItemIndexByOccurrence(emprestimo, itemToRemove, removalIndex);
+    const devolucaoItemIndex = this.findDevolucaoItemIndexByOccurrence(emprestimo, itemToRemove, removalIndex);
+
+    if (emprestimoItemIndex >= 0) {
+      emprestimo.emprestimoItem.splice(emprestimoItemIndex, 1);
+    }
+
+    if (devolucaoItemIndex >= 0 && emprestimo.emprestimoDevolucaoItem) {
+      emprestimo.emprestimoDevolucaoItem.splice(devolucaoItemIndex, 1);
+    }
+  }
+
+  /**
+   * Find the index of emprestimoItem to remove using occurrence-based matching
+   * Counts how many matching items appear before the removal index, then finds the Nth occurrence
+   */
+  private findEmprestimoItemIndexByOccurrence(
+    emprestimo: Emprestimo,
+    itemToRemove: EmprestimoItem,
+    removalIndex: number
+  ): number {
+    // For items with tempId, use direct matching (newly created items)
+    if (itemToRemove.tempId) {
+      return emprestimo.emprestimoItem.findIndex(ei => ei.tempId === itemToRemove.tempId);
+    }
+
+    // For items with backend ID, use direct matching (persisted items with unique IDs)
+    if (itemToRemove.id) {
+      return emprestimo.emprestimoItem.findIndex(ei => ei.id === itemToRemove.id);
+    }
+
+    // For items without unique identifiers, use occurrence-based matching
+    // Count how many items with same item.id and qtde appear BEFORE the removal index
+    const occurrenceNumber = this.countOccurrencesBefore(
+      this.emprestimoItems(),
+      itemToRemove,
+      removalIndex
+    );
+
+    // Find the Nth occurrence in the backend array
+    return this.findNthOccurrence(
+      emprestimo.emprestimoItem,
+      itemToRemove,
+      occurrenceNumber
+    );
+  }
+
+  /**
+   * Find the index of emprestimoDevolucaoItem to remove using occurrence-based matching
+   */
+  private findDevolucaoItemIndexByOccurrence(
+    emprestimo: Emprestimo,
+    itemToRemove: EmprestimoItem,
+    removalIndex: number
+  ): number {
+    if (!emprestimo.emprestimoDevolucaoItem) {
+      return -1;
+    }
+
+    // For items with tempId or backend ID, use robust matching
+    if (itemToRemove.tempId || itemToRemove.id) {
+      const devolucaoItem = this.findCorrespondingDevolucaoItemRobust(itemToRemove);
+      return devolucaoItem ? emprestimo.emprestimoDevolucaoItem.indexOf(devolucaoItem) : -1;
+    }
+
+    // For items without unique identifiers, use occurrence-based matching
+    const occurrenceNumber = this.countOccurrencesBefore(
+      this.emprestimoItems(),
+      itemToRemove,
+      removalIndex
+    );
+
+    return this.findNthItemOccurrence(
+      emprestimo.emprestimoDevolucaoItem,
+      itemToRemove,
+      occurrenceNumber
+    );
+  }
+
+  /**
+   * Count how many items with the same item.id and qtde appear before the given index
+   */
+  private countOccurrencesBefore(
+    items: EmprestimoItem[],
+    target: EmprestimoItem,
+    beforeIndex: number
+  ): number {
+    let count = 0;
+    for (let i = 0; i < beforeIndex && i < items.length; i++) {
+      if (items[i].item.id === target.item.id && Number(items[i].qtde) === Number(target.qtde)) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Find the Nth occurrence of an item in emprestimoItem array
+   */
+  private findNthOccurrence(
+    items: EmprestimoItem[],
+    target: EmprestimoItem,
+    occurrenceNumber: number
+  ): number {
+    return this.findNthItemOccurrence(items, target, occurrenceNumber);
+  }
+
+  /**
+   * Find the Nth occurrence of an item in either emprestimoItem or emprestimoDevolucaoItem array
+   * Generic method that works with both item types
+   */
+  private findNthItemOccurrence<T extends { item: { id: number }, qtde: number }>(
+    items: T[],
+    target: EmprestimoItem,
+    occurrenceNumber: number
+  ): number {
+    let count = 0;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].item.id === target.item.id && Number(items[i].qtde) === Number(target.qtde)) {
+        if (count === occurrenceNumber) {
+          return i;
+        }
+        count++;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * @deprecated Use removeItemByIndex instead to avoid removing all items with same id
    * Remove item from the list
    */
   removeItem(id: number): void {
@@ -445,6 +1015,51 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
         const minDate = new Date(Number.parseInt(parts[2]), Number.parseInt(parts[1]) - 1, Number.parseInt(parts[0]));
         this.minDatePrazoDevolucao.set(minDate);
       }
+    }
+  }
+
+  /**
+   * Get the status of EmprestimoDevolucaoItem for a given EmprestimoItem
+   * Uses robust matching strategy with multiple fallbacks
+   */
+  getStatusDevolucao(emprestimoItem: EmprestimoItem): StatusDevolucao | null {
+    const devolucaoItem = this.findCorrespondingDevolucaoItemRobust(emprestimoItem);
+    return devolucaoItem?.statusDevolucao ?? null;
+  }
+
+  /**
+   * Get status label for display
+   */
+  getStatusLabel(status: StatusDevolucao | null): string {
+    if (!status) return '';
+
+    switch (status) {
+      case StatusDevolucao.P:
+        return 'Pendente';
+      case StatusDevolucao.D:
+        return 'Devolvido';
+      case StatusDevolucao.S:
+        return 'Saída';
+      default:
+        return '';
+    }
+  }
+
+  /**
+   * Get status severity for tag styling
+   */
+  getStatusSeverity(status: StatusDevolucao | null): 'success' | 'warn' | 'secondary' | 'info' {
+    if (!status) return 'secondary';
+
+    switch (status) {
+      case StatusDevolucao.P:
+        return 'warn';
+      case StatusDevolucao.D:
+        return 'success';
+      case StatusDevolucao.S:
+        return 'info';
+      default:
+        return 'secondary';
     }
   }
 

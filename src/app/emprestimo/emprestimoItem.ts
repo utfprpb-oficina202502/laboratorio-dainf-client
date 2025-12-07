@@ -7,4 +7,5 @@ export class EmprestimoItem {
   devolver!: boolean;
   item!: Item;
   emprestimo!: Emprestimo;
+  tempId?: string; // Temporary unique identifier for matching before backend persistence
 }

@@ -266,13 +266,20 @@
                   </tr>
                 </ng-template>
 
-                <ng-template pTemplate="body" let-emprestimoItem>
+                <ng-template pTemplate="body" let-emprestimoItem let-rowIndex="rowIndex">
                   <tr>
                     <td>
                       <div class="flex items-center gap-2">
                         <span>{{ emprestimoItem.item.nome }}</span>
                         @if (emprestimoItem.item.patrimonio) {
                           <span class="text-gray-500">| {{ emprestimoItem.item.patrimonio }}</span>
+                        }
+                        @if (getStatusDevolucao(emprestimoItem); as status) {
+                          <p-tag
+                            [severity]="getStatusSeverity(status)"
+                            [value]="getStatusLabel(status)"
+                            [rounded]="true">
+                          </p-tag>
                         }
                       </div>
                     </td>
@@ -293,7 +300,7 @@
                         size="small"
                         pTooltip="Remover"
                         [disabled]="disableForm()"
-                        (onClick)="removeItem(emprestimoItem.item.id)"
+                        (onClick)="removeItemByIndex(rowIndex)"
                         [attr.aria-label]="'Remover item'">
                         <span pButtonIcon class="pi pi-trash"></span>
                       </p-button>
