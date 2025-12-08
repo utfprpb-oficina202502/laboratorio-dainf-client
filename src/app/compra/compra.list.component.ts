@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, viewChild} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {TableColumn} from '../framework/model/table-config.interface';
 import {Compra} from './compra';
@@ -7,6 +7,8 @@ import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.mod
 import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
 import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
 import {createTableConfig} from '../framework/utils/table-config.factory';
+import {MenuItem} from 'primeng/api';
+import {Popover} from 'primeng/popover';
 
 @Component({
     selector: 'app-list-compra',
@@ -24,6 +26,9 @@ export class CompraListComponent extends PrimeCrudListComponent<Compra, number> 
   protected override service = inject(CompraService);
   protected override columnsTable = ['id', 'fornecedorNomeFantasia', 'fornecedorRazaoSocial', 'dataCompra', 'actions'];
   protected override urlForm = 'compra/form';
+
+  readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
+  contextMenuItems: MenuItem[] = [];
 
   private readonly tableColumns: TableColumn[] = [
     {
@@ -104,5 +109,29 @@ export class CompraListComponent extends PrimeCrudListComponent<Compra, number> 
 
     this.columnsTable = this.tableConfig.columns.map(column => column.field);
     this.displayedColumns = [...this.columnsTable];
+  }
+
+  openOptions(event: Event, compra: Compra): void {
+    this.contextMenuItems = [
+      {
+        label: 'Editar',
+        icon: 'pi pi-pencil',
+        command: () => this.edit(compra.id)
+      },
+      {
+        label: 'Remover',
+        icon: 'pi pi-trash',
+        command: () => this.delete(compra.id)
+      }
+    ];
+
+    this.actionsMenu().toggle(event);
+  }
+
+  onKeyDown(event: KeyboardEvent, compra: Compra): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.openOptions(event, compra);
+    }
   }
 }
