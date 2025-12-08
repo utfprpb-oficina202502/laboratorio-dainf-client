@@ -98,99 +98,103 @@
             </div>
           </div>
 
-          <!-- Add Item Section -->
-          <div class="grid grid-cols-12 gap-4">
-            <!-- Item AutoComplete -->
-            <div class="col-span-12 md:col-span-7">
-              <app-form-field
-                hint="Digite pelo menos 2 caracteres para buscar"
-                label="Item">
-                <div class="flex flex-col gap-1">
-                  <div class="flex items-center gap-2">
-                    <p-autoComplete
-                      inputId="item"
-                      [(ngModel)]="tempItem"
-                      [ngModelOptions]="{standalone: true}"
-                      optionLabel="nome"
-                      dataKey="id"
-                      [suggestions]="itemList()"
-                      (completeMethod)="findProdutos($event)"
-                      (onSelect)="setQtdeDefaultItem()"
-                      minQueryLength="2"
-                      placeholder="Digite para buscar..."
-                      class="w-full"
-                      [inputStyle]="{ width: '100%' }">
-                      <ng-template let-item pTemplate="item">
-                        <div class="flex items-center gap-2 relative">
-                          @if (item.imageItem && item.imageItem.length > 0) {
-                            <div class="relative w-16 h-16">
-                              <img
-                                [ngSrc]="item.imageItem[0].nameImage"
-                                alt="Item"
-                                class="object-cover rounded"
-                                fill/>
-                            </div>
-                          }
-                          <div class="flex flex-col">
-                            <span>{{ item.nome }}</span>
-                            @if (item.patrimonio) {
-                              <span class="text-muted-color text-sm">{{ item.patrimonio }}</span>
+          <!-- Add Item Section (only if not disabled) -->
+          @if (!disableForm()) {
+            <div class="grid grid-cols-12 gap-4">
+              <!-- Item AutoComplete -->
+              <div class="col-span-12 md:col-span-7">
+                <app-form-field
+                  hint="Digite pelo menos 2 caracteres para buscar"
+                  label="Item">
+                  <div class="flex flex-col gap-1">
+                    <div class="flex items-center gap-2">
+                      <p-autoComplete
+                        (completeMethod)="findProdutos($event)"
+                        (ngModelChange)="tempItem.set($event)"
+                        (onSelect)="setQtdeDefaultItem()"
+                        [inputStyle]="{ width: '100%' }"
+                        [ngModel]="tempItem()"
+                        [ngModelOptions]="{standalone: true}"
+                        [suggestions]="itemList()"
+                        class="w-full"
+                        dataKey="id"
+                        inputId="item"
+                        minQueryLength="2"
+                        optionLabel="nome"
+                        placeholder="Digite para buscar...">
+                        <ng-template let-item pTemplate="item">
+                          <div class="flex items-center gap-2 relative">
+                            @if (item.imageItem && item.imageItem.length > 0) {
+                              <div class="relative w-16 h-16">
+                                <img
+                                  [ngSrc]="item.imageItem[0].nameImage"
+                                  alt="Item"
+                                  class="object-cover rounded"
+                                  fill/>
+                              </div>
                             }
+                            <div class="flex flex-col">
+                              <span>{{ item.nome }}</span>
+                              @if (item.patrimonio) {
+                                <span class="text-muted-color text-sm">{{ item.patrimonio }}</span>
+                              }
+                            </div>
                           </div>
-                        </div>
-                      </ng-template>
-                    </p-autoComplete>
-                    <app-cadastro-rapido
-                      [href]="'/item/form'"
-                      [id]="tempItem()?.id">
-                    </app-cadastro-rapido>
-                    @if (tempItem()) {
-                      <button
-                        type="button"
-                        class="p-button-link"
-                        (click)="showDialogImagens()"
-                        pTooltip="Ver Imagens">
-                        <i class="pi pi-images text-xl"></i>
-                      </button>
+                        </ng-template>
+                      </p-autoComplete>
+                      <app-cadastro-rapido
+                        [href]="'/item/form'"
+                        [id]="tempItem()?.id">
+                      </app-cadastro-rapido>
+                      @if (tempItem()) {
+                        <button
+                          (click)="showDialogImagens()"
+                          class="p-button-link"
+                          pTooltip="Ver Imagens"
+                          type="button">
+                          <i class="pi pi-images text-xl"></i>
+                        </button>
+                      }
+                    </div>
+                    @if (tempItem()?.disponivelEmprestimoCalculado) {
+                      <small class="text-muted-color">Estoque
+                        Disponível: {{ tempItem()?.disponivelEmprestimoCalculado }}</small>
+                    } @else if (tempItem()?.saldo) {
+                      <small class="text-muted-color">Estoque
+                        Disponível: {{ tempItem()?.saldo }}</small>
                     }
                   </div>
-                  @if (tempItem()?.disponivelEmprestimoCalculado) {
-                    <small class="text-muted-color">Estoque
-                      Disponível: {{ tempItem()?.disponivelEmprestimoCalculado }}</small>
-                  }@else if (tempItem()?.saldo) {
-                    <small class="text-muted-color">Estoque
-                      Disponível: {{ tempItem()?.saldo }}</small>
-                  }
-                </div>
-              </app-form-field>
-            </div>
+                </app-form-field>
+              </div>
 
-            <!-- Quantidade Field -->
-            <div class="col-span-12 md:col-span-3">
-              <label for="qtde" class="block mb-2 font-medium">Quantidade</label>
-              <input
-                pInputText
-                type="number"
-                id="qtde"
-                [(ngModel)]="tempQtde"
-                [ngModelOptions]="{standalone: true}"
-                [disabled]="tempItem()?.patrimonio !== null"
-                class="w-full"
-                min="1" />
-            </div>
+              <!-- Quantidade Field -->
+              <div class="col-span-12 md:col-span-3">
+                <label class="block mb-2 font-medium" for="qtde">Quantidade</label>
+                <input
+                  (ngModelChange)="tempQtde.set($event)"
+                  [disabled]="tempItem()?.patrimonio !== null"
+                  [ngModel]="tempQtde()"
+                  [ngModelOptions]="{standalone: true}"
+                  class="w-full"
+                  id="qtde"
+                  min="1"
+                  pInputText
+                  type="number"/>
+              </div>
 
-            <!-- Add Button -->
-            <div class="col-span-12 md:col-span-2">
-              <div class="block mb-2 font-medium invisible" aria-hidden="true">Action</div>
-              <p-button
-                icon="pi pi-plus"
-                label="Adicionar"
-                (onClick)="insertItem()"
-                [attr.aria-label]="'Adicionar item à reserva'"
-                styleClass="w-full">
-              </p-button>
+              <!-- Add Button -->
+              <div class="col-span-12 md:col-span-2">
+                <div aria-hidden="true" class="block mb-2 font-medium invisible">Action</div>
+                <p-button
+                  (onClick)="insertItem()"
+                  [attr.aria-label]="'Adicionar item à reserva'"
+                  icon="pi pi-plus"
+                  label="Adicionar"
+                  styleClass="w-full">
+                </p-button>
+              </div>
             </div>
-          </div>
+          }
 
           <!-- Items Table -->
           @if (hasItems()) {
@@ -200,7 +204,9 @@
                   <tr>
                     <th scope="col">Item</th>
                     <th scope="col" class="text-center" style="width: 150px">Qtde</th>
-                    <th class="text-center w-100px" scope="col">Opções</th>
+                    @if (!disableForm()) {
+                      <th class="text-center w-100px" scope="col">Opções</th>
+                    }
                   </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-reservaItem>
@@ -214,23 +220,27 @@
                       </div>
                     </td>
                     <td class="text-center">{{reservaItem.qtde}}</td>
-                    <td class="text-center">
-                      <p-button
-                        icon="pi pi-trash"
-                        (onClick)="removeItem(reservaItem.item.id)"
-                        severity="danger"
-                        [text]="true"
-                        [rounded]="true"
-                        pTooltip="Remover">
-                      </p-button>
-                    </td>
+                    @if (!disableForm()) {
+                      <td class="text-center">
+                        <p-button
+                          (onClick)="removeItem(reservaItem.item.id)"
+                          [rounded]="true"
+                          [text]="true"
+                          icon="pi pi-trash"
+                          pTooltip="Remover"
+                          severity="danger">
+                        </p-button>
+                      </td>
+                    }
                   </tr>
                 </ng-template>
                 <ng-template pTemplate="footer">
                   <tr>
                     <td class="font-bold">Total</td>
                     <td class="text-center font-bold">{{qtdeTotal()}}</td>
-                    <td></td>
+                    @if (!disableForm()) {
+                      <td></td>
+                    }
                   </tr>
                 </ng-template>
               </p-table>
@@ -256,11 +266,13 @@
             </div>
           </div>
 
-          <!-- Action Buttons -->
-          <div class="flex justify-end gap-2 mt-4">
-            <app-cancelar (cancelClick)="back()"></app-cancelar>
-            <app-salvar [typeButton]="'submit'" [disabled]="isLoading()"></app-salvar>
-          </div>
+          <!-- Action Buttons (only if not disabled) -->
+          @if (!disableForm()) {
+            <div class="flex justify-end gap-2 mt-4">
+              <app-cancelar (cancelClick)="back()"></app-cancelar>
+              <app-salvar [disabled]="isLoading()" [typeButton]="'submit'"></app-salvar>
+            </div>
+          }
         </form>
       }
     </ng-template>
@@ -269,12 +281,14 @@
 
 <!-- Image Gallery Dialog -->
 <p-dialog
-  header="Imagens do Item"
-  [(visible)]="dialogImagens"
-  [modal]="true"
-  [baseZIndex]="Z_INDEX.DIALOG"
+  (visibleChange)="dialogImagens.set($event)"
   [appendTo]="'body'"
-  class="dialog-xl">
+  [baseZIndex]="Z_INDEX.DIALOG"
+  [focusOnShow]="false"
+  [modal]="true"
+  [visible]="dialogImagens()"
+  class="dialog-xl"
+  header="Imagens do Item">
   <p-carousel
     [value]="images()"
     [numVisible]="3"

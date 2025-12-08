@@ -25,37 +25,105 @@ describe('RelatorioDownloadService', () => {
   });
 
   describe('downloadBlob', () => {
-    it('should create download link with correct attributes', () => {
+    // Salva referências originais dos métodos (não do objeto)
+    const origCreateObjectURL = global.URL.createObjectURL;
+    const origRevokeObjectURL = global.URL.revokeObjectURL;
+
+    afterEach(() => {
+      // Restaura os métodos originais
+      global.URL.createObjectURL = origCreateObjectURL;
+      global.URL.revokeObjectURL = origRevokeObjectURL;
+      jest.useRealTimers();
+    });
+
+    it('should create download link with correct attributes and append to body', () => {
+      jest.useFakeTimers();
+
       const mockBlob = new Blob(['test content'], {type: 'application/pdf'});
       const nomeArquivo = 'relatorio.pdf';
-
-      // Mock global URL
       const mockUrl = 'blob:mock-url';
-      const originalURL = global.URL;
+
+      // Mock dos métodos URL
       global.URL.createObjectURL = jest.fn().mockReturnValue(mockUrl);
       global.URL.revokeObjectURL = jest.fn();
 
-      // Mock do click do link
+      // Mock do elemento link
       const clickSpy = jest.fn();
+      const removeSpy = jest.fn();
       const mockLink = {
         href: '',
         download: '',
-        click: clickSpy
+        style: {display: ''},
+        click: clickSpy,
+        remove: removeSpy
       } as unknown as HTMLAnchorElement;
+
       const createElementSpy = jest.spyOn(document, 'createElement').mockReturnValue(mockLink);
+      const appendChildSpy = jest.spyOn(document.body, 'appendChild').mockImplementation(() => mockLink);
 
       service.downloadBlob(mockBlob, nomeArquivo);
 
+      // Verifica criação e configuração do link
       expect(global.URL.createObjectURL).toHaveBeenCalledWith(mockBlob);
       expect(createElementSpy).toHaveBeenCalledWith('a');
       expect(mockLink.href).toBe(mockUrl);
       expect(mockLink.download).toBe(nomeArquivo);
+      expect(mockLink.style.display).toBe('none');
+
+      // Verifica que o link foi anexado ao body e depois removido
+      expect(appendChildSpy).toHaveBeenCalledWith(mockLink);
       expect(clickSpy).toHaveBeenCalled();
+      expect(removeSpy).toHaveBeenCalled();
+
+      // Verifica que revokeObjectURL é chamado após o delay
+      expect(global.URL.revokeObjectURL).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(250);
       expect(global.URL.revokeObjectURL).toHaveBeenCalledWith(mockUrl);
 
-      // Cleanup
+      // Cleanup dos spies
       createElementSpy.mockRestore();
-      global.URL = originalURL;
+      appendChildSpy.mockRestore();
+    });
+
+    it('should handle click errors gracefully', () => {
+      jest.useFakeTimers();
+
+      const mockBlob = new Blob(['test'], {type: 'text/plain'});
+      const mockUrl = 'blob:error-url';
+
+      global.URL.createObjectURL = jest.fn().mockReturnValue(mockUrl);
+      global.URL.revokeObjectURL = jest.fn();
+
+      const removeSpy = jest.fn();
+      const mockLink = {
+        href: '',
+        download: '',
+        style: {display: ''},
+        click: jest.fn().mockImplementation(() => {
+          throw new Error('Click failed');
+        }),
+        remove: removeSpy
+      } as unknown as HTMLAnchorElement;
+
+      const createElementSpy = jest.spyOn(document, 'createElement').mockReturnValue(mockLink);
+      const appendChildSpy = jest.spyOn(document.body, 'appendChild').mockImplementation(() => mockLink);
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      // Não deve lançar exceção
+      expect(() => service.downloadBlob(mockBlob, 'test.txt')).not.toThrow();
+
+      // Deve logar o erro
+      expect(consoleSpy).toHaveBeenCalledWith('Erro ao iniciar download:', expect.any(Error));
+
+      // Cleanup ainda deve ocorrer (finally block)
+      expect(removeSpy).toHaveBeenCalled();
+      jest.advanceTimersByTime(250);
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith(mockUrl);
+
+      // Cleanup dos spies
+      createElementSpy.mockRestore();
+      appendChildSpy.mockRestore();
+      consoleSpy.mockRestore();
     });
   });
 

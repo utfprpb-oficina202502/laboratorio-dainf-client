@@ -34,6 +34,18 @@ describe('RelatorioParametrosService', () => {
   });
 
   describe('aplicarAtalhoPeriodo', () => {
+    // Data fixa para evitar testes flaky à meia-noite: 15/06/2025 às 14:30:00
+    const FIXED_DATE = new Date(2025, 5, 15, 14, 30, 0);
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      jest.setSystemTime(FIXED_DATE);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it('should return dates in dd/MM/yyyy format', () => {
       const result = service.aplicarAtalhoPeriodo('ultimos30dias');
 
@@ -43,76 +55,52 @@ describe('RelatorioParametrosService', () => {
 
     it('should calculate ultimos30dias correctly', () => {
       const result = service.aplicarAtalhoPeriodo('ultimos30dias');
-      const hoje = new Date();
-      const trintaDiasAtras = new Date(hoje);
-      trintaDiasAtras.setDate(hoje.getDate() - 30);
 
-      // Verifica que dataFim é hoje
-      const [diaFim, mesFim, anoFim] = result.dataFim.split('/').map(Number);
-      expect(anoFim).toBe(hoje.getFullYear());
-      expect(mesFim).toBe(hoje.getMonth() + 1);
-      expect(diaFim).toBe(hoje.getDate());
+      // Com data fixa em 15/06/2025, dataFim deve ser 15/06/2025
+      expect(result.dataFim).toBe('15/06/2025');
+
+      // dataInicio deve ser 16/05/2025 (30 dias antes)
+      expect(result.dataInicio).toBe('16/05/2025');
     });
 
     it('should calculate esteMes correctly', () => {
       const result = service.aplicarAtalhoPeriodo('esteMes');
-      const hoje = new Date();
 
-      // dataInicio deve ser o primeiro dia do mês
-      const [diaInicio] = result.dataInicio.split('/').map(Number);
-      expect(diaInicio).toBe(1);
+      // dataInicio deve ser o primeiro dia do mês (01/06/2025)
+      expect(result.dataInicio).toBe('01/06/2025');
 
-      // dataFim deve ser hoje
-      const [diaFim, mesFim, anoFim] = result.dataFim.split('/').map(Number);
-      expect(anoFim).toBe(hoje.getFullYear());
-      expect(mesFim).toBe(hoje.getMonth() + 1);
-      expect(diaFim).toBe(hoje.getDate());
+      // dataFim deve ser hoje (15/06/2025)
+      expect(result.dataFim).toBe('15/06/2025');
     });
 
     it('should calculate ultimoMes correctly', () => {
       const result = service.aplicarAtalhoPeriodo('ultimoMes');
-      const hoje = new Date();
-      const mesAnterior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
 
-      // dataInicio deve ser o primeiro dia do mês anterior
-      const [diaInicio, mesInicio] = result.dataInicio.split('/').map(Number);
-      expect(diaInicio).toBe(1);
-      expect(mesInicio).toBe(mesAnterior.getMonth() + 1);
+      // dataInicio deve ser o primeiro dia do mês anterior (01/05/2025)
+      expect(result.dataInicio).toBe('01/05/2025');
 
-      // dataFim deve ser o último dia do mês anterior
-      const ultimoDiaMesAnterior = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
-      const [diaFim] = result.dataFim.split('/').map(Number);
-      expect(diaFim).toBe(ultimoDiaMesAnterior.getDate());
+      // dataFim deve ser o último dia do mês anterior (31/05/2025)
+      expect(result.dataFim).toBe('31/05/2025');
     });
 
     it('should calculate ultimoTrimestre correctly', () => {
       const result = service.aplicarAtalhoPeriodo('ultimoTrimestre');
-      const hoje = new Date();
-      const noventaDiasAtras = new Date(hoje);
-      noventaDiasAtras.setDate(hoje.getDate() - 90);
 
-      // Verifica que dataFim é hoje
-      const [diaFim, mesFim, anoFim] = result.dataFim.split('/').map(Number);
-      expect(anoFim).toBe(hoje.getFullYear());
-      expect(mesFim).toBe(hoje.getMonth() + 1);
-      expect(diaFim).toBe(hoje.getDate());
+      // dataFim deve ser hoje (15/06/2025)
+      expect(result.dataFim).toBe('15/06/2025');
+
+      // dataInicio deve ser 90 dias antes (17/03/2025)
+      expect(result.dataInicio).toBe('17/03/2025');
     });
 
     it('should calculate esteAno correctly', () => {
       const result = service.aplicarAtalhoPeriodo('esteAno');
-      const hoje = new Date();
 
       // dataInicio deve ser 01/01 do ano atual
-      const [diaInicio, mesInicio, anoInicio] = result.dataInicio.split('/').map(Number);
-      expect(diaInicio).toBe(1);
-      expect(mesInicio).toBe(1);
-      expect(anoInicio).toBe(hoje.getFullYear());
+      expect(result.dataInicio).toBe('01/01/2025');
 
-      // dataFim deve ser hoje
-      const [diaFim, mesFim, anoFim] = result.dataFim.split('/').map(Number);
-      expect(anoFim).toBe(hoje.getFullYear());
-      expect(mesFim).toBe(hoje.getMonth() + 1);
-      expect(diaFim).toBe(hoje.getDate());
+      // dataFim deve ser hoje (15/06/2025)
+      expect(result.dataFim).toBe('15/06/2025');
     });
 
     it('should return default (ultimos30dias) for unknown shortcut', () => {

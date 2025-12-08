@@ -28,6 +28,7 @@ interface AlertItem {
   selector: 'app-alert-center',
   templateUrl: './alert-center.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {class: 'block'},
   imports: [
     ButtonModule,
     RouterLink

@@ -34,8 +34,16 @@ export class RelatorioDownloadService {
   /** Signal reativo com o histórico atual */
   readonly historico = signal<DownloadHistoryItem[]>(this.loadHistory());
 
+  /** Delay em ms antes de revogar a Object URL para garantir que o download iniciou */
+  private static readonly REVOKE_DELAY_MS = 250;
+
   /**
    * Executa o download de um Blob como arquivo.
+   *
+   * Implementação robusta que:
+   * - Anexa o elemento ao DOM antes do click (compatibilidade cross-browser)
+   * - Usa try/catch para tratamento de erros
+   * - Revoga a Object URL após um delay para garantir que o download iniciou
    *
    * @param blob Conteúdo do arquivo
    * @param nomeArquivo Nome do arquivo para download
@@ -45,8 +53,24 @@ export class RelatorioDownloadService {
     const link = document.createElement('a');
     link.href = url;
     link.download = nomeArquivo;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    link.style.display = 'none';
+
+    // Anexa ao DOM para compatibilidade com Firefox e outros browsers
+    document.body.appendChild(link);
+
+    try {
+      link.click();
+    } catch (error) {
+      console.error('Erro ao iniciar download:', error);
+    } finally {
+      // Remove o elemento do DOM imediatamente
+      link.remove();
+
+      // Revoga a Object URL após um delay para garantir que o download iniciou
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, RelatorioDownloadService.REVOKE_DELAY_MS);
+    }
   }
 
   /**
@@ -150,10 +174,11 @@ export class RelatorioDownloadService {
   }
 
   /**
-   * Gera um ID único para o item.
+   * Gera um ID único para o item usando crypto.randomUUID().
+   * Utiliza a API Web Crypto que fornece valores criptograficamente seguros.
    */
   private generateId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    return crypto.randomUUID();
   }
 
   /**

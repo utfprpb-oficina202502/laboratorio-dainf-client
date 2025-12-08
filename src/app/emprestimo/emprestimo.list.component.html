@@ -185,12 +185,16 @@
                           (keydown)="onKeyDown($event, row)"
                           (delete)="delete(row.id)"
                           (edit)="edit(row.id)"
+                          (view)="view(row.id)"
                           [deleteAriaLabel]="'Remover empréstimo ' + row.id"
                           [deleteTooltip]="'Remover empréstimo'"
                           [editAriaLabel]="'Editar empréstimo ' + row.id"
                           [editTooltip]="'Editar empréstimo'"
+                          [showEdit]="canEdit()"
+                          [showView]="isAlunoOrProfessor()"
                           [showDelete]="canDelete()"
-                          [showEdit]="canEdit()">
+                          [viewAriaLabel]="'Visualizar empréstimo ' + row.id"
+                          [viewTooltip]="'Visualizar empréstimo'">
                         </app-action-buttons>
                       </div>
                     }
