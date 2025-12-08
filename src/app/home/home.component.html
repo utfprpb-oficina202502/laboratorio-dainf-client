@@ -257,8 +257,10 @@
         </label>
         <p-datepicker
           [(ngModel)]="dtIniFiltro"
-          [showIcon]="true"
           [fluid]="true"
+          [readonlyInput]="breakpointService.isMobile()"
+          [showIcon]="true"
+          [touchUI]="breakpointService.isMobile()"
           appendTo="body"
           ariaLabel="Selecione a data inicial do período para filtrar o dashboard"
           dataType="string"
@@ -275,8 +277,10 @@
         </label>
         <p-datepicker
           [(ngModel)]="dtFimFiltro"
-          [showIcon]="true"
           [fluid]="true"
+          [readonlyInput]="breakpointService.isMobile()"
+          [showIcon]="true"
+          [touchUI]="breakpointService.isMobile()"
           appendTo="body"
           ariaLabel="Selecione a data final do período para filtrar o dashboard"
           dataType="string"

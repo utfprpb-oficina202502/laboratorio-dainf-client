@@ -282,10 +282,11 @@
 <!-- Image Gallery Dialog -->
 <p-dialog
   (visibleChange)="dialogImagens.set($event)"
-  [visible]="dialogImagens()"
-  [modal]="true"
-  [baseZIndex]="Z_INDEX.DIALOG"
   [appendTo]="'body'"
+  [baseZIndex]="Z_INDEX.DIALOG"
+  [focusOnShow]="false"
+  [modal]="true"
+  [visible]="dialogImagens()"
   class="dialog-xl"
   header="Imagens do Item">
   <p-carousel
