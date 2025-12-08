@@ -10,6 +10,7 @@ import {LoaderService} from '../framework/loader/loader.service';
 import {LoginService} from '../login/login.service';
 import {LoggerService} from '../framework/services/logger.service';
 import {FormBusinessRulesService} from '../framework/services/form-business-rules.service';
+import {CartService} from '../framework/services/cart.service';
 import {Reserva} from './reserva';
 import {ReservaItem} from './reservaItem';
 import {Item} from '../item/item';
@@ -20,8 +21,11 @@ describe('ReservaFormComponent', () => {
   let itemService: jest.Mocked<ItemService>;
   let formBusinessRulesService: jest.Mocked<FormBusinessRulesService>;
   let reservaService: jest.Mocked<ReservaService>;
+  let cartService: jest.Mocked<CartService>;
 
   beforeEach(() => {
+    sessionStorage.clear();
+
     const messageServiceMock = {
       add: jest.fn()
     } as any;
@@ -34,6 +38,10 @@ describe('ReservaFormComponent', () => {
     const loginServiceMock = {
       userLoggedIsAlunoOrProfessor: jest.fn().mockResolvedValue(false),
       getCurrentUser: jest.fn().mockReturnValue(of(null))
+    } as any;
+
+    const cartServiceMock = {
+      clear: jest.fn()
     } as any;
 
     const formBusinessRulesServiceMock = {
@@ -64,15 +72,21 @@ describe('ReservaFormComponent', () => {
         {provide: LoaderService, useValue: {show: jest.fn(), hide: jest.fn()}},
         {provide: LoginService, useValue: loginServiceMock},
         {provide: LoggerService, useValue: {error: jest.fn(), warn: jest.fn()}},
-        {provide: FormBusinessRulesService, useValue: formBusinessRulesServiceMock}
+        {provide: FormBusinessRulesService, useValue: formBusinessRulesServiceMock},
+        {provide: CartService, useValue: cartServiceMock}
       ]
     });
 
     itemService = TestBed.inject(ItemService) as jest.Mocked<ItemService>;
     formBusinessRulesService = TestBed.inject(FormBusinessRulesService) as jest.Mocked<FormBusinessRulesService>;
     reservaService = TestBed.inject(ReservaService) as jest.Mocked<ReservaService>;
+    cartService = TestBed.inject(CartService) as jest.Mocked<CartService>;
     fixture = TestBed.createComponent(ReservaFormComponent);
     component = fixture.componentInstance;
+  });
+
+  afterEach(() => {
+    sessionStorage.clear();
   });
 
   describe('Component Initialization', () => {
@@ -285,6 +299,53 @@ describe('ReservaFormComponent', () => {
 
       expect(itemService.findAllImagesItem).not.toHaveBeenCalled();
     });
+
+    it('should show dialog when images exist', () => {
+      const mockItem: Item = {id: 1, nome: 'Item 1'} as Item;
+      component.tempItem.set(mockItem);
+
+      const mockImages = [{id: 1, nameImage: 'test.jpg'} as any];
+      itemService.findAllImagesItem.mockReturnValue(of(mockImages));
+
+      component.showDialogImagens();
+
+      expect(itemService.findAllImagesItem).toHaveBeenCalledWith(1);
+      expect(component.images()).toEqual(mockImages);
+      expect(component.dialogImagens()).toBe(true);
+    });
+
+    it('should show info message when no images', () => {
+      const mockItem: Item = {id: 1, nome: 'Item 1'} as Item;
+      const messageService = TestBed.inject(MessageService);
+      component.tempItem.set(mockItem);
+
+      itemService.findAllImagesItem.mockReturnValue(of([]));
+
+      component.showDialogImagens();
+
+      expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'info',
+        summary: 'Ops...'
+      }));
+      expect(component.dialogImagens()).toBe(false);
+    });
+
+    it('should handle error when loading images', () => {
+      const mockItem: Item = {id: 1, nome: 'Item 1'} as Item;
+      const loaderService = TestBed.inject(LoaderService);
+      component.tempItem.set(mockItem);
+
+      itemService.findAllImagesItem.mockReturnValue({
+        subscribe: (callbacks: any) => {
+          callbacks.error(new Error('Network error'));
+          return {unsubscribe: jest.fn()};
+        }
+      } as any);
+
+      component.showDialogImagens();
+
+      expect(loaderService.hide).toHaveBeenCalled();
+    });
   });
 
   describe('save', () => {
@@ -403,6 +464,226 @@ describe('ReservaFormComponent', () => {
       const prepared = component.prepareFormValue(formValue);
 
       expect(prepared.usuario).toEqual(mockUser);
+    });
+  });
+
+  describe('verifyFormDisable', () => {
+    it('should disable form for aluno/professor viewing existing record', () => {
+      const loginService = TestBed.inject(LoginService);
+      (loginService.userLoggedIsAlunoOrProfessor as jest.Mock).mockResolvedValue(true);
+
+      component.ngOnInit();
+      component.object.set({id: 1} as Reserva);
+
+      // Simulate the isAlunoOrProfessor returning true
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(true);
+
+      component.verifyFormDisable();
+
+      expect(component.disableForm()).toBe(true);
+    });
+
+    it('should not disable form for admin user', () => {
+      component.ngOnInit();
+      component.object.set({id: 1} as Reserva);
+
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+
+      component.verifyFormDisable();
+
+      expect(component.disableForm()).toBe(false);
+    });
+
+    it('should not disable form for new record', () => {
+      component.ngOnInit();
+      component.object.set({} as Reserva);
+
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(true);
+
+      component.verifyFormDisable();
+
+      expect(component.disableForm()).toBe(false);
+    });
+  });
+
+  describe('postEdit', () => {
+    it('should call verifyFormDisable', () => {
+      const verifyFormDisableSpy = jest.spyOn(component, 'verifyFormDisable');
+
+      component.postEdit();
+
+      expect(verifyFormDisableSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('back', () => {
+    it('should clear storage and call parent back', () => {
+      sessionStorage.setItem('reserva_items_draft', JSON.stringify([]));
+      const superBackSpy = jest.spyOn(Object.getPrototypeOf(Object.getPrototypeOf(component)), 'back');
+
+      component.back();
+
+      expect(sessionStorage.getItem('reserva_items_draft')).toBeNull();
+      expect(superBackSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('postSave', () => {
+    it('should clear storage and call parent postSave', () => {
+      sessionStorage.setItem('reserva_items_draft', JSON.stringify([]));
+      const callback = jest.fn();
+      const superPostSaveSpy = jest.spyOn(Object.getPrototypeOf(Object.getPrototypeOf(component)), 'postSave');
+
+      component.postSave(callback);
+
+      expect(sessionStorage.getItem('reserva_items_draft')).toBeNull();
+      expect(superPostSaveSpy).toHaveBeenCalledWith(callback);
+    });
+  });
+
+  describe('SessionStorage operations', () => {
+    beforeEach(() => {
+      sessionStorage.clear();
+    });
+
+    afterEach(() => {
+      sessionStorage.clear();
+    });
+
+    it('should save items to sessionStorage when reservaItems change', () => {
+      const mockItem: Item = {id: 1, nome: 'Item 1'} as Item;
+      const reservaItem = new ReservaItem();
+      reservaItem.item = mockItem;
+      reservaItem.qtde = 2;
+
+      component.reservaItems.set([reservaItem]);
+
+      // Trigger effect by running change detection
+      fixture.detectChanges();
+
+      const stored = sessionStorage.getItem('reserva_items_draft') ?? '[]';
+      const parsed = JSON.parse(stored);
+      expect(parsed.length).toBe(1);
+    });
+
+    it('should load items from sessionStorage on init', () => {
+      const mockItem: Item = {id: 1, nome: 'Item 1'} as Item;
+      const reservaItem = new ReservaItem();
+      reservaItem.item = mockItem;
+      reservaItem.qtde = 3;
+
+      sessionStorage.setItem('reserva_items_draft', JSON.stringify([reservaItem]));
+
+      // Create new component instance
+      const newFixture = TestBed.createComponent(ReservaFormComponent);
+      const newComponent = newFixture.componentInstance as any;
+      newFixture.detectChanges();
+
+      expect(newComponent.reservaItems().length).toBe(1);
+      expect(newComponent.reservaItems()[0].qtde).toBe(3);
+    });
+
+    it('should handle invalid JSON in sessionStorage gracefully', () => {
+      sessionStorage.setItem('reserva_items_draft', 'invalid-json');
+
+      // Create new component - should not throw
+      const newFixture = TestBed.createComponent(ReservaFormComponent);
+      const newComponent = newFixture.componentInstance as any;
+      newFixture.detectChanges();
+
+      expect(newComponent.reservaItems()).toEqual([]);
+    });
+  });
+
+  describe('loadCartItems', () => {
+    it('should load cart items from history state', () => {
+      const mockItem: Item = {id: 1, nome: 'Item do Carrinho'} as Item;
+      const cartItems = [{item: mockItem, qtde: 2}];
+
+      // Mock history.state
+      const originalState = history.state;
+      Object.defineProperty(history, 'state', {
+        value: {cartItems},
+        writable: true,
+        configurable: true
+      });
+
+      const messageService = TestBed.inject(MessageService);
+
+      // Create new component to trigger ngOnInit
+      const newFixture = TestBed.createComponent(ReservaFormComponent);
+      const newComponent = newFixture.componentInstance as any;
+      newFixture.detectChanges();
+
+      expect(newComponent.reservaItems().length).toBe(1);
+      expect(newComponent.reservaItems()[0].item.nome).toBe('Item do Carrinho');
+      expect(newComponent.reservaItems()[0].qtde).toBe(2);
+      expect(cartService.clear).toHaveBeenCalled();
+      expect(messageService.add).toHaveBeenCalledWith(expect.objectContaining({
+        severity: 'info',
+        summary: 'Itens carregados'
+      }));
+
+      // Restore original state
+      Object.defineProperty(history, 'state', {
+        value: originalState,
+        writable: true,
+        configurable: true
+      });
+    });
+
+    it('should save cart items to sessionStorage after loading', () => {
+      const mockItem: Item = {id: 1, nome: 'Item'} as Item;
+      const cartItems = [{item: mockItem, qtde: 3}];
+
+      const originalState = history.state;
+      Object.defineProperty(history, 'state', {
+        value: {cartItems},
+        writable: true,
+        configurable: true
+      });
+
+      const newFixture = TestBed.createComponent(ReservaFormComponent);
+      newFixture.detectChanges();
+
+      const stored = sessionStorage.getItem('reserva_items_draft');
+      expect(stored).not.toBeNull();
+
+      Object.defineProperty(history, 'state', {
+        value: originalState,
+        writable: true,
+        configurable: true
+      });
+    });
+  });
+
+  describe('Form disable effect', () => {
+    it('should disable form controls when disableForm is true', () => {
+      component.ngOnInit();
+      fixture.detectChanges();
+
+      component.disableForm.set(true);
+      fixture.detectChanges();
+
+      const formGroup = component.form();
+      expect(formGroup?.get('descricao')?.disabled).toBe(true);
+      expect(formGroup?.get('dataReserva')?.disabled).toBe(true);
+      expect(formGroup?.get('dataRetirada')?.disabled).toBe(true);
+      expect(formGroup?.get('observacao')?.disabled).toBe(true);
+    });
+
+    it('should enable form controls when disableForm is false', () => {
+      component.ngOnInit();
+      fixture.detectChanges();
+
+      component.disableForm.set(true);
+      fixture.detectChanges();
+
+      component.disableForm.set(false);
+      fixture.detectChanges();
+
+      const formGroup = component.form();
+      expect(formGroup?.get('descricao')?.disabled).toBe(false);
     });
   });
 

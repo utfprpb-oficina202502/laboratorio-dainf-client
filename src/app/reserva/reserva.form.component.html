@@ -110,9 +110,10 @@
                     <div class="flex items-center gap-2">
                       <p-autoComplete
                         (completeMethod)="findProdutos($event)"
+                        (ngModelChange)="tempItem.set($event)"
                         (onSelect)="setQtdeDefaultItem()"
-                        [(ngModel)]="tempItem"
                         [inputStyle]="{ width: '100%' }"
+                        [ngModel]="tempItem()"
                         [ngModelOptions]="{standalone: true}"
                         [suggestions]="itemList()"
                         class="w-full"
@@ -170,8 +171,9 @@
               <div class="col-span-12 md:col-span-3">
                 <label class="block mb-2 font-medium" for="qtde">Quantidade</label>
                 <input
-                  [(ngModel)]="tempQtde"
+                  (ngModelChange)="tempQtde.set($event)"
                   [disabled]="tempItem()?.patrimonio !== null"
+                  [ngModel]="tempQtde()"
                   [ngModelOptions]="{standalone: true}"
                   class="w-full"
                   id="qtde"
@@ -279,12 +281,13 @@
 
 <!-- Image Gallery Dialog -->
 <p-dialog
-  header="Imagens do Item"
-  [(visible)]="dialogImagens"
+  (visibleChange)="dialogImagens.set($event)"
+  [visible]="dialogImagens()"
   [modal]="true"
   [baseZIndex]="Z_INDEX.DIALOG"
   [appendTo]="'body'"
-  class="dialog-xl">
+  class="dialog-xl"
+  header="Imagens do Item">
   <p-carousel
     [value]="images()"
     [numVisible]="3"
