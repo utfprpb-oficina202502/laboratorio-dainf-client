@@ -126,3 +126,44 @@ export function createActionsColumn(): TableColumn {
     align: 'center'
   };
 }
+
+/**
+ * Interface para configuração de componentes de lista
+ */
+export interface ListComponentConfig {
+  entityColumns: TableColumn[];
+  globalFilterFields: string[];
+  defaultSortField: string;
+  caption: string;
+  stateKey: string;
+  columnsTable: string[];
+}
+
+/**
+ * Cria configuração completa para componentes de lista
+ * @param entityColumns Colunas específicas da entidade
+ * @param globalFilterFields Campos para filtro global
+ * @param defaultSortField Campo padrão para ordenação
+ * @param caption Título da tabela
+ * @param stateKey Chave para estado da tabela
+ * @returns Configuração completa da tabela
+ */
+export function createListComponentConfig(
+  entityColumns: TableColumn[],
+  globalFilterFields: string[],
+  defaultSortField: string,
+  caption: string,
+  stateKey: string
+): ListComponentConfig {
+  const columns = [createIdColumn(), ...entityColumns, createActionsColumn()];
+  const columnsTable = columns.map(column => column.field);
+
+  return {
+    entityColumns,
+    globalFilterFields: ['id', ...globalFilterFields],
+    defaultSortField,
+    caption,
+    stateKey,
+    columnsTable
+  };
+}

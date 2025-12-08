@@ -1,12 +1,11 @@
 import {ChangeDetectionStrategy, Component, forwardRef, inject, OnInit, viewChild} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
-import {TableColumn} from '../framework/model/table-config.interface';
 import {SolicitacaoCompra} from './solicitacaoCompra';
 import {SolicitacaoCompraService} from './solicitacaoCompra.service';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
 import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
-import {createTableConfig, createIdColumn, createActionsColumn} from '../framework/utils/table-config.factory';
+import {createTableConfig, createListComponentConfig, createIdColumn, createActionsColumn} from '../framework/utils/table-config.factory';
 import {MenuItem} from 'primeng/api';
 import {Popover} from 'primeng/popover';
 
@@ -22,42 +21,46 @@ import {Popover} from 'primeng/popover';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<SolicitacaoCompra, number> implements OnInit {
+  private readonly listConfig = createListComponentConfig(
+    [
+      {
+        field: 'descricao',
+        header: 'Descrição',
+        type: 'text',
+        sortable: true,
+        filterable: true,
+        minWidth: '20rem'
+      },
+      {
+        field: 'dataSolicitacao',
+        header: 'Data Solicitação',
+        type: 'date',
+        sortable: true,
+        filterable: true,
+        width: '14rem',
+        align: 'center'
+      },
+      {
+        field: 'usuarioNome',
+        header: 'Usuário',
+        type: 'text',
+        sortable: true,
+        filterable: true,
+        minWidth: '16rem'
+      }
+    ],
+    ['descricao', 'dataSolicitacao', 'usuarioNome'],
+    'id',
+    'Solicitações de Compra',
+    'solicitacao-compra-list'
+  );
+
   protected override service = inject(SolicitacaoCompraService);
-  protected override columnsTable = ['id', 'descricao', 'dataSolicitacao', 'usuarioNome', 'actions'];
+  protected override columnsTable = this.listConfig.columnsTable;
   protected override urlForm = 'solicitacao-compra/form';
 
   readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
   contextMenuItems: MenuItem[] = [];
-
-  private readonly tableColumns: TableColumn[] = [
-    createIdColumn(),
-    {
-      field: 'descricao',
-      header: 'Descrição',
-      type: 'text',
-      sortable: true,
-      filterable: true,
-      minWidth: '20rem'
-    },
-    {
-      field: 'dataSolicitacao',
-      header: 'Data Solicitação',
-      type: 'date',
-      sortable: true,
-      filterable: true,
-      width: '14rem',
-      align: 'center'
-    },
-    {
-      field: 'usuarioNome',
-      header: 'Usuário',
-      type: 'text',
-      sortable: true,
-      filterable: true,
-      minWidth: '16rem'
-    },
-    createActionsColumn()
-  ];
 
   constructor() {
     super();
@@ -91,12 +94,14 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
   }
 
   private configureTable(): void {
+    const tableColumns = [createIdColumn(), ...this.listConfig.entityColumns, createActionsColumn()];
+
     this.tableConfig = createTableConfig({
-      columns: this.tableColumns,
-      globalFilterFields: ['id', 'descricao', 'dataSolicitacao', 'usuarioNome'],
-      defaultSortField: 'id',
-      caption: 'Solicitações de Compra',
-      stateKey: 'solicitacao-compra-list',
+      columns: tableColumns,
+      globalFilterFields: this.listConfig.globalFilterFields,
+      defaultSortField: this.listConfig.defaultSortField,
+      caption: this.listConfig.caption,
+      stateKey: this.listConfig.stateKey,
       // ...outras propriedades específicas...
     });
 
