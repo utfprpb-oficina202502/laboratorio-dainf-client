@@ -5,14 +5,28 @@ export class DateUtil {
     return new Date(Number(aux[2]), Number(aux[1]) - 1, Number(aux[0]));
   }
 
+  /**
+   * Verifica se a data é anterior a hoje (comparação por dia, ignorando horário).
+   * Uma data igual a hoje retorna false - só é "antes" se for de um dia anterior.
+   */
   static dtIsBeforeToday(dt: Date | string): boolean {
-    const dtCompare: Date = typeof dt === 'string' ? this.parseStringToDate(dt) : dt;
-    return dtCompare.getTime() < Date.now();
+    const dtCompare: Date = typeof dt === 'string' ? this.parseStringToDate(dt) : new Date(dt);
+    dtCompare.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return dtCompare.getTime() < today.getTime();
   }
 
+  /**
+   * Verifica se a data é posterior a hoje (comparação por dia, ignorando horário).
+   * Uma data igual a hoje retorna false - só é "depois" se for de um dia posterior.
+   */
   static dtIsAfterToday(dt: Date | string): boolean {
-    const dtCompare: Date = typeof dt === 'string' ? this.parseStringToDate(dt) : dt;
-    return dtCompare.getTime() > Date.now();
+    const dtCompare: Date = typeof dt === 'string' ? this.parseStringToDate(dt) : new Date(dt);
+    dtCompare.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return dtCompare.getTime() > today.getTime();
   }
 
   static dtIsAfterDtLimit(dt: Date | string, dtLimite: Date | string): boolean {
@@ -60,7 +74,7 @@ export class DateUtil {
     }
     // Tenta converter para Date
     const d = new Date(dateStr);
-    if (!isNaN(d.getTime())) {
+    if (!Number.isNaN(d.getTime())) {
       return d.toLocaleDateString('pt-BR');
     }
     return dateStr;

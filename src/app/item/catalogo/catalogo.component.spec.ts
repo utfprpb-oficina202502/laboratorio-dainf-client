@@ -88,7 +88,8 @@ describe('CatalogoComponent', () => {
 
   beforeEach(async () => {
     itemServiceMock = {
-      findAllPaged: jest.fn()
+      findAllPaged: jest.fn(),
+      findAllPagedByGrupo: jest.fn()
     } as unknown as jest.Mocked<ItemService>;
 
     grupoServiceMock = {
@@ -155,7 +156,7 @@ describe('CatalogoComponent', () => {
   describe('Inicialização', () => {
     it('deve criar o componente', () => {
       grupoServiceMock.findAll.mockReturnValue(of([]));
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
       fixture.detectChanges();
 
       expect(component).toBeTruthy();
@@ -165,13 +166,13 @@ describe('CatalogoComponent', () => {
       const grupos = CatalogoTestFactory.createGrupos();
       const items = CatalogoTestFactory.createItems();
       grupoServiceMock.findAll.mockReturnValue(of(grupos));
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse(items)));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse(items)));
 
       fixture.detectChanges();
       tick();
 
       expect(grupoServiceMock.findAll).toHaveBeenCalled();
-      expect(itemServiceMock.findAllPaged).toHaveBeenCalled();
+      expect(itemServiceMock.findAllPagedByGrupo).toHaveBeenCalled();
       expect(component['grupos']().length).toBe(3);
       expect(component['items']().length).toBe(5);
       expect(component['loading']()).toBe(false);
@@ -179,7 +180,7 @@ describe('CatalogoComponent', () => {
 
     it('deve exibir erro quando falha ao carregar itens', fakeAsync(() => {
       grupoServiceMock.findAll.mockReturnValue(of([]));
-      itemServiceMock.findAllPaged.mockReturnValue(throwError(() => new Error('Network error')));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(throwError(() => new Error('Network error')));
 
       fixture.detectChanges();
       tick();
@@ -190,7 +191,7 @@ describe('CatalogoComponent', () => {
 
     it('deve iniciar com loading true', () => {
       grupoServiceMock.findAll.mockReturnValue(of([]));
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
 
       expect(component['loading']()).toBe(true);
     });
@@ -199,7 +200,7 @@ describe('CatalogoComponent', () => {
   describe('Navegação para Detalhes do Item', () => {
     beforeEach(fakeAsync(() => {
       grupoServiceMock.findAll.mockReturnValue(of([]));
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
       fixture.detectChanges();
       tick();
     }));
@@ -229,24 +230,24 @@ describe('CatalogoComponent', () => {
   describe('Paginação', () => {
     beforeEach(fakeAsync(() => {
       grupoServiceMock.findAll.mockReturnValue(of([]));
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse([], 100)));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse([], 100)));
       fixture.detectChanges();
       tick();
     }));
 
     it('deve atualizar página ao mudar paginação', fakeAsync(() => {
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
 
       component.onPageChange({page: 2, rows: 24, first: 48});
       tick();
 
       expect(component['currentPage']()).toBe(2);
       expect(component['pageSize']()).toBe(24);
-      expect(itemServiceMock.findAllPaged).toHaveBeenCalledWith(2, 24, '');
+      expect(itemServiceMock.findAllPagedByGrupo).toHaveBeenCalledWith(2, 24, '', undefined);
     }));
 
     it('deve usar valores padrão quando evento de paginação incompleto', fakeAsync(() => {
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
 
       component.onPageChange({});
       tick();
@@ -259,7 +260,7 @@ describe('CatalogoComponent', () => {
   describe('Filtros', () => {
     beforeEach(fakeAsync(() => {
       grupoServiceMock.findAll.mockReturnValue(of(CatalogoTestFactory.createGrupos()));
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse(CatalogoTestFactory.createItems())));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse(CatalogoTestFactory.createItems())));
       fixture.detectChanges();
       tick();
     }));
@@ -267,18 +268,18 @@ describe('CatalogoComponent', () => {
     it('deve resetar página ao buscar', fakeAsync(() => {
       component['currentPage'].set(5);
       component['searchTerm'].set('arduino');
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
 
       component.onSearch();
       tick();
 
       expect(component['currentPage']()).toBe(0);
-      expect(itemServiceMock.findAllPaged).toHaveBeenCalledWith(0, 12, 'arduino');
+      expect(itemServiceMock.findAllPagedByGrupo).toHaveBeenCalledWith(0, 12, 'arduino', undefined);
     }));
 
     it('deve resetar página ao mudar grupo', fakeAsync(() => {
       component['currentPage'].set(3);
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
 
       component.onGrupoChange();
       tick();
@@ -286,19 +287,17 @@ describe('CatalogoComponent', () => {
       expect(component['currentPage']()).toBe(0);
     }));
 
-    it('deve filtrar itens por grupo no cliente', fakeAsync(() => {
-      const items = CatalogoTestFactory.createItems(10);
-      // Todos os itens com grupo id 1
-      items.forEach(item => item.grupo = CatalogoTestFactory.createGrupo({id: 1}));
-      // Um item com grupo id 2
-      items[5].grupo = CatalogoTestFactory.createGrupo({id: 2});
+    it('deve passar grupoId para o servidor ao filtrar por grupo', fakeAsync(() => {
+      const grupo = CatalogoTestFactory.createGrupo({id: 2});
+      const itemsFiltrados = [CatalogoTestFactory.createItem({id: 5, grupo})];
 
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse(items)));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse(itemsFiltrados)));
 
-      component['selectedGrupo'].set(CatalogoTestFactory.createGrupo({id: 2}));
+      component['selectedGrupo'].set(grupo);
       component.loadItems();
       tick();
 
+      expect(itemServiceMock.findAllPagedByGrupo).toHaveBeenCalledWith(0, 12, '', 2);
       expect(component['items']().length).toBe(1);
       expect(component['items']()[0].grupo?.id).toBe(2);
     }));
@@ -308,7 +307,7 @@ describe('CatalogoComponent', () => {
       component['selectedGrupo'].set(CatalogoTestFactory.createGrupo());
       component['currentPage'].set(5);
 
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
 
       component.clearFilters();
       tick();
@@ -323,7 +322,7 @@ describe('CatalogoComponent', () => {
     it('deve incluir opção "Todos os grupos" nas opções', fakeAsync(() => {
       const grupos = CatalogoTestFactory.createGrupos();
       grupoServiceMock.findAll.mockReturnValue(of(grupos));
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
 
       fixture.detectChanges();
       tick();
@@ -337,7 +336,7 @@ describe('CatalogoComponent', () => {
     it('não deve filtrar quando grupo "Todos" selecionado (id: 0)', fakeAsync(() => {
       const items = CatalogoTestFactory.createItems(5);
       grupoServiceMock.findAll.mockReturnValue(of([]));
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse(items)));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse(items)));
 
       fixture.detectChanges();
       tick();
@@ -355,7 +354,7 @@ describe('CatalogoComponent', () => {
   describe('Skeleton Loading', () => {
     it('deve retornar array do tamanho correto para skeleton', () => {
       grupoServiceMock.findAll.mockReturnValue(of([]));
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
 
       component['pageSize'].set(24);
       const skeleton = component.getSkeletonArray();
@@ -369,7 +368,7 @@ describe('CatalogoComponent', () => {
   describe('Responsividade', () => {
     it('deve expor isMobile do breakpointService', fakeAsync(() => {
       grupoServiceMock.findAll.mockReturnValue(of([]));
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
       fixture.detectChanges();
       tick();
 
@@ -379,7 +378,7 @@ describe('CatalogoComponent', () => {
 
     it('deve expor cartItemCount do cartService', fakeAsync(() => {
       grupoServiceMock.findAll.mockReturnValue(of([]));
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
       fixture.detectChanges();
       tick();
 
@@ -391,7 +390,7 @@ describe('CatalogoComponent', () => {
   describe('Tratamento de Erros', () => {
     it('deve logar erro via LoggerService ao falhar ao carregar grupos', fakeAsync(() => {
       grupoServiceMock.findAll.mockReturnValue(throwError(() => new Error('Grupo error')));
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse([])));
 
       fixture.detectChanges();
       tick();
@@ -401,7 +400,7 @@ describe('CatalogoComponent', () => {
 
     it('deve logar erro via LoggerService ao falhar ao carregar itens', fakeAsync(() => {
       grupoServiceMock.findAll.mockReturnValue(of([]));
-      itemServiceMock.findAllPaged.mockReturnValue(throwError(() => new Error('Item error')));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(throwError(() => new Error('Item error')));
 
       fixture.detectChanges();
       tick();
@@ -411,7 +410,7 @@ describe('CatalogoComponent', () => {
 
     it('deve definir erro e parar loading ao falhar ao carregar itens', fakeAsync(() => {
       grupoServiceMock.findAll.mockReturnValue(of([]));
-      itemServiceMock.findAllPaged.mockReturnValue(throwError(() => new Error('Item error')));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(throwError(() => new Error('Item error')));
 
       fixture.detectChanges();
       tick();
@@ -424,7 +423,7 @@ describe('CatalogoComponent', () => {
   describe('Total de Registros', () => {
     it('deve atualizar totalRecords da resposta do backend', fakeAsync(() => {
       grupoServiceMock.findAll.mockReturnValue(of([]));
-      itemServiceMock.findAllPaged.mockReturnValue(of(CatalogoTestFactory.createPageResponse([], 150)));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(CatalogoTestFactory.createPageResponse([], 150)));
 
       fixture.detectChanges();
       tick();

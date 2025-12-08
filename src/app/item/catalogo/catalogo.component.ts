@@ -166,23 +166,12 @@ export class CatalogoComponent implements OnInit {
     const page = this.currentPage();
     const size = this.pageSize();
     const filter = this.searchTerm();
+    const grupoId = this.selectedGrupo()?.id || undefined;
 
-    this.itemService.findAllPaged(page, size, filter).subscribe({
+    this.itemService.findAllPagedByGrupo(page, size, filter, grupoId).subscribe({
       next: (response: PageResponse<Item>) => {
-        let items = response.content || [];
-        let total = response.totalElements;
-
-        // Filtra por grupo no cliente se selecionado
-        // Nota: Workaround até o backend suportar filtro por grupo
-        const selectedGrupo = this.selectedGrupo();
-        if (selectedGrupo?.id) {
-          items = items.filter(item => item.grupo?.id === selectedGrupo.id);
-          // Ajusta total para refletir filtro client-side (aproximação)
-          total = items.length;
-        }
-
-        this.items.set(items);
-        this.totalRecords.set(total);
+        this.items.set(response.content || []);
+        this.totalRecords.set(response.totalElements);
         this.loading.set(false);
       },
       error: (err) => {

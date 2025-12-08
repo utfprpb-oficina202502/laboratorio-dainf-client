@@ -106,7 +106,8 @@ describe('ArvoreComponent', () => {
 
   beforeEach(async () => {
     itemServiceMock = {
-      findAllPaged: jest.fn()
+      findAllPaged: jest.fn(),
+      findAllPagedByGrupo: jest.fn()
     } as unknown as jest.Mocked<ItemService>;
 
     grupoServiceMock = {
@@ -225,14 +226,14 @@ describe('ArvoreComponent', () => {
 
     it('deve carregar itens ao expandir um grupo', fakeAsync(() => {
       const items = ArvoreTestFactory.createItems(1);
-      itemServiceMock.findAllPaged.mockReturnValue(of(ArvoreTestFactory.createPageResponse(items)));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(ArvoreTestFactory.createPageResponse(items)));
 
       const nodes = component['treeNodes']();
       const node = nodes[0];
       component.onNodeExpand({node} as any);
       tick();
 
-      expect(itemServiceMock.findAllPaged).toHaveBeenCalled();
+      expect(itemServiceMock.findAllPagedByGrupo).toHaveBeenCalled();
       // O nó foi atualizado - precisamos pegar a versão atualizada
       const updatedNodes = component['treeNodes']();
       expect(updatedNodes[0].data?.loaded).toBe(true);
@@ -242,7 +243,7 @@ describe('ArvoreComponent', () => {
 
     it('deve adicionar skeleton com key loading- ao expandir', fakeAsync(() => {
       const items = ArvoreTestFactory.createItems(1);
-      itemServiceMock.findAllPaged.mockReturnValue(of(ArvoreTestFactory.createPageResponse(items)));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(ArvoreTestFactory.createPageResponse(items)));
 
       const nodes = component['treeNodes']();
       const node = nodes[0];
@@ -266,10 +267,8 @@ describe('ArvoreComponent', () => {
     }));
 
     it('deve exibir nó vazio quando grupo não tem itens', fakeAsync(() => {
-      // Retorna itens mas nenhum com o grupo id 1
-      const items = ArvoreTestFactory.createItems(2); // grupo id 2
-      items.forEach(item => item.grupo = ArvoreTestFactory.createGrupo({id: 2}));
-      itemServiceMock.findAllPaged.mockReturnValue(of(ArvoreTestFactory.createPageResponse(items)));
+      // Backend retorna lista vazia para grupo sem itens
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(ArvoreTestFactory.createPageResponse([])));
 
       const nodes = component['treeNodes']();
       const node = nodes[0]; // grupo id 1
@@ -282,7 +281,7 @@ describe('ArvoreComponent', () => {
     }));
 
     it('deve exibir nó de erro quando falha ao carregar itens', fakeAsync(() => {
-      itemServiceMock.findAllPaged.mockReturnValue(throwError(() => new Error('Failed')));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(throwError(() => new Error('Failed')));
 
       const nodes = component['treeNodes']();
       const node = nodes[0];
@@ -296,7 +295,7 @@ describe('ArvoreComponent', () => {
 
     it('não deve recarregar itens de grupo já carregado', fakeAsync(() => {
       const items = ArvoreTestFactory.createItems(1);
-      itemServiceMock.findAllPaged.mockReturnValue(of(ArvoreTestFactory.createPageResponse(items)));
+      itemServiceMock.findAllPagedByGrupo.mockReturnValue(of(ArvoreTestFactory.createPageResponse(items)));
 
       const nodes = component['treeNodes']();
       const node = nodes[0];
@@ -314,7 +313,7 @@ describe('ArvoreComponent', () => {
       tick();
 
       // Deve ter chamado apenas uma vez
-      expect(itemServiceMock.findAllPaged).toHaveBeenCalledTimes(1);
+      expect(itemServiceMock.findAllPagedByGrupo).toHaveBeenCalledTimes(1);
     }));
   });
 
@@ -604,40 +603,6 @@ describe('ArvoreComponent', () => {
       };
 
       expect(component.getNodeItem(grupoNode)).toBeUndefined();
-    });
-  });
-
-  describe('Expandir/Colapsar Todos', () => {
-    beforeEach(fakeAsync(() => {
-      const grupos = ArvoreTestFactory.createGrupos();
-      grupoServiceMock.findAll.mockReturnValue(of(grupos));
-      fixture.detectChanges();
-      tick();
-    }));
-
-    it('deve expandir todos os nós', fakeAsync(() => {
-      const items = ArvoreTestFactory.createItems(1);
-      itemServiceMock.findAllPaged.mockReturnValue(of(ArvoreTestFactory.createPageResponse(items)));
-
-      component.expandAll();
-      tick();
-
-      const nodes = component['treeNodes']();
-      nodes.forEach(node => {
-        expect(node.expanded).toBe(true);
-      });
-    }));
-
-    it('deve colapsar todos os nós', () => {
-      const nodes = component['treeNodes']();
-      nodes.forEach(node => node.expanded = true);
-      component['treeNodes'].set([...nodes]);
-
-      component.collapseAll();
-
-      component['treeNodes']().forEach(node => {
-        expect(node.expanded).toBe(false);
-      });
     });
   });
 

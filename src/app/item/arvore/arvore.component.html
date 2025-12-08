@@ -17,37 +17,15 @@
           <i class="pi pi-info-circle mr-1"></i>
           Clique nos grupos para expandir
         </span>
-        <div class="flex items-center gap-2">
-          <p-button
-            (onClick)="expandAll()"
-            [text]="true"
-            class="hidden md:inline-flex"
-            icon="pi pi-angle-double-down"
-            label="Expandir"
-            pTooltip="Expandir todos os grupos"
-            size="small"
-            tooltipPosition="top"/>
-
-          <p-button
-            (onClick)="collapseAll()"
-            [text]="true"
-            class="hidden md:inline-flex"
-            icon="pi pi-angle-double-up"
-            label="Colapsar"
-            pTooltip="Colapsar todos os grupos"
-            size="small"
-            tooltipPosition="top"/>
-
-          <p-button
-            (onClick)="refresh()"
-            [text]="true"
-            aria-label="Atualizar lista"
-            icon="pi pi-refresh"
-            pTooltip="Atualizar lista"
-            severity="secondary"
-            size="small"
-            tooltipPosition="top"/>
-        </div>
+        <p-button
+          (onClick)="refresh()"
+          [text]="true"
+          aria-label="Atualizar lista"
+          icon="pi pi-refresh"
+          pTooltip="Atualizar lista"
+          severity="secondary"
+          size="small"
+          tooltipPosition="top"/>
       </div>
 
       <!-- Estado de erro -->

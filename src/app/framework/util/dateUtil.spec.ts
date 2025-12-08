@@ -1,4 +1,4 @@
-import { DateUtil } from './dateUtil';
+import {DateUtil} from './dateUtil';
 
 describe('DateUtil', () => {
   describe('parseStringToDate', () => {
@@ -11,53 +11,73 @@ describe('DateUtil', () => {
   });
 
   describe('dtIsBeforeToday', () => {
-    let fixedNow: number;
-    beforeAll(() => {
-      // 10/11/2025 00:00:00
-      fixedNow = new Date(2025, 10, 10).getTime();
-      jest.spyOn(Date, 'now').mockReturnValue(fixedNow);
+    const fixedDate = new Date(2025, 10, 10, 12, 0, 0); // 10/11/2025 12:00:00
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      jest.setSystemTime(fixedDate);
     });
-    afterAll(() => {
-      (Date.now as jest.Mock).mockRestore?.();
+
+    afterEach(() => {
+      jest.useRealTimers();
     });
+
     it('should return true for yesterday', () => {
-      const yesterday = new Date(fixedNow);
-      yesterday.setDate(yesterday.getDate() - 1);
-      expect(DateUtil.dtIsBeforeToday(yesterday)).toBe(true);
+      expect(DateUtil.dtIsBeforeToday('09/11/2025')).toBe(true);
     });
-    it('should return false for today', () => {
-      const today = new Date(fixedNow);
-      expect(DateUtil.dtIsBeforeToday(today)).toBe(false);
+
+    it('should return false for today (mesmo com horário diferente)', () => {
+      // Data de hoje deve retornar false, independente do horário
+      expect(DateUtil.dtIsBeforeToday('10/11/2025')).toBe(false);
     });
+
     it('should return false for future date', () => {
-      const future = new Date(fixedNow);
-      future.setDate(future.getDate() + 1);
-      expect(DateUtil.dtIsBeforeToday(future)).toBe(false);
+      expect(DateUtil.dtIsBeforeToday('11/11/2025')).toBe(false);
+    });
+
+    it('should handle Date objects correctly', () => {
+      const yesterday = new Date(2025, 10, 9);
+      const today = new Date(2025, 10, 10);
+      const tomorrow = new Date(2025, 10, 11);
+
+      expect(DateUtil.dtIsBeforeToday(yesterday)).toBe(true);
+      expect(DateUtil.dtIsBeforeToday(today)).toBe(false);
+      expect(DateUtil.dtIsBeforeToday(tomorrow)).toBe(false);
     });
   });
 
   describe('dtIsAfterToday', () => {
-    let fixedNow: number;
-    beforeAll(() => {
-      fixedNow = new Date(2025, 10, 10).getTime();
-      jest.spyOn(Date, 'now').mockReturnValue(fixedNow);
+    const fixedDate = new Date(2025, 10, 10, 12, 0, 0); // 10/11/2025 12:00:00
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      jest.setSystemTime(fixedDate);
     });
-    afterAll(() => {
-      (Date.now as jest.Mock).mockRestore?.();
+
+    afterEach(() => {
+      jest.useRealTimers();
     });
+
     it('should return true for tomorrow', () => {
-      const tomorrow = new Date(fixedNow);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      expect(DateUtil.dtIsAfterToday(tomorrow)).toBe(true);
+      expect(DateUtil.dtIsAfterToday('11/11/2025')).toBe(true);
     });
-    it('should return false for today', () => {
-      const today = new Date(fixedNow);
-      expect(DateUtil.dtIsAfterToday(today)).toBe(false);
+
+    it('should return false for today (mesmo com horário diferente)', () => {
+      expect(DateUtil.dtIsAfterToday('10/11/2025')).toBe(false);
     });
+
     it('should return false for past date', () => {
-      const past = new Date(fixedNow);
-      past.setDate(past.getDate() - 1);
-      expect(DateUtil.dtIsAfterToday(past)).toBe(false);
+      expect(DateUtil.dtIsAfterToday('09/11/2025')).toBe(false);
+    });
+
+    it('should handle Date objects correctly', () => {
+      const yesterday = new Date(2025, 10, 9);
+      const today = new Date(2025, 10, 10);
+      const tomorrow = new Date(2025, 10, 11);
+
+      expect(DateUtil.dtIsAfterToday(yesterday)).toBe(false);
+      expect(DateUtil.dtIsAfterToday(today)).toBe(false);
+      expect(DateUtil.dtIsAfterToday(tomorrow)).toBe(true);
     });
   });
 
