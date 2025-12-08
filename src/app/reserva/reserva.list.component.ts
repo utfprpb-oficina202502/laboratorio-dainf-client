@@ -183,8 +183,22 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
   }
 
   finalizarReserva(reserva: Reserva) {
-    localStorage.setItem('reserva-to-emprestimo', JSON.stringify(reserva));
-    this.router.navigate(['emprestimo/form/reserva']);
+    // Fetch complete reservation data (including nested relationships like usuario and reservaItem)
+    // before navigating to ensure all required fields are available for creating the empréstimo
+    this.service.findOne(reserva.id).subscribe({
+      next: (reservaCompleta: Reserva) => {
+        localStorage.setItem('reserva-to-emprestimo', JSON.stringify(reservaCompleta));
+        this.router.navigate(['emprestimo/form/reserva']);
+      },
+      error: (error: unknown) => {
+        console.error('Erro ao buscar dados completos da reserva:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Não foi possível carregar os dados da reserva'
+        });
+      }
+    });
   }
 
   postFindAll(): void {

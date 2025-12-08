@@ -1107,9 +1107,13 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
    */
   generateEmprestimoByReserva(): void {
     const reservaData = localStorage.getItem('reserva-to-emprestimo');
-    if (!reservaData) return;
+    if (!reservaData) {
+      this.logger.warn('Nenhum dado de reserva encontrado no localStorage');
+      return;
+    }
 
     const reserva = JSON.parse(reservaData);
+    this.logger.info('Gerando empréstimo a partir da reserva:', reserva);
     this.idReserva.set(reserva.id);
 
     const formGroup = this.form();
@@ -1119,15 +1123,27 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
         observacao: reserva.observacao
       });
     }
-
-    this.documentoUsuario.set(reserva.usuario.documento);
+    if (reserva.usuario?.documento) {
+      this.documentoUsuario.set(reserva.usuario.documento);
+    }
 
     const newItems: EmprestimoItem[] = [];
-    for (const reservaItem of reserva.reservaItem) {
-      const emprestimoItem = new EmprestimoItem();
-      emprestimoItem.item = reservaItem.item;
-      emprestimoItem.qtde = reservaItem.qtde;
-      newItems.push(emprestimoItem);
+    if (reserva.reservaItem && Array.isArray(reserva.reservaItem)) {
+      for (const reservaItem of reserva.reservaItem) {
+        if (!reservaItem.item) {
+          this.logger.warn('Item não encontrado em reservaItem:', reservaItem);
+          continue;
+        }
+        const emprestimoItem = new EmprestimoItem();
+        emprestimoItem.item = reservaItem.item;
+        emprestimoItem.qtde = reservaItem.qtde;
+        // Set devolver based on item type: true for permanent (P), false for consumable (C)
+        emprestimoItem.devolver = reservaItem.item.tipoItem === 'P';
+        newItems.push(emprestimoItem);
+      }
+      this.logger.info(`${newItems.length} itens carregados da reserva`);
+    } else {
+      this.logger.warn('Nenhum reservaItem encontrado na reserva');
     }
 
     this.emprestimoItems.set(newItems);
