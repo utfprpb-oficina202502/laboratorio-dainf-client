@@ -28,7 +28,7 @@
 }
 
 :host ::ng-deep .tree-custom .p-tree-node-content:hover {
-  background-color: var(--p-surface-100);
+  background-color: var(--overlay-subtle);
 }
 
 :host ::ng-deep .tree-custom .p-tree-node-content:focus {
@@ -45,7 +45,7 @@
 }
 
 :host ::ng-deep .tree-custom .p-tree-node-toggler:hover {
-  background-color: var(--p-surface-200);
+  background-color: var(--overlay-medium);
 }
 
 /* Remove ícones padrão para usar customizados */
@@ -81,7 +81,7 @@
 
 .item-node:hover {
   border-left-color: var(--p-primary-color);
-  background-color: var(--p-surface-50);
+  background-color: var(--overlay-subtle);
 }
 
 .item-thumbnail img {
