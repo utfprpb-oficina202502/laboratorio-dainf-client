@@ -35,23 +35,6 @@ import {HistoricoUsoMensal} from '../../models/dashboard.models';
     class: 'block'
   },
   styles: [`
-    :host ::ng-deep .p-card {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
-
-    :host ::ng-deep .p-card-body {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    :host ::ng-deep .p-card-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
 
     .card-custom-header {
       flex-shrink: 0;
@@ -77,8 +60,14 @@ export class UsageChartComponent implements AfterViewInit, OnDestroy {
       const data = this.history();
       const isLoading = this.loading();
 
-      if (!isLoading && data.length > 0 && this.viewInitialized) {
-        this.createChart(data);
+      if (!isLoading && data.length > 0) {
+        // Setar hasData ANTES para que o container seja renderizado no DOM
+        this.hasData.set(true);
+
+        if (this.viewInitialized) {
+          // Aguardar o próximo ciclo para garantir que o container exista no DOM
+          setTimeout(() => this.createChart(data), 0);
+        }
       } else if (!isLoading && data.length === 0) {
         this.hasData.set(false);
       }
@@ -89,7 +78,9 @@ export class UsageChartComponent implements AfterViewInit, OnDestroy {
     this.viewInitialized = true;
     const data = this.history();
     if (!this.loading() && data.length > 0) {
-      this.createChart(data);
+      this.hasData.set(true);
+      // Aguardar o próximo ciclo para garantir que o container exista no DOM
+      setTimeout(() => this.createChart(data), 0);
     }
   }
 
@@ -118,7 +109,6 @@ export class UsageChartComponent implements AfterViewInit, OnDestroy {
       });
 
       this.chartCreated = true;
-      this.hasData.set(true);
     } catch (error) {
       this.logger.error('Erro ao criar gráfico de uso', error);
       this.hasData.set(false);

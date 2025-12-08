@@ -1,4 +1,4 @@
-import {ComponentFixture, fakeAsync, flush, TestBed} from '@angular/core/testing';
+import {ComponentFixture, fakeAsync, flush, TestBed, tick} from '@angular/core/testing';
 import {UsageChartComponent} from './usage-chart.component';
 import {ChartService} from '../../../framework/charts/chart.service';
 import {LoggerService} from '../../../framework/services/logger.service';
@@ -117,13 +117,15 @@ describe('UsageChartComponent', () => {
   });
 
   describe('Criação do Gráfico', () => {
-    it('deve chamar createBarChart quando há dados após ngAfterViewInit', fakeAsync(() => {
+    it('deve chamar createBarChart quando há dados após ngAfterViewInit', async () => {
       const mockHistory = createMockHistory();
       fixture.componentRef.setInput('loading', false);
       fixture.componentRef.setInput('history', mockHistory);
 
       fixture.detectChanges();
-      flush();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      await fixture.whenStable();
 
       expect(chartServiceMock.createBarChart).toHaveBeenCalledWith({
         containerId: 'usage-chart-container',
@@ -132,7 +134,7 @@ describe('UsageChartComponent', () => {
         valueField: 'quantidade',
         noDataMessage: 'Nenhum empréstimo no período.'
       });
-    }));
+    });
 
     it('não deve chamar createBarChart quando loading é true', fakeAsync(() => {
       fixture.componentRef.setInput('loading', true);
@@ -140,6 +142,7 @@ describe('UsageChartComponent', () => {
 
       fixture.detectChanges();
       flush();
+      tick();
 
       expect(chartServiceMock.createBarChart).not.toHaveBeenCalled();
     }));
@@ -150,6 +153,7 @@ describe('UsageChartComponent', () => {
 
       fixture.detectChanges();
       flush();
+      tick();
 
       expect(chartServiceMock.createBarChart).not.toHaveBeenCalled();
     }));
@@ -160,6 +164,7 @@ describe('UsageChartComponent', () => {
 
       fixture.detectChanges();
       flush();
+      tick();
 
       expect(component['hasData']()).toBe(false);
     }));
