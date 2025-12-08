@@ -353,40 +353,30 @@ describe('ReservaListComponent', () => {
       expect(reservaService.findOne).toHaveBeenCalledWith(123);
     });
 
-    it('deve salvar reserva completa no localStorage', (done) => {
+    it('deve salvar reserva completa no localStorage', () => {
       component.finalizarReserva(mockReserva);
 
-      // Aguarda a conclusão da chamada assíncrona
-      setTimeout(() => {
-        expect(setItemSpy).toHaveBeenCalledWith(
-          'reserva-to-emprestimo',
-          JSON.stringify(mockReservaCompleta)
-        );
-        done();
-      }, 0);
+      expect(setItemSpy).toHaveBeenCalledWith(
+        'reserva-to-emprestimo',
+        JSON.stringify(mockReservaCompleta)
+      );
     });
 
-    it('deve navegar para emprestimo/form/reserva', (done) => {
+    it('deve navegar para emprestimo/form/reserva', () => {
       component.finalizarReserva(mockReserva);
 
-      setTimeout(() => {
-        expect(component['router'].navigate).toHaveBeenCalledWith(['emprestimo/form/reserva']);
-        done();
-      }, 0);
+      expect(component['router'].navigate).toHaveBeenCalledWith(['emprestimo/form/reserva']);
     });
 
-    it('deve passar dados corretos da reserva', (done) => {
+    it('deve passar dados corretos da reserva', () => {
       component.finalizarReserva(mockReserva);
 
-      setTimeout(() => {
-        const savedData = JSON.parse(setItemSpy.mock.calls[0][1]);
-        expect(savedData.id).toBe(123);
-        expect(savedData.descricao).toBe('Reserva completa');
-        done();
-      }, 0);
+      const savedData = JSON.parse(setItemSpy.mock.calls[0][1]);
+      expect(savedData.id).toBe(123);
+      expect(savedData.descricao).toBe('Reserva completa');
     });
 
-    it('deve exibir mensagem de erro se falhar ao buscar reserva', (done) => {
+    it('deve exibir mensagem de erro se falhar ao buscar reserva', () => {
       const messageService = TestBed.inject(MessageService) as jest.Mocked<MessageService>;
       const errorMessage = 'Erro ao buscar reserva';
       reservaService.findOne.mockReturnValue(
@@ -397,15 +387,12 @@ describe('ReservaListComponent', () => {
 
       component.finalizarReserva(mockReserva);
 
-      setTimeout(() => {
-        expect(messageService.add).toHaveBeenCalledWith({
-          severity: 'error',
-          summary: 'Erro',
-          detail: 'Não foi possível carregar os dados da reserva'
-        });
-        expect(component['router'].navigate).not.toHaveBeenCalled();
-        done();
-      }, 0);
+      expect(messageService.add).toHaveBeenCalledWith({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Não foi possível carregar os dados da reserva'
+      });
+      expect(component['router'].navigate).not.toHaveBeenCalled();
     });
   });
 

@@ -183,7 +183,8 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
   }
 
   finalizarReserva(reserva: Reserva) {
-    // Buscar os dados completos da reserva antes de navegar
+    // Fetch complete reservation data (including nested relationships like usuario and reservaItem)
+    // before navigating to ensure all required fields are available for creating the empréstimo
     this.service.findOne(reserva.id).subscribe({
       next: (reservaCompleta: Reserva) => {
         localStorage.setItem('reserva-to-emprestimo', JSON.stringify(reservaCompleta));

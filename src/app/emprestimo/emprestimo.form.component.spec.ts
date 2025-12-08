@@ -36,7 +36,7 @@ describe('EmprestimoFormComponent', () => {
         {provide: UsuarioService, useValue: {completeCustom: jest.fn()}},
         {provide: LoaderService, useValue: {show: jest.fn(), hide: jest.fn()}},
         {provide: LoginService, useValue: loginServiceMock},
-        {provide: LoggerService, useValue: {error: jest.fn(), warn: jest.fn(), debug: jest.fn()}}
+        {provide: LoggerService, useValue: {error: jest.fn(), warn: jest.fn(), debug: jest.fn(), info: jest.fn()}}
       ]
     });
 
@@ -1391,6 +1391,244 @@ describe('EmprestimoFormComponent', () => {
       expect(emprestimoItem.tempId).toBeDefined();
       expect(devolucaoItem.tempId).toBeDefined();
       expect(emprestimoItem.tempId).toBe(devolucaoItem.tempId);
+    });
+  });
+
+  describe('generateEmprestimoByReserva', () => {
+    beforeEach(() => {
+      // Clear localStorage before each test
+      localStorage.clear();
+    });
+
+    it('should log warning and return early if no reserva data in localStorage', () => {
+      const loggerService = TestBed.inject(LoggerService) as jest.Mocked<LoggerService>;
+
+      component.generateEmprestimoByReserva();
+
+      expect(loggerService.warn).toHaveBeenCalledWith('Nenhum dado de reserva encontrado no localStorage');
+      expect(component.idReserva()).toBe(0);
+    });
+
+    it('should load reserva data and populate form fields', (done) => {
+      const mockReserva = {
+        id: 123,
+        descricao: 'Reserva teste',
+        observacao: 'Observação de teste',
+        usuario: {
+          id: 1,
+          nome: 'João Silva',
+          documento: '12345678900'
+        },
+        reservaItem: []
+      };
+
+      localStorage.setItem('reserva-to-emprestimo', JSON.stringify(mockReserva));
+      component.ngOnInit();
+      fixture.detectChanges();
+
+      setTimeout(() => {
+        component.generateEmprestimoByReserva();
+
+        expect(component.idReserva()).toBe(123);
+        expect(component.documentoUsuario()).toBe('12345678900');
+
+        const formGroup = component.form();
+        expect(formGroup?.get('usuarioEmprestimo')?.value).toEqual(mockReserva.usuario);
+        expect(formGroup?.get('observacao')?.value).toBe('Observação de teste');
+        done();
+      }, 50);
+    });    it('should create emprestimoItems from reservaItems with correct devolver flag for permanent items', () => {
+      const mockReserva = {
+        id: 456,
+        usuario: {
+          id: 2,
+          nome: 'Maria Santos',
+          documento: '98765432100'
+        },
+        observacao: 'Test',
+        reservaItem: [
+          {
+            id: 1,
+            qtde: 5,
+            item: {
+              id: 10,
+              nome: 'Arduino',
+              tipoItem: 'P', // Permanent item
+              saldo: 20
+            }
+          },
+          {
+            id: 2,
+            qtde: 3,
+            item: {
+              id: 11,
+              nome: 'Resistor',
+              tipoItem: 'C', // Consumable item
+              saldo: 100
+            }
+          }
+        ]
+      };
+
+      localStorage.setItem('reserva-to-emprestimo', JSON.stringify(mockReserva));
+      const loggerService = TestBed.inject(LoggerService) as jest.Mocked<LoggerService>;
+
+      component.generateEmprestimoByReserva();
+
+      const items = component.emprestimoItems();
+      expect(items.length).toBe(2);
+
+      // First item (permanent) should have devolver = true
+      expect(items[0].item.id).toBe(10);
+      expect(items[0].qtde).toBe(5);
+      expect(items[0].devolver).toBe(true);
+
+      // Second item (consumable) should have devolver = false
+      expect(items[1].item.id).toBe(11);
+      expect(items[1].qtde).toBe(3);
+      expect(items[1].devolver).toBe(false);
+
+      expect(loggerService.info).toHaveBeenCalledWith(
+        expect.stringContaining('Gerando empréstimo a partir da reserva:'),
+        mockReserva
+      );
+      expect(loggerService.info).toHaveBeenCalledWith('2 itens carregados da reserva');
+    });
+
+    it('should handle missing usuario.documento gracefully', () => {
+      const mockReserva = {
+        id: 789,
+        usuario: {
+          id: 3,
+          nome: 'Pedro Costa'
+          // no documento field
+        },
+        observacao: 'Test',
+        reservaItem: []
+      };
+
+      localStorage.setItem('reserva-to-emprestimo', JSON.stringify(mockReserva));
+
+      component.generateEmprestimoByReserva();
+
+      expect(component.idReserva()).toBe(789);
+      expect(component.documentoUsuario()).toBe(''); // Should remain empty
+    });
+
+    it('should log warning if reservaItem is missing or not an array', () => {
+      const mockReserva = {
+        id: 999,
+        usuario: {
+          id: 4,
+          nome: 'Ana Lima',
+          documento: '11111111111'
+        },
+        observacao: 'Test'
+        // no reservaItem field
+      };
+
+      localStorage.setItem('reserva-to-emprestimo', JSON.stringify(mockReserva));
+      const loggerService = TestBed.inject(LoggerService) as jest.Mocked<LoggerService>;
+
+      component.generateEmprestimoByReserva();
+
+      expect(loggerService.warn).toHaveBeenCalledWith('Nenhum reservaItem encontrado na reserva');
+      expect(component.emprestimoItems().length).toBe(0);
+    });
+
+    it('should remove reserva data from localStorage after processing', () => {
+      const mockReserva = {
+        id: 111,
+        usuario: { id: 5, nome: 'Carlos', documento: '22222222222' },
+        observacao: 'Test',
+        reservaItem: []
+      };
+
+      localStorage.setItem('reserva-to-emprestimo', JSON.stringify(mockReserva));
+
+      component.generateEmprestimoByReserva();
+
+      expect(localStorage.getItem('reserva-to-emprestimo')).toBeNull();
+    });
+
+    it('should create multiple items with different tipoItem correctly', () => {
+      const mockReserva = {
+        id: 222,
+        usuario: { id: 6, nome: 'Lucia', documento: '33333333333' },
+        observacao: 'Mixed items test',
+        reservaItem: [
+          {
+            id: 1,
+            qtde: 2,
+            item: { id: 20, nome: 'Raspberry Pi', tipoItem: 'P', saldo: 10 }
+          },
+          {
+            id: 2,
+            qtde: 10,
+            item: { id: 21, nome: 'LED', tipoItem: 'C', saldo: 500 }
+          },
+          {
+            id: 3,
+            qtde: 1,
+            item: { id: 22, nome: 'Multímetro', tipoItem: 'P', saldo: 5 }
+          }
+        ]
+      };
+
+      localStorage.setItem('reserva-to-emprestimo', JSON.stringify(mockReserva));
+
+      component.generateEmprestimoByReserva();
+
+      const items = component.emprestimoItems();
+      expect(items.length).toBe(3);
+
+      // Verify each item has correct devolver flag
+      expect(items[0].devolver).toBe(true);  // Permanent
+      expect(items[1].devolver).toBe(false); // Consumable
+      expect(items[2].devolver).toBe(true);  // Permanent
+    });
+
+    it('should skip reservaItems with missing item and log warning', () => {
+      const mockReserva = {
+        id: 333,
+        usuario: { id: 7, nome: 'Test User', documento: '44444444444' },
+        observacao: 'Test with missing item',
+        reservaItem: [
+          {
+            id: 1,
+            qtde: 5,
+            item: { id: 30, nome: 'Valid Item', tipoItem: 'P', saldo: 10 }
+          },
+          {
+            id: 2,
+            qtde: 3,
+            item: null // Missing item
+          },
+          {
+            id: 3,
+            qtde: 2,
+            item: { id: 31, nome: 'Another Valid Item', tipoItem: 'C', saldo: 20 }
+          }
+        ]
+      };
+
+      localStorage.setItem('reserva-to-emprestimo', JSON.stringify(mockReserva));
+      const loggerService = TestBed.inject(LoggerService) as jest.Mocked<LoggerService>;
+
+      component.generateEmprestimoByReserva();
+
+      const items = component.emprestimoItems();
+
+      // Should only have 2 items (skipping the one with null item)
+      expect(items.length).toBe(2);
+      expect(items[0].item.id).toBe(30);
+      expect(items[1].item.id).toBe(31);
+
+      // Should have logged a warning about the missing item
+      expect(loggerService.warn).toHaveBeenCalledWith(
+        'Item não encontrado em reservaItem:',
+        expect.objectContaining({ id: 2, qtde: 3, item: null })
+      );
     });
   });
 });

@@ -1130,6 +1130,10 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
     const newItems: EmprestimoItem[] = [];
     if (reserva.reservaItem && Array.isArray(reserva.reservaItem)) {
       for (const reservaItem of reserva.reservaItem) {
+        if (!reservaItem.item) {
+          this.logger.warn('Item não encontrado em reservaItem:', reservaItem);
+          continue;
+        }
         const emprestimoItem = new EmprestimoItem();
         emprestimoItem.item = reservaItem.item;
         emprestimoItem.qtde = reservaItem.qtde;
