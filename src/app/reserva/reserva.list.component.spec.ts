@@ -325,39 +325,87 @@ describe('ReservaListComponent', () => {
   // ============================================================================
   describe('finalizarReserva()', () => {
     let mockReserva: Reserva;
+    let mockReservaCompleta: Reserva;
     let setItemSpy: jest.SpyInstance;
 
     beforeEach(() => {
       mockReserva = ReservaTestFactory.create({id: 123});
+      mockReservaCompleta = ReservaTestFactory.create({
+        id: 123,
+        descricao: 'Reserva completa',
+        observacao: 'Observação teste'
+      });
+
       jest.spyOn(component['router'], 'navigate').mockImplementation(() => Promise.resolve(true));
-      // No-op: localStorage.setItem é mockado para evitar efeitos colaterais
       setItemSpy = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => undefined);
+
+      // Mock do findOne para retornar a reserva completa
+      reservaService.findOne.mockReturnValue(of(mockReservaCompleta));
     });
 
     afterEach(() => {
       setItemSpy.mockRestore();
     });
 
-    it('deve salvar reserva no localStorage', () => {
+    it('deve buscar dados completos da reserva antes de salvar', () => {
       component.finalizarReserva(mockReserva);
 
-      expect(setItemSpy).toHaveBeenCalledWith(
-        'reserva-to-emprestimo',
-        JSON.stringify(mockReserva)
+      expect(reservaService.findOne).toHaveBeenCalledWith(123);
+    });
+
+    it('deve salvar reserva completa no localStorage', (done) => {
+      component.finalizarReserva(mockReserva);
+
+      // Aguarda a conclusão da chamada assíncrona
+      setTimeout(() => {
+        expect(setItemSpy).toHaveBeenCalledWith(
+          'reserva-to-emprestimo',
+          JSON.stringify(mockReservaCompleta)
+        );
+        done();
+      }, 0);
+    });
+
+    it('deve navegar para emprestimo/form/reserva', (done) => {
+      component.finalizarReserva(mockReserva);
+
+      setTimeout(() => {
+        expect(component['router'].navigate).toHaveBeenCalledWith(['emprestimo/form/reserva']);
+        done();
+      }, 0);
+    });
+
+    it('deve passar dados corretos da reserva', (done) => {
+      component.finalizarReserva(mockReserva);
+
+      setTimeout(() => {
+        const savedData = JSON.parse(setItemSpy.mock.calls[0][1]);
+        expect(savedData.id).toBe(123);
+        expect(savedData.descricao).toBe('Reserva completa');
+        done();
+      }, 0);
+    });
+
+    it('deve exibir mensagem de erro se falhar ao buscar reserva', (done) => {
+      const messageService = TestBed.inject(MessageService) as jest.Mocked<MessageService>;
+      const errorMessage = 'Erro ao buscar reserva';
+      reservaService.findOne.mockReturnValue(
+        new (require('rxjs').Observable)((observer: any) => {
+          observer.error(new Error(errorMessage));
+        })
       );
-    });
 
-    it('deve navegar para emprestimo/form/reserva', () => {
       component.finalizarReserva(mockReserva);
 
-      expect(component['router'].navigate).toHaveBeenCalledWith(['emprestimo/form/reserva']);
-    });
-
-    it('deve passar dados corretos da reserva', () => {
-      component.finalizarReserva(mockReserva);
-
-      const savedData = JSON.parse(setItemSpy.mock.calls[0][1]);
-      expect(savedData.id).toBe(123);
+      setTimeout(() => {
+        expect(messageService.add).toHaveBeenCalledWith({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Não foi possível carregar os dados da reserva'
+        });
+        expect(component['router'].navigate).not.toHaveBeenCalled();
+        done();
+      }, 0);
     });
   });
 
