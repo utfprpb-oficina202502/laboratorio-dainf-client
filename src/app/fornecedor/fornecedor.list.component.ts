@@ -7,7 +7,7 @@ import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.mod
 import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
 import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
 import {CpfCnpjPipe} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe";
-import {createTableConfig} from '../framework/utils/table-config.factory';
+import {createTableConfig, createIdColumn, createActionsColumn} from '../framework/utils/table-config.factory';
 import {MenuItem} from 'primeng/api';
 import {Popover} from 'primeng/popover';
 
@@ -33,15 +33,7 @@ export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, 
   contextMenuItems: MenuItem[] = [];
 
   private readonly tableColumns: TableColumn[] = [
-    {
-      field: 'id',
-      header: 'Código',
-      type: 'number',
-      sortable: true,
-      filterable: true,
-      width: '8rem',
-      align: 'center'
-    },
+    createIdColumn(),
     {
       field: 'razaoSocial',
       header: 'Razão Social',
@@ -67,17 +59,7 @@ export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, 
       width: '14rem',
       align: 'center'
     },
-    {
-      field: 'actions',
-      header: 'Opções',
-      type: 'custom',
-      sortable: false,
-      filterable: false,
-      exportable: false,
-      toggleable: false,
-      width: '12rem',
-      align: 'center'
-    }
+    createActionsColumn()
   ];
 
   constructor() {
