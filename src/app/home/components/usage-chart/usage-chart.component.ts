@@ -35,23 +35,6 @@ import {HistoricoUsoMensal} from '../../models/dashboard.models';
     class: 'block'
   },
   styles: [`
-    :host ::ng-deep .p-card {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
-
-    :host ::ng-deep .p-card-body {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    :host ::ng-deep .p-card-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
 
     .card-custom-header {
       flex-shrink: 0;
