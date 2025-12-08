@@ -66,4 +66,43 @@ export class ItemService extends CrudService<Item, number> {
   setCoverImage(itemId: number, imageId: number): Observable<void> {
     return this.http.post<void>(`${this.url}set-cover-image/${itemId}/${imageId}`, {});
   }
+
+  /**
+   * Busca paginada de itens com filtro opcional por grupo.
+   * Permite filtrar itens no servidor por grupo específico, melhorando performance.
+   *
+   * @param page Número da página (0-indexed)
+   * @param size Tamanho da página
+   * @param filter Filtro de busca textual (id, nome, localização, grupo)
+   * @param grupoId ID do grupo para filtrar (opcional)
+   * @param sort Parâmetro de ordenação no formato 'field,direction' (ex: 'nome,asc')
+   * @returns Observable de PageResponse<Item>
+   *
+   * @example
+   * ```typescript
+   * // Buscar todos os itens do grupo 5
+   * itemService.findAllPagedByGrupo(0, 100, '', 5).subscribe(response => {
+   *   const items = response.content;
+   * });
+   * ```
+   */
+  findAllPagedByGrupo(page: number, size: number, filter = '', grupoId?: number, sort?: string): Observable<PageResponse<Item>> {
+    page = Math.max(0, Number(page));
+    size = Math.max(1, Number(size));
+
+    let params = new HttpParams()
+    .set('page', String(page))
+    .set('size', String(size))
+    .set('filter', filter);
+
+    if (grupoId) {
+      params = params.set('grupoId', String(grupoId));
+    }
+
+    if (sort) {
+      params = params.set('sort', sort);
+    }
+
+    return this.http.get<PageResponse<Item>>(`${this.url}page`, {params});
+  }
 }

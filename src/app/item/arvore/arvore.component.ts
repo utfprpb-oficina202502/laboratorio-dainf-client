@@ -18,7 +18,7 @@ import {CartService} from '../../framework/services/cart.service';
 import {BreakpointService} from '../../framework/services/breakpoint.service';
 import {LoggerService} from '../../framework/services/logger.service';
 import {ItemAvailabilityUtil} from '../../framework/utils/item-availability.util';
-import {IMAGE, NAVIGATION} from '../../framework/constants';
+import {IMAGE, NAVIGATION, TREE} from '../../framework/constants';
 import {environment} from '../../../environments/environment';
 
 import {TreeModule, TreeNodeExpandEvent} from 'primeng/tree';
@@ -294,31 +294,6 @@ export class ArvoreComponent implements OnInit {
   }
 
   /**
-   * Expande todos os nós e carrega seus itens.
-   */
-  expandAll(): void {
-    const nodes = this.treeNodes().map(node => {
-      // Dispara carregamento se ainda não foi carregado
-      if (node.data?.type === 'grupo' && !node.data.loaded) {
-        this.loadItemsForGroup(node);
-      }
-      return {...node, expanded: true};
-    });
-    this.treeNodes.set(nodes);
-  }
-
-  /**
-   * Colapsa todos os nós.
-   */
-  collapseAll(): void {
-    const nodes = this.treeNodes().map(node => ({
-      ...node,
-      expanded: false
-    }));
-    this.treeNodes.set(nodes);
-  }
-
-  /**
    * Recarrega dados (limpa cache).
    */
   refresh(): void {
@@ -382,10 +357,10 @@ export class ArvoreComponent implements OnInit {
     // Força atualização da árvore
     this.treeNodes.set([...this.treeNodes()]);
 
-    // Busca itens do grupo (usando filtro no cliente por enquanto)
-    this.itemService.findAllPaged(0, 100, '').subscribe({
+    // Busca itens do grupo (filtro server-side para melhor performance)
+    this.itemService.findAllPagedByGrupo(0, TREE.PAGE_SIZE, '', grupo.id).subscribe({
       next: (response) => {
-        const items = (response.content || []).filter(item => item.grupo?.id === grupo.id);
+        const items = response.content || [];
 
         // Cria nós de item ou nó de estado vazio
         if (items.length > 0) {

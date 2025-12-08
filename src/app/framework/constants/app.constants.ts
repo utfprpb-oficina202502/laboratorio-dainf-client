@@ -207,3 +207,16 @@ export const IMAGE = {
   /** Caminho para imagem placeholder quando item não possui imagem */
   PLACEHOLDER: 'no-image.svg',
 } as const;
+
+/**
+ * Tree Component Constants
+ * Configurações para componentes de árvore hierárquica
+ *
+ * @example
+ * // Uso no ArvoreComponent
+ * this.itemService.findAllPagedByGrupo(0, TREE.PAGE_SIZE, '', grupo.id);
+ */
+export const TREE = {
+  /** Tamanho de página para carregamento de itens por grupo na árvore */
+  PAGE_SIZE: 100,
+} as const;
