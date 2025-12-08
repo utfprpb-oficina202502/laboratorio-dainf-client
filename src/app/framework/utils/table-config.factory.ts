@@ -92,3 +92,37 @@ export function createTableConfig(partialConfig: Partial<TableConfiguration>): T
   }
   return config;
 }
+
+/**
+ * Cria configuração padrão para coluna de ID/Código
+ * @returns Configuração da coluna ID
+ */
+export function createIdColumn(): TableColumn {
+  return {
+    field: 'id',
+    header: 'Código',
+    type: 'number',
+    sortable: true,
+    filterable: true,
+    width: '8rem',
+    align: 'center'
+  };
+}
+
+/**
+ * Cria configuração padrão para coluna de ações
+ * @returns Configuração da coluna de ações
+ */
+export function createActionsColumn(): TableColumn {
+  return {
+    field: 'actions',
+    header: 'Opções',
+    type: 'custom',
+    sortable: false,
+    filterable: false,
+    exportable: false,
+    toggleable: false,
+    width: '12rem',
+    align: 'center'
+  };
+}

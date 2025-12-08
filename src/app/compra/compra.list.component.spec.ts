@@ -291,4 +291,128 @@ describe('CompraListComponent', () => {
       expect(allSortable).toBe(true);
     });
   });
+
+  // ============================================================================
+  // openOptions() - Menu de Contexto (4 tests)
+  // ============================================================================
+  describe('openOptions() - Menu de Contexto', () => {
+    let mockEvent: Event;
+
+    beforeEach(() => {
+      mockEvent = new Event('click');
+      // Mock do viewChild actionsMenu usando Object.defineProperty
+      const mockActionsMenu = {
+        toggle: jest.fn()
+      };
+      Object.defineProperty(component, 'actionsMenu', {
+        value: jest.fn().mockReturnValue(mockActionsMenu),
+        writable: true,
+        configurable: true
+      });
+    });
+
+    it('deve mostrar opções "Editar" e "Remover" para admin/funcionário', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+      const compra = CompraTestFactory.create({id: 1});
+
+      component.openOptions(mockEvent, compra);
+
+      expect(component.contextMenuItems.length).toBe(2);
+      expect(component.contextMenuItems[0].label).toBe('Editar');
+      expect(component.contextMenuItems[1].label).toBe('Remover');
+    });
+
+    it('deve mostrar ícone correto para "Editar"', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+      const compra = CompraTestFactory.create({id: 1});
+
+      component.openOptions(mockEvent, compra);
+
+      const editItem = component.contextMenuItems.find(item => item.label === 'Editar');
+      expect(editItem?.icon).toBe('pi pi-pencil');
+    });
+
+    it('deve mostrar ícone correto para "Remover"', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+      const compra = CompraTestFactory.create({id: 1});
+
+      component.openOptions(mockEvent, compra);
+
+      const removeItem = component.contextMenuItems.find(item => item.label === 'Remover');
+      expect(removeItem?.icon).toBe('pi pi-trash');
+    });
+
+    it('deve alternar actionsMenu popover', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+      const toggleSpy = jest.fn();
+      const mockActionsMenu = {
+        toggle: toggleSpy
+      };
+      Object.defineProperty(component, 'actionsMenu', {
+        value: jest.fn().mockReturnValue(mockActionsMenu),
+        writable: true,
+        configurable: true
+      });
+
+      component.openOptions(mockEvent, CompraTestFactory.create({id: 1}));
+
+      expect(toggleSpy).toHaveBeenCalledWith(mockEvent);
+    });
+
+    it('deve incluir comandos corretos para Editar e Remover', () => {
+      jest.spyOn(component, 'isAlunoOrProfessor').mockReturnValue(false);
+      const compra = CompraTestFactory.create({id: 3});
+      const editSpy = jest.spyOn(component, 'edit');
+      const deleteSpy = jest.spyOn(component, 'delete');
+
+      component.openOptions(mockEvent, compra);
+
+      const editItem = component.contextMenuItems.find(item => item.label === 'Editar');
+      const removeItem = component.contextMenuItems.find(item => item.label === 'Remover');
+
+      expect(editItem).toBeTruthy();
+      expect(removeItem).toBeTruthy();
+
+      // Executa comandos
+      editItem?.command?.({} as any);
+      removeItem?.command?.({} as any);
+
+      expect(editSpy).toHaveBeenCalledWith(3);
+      expect(deleteSpy).toHaveBeenCalledWith(3);
+    });
+  });
+
+  // ============================================================================
+  // onKeyDown() - Acessibilidade por Teclado (2 tests)
+  // ============================================================================
+  describe('onKeyDown() - Acessibilidade por Teclado', () => {
+    beforeEach(() => {
+      const mockActionsMenu = {
+        toggle: jest.fn()
+      };
+      Object.defineProperty(component, 'actionsMenu', {
+        value: jest.fn().mockReturnValue(mockActionsMenu),
+        writable: true,
+        configurable: true
+      });
+    });
+
+    it('deve chamar openOptions ao pressionar Enter', () => {
+      const compra = CompraTestFactory.create({id: 1});
+      const openOptionsSpy = jest.spyOn(component, 'openOptions');
+
+      component.onKeyDown(new KeyboardEvent('keydown', {key: 'Enter'}), compra);
+
+      expect(openOptionsSpy).toHaveBeenCalledWith(expect.any(KeyboardEvent), compra);
+    });
+
+    it('deve chamar openOptions ao pressionar Espaço', () => {
+      const compra = CompraTestFactory.create({id: 1});
+      const openOptionsSpy = jest.spyOn(component, 'openOptions');
+
+      component.onKeyDown(new KeyboardEvent('keydown', {key: ' '}), compra);
+
+      expect(openOptionsSpy).toHaveBeenCalledWith(expect.any(KeyboardEvent), compra);
+    });
+  });
 });
