@@ -1123,7 +1123,6 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
         observacao: reserva.observacao
       });
     }
-
     if (reserva.usuario?.documento) {
       this.documentoUsuario.set(reserva.usuario.documento);
     }
