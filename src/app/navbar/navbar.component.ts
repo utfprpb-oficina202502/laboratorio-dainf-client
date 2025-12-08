@@ -98,16 +98,22 @@ export class NavbarComponent implements OnInit {
         command: () => { this.openEditForm(); },
       },
       {
-        label: 'Configurações',
-        icon: 'pi pi-cog',
-        command: () => { this.router.navigate(['/configuracoes']); },
-      },
-      {
         label: 'Sair',
         icon: 'pi pi-external-link',
         command: () => { this.logout(); },
       },
     ];
+
+    // Adiciona menu de configurações apenas para administradores
+    if (this.loginService.hasAnyRole(['ROLE_ADMINISTRADOR'])) {
+      this.items.splice(1, 0, {
+        label: 'Configurações',
+        icon: 'pi pi-cog',
+        command: () => {
+          this.router.navigate(['/configuracoes']);
+        },
+      });
+    }
   }
 
   getUserLogado() {
