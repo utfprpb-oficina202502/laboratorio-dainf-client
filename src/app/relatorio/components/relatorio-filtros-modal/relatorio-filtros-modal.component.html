@@ -1,0 +1,127 @@
+<p-dialog
+  (visibleChange)="visibleChange.emit($event)"
+  [breakpoints]="{'768px': '95vw'}"
+  [closable]="true"
+  [draggable]="false"
+  [focusOnShow]="false"
+  [header]="config().titulo"
+  [modal]="true"
+  [resizable]="false"
+  [style]="{width: '90vw', maxWidth: '420px'}"
+  [visible]="visible()"
+  styleClass="relatorio-modal">
+
+  <!-- Header customizado com ícone -->
+  <ng-template pTemplate="header">
+    <div class="modal-header">
+      <div [style.background-color]="config().cor + '15'" [style.color]="config().cor"
+           class="modal-header-icon">
+        <i [class]="config().icone" class="pi"></i>
+      </div>
+      <div class="modal-header-text">
+        <span class="modal-title">{{ config().titulo }}</span>
+        <span class="modal-subtitle">{{ config().descricao }}</span>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Conteúdo: campos do formulário (se houver) -->
+  @if (temCampos()) {
+    <div class="modal-content">
+      <!-- Atalhos de período (se aplicável) -->
+      @if (temCamposData() && config().atalhosPeriodo?.length) {
+        <div class="periodo-shortcuts-container">
+          <app-periodo-shortcuts
+            (periodoSelecionado)="onPeriodoSelecionado($event)"
+            [atalhos]="config().atalhosPeriodo!"/>
+        </div>
+        <p-divider/>
+      }
+
+      <!-- Campos -->
+      <div class="modal-fields">
+        @for (campo of config().campos; track campo.nome) {
+          <div class="modal-field">
+            <label [for]="'modal-campo-' + campo.nome" class="modal-label">
+              {{ campo.label }}
+              @if (campo.obrigatorio) {
+                <span class="required-mark">*</span>
+              }
+            </label>
+
+            @switch (campo.tipo) {
+              @case ('texto') {
+                <input
+                  (ngModelChange)="onValorChange(campo, $event)"
+                  [disabled]="loading()"
+                  [id]="'modal-campo-' + campo.nome"
+                  [ngModel]="valores()[campo.nome]"
+                  [placeholder]="campo.placeholder || ''"
+                  class="w-full"
+                  pInputText/>
+                @if (campo.mensagemErro) {
+                  <small class="field-hint">{{ campo.mensagemErro }}</small>
+                }
+              }
+              @case ('data') {
+                <p-datePicker
+                  (ngModelChange)="onValorChange(campo, $event)"
+                  [disabled]="loading()"
+                  [fluid]="true"
+                  [inputId]="'modal-campo-' + campo.nome"
+                  [ngModel]="valores()[campo.nome]"
+                  [showIcon]="true"
+                  [touchUI]="breakpointService.isMobile()"
+                  appendTo="body"
+                  dateFormat="dd/mm/yy"/>
+              }
+              @case ('item-autocomplete') {
+                <p-autoComplete
+                  (completeMethod)="buscarItens($event)"
+                  (onClear)="limparItem(campo)"
+                  (onSelect)="onItemSelect($event, campo)"
+                  [disabled]="loading()"
+                  [fluid]="true"
+                  [inputId]="'modal-campo-' + campo.nome"
+                  [minLength]="2"
+                  [ngModel]="itemSelecionado()"
+                  [placeholder]="campo.placeholder || 'Digite para buscar...'"
+                  [showClear]="true"
+                  [suggestions]="sugestoesItem()"
+                  appendTo="body"
+                  field="nome"
+                  optionLabel="nome"/>
+                <small class="field-hint">Digite pelo menos 2 caracteres</small>
+              }
+            }
+          </div>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="modal-content modal-content-simple">
+      <p class="modal-simple-text">Escolha o formato do relatório:</p>
+    </div>
+  }
+
+  <!-- Footer: botões de formato -->
+  <ng-template pTemplate="footer">
+    <div class="modal-footer">
+      <p-button
+        (onClick)="gerarRelatorio('PDF')"
+        [disabled]="!formValido()"
+        [loading]="loading()"
+        icon="pi pi-file-pdf"
+        label="PDF"
+        severity="danger"/>
+
+      <p-button
+        (onClick)="gerarRelatorio('EXCEL')"
+        [disabled]="!formValido()"
+        [loading]="loading()"
+        icon="pi pi-file-excel"
+        label="Excel"
+        severity="success"/>
+    </div>
+  </ng-template>
+</p-dialog>

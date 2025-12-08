@@ -134,7 +134,7 @@
                           <div class="flex flex-col">
                             <span>{{ item.nome }}</span>
                             @if (item.patrimonio) {
-                              <span class="text-gray-500 text-sm">{{ item.patrimonio }}</span>
+                              <span class="text-muted-color text-sm">{{ item.patrimonio }}</span>
                             }
                           </div>
                         </div>
@@ -155,9 +155,11 @@
                     }
                   </div>
                   @if (tempItem()?.disponivelEmprestimoCalculado) {
-                    <small class="text-gray-600">Estoque Disponível: {{ tempItem()?.disponivelEmprestimoCalculado }}</small>
+                    <small class="text-muted-color">Estoque
+                      Disponível: {{ tempItem()?.disponivelEmprestimoCalculado }}</small>
                   }@else if (tempItem()?.saldo) {
-                    <small class="text-gray-600">Estoque Disponível: {{ tempItem()?.saldo }}</small>
+                    <small class="text-muted-color">Estoque
+                      Disponível: {{ tempItem()?.saldo }}</small>
                   }
                 </div>
               </app-form-field>
@@ -207,7 +209,7 @@
                       <div class="flex items-center gap-2">
                         <span>{{reservaItem.item?.nome}}</span>
                         @if (reservaItem.item?.patrimonio) {
-                          <span class="text-gray-500">| {{reservaItem.item.patrimonio}}</span>
+                          <span class="text-muted-color">| {{ reservaItem.item.patrimonio }}</span>
                         }
                       </div>
                     </td>

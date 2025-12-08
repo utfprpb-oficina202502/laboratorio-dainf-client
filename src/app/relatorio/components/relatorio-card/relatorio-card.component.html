@@ -1,0 +1,22 @@
+<button
+  (click)="onClick()"
+  [class.loading]="loading()"
+  [disabled]="loading()"
+  [ngStyle]="styleVariables()"
+  class="relatorio-card"
+  type="button">
+
+  <!-- Ícone -->
+  <div class="card-icon">
+    <i [class]="config().icone" class="pi"></i>
+  </div>
+
+  <!-- Conteúdo -->
+  <div class="card-content">
+    <h3 class="card-title">{{ config().titulo }}</h3>
+    <p class="card-description">{{ config().descricao }}</p>
+  </div>
+
+  <!-- Indicador de ação -->
+  <i class="pi pi-chevron-right card-arrow"></i>
+</button>

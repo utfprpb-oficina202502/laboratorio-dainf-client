@@ -187,7 +187,7 @@
                             <div class="flex flex-col">
                               <span>{{ item.nome }}</span>
                               @if (item.patrimonio) {
-                                <span class="text-gray-500 text-sm">{{ item.patrimonio }}</span>
+                                <span class="text-muted-color text-sm">{{ item.patrimonio }}</span>
                               }
                             </div>
                           </div>
@@ -199,9 +199,10 @@
                       </app-cadastro-rapido>
                     </div>
                     @if (tempItem()?.disponivelEmprestimoCalculado) {
-                      <small class="text-gray-600">Estoque Total: {{ tempItem()?.disponivelEmprestimoCalculado }}</small>
+                      <small class="text-muted-color">Estoque
+                        Total: {{ tempItem()?.disponivelEmprestimoCalculado }}</small>
                     }@else{
-                      <small class="text-gray-600">Estoque Total: {{ tempItem()?.saldo }}</small>
+                      <small class="text-muted-color">Estoque Total: {{ tempItem()?.saldo }}</small>
                     }
                   </div>
                 </app-form-field>
@@ -271,7 +272,8 @@
                       <div class="flex items-center gap-2">
                         <span>{{ emprestimoItem.item.nome }}</span>
                         @if (emprestimoItem.item.patrimonio) {
-                          <span class="text-gray-500">| {{ emprestimoItem.item.patrimonio }}</span>
+                          <span
+                            class="text-muted-color">| {{ emprestimoItem.item.patrimonio }}</span>
                         }
                         @if (getStatusDevolucao(emprestimoItem); as status) {
                           <p-tag

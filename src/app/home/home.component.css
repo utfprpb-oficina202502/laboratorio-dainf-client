@@ -111,14 +111,18 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  width: 100%;
+}
+
+.filtro-form ::ng-deep app-periodo-shortcuts {
+  width: 100%;
 }
 
 .filtro-form-content {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  max-width: 100%;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .filtro-form-field {

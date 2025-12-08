@@ -1,0 +1,36 @@
+<div class="relatorio-dashboard">
+  <!-- Toast para feedback -->
+  <p-toast/>
+
+  <!-- Header -->
+  <header class="dashboard-header">
+    <i class="pi pi-file-export dashboard-icon"></i>
+    <div>
+      <h1 class="dashboard-title">Relatórios</h1>
+      <p class="dashboard-subtitle">Selecione um relatório para gerar</p>
+    </div>
+  </header>
+
+  <!-- Grid de cards -->
+  <main class="dashboard-grid">
+    @for (relatorio of relatorios; track relatorio.id) {
+      <app-relatorio-card
+        (cardClick)="onCardClick($event)"
+        [config]="relatorio"
+        [loading]="relatorioEmGeracao() === relatorio.id"/>
+    }
+  </main>
+
+  <!-- Histórico de downloads -->
+  <app-historico-downloads/>
+
+  <!-- Modal de filtros e formato -->
+  @if (modalConfig()) {
+    <app-relatorio-filtros-modal
+      (gerar)="onGerarRelatorio($event)"
+      (visibleChange)="modalVisible.set($event)"
+      [config]="modalConfig()!"
+      [loading]="!!relatorioEmGeracao()"
+      [visible]="modalVisible()"/>
+  }
+</div>

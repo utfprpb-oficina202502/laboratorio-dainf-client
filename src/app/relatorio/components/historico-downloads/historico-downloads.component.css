@@ -1,0 +1,139 @@
+.historico-downloads {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--p-surface-200, #e5e7eb);
+}
+
+/* Header */
+.historico-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.historico-title-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.historico-icon {
+  font-size: 1.125rem;
+  color: var(--color-text-secondary);
+}
+
+.historico-titulo {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.historico-count {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+/* Tabela */
+:host ::ng-deep .historico-table {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--p-surface-200, #e5e7eb);
+}
+
+:host ::ng-deep .historico-table .p-datatable-thead > tr > th {
+  background-color: var(--p-surface-50, #f9fafb);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--color-text-secondary);
+  padding: 0.625rem 0.75rem;
+}
+
+:host ::ng-deep .historico-table .p-datatable-tbody > tr > td {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+/* Célula: Relatório */
+.historico-relatorio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.historico-relatorio-indicator {
+  width: 4px;
+  height: 20px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.historico-relatorio-nome {
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Célula: Parâmetros */
+.historico-parametros {
+  color: var(--color-text-secondary);
+  font-family: monospace;
+  font-size: 0.75rem;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+/* Célula: Data */
+.historico-data {
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* Responsividade */
+@media (max-width: 767px) {
+  .historico-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  :host ::ng-deep .historico-table .p-datatable-thead > tr > th,
+  :host ::ng-deep .historico-table .p-datatable-tbody > tr > td {
+    padding: 0.5rem;
+  }
+
+  .historico-relatorio-nome {
+    max-width: 120px;
+  }
+
+  .historico-parametros {
+    max-width: 80px;
+  }
+}
+
+/* Dark mode */
+:host-context(.theme-dark) .historico-downloads {
+  border-top-color: var(--p-surface-700, #334155);
+}
+
+:host-context(.theme-dark) ::ng-deep .historico-table {
+  border-color: var(--p-surface-700, #334155);
+}
+
+:host-context(.theme-dark) ::ng-deep .historico-table .p-datatable-thead > tr > th {
+  background-color: var(--p-surface-800, #1e293b);
+  border-color: var(--p-surface-700, #334155);
+}
+
+:host-context(.theme-dark) ::ng-deep .historico-table .p-datatable-tbody > tr > td {
+  border-color: var(--p-surface-700, #334155);
+}
