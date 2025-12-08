@@ -639,7 +639,7 @@ describe('EmprestimoFormComponent', () => {
       item = {
         id: 1,
         nome: 'Test Item',
-        tipoItem: 'C',
+        tipoItem: 'P',
         saldo: 10
       };
       component.tempItem.set(item);
@@ -776,10 +776,41 @@ describe('EmprestimoFormComponent', () => {
       expect(emprestimo.emprestimoItem.length).toBe(1);
       expect(emprestimo.emprestimoItem[0].qtde).toBe(5);
 
-      // Should create corresponding devolucaoItem with status P
+      // Should create corresponding devolucaoItem with status P for permanent items
       expect(emprestimo.emprestimoDevolucaoItem.length).toBe(1);
       expect(emprestimo.emprestimoDevolucaoItem[0].qtde).toBe(5);
       expect(emprestimo.emprestimoDevolucaoItem[0].statusDevolucao).toBe(StatusDevolucao.P);
+    });
+
+    it('should NOT create emprestimoDevolucaoItem for consumable items (tipoItem C)', () => {
+      const consumableItem = {
+        id: 99,
+        nome: 'Consumable Item',
+        tipoItem: 'C',
+        saldo: 10
+      };
+
+      const emprestimo = {
+        id: 200,
+        emprestimoItem: [],
+        emprestimoDevolucaoItem: []
+      } as unknown as Emprestimo;
+
+      component.object.set(emprestimo);
+      component.emprestimoItems.set([]);
+      component.tempItem.set(consumableItem);
+      component.tempQtde.set(5);
+      component.tempDevolver.set(false);
+
+      component.insertItem();
+
+      // Should create emprestimoItem
+      expect(emprestimo.emprestimoItem.length).toBe(1);
+      expect(emprestimo.emprestimoItem[0].qtde).toBe(5);
+      expect(emprestimo.emprestimoItem[0].devolver).toBe(false);
+
+      // Should NOT create corresponding devolucaoItem for consumable items
+      expect(emprestimo.emprestimoDevolucaoItem.length).toBe(0);
     });
 
     it('should not exceed item saldo when adding quantity', () => {
@@ -1347,7 +1378,7 @@ describe('EmprestimoFormComponent', () => {
       component.object.set(emprestimo);
       component.emprestimoItems.set([]);
 
-      const item1 = {id: 1, nome: 'Item A', saldo: 10};
+      const item1 = {id: 1, nome: 'Item A', tipoItem: 'P', saldo: 10};
       component.tempItem.set(item1);
       component.tempQtde.set(5);
       component.tempDevolver.set(true);
