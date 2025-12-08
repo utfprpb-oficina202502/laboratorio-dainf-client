@@ -26,12 +26,13 @@ import {DownloadHistory, DownloadHistoryItem} from '../models/download-history.i
  */
 @Injectable({providedIn: 'root'})
 export class RelatorioDownloadService {
+  // Constantes estáticas - inicializadas antes de qualquer instância
+  private static readonly STORAGE_KEY = 'laboratorio-relatorio-downloads';
+  private static readonly MAX_ITEMS = 10;
+  private static readonly SCHEMA_VERSION = 1;
+
   /** Signal reativo com o histórico atual */
   readonly historico = signal<DownloadHistoryItem[]>(this.loadHistory());
-  // Constantes devem ser declaradas ANTES de campos que as utilizam
-  private readonly STORAGE_KEY = 'laboratorio-relatorio-downloads';
-  private readonly MAX_ITEMS = 10;
-  private readonly SCHEMA_VERSION = 1;
 
   /**
    * Executa o download de um Blob como arquivo.
@@ -82,7 +83,7 @@ export class RelatorioDownloadService {
     };
 
     const currentHistory = this.historico();
-    const updatedHistory = [newItem, ...currentHistory].slice(0, this.MAX_ITEMS);
+    const updatedHistory = [newItem, ...currentHistory].slice(0, RelatorioDownloadService.MAX_ITEMS);
 
     this.saveHistory(updatedHistory);
     this.historico.set(updatedHistory);
@@ -105,7 +106,7 @@ export class RelatorioDownloadService {
    * Limpa todo o histórico de downloads.
    */
   clearHistory(): void {
-    localStorage.removeItem(this.STORAGE_KEY);
+    localStorage.removeItem(RelatorioDownloadService.STORAGE_KEY);
     this.historico.set([]);
   }
 
@@ -114,13 +115,13 @@ export class RelatorioDownloadService {
    */
   private loadHistory(): DownloadHistoryItem[] {
     try {
-      const stored = localStorage.getItem(this.STORAGE_KEY);
+      const stored = localStorage.getItem(RelatorioDownloadService.STORAGE_KEY);
       if (!stored) return [];
 
       const data: DownloadHistory = JSON.parse(stored);
 
       // Verifica versão do schema para migrações futuras
-      if (data.version !== this.SCHEMA_VERSION) {
+      if (data.version !== RelatorioDownloadService.SCHEMA_VERSION) {
         console.warn('Versão do histórico incompatível, limpando...');
         return [];
       }
@@ -138,11 +139,11 @@ export class RelatorioDownloadService {
   private saveHistory(items: DownloadHistoryItem[]): void {
     const data: DownloadHistory = {
       items,
-      version: this.SCHEMA_VERSION
+      version: RelatorioDownloadService.SCHEMA_VERSION
     };
 
     try {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(RelatorioDownloadService.STORAGE_KEY, JSON.stringify(data));
     } catch (e) {
       console.error('Erro ao salvar histórico de downloads:', e);
     }
