@@ -52,6 +52,13 @@ import {
   ItemFrequenteUsuario
 } from './models/dashboard.models';
 
+// Componentes compartilhados de relatórios
+import {
+  PeriodoShortcutsComponent
+} from '../relatorio/components/periodo-shortcuts/periodo-shortcuts.component';
+import {PeriodoDatas} from '../relatorio/services/relatorio-parametros.service';
+import {AtalhoPeriodo} from '../relatorio/models/relatorio-card.interface';
+
 @Component({
   selector: "app-home",
   templateUrl: "./home.component.html",
@@ -77,7 +84,9 @@ import {
     LoanCalendarComponent,
     ActivityTimelineComponent,
     UsageChartComponent,
-    FrequentItemsComponent
+    FrequentItemsComponent,
+    // Componentes compartilhados
+    PeriodoShortcutsComponent
   ]
 })
 export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -88,6 +97,15 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   private static readonly DEFAULT_DATE_RANGE_DAYS = 90;
   private static readonly STORAGE_KEY_DATE_INI = "dash_dt_ini";
   private static readonly STORAGE_KEY_DATE_FIM = "dash_dt_fim";
+
+  /** Atalhos de período disponíveis no filtro */
+  protected readonly atalhosDisponiveis: AtalhoPeriodo[] = [
+    'ultimos30dias',
+    'ultimoTrimestre',
+    'esteMes',
+    'ultimoMes',
+    'esteAno'
+  ];
   // Signals - UI State
   protected dialogVisible = signal(false);
   private readonly loginService = inject(LoginService);
@@ -230,6 +248,15 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.dtIniFiltro.set(null);
     this.dtFimFiltro.set(null);
     this.buildDashboards();
+  }
+
+  /**
+   * Aplica um período pré-definido ao filtro.
+   * Preenche automaticamente os campos de data.
+   */
+  protected onPeriodoSelecionado(periodo: PeriodoDatas): void {
+    this.dtIniFiltro.set(periodo.dataInicio);
+    this.dtFimFiltro.set(periodo.dataFim);
   }
 
   protected toggleFullscreen(wrapperId: string): void {

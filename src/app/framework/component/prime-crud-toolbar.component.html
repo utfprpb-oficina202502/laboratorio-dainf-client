@@ -10,7 +10,7 @@
       @if (toolbarEndTemplate) {
         <ng-container [ngTemplateOutlet]="toolbarEndTemplate"></ng-container>
       } @else {
-        <!-- Add/Delete buttons -->
+        <!-- Add button -->
         @if (!toolbarStartTemplate) {
         @if (listInstance.canCreate() && !listInstance.isReadOnly()) {
             <p-button
@@ -20,19 +20,6 @@
               [attr.aria-label]="'Adicionar ' + entityName">
               <span pButtonIcon class="pi pi-plus"></span>
               <span pButtonLabel class="hidden md:inline ml-2">Adicionar</span>
-            </p-button>
-          }
-        @if (listInstance.canDelete() && !listInstance.isReadOnly()) {
-            <p-button
-              severity="danger"
-              [outlined]="true"
-              (onClick)="listInstance.deleteSelectedItems()"
-              [disabled]="!listInstance.selectedItems() || !listInstance.selectedItems().length"
-              [pTooltip]="'Deletar '+ entityPluralName +' selecionados'"
-              tooltipPosition="bottom"
-              [attr.aria-label]="'Deletar ' + (listInstance.selectedItems().length || 0) + ' registro(s)'">
-              <span pButtonIcon class="pi pi-trash"></span>
-              <span pButtonLabel class="hidden md:inline ml-2">Deletar</span>
             </p-button>
           }
         }

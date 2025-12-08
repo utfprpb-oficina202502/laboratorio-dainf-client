@@ -1,0 +1,98 @@
+@if (historico().length > 0) {
+  <section aria-labelledby="historico-titulo" class="historico-downloads">
+    <!-- Header -->
+    <div class="historico-header">
+      <div class="historico-title-container">
+        <i class="pi pi-download historico-icon"></i>
+        <h3 class="historico-titulo" id="historico-titulo">Histórico de Downloads</h3>
+        <span class="historico-count">({{ historico().length }})</span>
+      </div>
+      <p-button
+        (onClick)="limparHistorico()"
+        [text]="true"
+        icon="pi pi-trash"
+        label="Limpar"
+        pTooltip="Limpar todo o histórico"
+        severity="secondary"
+        size="small"
+        tooltipPosition="left"/>
+    </div>
+
+    <!-- Tabela -->
+    <p-table
+      [scrollable]="true"
+      [tableStyle]="{'min-width': '100%'}"
+      [value]="historico()"
+      scrollHeight="200px"
+      styleClass="p-datatable-sm p-datatable-striped historico-table">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th scope="col" style="width: 40%">Relatório</th>
+          <th scope="col" style="width: 25%">Parâmetros</th>
+          <th scope="col" style="width: 15%">Formato</th>
+          <th scope="col" style="width: 15%">Data</th>
+          <th scope="col" style="width: 5%"><span class="sr-only">Ações</span></th>
+        </tr>
+      </ng-template>
+
+      <ng-template let-item pTemplate="body">
+        <tr>
+          <!-- Relatório -->
+          <td>
+            <div class="historico-relatorio">
+              <span
+                [style.background-color]="getRelatorioColor(item.relatorioId)"
+                class="historico-relatorio-indicator">
+              </span>
+              <span class="historico-relatorio-nome">{{ item.tipoRelatorio }}</span>
+            </div>
+          </td>
+
+          <!-- Parâmetros -->
+          <td>
+            <span [title]="item.parametros" class="historico-parametros">
+              {{ item.parametros || '-' }}
+            </span>
+          </td>
+
+          <!-- Formato -->
+          <td>
+            <p-tag
+              [icon]="'pi ' + getFormatoIcon(item.formato)"
+              [rounded]="true"
+              [severity]="getFormatoSeverity(item.formato)"
+              [value]="item.formato"/>
+          </td>
+
+          <!-- Data -->
+          <td>
+            <span class="historico-data">{{ formatarData(item.dataGeracao) }}</span>
+          </td>
+
+          <!-- Ação -->
+          <td>
+            <p-button
+              (onClick)="removerItem(item)"
+              [rounded]="true"
+              [text]="true"
+              icon="pi pi-times"
+              pTooltip="Remover do histórico"
+              severity="secondary"
+              size="small"
+              tooltipPosition="left"/>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td class="text-center text-color-secondary py-4" colspan="5">
+            <i class="pi pi-inbox text-2xl mb-2"></i>
+            <p>Nenhum download realizado</p>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+}

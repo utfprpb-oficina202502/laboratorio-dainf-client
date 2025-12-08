@@ -1,3 +1,1 @@
-td, th {
-  width: 25%;
-}
+/* Removed legacy styles - now using PrimeNG tables with column-specific widths */

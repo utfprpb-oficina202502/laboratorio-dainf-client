@@ -1,4 +1,4 @@
-import { TableColumn, TableConfiguration } from '../model/table-config.interface';
+import {TableColumn, TableConfiguration} from '../model/table-config.interface';
 
 /**
  * Interface fortemente tipada para configuração de tabelas PrimeNG.
@@ -62,6 +62,7 @@ export function createTableConfig(partialConfig: Partial<TableConfiguration>): T
     loadingMessage: 'Carregando registros...',
     globalFilterPlaceholder: 'Buscar...',
     columnToggle: true,
+    selectable: false, // Desabilitado: seleção em massa não utilizada
     expandable: false,
     expandMode: 'single',
     rowExpansionKey: 'id',

@@ -244,6 +244,11 @@
   </ng-template>
 
   <form class="filtro-form">
+    <!-- Atalhos de período -->
+    <app-periodo-shortcuts
+      (periodoSelecionado)="onPeriodoSelecionado($event)"
+      [atalhos]="atalhosDisponiveis"/>
+
     <div class="filtro-form-content">
       <div class="filtro-form-field">
         <label class="filtro-form-label" for="dtIni">
@@ -253,16 +258,14 @@
         <p-datepicker
           [(ngModel)]="dtIniFiltro"
           [showIcon]="true"
+          [fluid]="true"
           appendTo="body"
           ariaLabel="Selecione a data inicial do período para filtrar o dashboard"
           dataType="string"
           dateFormat="dd/mm/yy"
           inputId="dtIni"
           name="dtIni"
-          placeholder="Selecione a data inicial"
-          class="w-full"
-          [inputStyle]="{ width: '100%' }">
-        </p-datepicker>
+          placeholder="Selecione a data inicial"/>
       </div>
 
       <div class="filtro-form-field">
@@ -273,16 +276,14 @@
         <p-datepicker
           [(ngModel)]="dtFimFiltro"
           [showIcon]="true"
+          [fluid]="true"
           appendTo="body"
           ariaLabel="Selecione a data final do período para filtrar o dashboard"
           dataType="string"
           dateFormat="dd/mm/yy"
           inputId="dtFim"
           name="dtFim"
-          placeholder="Selecione a data final"
-          class="w-full"
-          [inputStyle]="{ width: '100%' }">
-        </p-datepicker>
+          placeholder="Selecione a data final"/>
       </div>
     </div>
   </form>

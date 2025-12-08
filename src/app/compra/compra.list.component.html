@@ -127,8 +127,7 @@
                     </button>
                   } @else {
                     <span
-                      [attr.aria-label]="column.header + ': ' + (rowData.fornecedorNomeFantasia || 'Não informado')"
-                      class="font-semibold">
+                      [attr.aria-label]="column.header + ': ' + (rowData.fornecedorNomeFantasia || 'Não informado')">
                       {{ rowData.fornecedorNomeFantasia || 'Não informado' }}
                     </span>
                   }
@@ -145,7 +144,7 @@
                   } @else {
                     <span
                       [attr.aria-label]="column.header + ': ' + (rowData.fornecedorRazaoSocial || 'Não informado')"
-                      class="text-gray-600">
+                      class="text-muted-color">
                       {{ rowData.fornecedorRazaoSocial || 'Não informado' }}
                     </span>
                   }

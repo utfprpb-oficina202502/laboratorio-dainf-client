@@ -19,8 +19,6 @@ import {EmprestimoDevolucaoComponent} from './emprestimo/emprestimo.devolucao.co
 import {SaidaFormComponent} from './saida/saida.form.component';
 import {ReservaFormComponent} from './reserva/reserva.form.component';
 import {SolicitacaoCompraFormComponent} from './solicitacaoCompra/solicitacaoCompra.form.component';
-import {RelatorioFormComponent} from './relatorio/relatorio.form.component';
-import {RelatorioViewerComponent} from './relatorio/relatorio.viewer.component';
 import {CadastrarUsuarioComponent} from './cadastrarUsuario/cadastrarUsuario.component';
 import {
   ReenviarEmailConfirmacaoUsuarioComponent
@@ -156,11 +154,11 @@ export const routes: Routes = [
     component: SolicitacaoCompraFormComponent
   },
 
-  // Relatorio
+  // Relatorio - Dashboard de geração de relatórios
   {
     path: 'relatorio',
     canActivate: [LoginService],
-    loadComponent: () => import('./relatorio/relatorio.list.component').then(m => m.RelatorioListComponent)
+    loadComponent: () => import('./relatorio/relatorio-dashboard.component').then(m => m.RelatorioDashboardComponent)
   },
 
   //Nada Consta
@@ -174,11 +172,6 @@ export const routes: Routes = [
     canActivate: [LoginService],
     loadComponent: () => import('./nada-consta/nada-consta-visualizar.component').then(m => m.NadaConstaVisualizarComponent)
   },
-
-  //relatório
-  {path: 'relatorio/form', canActivate: [LoginService], component: RelatorioFormComponent},
-  {path: 'relatorio/form/:id', canActivate: [LoginService], component: RelatorioFormComponent},
-  {path: 'relatorio/view/:id', canActivate: [LoginService], component: RelatorioViewerComponent},
 
   // Configurações
   {

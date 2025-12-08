@@ -1,0 +1,77 @@
+.relatorio-dashboard {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  animation: dashboard-fade-in 0.3s ease both;
+}
+
+/* Header */
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-icon {
+  font-size: 1.75rem;
+  color: var(--p-primary-color, #3b82f6);
+}
+
+.dashboard-title {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.dashboard-subtitle {
+  margin: 0.125rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+/* Grid de cards */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+/* Responsividade */
+@media (max-width: 767px) {
+  .relatorio-dashboard {
+    padding: 1rem;
+  }
+
+  .dashboard-icon {
+    font-size: 1.5rem;
+  }
+
+  .dashboard-title {
+    font-size: 1.25rem;
+  }
+
+  .dashboard-subtitle {
+    font-size: 0.8125rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 0.625rem;
+  }
+}
+
+/* Animação de entrada */
+@keyframes dashboard-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

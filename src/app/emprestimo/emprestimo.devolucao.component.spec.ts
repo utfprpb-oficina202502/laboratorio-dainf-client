@@ -984,7 +984,9 @@ describe('EmprestimoDevolucaoComponent - drop (drag-and-drop)', () => {
       component.drop(event);
 
       // Verifica que o EmprestimoItem tem a mesma quantidade que EmprestimoDevolucaoItem
-      const emprestimoItemAtualizado = component.emprestimo()!.emprestimoItem.find(ei => ei.item.id === 100);
+      const emprestimoResultado = component.emprestimo();
+      expect(emprestimoResultado).toBeDefined();
+      const emprestimoItemAtualizado = emprestimoResultado?.emprestimoItem.find(ei => ei.item.id === 100);
       expect(emprestimoItemAtualizado?.qtde).toBe(5);
     });
 
@@ -1033,7 +1035,9 @@ describe('EmprestimoDevolucaoComponent - drop (drag-and-drop)', () => {
       component.drop(event);
 
       // Verifica que os EmprestimoItem têm as mesmas quantidades que os EmprestimoDevolucaoItem
-      const emprestimoItems = component.emprestimo()!.emprestimoItem.filter(ei => ei.item.id === 100);
+      const emprestimoAtual = component.emprestimo();
+      expect(emprestimoAtual).toBeDefined();
+      const emprestimoItems = emprestimoAtual?.emprestimoItem.filter(ei => ei.item.id === 100) ?? [];
       expect(emprestimoItems.length).toBe(2);
 
       const qtdesEmprestimoItem = emprestimoItems.map(ei => ei.qtde).sort((a, b) => a - b);
