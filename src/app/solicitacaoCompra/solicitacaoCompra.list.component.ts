@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject, OnInit, viewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, Injector} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {SolicitacaoCompra} from './solicitacaoCompra';
 import {SolicitacaoCompraService} from './solicitacaoCompra.service';
@@ -7,7 +7,7 @@ import {TableEmptyStateComponent} from '../framework/component/table-empty-state
 import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
 import {createTableConfig, createListComponentConfig, createIdColumn, createActionsColumn} from '../framework/utils/table-config.factory';
 import {MenuItem} from 'primeng/api';
-import {Popover} from 'primeng/popover';
+import { SharedListComponentBase } from '../framework/component/shared-list-base.component';
 
 @Component({
     selector: 'app-list-solicitacao-compra',
@@ -20,8 +20,8 @@ import {Popover} from 'primeng/popover';
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => SolicitacaoCompraListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<SolicitacaoCompra, number> implements OnInit {
-  private readonly listConfig = createListComponentConfig(
+export class SolicitacaoCompraListComponent extends SharedListComponentBase<SolicitacaoCompra, number> {
+  public readonly listConfig = createListComponentConfig(
     [
       {
         field: 'descricao',
@@ -32,110 +32,97 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
         minWidth: '20rem'
       },
       {
+        field: 'status',
+        header: 'Status',
+        type: 'custom',
+        sortable: true,
+        filterable: true,
+        width: '10rem',
+        align: 'center'
+      },
+      {
         field: 'dataSolicitacao',
         header: 'Data Solicitação',
         type: 'date',
         sortable: true,
         filterable: true,
-        width: '14rem',
+        width: '12rem',
         align: 'center'
-      },
-      {
-        field: 'usuarioNome',
-        header: 'Usuário',
-        type: 'text',
-        sortable: true,
-        filterable: true,
-        minWidth: '16rem'
       }
     ],
-    ['descricao', 'dataSolicitacao', 'usuarioNome'],
-    'id',
+    ['descricao', 'status', 'dataSolicitacao'],
+    'descricao',
     'Solicitações de Compra',
     'solicitacao-compra-list'
   );
 
-  protected override service = inject(SolicitacaoCompraService);
-  protected override columnsTable = this.listConfig.columnsTable;
-  protected override urlForm = 'solicitacao-compra/form';
-
-  readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
   contextMenuItems: MenuItem[] = [];
+  service = new SolicitacaoCompraService(); // Replace with DI as needed
+  columnsTable: string[] = [];
+  urlForm = 'solicitacaoCompra/form';
 
   constructor() {
-    super();
-
-    this.hostListenerColumnEnable = false;
+    super({
+      entityName: 'Solicitação de Compra',
+      entityPluralName: 'Solicitações de Compra',
+      exportFileName: 'solicitacoes-compra',
+      listConfig: createListComponentConfig(
+        [
+          {
+            field: 'descricao',
+            header: 'Descrição',
+            type: 'text',
+            sortable: true,
+            filterable: true,
+            minWidth: '20rem'
+          },
+          {
+            field: 'status',
+            header: 'Status',
+            type: 'custom',
+            sortable: true,
+            filterable: true,
+            width: '10rem',
+            align: 'center'
+          },
+          {
+            field: 'dataSolicitacao',
+            header: 'Data Solicitação',
+            type: 'date',
+            sortable: true,
+            filterable: true,
+            width: '12rem',
+            align: 'center'
+          }
+        ],
+        ['descricao', 'status', 'dataSolicitacao'],
+        'descricao',
+        'Solicitações de Compra',
+        'solicitacao-compra-list'
+      ),
+      entityService: new SolicitacaoCompraService(),
+      injector: Injector as any // Replace with actual injector if needed
+    });
     this.configureTable();
   }
 
-  protected override getEntityName(): string {
-    return 'Solicitação de Compra';
-  }
-
-  protected override getEntityPluralName(): string {
-    return 'Solicitações de Compra';
-  }
-
-  protected override getExportFileName(): string {
-    return 'solicitacoes-compra';
-  }
-
-  ngOnInit(): void {
-    super.ngOnInit();
-
-    // isAlunoOrProfessor is now a computed signal from base class
-    // Check permission and load appropriate data
-    if (this.isAlunoOrProfessor()) {
-      this.findAllByUsername();
-    } else {
-      this.findAll();
-    }
-  }
-
-  private configureTable(): void {
-    const tableColumns = [createIdColumn(), ...this.listConfig.entityColumns, createActionsColumn()];
-
-    this.tableConfig = createTableConfig({
-      columns: tableColumns,
-      globalFilterFields: this.listConfig.globalFilterFields,
-      defaultSortField: this.listConfig.defaultSortField,
-      caption: this.listConfig.caption,
-      stateKey: this.listConfig.stateKey,
-      // ...outras propriedades específicas...
-    });
-
-    this.columnsTable = this.tableConfig.columns.map(column => column.field);
-    this.displayedColumns = [...this.columnsTable];
-  }
-
-  postFindAll(): void {
-    // PrimeNG tables handle sorting and filtering through the table configuration
-    // Custom sorting for nested properties is handled in the template
-  }
-
   openOptions(event: Event, solicitacaoCompra: SolicitacaoCompra): void {
-    const isAluno = this.isAlunoOrProfessor();
-
     this.contextMenuItems = [
       {
         label: 'Editar',
         icon: 'pi pi-pencil',
         command: () => this.edit(solicitacaoCompra.id)
       },
-      ...(isAluno ? [{
-        label: 'Visualizar',
-        icon: 'pi pi-eye',
-        command: () => this.edit(solicitacaoCompra.id)
-      }] : []),
       {
         label: 'Remover',
         icon: 'pi pi-trash',
         command: () => this.delete(solicitacaoCompra.id)
       }
     ];
-
-    this.actionsMenu().toggle(event);
+    const menu = this.actionsMenu?.();
+    if (menu && typeof menu.toggle === 'function') {
+      menu.toggle(event);
+    }
   }
 
   onKeyDown(event: KeyboardEvent, solicitacaoCompra: SolicitacaoCompra): void {
@@ -145,4 +132,25 @@ export class SolicitacaoCompraListComponent extends PrimeCrudListComponent<Solic
     }
   }
 
+  edit(_id: number): void {
+    // Implement edit logic or call base method
+  }
+
+  delete(_id: number): void {
+    // Implement delete logic or call base method
+  }
+
+  public configureTable(): void {
+    const tableColumns = [createIdColumn(), ...this.listConfig.entityColumns, createActionsColumn()];
+    this.tableConfig = createTableConfig({
+      columns: tableColumns,
+      globalFilterFields: this.listConfig.globalFilterFields,
+      defaultSortField: this.listConfig.defaultSortField,
+      caption: this.listConfig.caption,
+      stateKey: this.listConfig.stateKey,
+      // ...outras propriedades específicas...
+    });
+    this.columnsTable = this.tableConfig.columns.map((column: any) => column.field);
+    this.displayedColumns = [...this.columnsTable];
+  }
 }
