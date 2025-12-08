@@ -91,6 +91,9 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
   protected readonly images = signal<ItemImage[]>([]);
   protected readonly dialogImagens = signal<boolean>(false);
 
+  // Signal para controle de desabilitação do formulário (modo visualização)
+  protected readonly disableForm = signal<boolean>(false);
+
   // Temporary signals for adding items (not part of main form)
   protected readonly tempItem = signal<Item | null>(null);
   protected readonly tempQtde = signal<number>(1);
@@ -128,6 +131,26 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
         this.saveReservaItemsToStorage(items);
       }
     });
+
+    // Effect para desabilitar/habilitar campos do formulário em modo visualização
+    effect(() => {
+      const formGroup = this.form();
+      const shouldDisable = this.disableForm();
+
+      if (formGroup) {
+        const controls = ['descricao', 'dataReserva', 'dataRetirada', 'observacao'];
+        controls.forEach(controlName => {
+          const control = formGroup.get(controlName);
+          if (control) {
+            if (shouldDisable) {
+              control.disable({emitEvent: false});
+            } else {
+              control.enable({emitEvent: false});
+            }
+          }
+        });
+      }
+    });
   }
 
   /**
@@ -152,6 +175,30 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
   protected override postSave(callback: () => void): void {
     this.clearReservaItemsFromStorage();
     super.postSave(callback);
+  }
+
+  /**
+   * Verifica se o formulário deve ser desabilitado.
+   * Alunos/professores visualizando registros existentes terão o formulário somente-leitura.
+   */
+  verifyFormDisable(): void {
+    const obj = this.object();
+    const isEditMode = obj && !!obj.id;
+    const isAluno = this.isAlunoOrProfessor();
+
+    if (isEditMode && isAluno) {
+      this.disableForm.set(true);
+    } else {
+      this.disableForm.set(false);
+    }
+  }
+
+  /**
+   * Hook executado após carregar dados do objeto para edição.
+   * Verifica permissões para desabilitar o formulário.
+   */
+  protected override postEdit(): void {
+    this.verifyFormDisable();
   }
 
   /**

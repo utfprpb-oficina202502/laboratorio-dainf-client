@@ -244,70 +244,26 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
 
   async enviarNovoPrazo() {
     if (!this.emprestimoSelecionadoParaPrazo || !this.novaDataPrazo) return;
-    // Validação robusta da nova data
-    let novaData: Date | undefined;
-    // Aceita formatos dd/MM/yyyy e ISO
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(this.novaDataPrazo)) {
-      const [dia, mes, ano] = this.novaDataPrazo.split('/').map(Number);
-      novaData = new Date(ano, mes - 1, dia);
-    } else {
-      novaData = new Date(this.novaDataPrazo);
-    }
-    if (!novaData || Number.isNaN(novaData.getTime())) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Data inválida',
-        detail: 'Selecione uma data válida para o novo prazo de devolução.',
-        life: 5000
-      });
+
+    const novaData = this.parseDateString(this.novaDataPrazo);
+    if (!novaData) {
+      this.showErrorMessage('Data inválida', 'Selecione uma data válida para o novo prazo de devolução.');
       return;
     }
-    // Normaliza para início do dia
-    novaData.setHours(0, 0, 0, 0);
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    // Prazo atual
-    let prazoAtual: Date | undefined;
-    if (this.emprestimoSelecionadoParaPrazo.prazoDevolucao) {
-      const prazoStr = this.emprestimoSelecionadoParaPrazo.prazoDevolucao;
-      if (/^\d{2}\/\d{2}\/\d{4}$/.test(prazoStr)) {
-        const [dia, mes, ano] = prazoStr.split('/').map(Number);
-        prazoAtual = new Date(ano, mes - 1, dia);
-      } else {
-        prazoAtual = new Date(prazoStr);
-      }
-      if (prazoAtual && !Number.isNaN(prazoAtual.getTime())) {
-        prazoAtual.setHours(0, 0, 0, 0);
-      } else {
-        prazoAtual = undefined;
-      }
-    }
-    if (novaData <= hoje) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Data inválida',
-        detail: 'A nova data de devolução deve ser futura em relação a hoje.',
-        life: 5000
-      });
+
+    const prazoAtual = this.parseDateString(this.emprestimoSelecionadoParaPrazo.prazoDevolucao);
+    const erroValidacao = this.validarNovaDataPrazo(novaData, prazoAtual);
+    if (erroValidacao) {
+      this.showErrorMessage('Data inválida', erroValidacao);
       return;
     }
-    if (prazoAtual && novaData <= prazoAtual) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Data inválida',
-        detail: 'A nova data deve ser posterior ao prazo de devolução atual.',
-        life: 5000
-      });
-      return;
-    }
+
     this.loaderService.show();
     try {
-      // Buscar o objeto completo do empréstimo
       const emprestimo = await firstValueFrom(this.emprestimoService.findOne(this.emprestimoSelecionadoParaPrazo.id));
       if (!emprestimo) {
         throw new Error('Empréstimo não encontrado!');
       }
-      // Atualiza apenas o prazoDevolucao
       emprestimo.prazoDevolucao = this.novaDataPrazo;
       await firstValueFrom(this.emprestimoService.saveEmprestimo(emprestimo, 0));
       this.fecharModalNovoPrazo();
@@ -320,15 +276,64 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
         life: 3000
       });
     } catch (error: unknown) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Atenção!',
-        detail: (error as Error)?.message || 'Ocorreu um erro ao alterar a data do prazo de devolução!',
-        life: 5000
-      });
+      this.showErrorMessage('Atenção!', (error as Error)?.message || 'Ocorreu um erro ao alterar a data do prazo de devolução!');
     } finally {
       this.loaderService.hide();
     }
+  }
+
+  /**
+   * Navega para o formulário de empréstimo em modo visualização.
+   * O formulário detecta automaticamente se o usuário é aluno/professor
+   * e desabilita os campos via verifyFormDisable().
+   *
+   * @param id Identificador do empréstimo
+   */
+  view(id: number) {
+    this.router.navigate([this.urlForm, id]);
+  }
+
+  /**
+   * Converte string de data (dd/MM/yyyy ou ISO) para Date normalizado à meia-noite.
+   * @param dateStr String de data a ser convertida
+   * @returns Date normalizado ou undefined se inválido
+   */
+  private parseDateString(dateStr: string | undefined): Date | undefined {
+    if (!dateStr) return undefined;
+
+    const ddMmYyyyRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+    const date = ddMmYyyyRegex.test(dateStr)
+      ? new Date(...this.parsePartsFromDdMmYyyy(dateStr))
+      : new Date(dateStr);
+
+    if (Number.isNaN(date.getTime())) return undefined;
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
+  /**
+   * Extrai partes da data no formato dd/MM/yyyy para uso no construtor Date.
+   */
+  private parsePartsFromDdMmYyyy(dateStr: string): [number, number, number] {
+    const [dia, mes, ano] = dateStr.split('/').map(Number);
+    return [ano, mes - 1, dia];
+  }
+
+  /**
+   * Valida se a nova data de prazo é válida em relação a hoje e ao prazo atual.
+   * @returns Mensagem de erro ou undefined se válido
+   */
+  private validarNovaDataPrazo(novaData: Date, prazoAtual: Date | undefined): string | undefined {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    if (novaData <= hoje) {
+      return 'A nova data de devolução deve ser futura em relação a hoje.';
+    }
+    if (prazoAtual && novaData <= prazoAtual) {
+      return 'A nova data deve ser posterior ao prazo de devolução atual.';
+    }
+    return undefined;
   }
 
   findUsuarios($event: { query: string }) {
@@ -386,8 +391,11 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     this.novaData().overlayVisible = true;
   }
 
-  view(id: number) {
-    this.router.navigate([this.urlForm, id, 'view']);
+  /**
+   * Exibe mensagem de erro padronizada.
+   */
+  private showErrorMessage(summary: string, detail: string): void {
+    this.messageService.add({severity: 'error', summary, detail, life: 5000});
   }
 
   /**
