@@ -143,10 +143,8 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> impl
    * Se a navegação veio do toggle de visualização, permite acesso à tabela.
    */
   override ngOnInit(): void {
-    const navigation = this.router.getCurrentNavigation();
-    const routerState = navigation?.extras?.state as { fromToggle?: boolean } | undefined;
-    const historyState = history.state as { fromToggle?: boolean } | undefined;
-    const fromToggle = routerState?.fromToggle === true || historyState?.fromToggle === true;
+    const state = history.state as { fromToggle?: boolean } | undefined;
+    const fromToggle = state?.fromToggle === true;
 
     if (this.isAlunoOrProfessor() && !fromToggle) {
       this.router.navigate(['/item/catalogo'], {replaceUrl: true});
