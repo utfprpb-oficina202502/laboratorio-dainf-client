@@ -694,7 +694,7 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   setDevolucaoItem(): void {
     const item = this.tempItem();
     if (item && typeof item === 'object') {
-      if (item.tipoItem === 'C') {
+      if (item.tipoItem === 'P') {
         this.tempDevolver.set(true);
       } else {
         this.tempDevolver.set(false);
@@ -769,7 +769,8 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
     const newEmprestimoItem = new EmprestimoItem();
     newEmprestimoItem.item = item;
     newEmprestimoItem.qtde = qtde;
-    newEmprestimoItem.devolver = this.tempDevolver() ?? false;
+    // Set devolver based on item type: true for permanent (P), false for consumable (C)
+    newEmprestimoItem.devolver = item.tipoItem === 'P';
     newEmprestimoItem.tempId = tempId;
     currentItems.push(newEmprestimoItem);
 
@@ -777,7 +778,10 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
     const emprestimo = this.object();
     if (emprestimo?.emprestimoItem) {
       emprestimo.emprestimoItem.push(newEmprestimoItem);
-      this.createCorrespondingDevolucaoItem(emprestimo, item, qtde, tempId);
+      // Create devolucaoItem only for permanent items (devolver = true)
+      if (newEmprestimoItem.devolver) {
+        this.createCorrespondingDevolucaoItem(emprestimo, item, qtde, tempId);
+      }
     }
   }
 
