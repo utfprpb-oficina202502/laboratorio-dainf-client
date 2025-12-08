@@ -118,19 +118,22 @@ export class ItemViewModeToggleComponent {
 
   /**
    * Handler de mudança de modo - navega automaticamente.
+   * Passa state indicando que é navegação intencional via toggle.
    */
   protected onModeChange(mode: string): void {
     this.modeChange.emit(mode);
 
+    const navigationExtras = {state: {fromToggle: true}};
+
     switch (mode) {
       case 'table':
-        this.router.navigate(['/item']);
+        this.router.navigate(['/item'], navigationExtras);
         break;
       case 'catalog':
-        this.router.navigate(['/item/catalogo']);
+        this.router.navigate(['/item/catalogo'], navigationExtras);
         break;
       case 'tree':
-        this.router.navigate(['/item/arvore']);
+        this.router.navigate(['/item/arvore'], navigationExtras);
         break;
     }
   }

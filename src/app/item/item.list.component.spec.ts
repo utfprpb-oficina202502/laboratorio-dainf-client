@@ -131,16 +131,27 @@ describe('ItemListComponent', () => {
   });
 
   // ============================================================================
-  // Redirecionamento para Catálogo (3 tests)
+  // Redirecionamento Condicional para Catálogo (4 tests)
   // ============================================================================
-  describe('Redirecionamento para Catálogo', () => {
+  describe('Redirecionamento Condicional para Catálogo', () => {
     let navigateSpy: jest.SpyInstance;
+    let originalHistoryState: unknown;
 
     beforeEach(() => {
       navigateSpy = jest.spyOn(component['router'], 'navigate').mockImplementation(() => Promise.resolve(true));
+      originalHistoryState = history.state;
     });
 
-    it('deve redirecionar alunos para o catálogo no ngOnInit', () => {
+    afterEach(() => {
+      // Restaura history.state original
+      Object.defineProperty(window, 'history', {
+        value: {state: originalHistoryState},
+        writable: true
+      });
+    });
+
+    it('deve redirecionar aluno/professor para o catálogo por padrão', () => {
+      Object.defineProperty(history, 'state', {value: {}, configurable: true});
       Object.defineProperty(component, 'isAlunoOrProfessor', {
         value: () => true,
         writable: true,
@@ -152,7 +163,8 @@ describe('ItemListComponent', () => {
       expect(navigateSpy).toHaveBeenCalledWith(['/item/catalogo'], {replaceUrl: true});
     });
 
-    it('deve redirecionar professores para o catálogo no ngOnInit', () => {
+    it('deve permitir aluno acessar tabela via toggle', () => {
+      Object.defineProperty(history, 'state', {value: {fromToggle: true}, configurable: true});
       Object.defineProperty(component, 'isAlunoOrProfessor', {
         value: () => true,
         writable: true,
@@ -161,10 +173,24 @@ describe('ItemListComponent', () => {
 
       component.ngOnInit();
 
-      expect(navigateSpy).toHaveBeenCalledWith(['/item/catalogo'], {replaceUrl: true});
+      expect(navigateSpy).not.toHaveBeenCalledWith(['/item/catalogo'], expect.anything());
     });
 
-    it('não deve redirecionar admin/laboratorista para o catálogo', () => {
+    it('deve permitir professor acessar tabela via toggle', () => {
+      Object.defineProperty(history, 'state', {value: {fromToggle: true}, configurable: true});
+      Object.defineProperty(component, 'isAlunoOrProfessor', {
+        value: () => true,
+        writable: true,
+        configurable: true
+      });
+
+      component.ngOnInit();
+
+      expect(navigateSpy).not.toHaveBeenCalledWith(['/item/catalogo'], expect.anything());
+    });
+
+    it('não deve redirecionar admin/laboratorista em nenhum caso', () => {
+      Object.defineProperty(history, 'state', {value: {}, configurable: true});
       Object.defineProperty(component, 'isAlunoOrProfessor', {
         value: () => false,
         writable: true,
