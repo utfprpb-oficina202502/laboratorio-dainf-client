@@ -3,7 +3,7 @@ import {ReservaListComponent} from './reserva.list.component';
 import {ReservaService} from './reserva.service';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import {provideRouter} from '@angular/router';
-import {of} from 'rxjs';
+import {of, throwError} from 'rxjs';
 import {Reserva} from './reserva';
 import {LoginService} from '../login/login.service';
 import {ReservaTestFactory} from './reserva.test-factory';
@@ -380,9 +380,7 @@ describe('ReservaListComponent', () => {
       const messageService = TestBed.inject(MessageService) as jest.Mocked<MessageService>;
       const errorMessage = 'Erro ao buscar reserva';
       reservaService.findOne.mockReturnValue(
-        new (require('rxjs').Observable)((observer: any) => {
-          observer.error(new Error(errorMessage));
-        })
+        throwError(() => new Error(errorMessage))
       );
 
       component.finalizarReserva(mockReserva);

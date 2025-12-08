@@ -139,12 +139,16 @@ export class ItemListComponent extends PrimeCrudListComponent<Item, number> impl
   }
 
   /**
-   * Redireciona alunos e professores para o catálogo automaticamente.
-   * Usuários com perfil de aluno ou professor têm uma experiência
-   * otimizada através da visualização em catálogo.
+   * Redireciona alunos e professores para o catálogo por padrão.
+   * Se a navegação veio do toggle de visualização, permite acesso à tabela.
    */
   override ngOnInit(): void {
-    if (this.isAlunoOrProfessor()) {
+    const navigation = this.router.getCurrentNavigation();
+    const routerState = navigation?.extras?.state as { fromToggle?: boolean } | undefined;
+    const historyState = history.state as { fromToggle?: boolean } | undefined;
+    const fromToggle = routerState?.fromToggle === true || historyState?.fromToggle === true;
+
+    if (this.isAlunoOrProfessor() && !fromToggle) {
       this.router.navigate(['/item/catalogo'], {replaceUrl: true});
       return;
     }
