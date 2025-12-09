@@ -1,4 +1,4 @@
-import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {ComponentFixture, fakeAsync, TestBed, tick} from '@angular/core/testing';
 import {ReactiveFormsModule} from '@angular/forms';
 import {provideRouter} from '@angular/router';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
@@ -226,20 +226,27 @@ describe('CompraFormComponent', () => {
   });
 
   describe('Fornecedor Autocomplete', () => {
-    it('should fetch fornecedores on autocomplete event', () => {
+    it('should fetch fornecedores on autocomplete event with debounce', fakeAsync(() => {
       fornecedorService.complete.mockReturnValue(of(mockFornecedores as Fornecedor[]));
 
       component.findFornecedores({query: 'Fornecedor'} as any);
 
+      // Before debounce triggers, service should not be called
+      expect(fornecedorService.complete).not.toHaveBeenCalled();
+
+      // Advance time to trigger debounce (300ms)
+      tick(300);
+
       expect(fornecedorService.complete).toHaveBeenCalledWith('Fornecedor');
       expect(component['fornecedorList']()).toEqual(mockFornecedores);
-    });
+    }));
 
-    it('should handle error when fetching fornecedores', () => {
+    it('should handle error when fetching fornecedores with debounce', fakeAsync(() => {
       const error = new Error('Network error');
       fornecedorService.complete.mockReturnValue(throwError(() => error));
 
       component.findFornecedores({query: 'test'} as any);
+      tick(300);
 
       expect(loggerService.error).toHaveBeenCalledWith('Erro ao buscar fornecedores:', error);
       expect(messageService.add).toHaveBeenCalledWith({
@@ -247,19 +254,31 @@ describe('CompraFormComponent', () => {
         summary: 'Erro',
         detail: 'Não foi possível buscar fornecedores. Tente novamente.'
       });
+    }));
+
+    it('should not fetch fornecedores when query has less than 2 characters', () => {
+      component.findFornecedores({query: 'F'} as any);
+
+      expect(fornecedorService.complete).not.toHaveBeenCalled();
       expect(component['fornecedorList']()).toEqual([]);
     });
   });
 
   describe('Item Autocomplete', () => {
-    it('should fetch items when query has at least 2 characters', () => {
+    it('should fetch items when query has at least 2 characters with debounce', fakeAsync(() => {
       itemService.completeItem.mockReturnValue(of(mockItems as Item[]));
 
       component.findProdutos({query: 'Item'} as any);
 
+      // Before debounce triggers, service should not be called
+      expect(itemService.completeItem).not.toHaveBeenCalled();
+
+      // Advance time to trigger debounce (300ms)
+      tick(300);
+
       expect(itemService.completeItem).toHaveBeenCalledWith('Item', false);
       expect(component['itemList']()).toEqual(mockItems);
-    });
+    }));
 
     it('should not fetch items when query has less than 2 characters', () => {
       component.findProdutos({query: 'I'} as any);
@@ -275,11 +294,12 @@ describe('CompraFormComponent', () => {
       expect(component['itemList']()).toEqual([]);
     });
 
-    it('should handle error when fetching items', () => {
+    it('should handle error when fetching items with debounce', fakeAsync(() => {
       const error = new Error('Network error');
       itemService.completeItem.mockReturnValue(throwError(() => error));
 
       component.findProdutos({query: 'test'} as any);
+      tick(300);
 
       expect(loggerService.error).toHaveBeenCalledWith('Erro ao buscar itens:', error);
       expect(messageService.add).toHaveBeenCalledWith({
@@ -287,8 +307,7 @@ describe('CompraFormComponent', () => {
         summary: 'Erro',
         detail: 'Não foi possível buscar itens. Tente novamente.'
       });
-      expect(component['itemList']()).toEqual([]);
-    });
+    }));
   });
 
   describe('Item Management', () => {

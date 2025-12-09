@@ -2,14 +2,19 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
+  OnDestroy,
   OnInit,
   signal
 } from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {NgOptimizedImage} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Router} from '@angular/router';
+import {of, Subject} from 'rxjs';
+import {catchError, debounceTime, distinctUntilChanged, filter, switchMap} from 'rxjs/operators';
 import {Z_INDEX} from '../framework/constants';
 
 import {Reserva} from './reserva';
@@ -23,6 +28,7 @@ import {ReservaItem} from './reservaItem';
 import {ItemImage} from '../item/itemImage';
 import {BreakpointService} from '../framework/service/breakpoint.service';
 import {CartItem, CartService} from '../framework/service/cart.service';
+import {LoggerService} from '../framework/service/logger.service';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
@@ -69,7 +75,7 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva, number> implements OnInit {
+export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva, number> implements OnInit, OnDestroy {
   // Constants for template
   protected readonly Z_INDEX = Z_INDEX;
 
@@ -81,6 +87,14 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
   protected readonly breakpointService = inject(BreakpointService);
   private readonly cartService = inject(CartService);
   private readonly routerRef = inject(Router);
+  /** Tempo de debounce para busca (ms) */
+  private static readonly SEARCH_DEBOUNCE_MS = 300;
+  /** Quantidade mínima de caracteres para busca */
+  private static readonly MIN_SEARCH_LENGTH = 2;
+  protected readonly logger = inject(LoggerService);
+  private readonly destroyRef = inject(DestroyRef);
+  /** Subject para debounce da busca de itens */
+  private readonly itemSearchSubject = new Subject<string>();
 
   // Signals for state management
   protected readonly itemList = signal<Item[]>([]);
@@ -121,6 +135,26 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
   constructor() {
     super();
 
+    // Configura debounce para busca de itens
+    this.itemSearchSubject.pipe(
+      debounceTime(ReservaFormComponent.SEARCH_DEBOUNCE_MS),
+      distinctUntilChanged(),
+      filter(query => query.length >= ReservaFormComponent.MIN_SEARCH_LENGTH),
+      switchMap(query => this.itemService.completeItem(query, true).pipe(
+        catchError(error => {
+          this.logger.error('Erro ao buscar itens', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erro',
+            detail: 'Erro ao carregar itens. Tente novamente.',
+            life: 5000
+          });
+          return of([]);
+        })
+      )),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(items => this.itemList.set(items));
+
     // Auto-save dos itens da reserva quando mudam
     effect(() => {
       const items = this.reservaItems();
@@ -148,6 +182,10 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
         });
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.itemSearchSubject.complete();
   }
 
   /**
@@ -279,12 +317,16 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
   }
 
   /**
-   * Autocomplete for Items
+   * Busca itens para autocomplete com debounce.
+   * O debounce evita chamadas excessivas à API durante a digitação.
    */
   findProdutos(event: AutoCompleteCompleteEvent): void {
-    this.itemService.completeItem(event.query, true).subscribe(e => {
-      this.itemList.set(e);
-    });
+    const query = event.query;
+    if (query.length < ReservaFormComponent.MIN_SEARCH_LENGTH) {
+      this.itemList.set([]);
+      return;
+    }
+    this.itemSearchSubject.next(query);
   }
 
   /**

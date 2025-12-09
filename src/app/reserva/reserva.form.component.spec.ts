@@ -1,4 +1,4 @@
-import {TestBed} from '@angular/core/testing';
+import {fakeAsync, TestBed, tick} from '@angular/core/testing';
 import {FormBuilder, ReactiveFormsModule} from '@angular/forms';
 import {provideRouter} from '@angular/router';
 import {MessageService} from 'primeng/api';
@@ -117,7 +117,7 @@ describe('ReservaFormComponent', () => {
   });
 
   describe('findProdutos', () => {
-    it('should call itemService.completeItem with correct parameters', () => {
+    it('should call itemService.completeItem with debounce', fakeAsync(() => {
       const event = {query: 'test'};
       const mockItems: Item[] = [{id: 1, nome: 'Item 1'} as Item];
 
@@ -125,11 +125,17 @@ describe('ReservaFormComponent', () => {
 
       component.findProdutos(event);
 
+      // Before debounce triggers, service should not be called
+      expect(itemService.completeItem).not.toHaveBeenCalled();
+
+      // Advance time to trigger debounce (300ms)
+      tick(300);
+
       expect(itemService.completeItem).toHaveBeenCalledWith('test', true);
       expect(component.itemList()).toEqual(mockItems);
-    });
+    }));
 
-    it('should update itemList signal with results', () => {
+    it('should update itemList signal with results after debounce', fakeAsync(() => {
       const event = {query: 'mouse'};
       const mockItems: Item[] = [
         {id: 1, nome: 'Mouse USB'} as Item,
@@ -139,8 +145,18 @@ describe('ReservaFormComponent', () => {
       itemService.completeItem.mockReturnValue(of(mockItems));
 
       component.findProdutos(event);
+      tick(300);
 
       expect(component.itemList()).toEqual(mockItems);
+    }));
+
+    it('should not fetch items when query has less than 2 characters', () => {
+      const event = {query: 'a'};
+
+      component.findProdutos(event);
+
+      expect(itemService.completeItem).not.toHaveBeenCalled();
+      expect(component.itemList()).toEqual([]);
     });
   });
 

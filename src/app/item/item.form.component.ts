@@ -2,15 +2,18 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   OnDestroy,
   signal,
   viewChild
 } from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
-import {Subscription} from 'rxjs';
+import {of, Subject, Subscription} from 'rxjs';
+import {catchError, debounceTime, distinctUntilChanged, filter, switchMap} from 'rxjs/operators';
 import {NAVIGATION, Z_INDEX} from '../framework/constants';
 import {
   PrimeReactiveCrudFormComponent
@@ -100,9 +103,15 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   private readonly fb = inject(FormBuilder);
   private readonly grupoService = inject(GrupoService);
   private readonly emprestimoService = inject(EmprestimoService);
+  /** Tempo de debounce para busca (ms) */
+  private static readonly SEARCH_DEBOUNCE_MS = 300;
   // Constants for template
   protected readonly Z_INDEX = Z_INDEX;
-  private grupoSubscription?: Subscription;
+  /** Quantidade mínima de caracteres para busca */
+  private static readonly MIN_SEARCH_LENGTH = 2;
+  private readonly destroyRef = inject(DestroyRef);
+  /** Subject para debounce da busca de grupos */
+  private readonly grupoSearchSubject = new Subject<string>();
   private imagesSubscription?: Subscription;
   private emprestimosSubscription?: Subscription;
   protected readonly logger = inject(LoggerService);
@@ -112,7 +121,6 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   // Signals for component state
   protected readonly grupoList = signal<Grupo[]>([]);
   protected readonly grupoLoading = signal(false);
-  protected readonly grupoTotalRecords = signal(0);
   protected readonly tipoItemOptions = signal<TipoItemOption[]>([
     { label: 'Consumo', value: 'C' },
     { label: 'Permanente', value: 'P' }
@@ -136,11 +144,6 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   protected readonly emprestimosFirst = signal(0);
   protected readonly emprestimosSortField = signal('id');
   protected readonly emprestimosSortOrder = signal(1); // 1 for ascending, -1 for descending
-
-  // Pagination state for Grupo autocomplete
-  private readonly GRUPO_PAGE_SIZE = 10;
-  private grupoPage = 0;
-  private grupoQuery = '';
 
   // Cart signals
   protected readonly cartQuantity = signal(1);
@@ -245,6 +248,34 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
         }
       }
     });
+
+    // Configura debounce para busca de grupos
+    this.grupoSearchSubject.pipe(
+      debounceTime(ItemFormComponent.SEARCH_DEBOUNCE_MS),
+      distinctUntilChanged(),
+      filter(query => query.length >= ItemFormComponent.MIN_SEARCH_LENGTH),
+      switchMap(query => {
+        this.grupoLoading.set(true);
+        return this.grupoService.completePaged(query, 0, 20).pipe(
+          catchError(error => {
+            this.logger.error('Erro ao buscar grupos', error);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erro',
+              detail: 'Erro ao carregar grupos. Tente novamente.',
+              life: 5000
+            });
+            return of({content: [], totalElements: 0, totalPages: 0, size: 20, number: 0});
+          })
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: (response) => {
+        this.grupoList.set(response.content);
+        this.grupoLoading.set(false);
+      }
+    });
   }
 
   /**
@@ -334,68 +365,16 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   }
 
   /**
-   * Find grupos for autocomplete with pagination
+   * Busca grupos para autocomplete com debounce.
+   * O debounce evita chamadas excessivas à API durante a digitação.
    */
   findGrupos($event: AutoCompleteCompleteEvent): void {
-    this.cancelGrupoRequest();
-
-    // Reset pagination on new query
-    if ($event.query !== this.grupoQuery) {
-      this.grupoPage = 0;
+    const query = $event.query;
+    if (query.length < ItemFormComponent.MIN_SEARCH_LENGTH) {
       this.grupoList.set([]);
+      return;
     }
-    this.grupoQuery = $event.query;
-
-    this.loadGruposPage();
-  }
-
-  /**
-   * Handler for p-autoComplete onLazyLoad (virtual scroll)
-   */
-  onGrupoLazyLoad(event: { first: number; last: number }): void {
-    this.cancelGrupoRequest(); // Cancel previous request to prevent race condition
-
-    const currentLength = this.grupoList().length;
-    const neededPage = Math.floor(event.last / this.GRUPO_PAGE_SIZE);
-
-    // Load next page if approaching end and more records exist
-    if (neededPage >= this.grupoPage && currentLength < this.grupoTotalRecords()) {
-      this.grupoPage = neededPage;
-      this.loadGruposPage();
-    }
-  }
-
-  /**
-   * Load a page of grupos
-   */
-  private loadGruposPage(): void {
-    this.grupoLoading.set(true);
-
-    this.grupoSubscription = this.grupoService
-    .completePaged(this.grupoQuery, this.grupoPage, this.GRUPO_PAGE_SIZE)
-    .subscribe({
-      next: (response) => {
-        // Append to existing list for virtual scroll
-        const currentList = this.grupoList();
-        if (this.grupoPage === 0) {
-          this.grupoList.set(response.content);
-        } else {
-          this.grupoList.set([...currentList, ...response.content]);
-        }
-        this.grupoTotalRecords.set(response.totalElements);
-        this.grupoLoading.set(false);
-      },
-      error: (error) => {
-        this.logger.error('Error fetching grupos', error);
-        this.grupoLoading.set(false);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erro',
-          detail: 'Erro ao carregar grupos. Tente novamente.',
-          life: 5000
-        });
-      }
-    });
+    this.grupoSearchSubject.next(query);
   }
 
   /**
@@ -426,15 +405,6 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
       this.callback = callback;
     } else {
       callback();
-    }
-  }
-
-  /**
-   * Cancel ongoing grupo request
-   */
-  private cancelGrupoRequest(): void {
-    if (this.grupoSubscription && !this.grupoSubscription.closed) {
-      this.grupoSubscription.unsubscribe();
     }
   }
 
@@ -902,7 +872,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
    * Cleanup on component destroy
    */
   ngOnDestroy(): void {
-    this.cancelGrupoRequest();
+    this.grupoSearchSubject.complete();
     this.cancelImagesRequest();
     this.cancelEmprestimosRequest();
     if (this.navigationTimerId) {

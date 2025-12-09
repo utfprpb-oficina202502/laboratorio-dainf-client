@@ -83,7 +83,7 @@
                   [disabled]="loading()"
                   [fluid]="true"
                   [inputId]="'modal-campo-' + campo.nome"
-                  [minLength]="2"
+                  minQueryLength="2"
                   [ngModel]="itemSelecionado()"
                   [placeholder]="campo.placeholder || 'Digite para buscar...'"
                   [showClear]="true"

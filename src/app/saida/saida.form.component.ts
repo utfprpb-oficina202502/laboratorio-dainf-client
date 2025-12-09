@@ -1,6 +1,16 @@
-import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
-
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  OnDestroy,
+  signal
+} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import {of, Subject} from 'rxjs';
+import {catchError, debounceTime, distinctUntilChanged, filter, switchMap} from 'rxjs/operators';
 
 import {Saida} from './saida';
 import {SaidaService} from './saida.service';
@@ -11,6 +21,7 @@ import {Item} from '../item/item';
 import {ItemService} from '../item/item.service';
 import {SaidaItem} from './saidaItem';
 import {BreakpointService} from '../framework/service/breakpoint.service';
+import {LoggerService} from '../framework/service/logger.service';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
@@ -52,13 +63,21 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SaidaFormComponent extends PrimeReactiveCrudFormComponent<Saida, number> {
+export class SaidaFormComponent extends PrimeReactiveCrudFormComponent<Saida, number> implements OnDestroy {
   protected override service = inject(SaidaService);
   protected override urlList = '/saida';
   protected override type = Saida;
   private readonly fb = inject(FormBuilder);
   private readonly itemService = inject(ItemService);
   protected readonly breakpointService = inject(BreakpointService);
+  /** Tempo de debounce para busca (ms) */
+  private static readonly SEARCH_DEBOUNCE_MS = 300;
+  /** Quantidade mínima de caracteres para busca */
+  private static readonly MIN_SEARCH_LENGTH = 2;
+  protected readonly logger = inject(LoggerService);
+  private readonly destroyRef = inject(DestroyRef);
+  /** Subject para debounce da busca de itens */
+  private readonly itemSearchSubject = new Subject<string>();
 
   // Signals for state management
   protected readonly itemList = signal<Item[]>([]);
@@ -84,6 +103,30 @@ export class SaidaFormComponent extends PrimeReactiveCrudFormComponent<Saida, nu
 
   constructor() {
     super();
+
+    // Configura debounce para busca de itens
+    this.itemSearchSubject.pipe(
+      debounceTime(SaidaFormComponent.SEARCH_DEBOUNCE_MS),
+      distinctUntilChanged(),
+      filter(query => query.length >= SaidaFormComponent.MIN_SEARCH_LENGTH),
+      switchMap(query => this.itemService.completeItem(query, true).pipe(
+        catchError(error => {
+          this.logger.error('Erro ao buscar itens', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erro',
+            detail: 'Erro ao carregar itens. Tente novamente.',
+            life: 5000
+          });
+          return of([]);
+        })
+      )),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(items => this.itemList.set(items));
+  }
+
+  ngOnDestroy(): void {
+    this.itemSearchSubject.complete();
   }
 
   /**
@@ -108,12 +151,16 @@ export class SaidaFormComponent extends PrimeReactiveCrudFormComponent<Saida, nu
   }
 
   /**
-   * Autocomplete for Items
+   * Busca itens para autocomplete com debounce.
+   * O debounce evita chamadas excessivas à API durante a digitação.
    */
   findProdutos(event: AutoCompleteCompleteEvent): void {
-    this.itemService.completeItem(event.query, true).subscribe(e => {
-      this.itemList.set(e);
-    });
+    const query = event.query;
+    if (query.length < SaidaFormComponent.MIN_SEARCH_LENGTH) {
+      this.itemList.set([]);
+      return;
+    }
+    this.itemSearchSubject.next(query);
   }
 
   /**

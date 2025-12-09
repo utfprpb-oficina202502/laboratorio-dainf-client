@@ -2,14 +2,17 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   OnDestroy,
   signal
 } from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {NgOptimizedImage} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
-import {Subscription} from 'rxjs';
+import {of, Subject, Subscription} from 'rxjs';
+import {catchError, debounceTime, distinctUntilChanged, filter, switchMap} from 'rxjs/operators';
 import {Emprestimo} from './emprestimo';
 import {EmprestimoService} from './emprestimo.service';
 import {
@@ -85,13 +88,21 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   private readonly fb = inject(FormBuilder);
   private readonly itemService = inject(ItemService);
   private readonly usuarioService = inject(UsuarioService);
+  /** Tempo de debounce para busca (ms) */
+  private static readonly SEARCH_DEBOUNCE_MS = 300;
   protected readonly logger = inject(LoggerService);
   protected readonly itemLoading = signal(false);
+  /** Quantidade mínima de caracteres para busca */
+  private static readonly MIN_SEARCH_LENGTH = 2;
+  private readonly destroyRef = inject(DestroyRef);
+  /** Subject para debounce da busca de itens */
+  private readonly itemSearchSubject = new Subject<string>();
+  /** Subject para debounce da busca de usuários */
+  private readonly usuarioSearchSubject = new Subject<string>();
 
   // State signals
   protected readonly itemList = signal<Item[]>([]);
-  protected readonly itemTotalRecords = signal(0);
-  private itemSubscription?: Subscription;
+  private readonly itemSubscription?: Subscription;
   protected readonly usuarioList = signal<Usuario[]>([]);
   protected readonly emprestimoItems = signal<EmprestimoItem[]>([]);
   protected readonly maxDateEmprestimo = signal<Date>(new Date());
@@ -99,10 +110,6 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   protected readonly documentoUsuario = signal<string>('');
   protected readonly disableForm = signal<boolean>(false);
   protected readonly idReserva = signal<number>(0);
-  // Pagination state for Item autocomplete
-  private readonly ITEM_PAGE_SIZE = 10;
-  private itemPage = 0;
-  private itemQuery = '';
 
   // Temporary signals for adding items
   protected tempItem = signal<Item | null>(null);
@@ -146,6 +153,61 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
             }
           }
         });
+      }
+    });
+
+    // Configura debounce para busca de itens
+    this.itemSearchSubject.pipe(
+      debounceTime(EmprestimoFormComponent.SEARCH_DEBOUNCE_MS),
+      distinctUntilChanged(),
+      filter(query => query.length >= EmprestimoFormComponent.MIN_SEARCH_LENGTH),
+      switchMap(query => {
+        this.itemLoading.set(true);
+        return this.itemService.completeItem(query, true).pipe(
+          catchError(error => {
+            this.logger.error('Erro ao buscar itens', error);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erro',
+              detail: 'Erro ao carregar itens. Tente novamente.',
+              life: 5000
+            });
+            return of([]);
+          })
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: (items) => {
+        this.itemList.set(items);
+        this.itemLoading.set(false);
+      }
+    });
+
+    // Configura debounce para busca de usuários
+    this.usuarioSearchSubject.pipe(
+      debounceTime(EmprestimoFormComponent.SEARCH_DEBOUNCE_MS),
+      distinctUntilChanged(),
+      filter(query => query.length >= EmprestimoFormComponent.MIN_SEARCH_LENGTH),
+      switchMap(query => {
+        return this.usuarioService.completeCustom(query).pipe(
+          catchError(error => {
+            this.logger.error('Erro ao buscar usuários', error);
+            return of([]);
+          })
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: (usuarios) => {
+        this.usuarioList.set(usuarios);
+        if (usuarios.length === 1) {
+          const formGroup = this.form();
+          if (formGroup) {
+            formGroup.patchValue({usuarioEmprestimo: usuarios[0]});
+            this.documentoUsuario.set(usuarios[0].documento);
+          }
+        }
       }
     });
   }
@@ -482,75 +544,25 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   }
 
   /**
-   * Autocomplete for Items with pagination
+   * Busca itens para autocomplete com debounce.
+   * O debounce evita chamadas excessivas à API durante a digitação.
    */
   findProdutos(event: AutoCompleteCompleteEvent): void {
-    this.cancelItemRequest(); // Cancel previous request to prevent race condition
-
-    // Reset pagination on new query
-    if (event.query !== this.itemQuery) {
-      this.itemPage = 0;
+    const query = event.query;
+    if (query.length < EmprestimoFormComponent.MIN_SEARCH_LENGTH) {
       this.itemList.set([]);
+      return;
     }
-    this.itemQuery = event.query;
-
-    this.loadItemsPage();
-  }
-
-  /**
-   * Handler for p-autoComplete onLazyLoad (virtual scroll)
-   */
-  onItemLazyLoad(event: { first: number; last: number }): void {
-    this.cancelItemRequest(); // Cancel previous request to prevent race condition
-
-    const currentLength = this.itemList().length;
-    const neededPage = Math.floor(event.last / this.ITEM_PAGE_SIZE);
-
-    // Load next page if approaching end and more records exist
-    if (neededPage >= this.itemPage && currentLength < this.itemTotalRecords()) {
-      this.itemPage = neededPage;
-      this.loadItemsPage();
-    }
+    this.itemSearchSubject.next(query);
   }
 
   /**
    * Cleanup subscriptions on destroy
    */
   ngOnDestroy(): void {
+    this.itemSearchSubject.complete();
+    this.usuarioSearchSubject.complete();
     this.cancelItemRequest();
-  }
-
-  /**
-   * Load a page of items
-   */
-  private loadItemsPage(): void {
-    this.itemLoading.set(true);
-
-    this.itemSubscription = this.itemService
-    .completeItemPaged(this.itemQuery, true, this.itemPage, this.ITEM_PAGE_SIZE)
-    .subscribe({
-      next: (response) => {
-        // Append to existing list for virtual scroll
-        const currentList = this.itemList();
-        if (this.itemPage === 0) {
-          this.itemList.set(response.content);
-        } else {
-          this.itemList.set([...currentList, ...response.content]);
-        }
-        this.itemTotalRecords.set(response.totalElements);
-        this.itemLoading.set(false);
-      },
-      error: (error) => {
-        this.logger.error('Error fetching items', error);
-        this.itemLoading.set(false);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erro',
-          detail: 'Erro ao carregar itens. Tente novamente.',
-          life: 5000
-        });
-      }
-    });
   }
 
   /**
@@ -574,25 +586,16 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   }
 
   /**
-   * Autocomplete for Usuarios
+   * Busca usuários para autocomplete com debounce.
+   * O debounce evita chamadas excessivas à API durante a digitação.
    */
   findUsuarios(event: AutoCompleteCompleteEvent): void {
-    this.usuarioService.completeCustom(event.query).subscribe({
-      next: (usuarios) => {
-        this.usuarioList.set(usuarios);
-        if (usuarios.length === 1) {
-          const formGroup = this.form();
-          if (formGroup) {
-            formGroup.patchValue({usuarioEmprestimo: usuarios[0]});
-            this.documentoUsuario.set(usuarios[0].documento);
-          }
-        }
-      },
-      error: (error) => {
-        this.logger.error('Erro ao buscar usuários', error);
-        this.usuarioList.set([]);
-      }
-    });
+    const query = event.query;
+    if (query.length < EmprestimoFormComponent.MIN_SEARCH_LENGTH) {
+      this.usuarioList.set([]);
+      return;
+    }
+    this.usuarioSearchSubject.next(query);
   }
 
   /**
