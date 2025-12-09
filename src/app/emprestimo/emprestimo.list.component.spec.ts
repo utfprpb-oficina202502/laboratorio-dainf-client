@@ -12,34 +12,19 @@ import {EmprestimoTestFactory, UsuarioTestFactory} from './emprestimo.test-facto
 import {createServiceMock} from '../framework/testing/test-helpers';
 
 /**
- * Pre-computed test dates to avoid runtime date operations
- */
-const TEST_DATES = {
-  future7: '07/12/2025',
-  future15: '15/12/2025',
-  future30: '30/12/2025'
-} as const;
-
-/**
- * Helper function to get pre-computed future date string
+ * Helper function to generate a future date string dynamically.
+ * Avoids hardcoded dates that become stale or behave differently across timezones.
+ *
  * @param days Number of days to add to current date
- * @returns Pre-computed formatted date string in DD/MM/YYYY format
+ * @returns Formatted date string in DD/MM/YYYY format
  */
 function getFutureDateString(days: number): string {
-  switch (days) {
-    case 7: return TEST_DATES.future7;
-    case 15: return TEST_DATES.future15;
-    case 30: return TEST_DATES.future30;
-    default: {
-      // Fallback for other values (rarely used)
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + days);
-      const dia = String(futureDate.getDate()).padStart(2, '0');
-      const mes = String(futureDate.getMonth() + 1).padStart(2, '0');
-      const ano = futureDate.getFullYear();
-      return `${dia}/${mes}/${ano}`;
-    }
-  }
+  const futureDate = new Date();
+  futureDate.setDate(futureDate.getDate() + days);
+  const dia = String(futureDate.getDate()).padStart(2, '0');
+  const mes = String(futureDate.getMonth() + 1).padStart(2, '0');
+  const ano = futureDate.getFullYear();
+  return `${dia}/${mes}/${ano}`;
 }
 
 /**
@@ -922,10 +907,14 @@ describe('EmprestimoListComponent', () => {
     });
 
     it('deve exibir erro se nova data for anterior ou igual ao prazo atual', async () => {
-      // Cria um empréstimo com prazo atual em 10/12/2025
-      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/12/2025'});
+      // Usa datas dinâmicas: prazo em 30 dias, nova data em 30 dias (igual ao prazo)
+      const prazoAtual = getFutureDateString(30);
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({
+        id: 1,
+        prazoDevolucao: prazoAtual
+      });
       // Nova data igual ao prazo atual
-      component.novaDataPrazo = '10/12/2025';
+      component.novaDataPrazo = prazoAtual;
       const addSpy = jest.spyOn(component['messageService'], 'add');
       await component.enviarNovoPrazo();
       expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
@@ -936,10 +925,15 @@ describe('EmprestimoListComponent', () => {
     });
 
     it('deve exibir erro se nova data for anterior ao prazo atual', async () => {
-      // Cria um empréstimo com prazo atual em 10/12/2025
-      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({id: 1, prazoDevolucao: '10/12/2025'});
-      // Nova data anterior ao prazo atual
-      component.novaDataPrazo = '09/12/2025';
+      // Usa datas dinâmicas: prazo em 30 dias, nova data em 15 dias (antes do prazo, mas após hoje)
+      const prazoAtual = getFutureDateString(30);
+      const novaDataAnterior = getFutureDateString(15);
+      component.emprestimoSelecionadoParaPrazo = EmprestimoTestFactory.createPendente({
+        id: 1,
+        prazoDevolucao: prazoAtual
+      });
+      // Nova data anterior ao prazo atual (mas ainda no futuro em relação a hoje)
+      component.novaDataPrazo = novaDataAnterior;
       const addSpy = jest.spyOn(component['messageService'], 'add');
       await component.enviarNovoPrazo();
       expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({

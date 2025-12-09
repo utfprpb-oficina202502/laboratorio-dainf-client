@@ -286,4 +286,94 @@ describe('CartService', () => {
       expect(newService.items()[0].qtde).toBe(3);
     });
   });
+
+  describe('fallback para saldo quando disponivelEmprestimoCalculado é undefined', () => {
+    it('deve usar saldo como fallback ao adicionar item', () => {
+      const item = createTestItem({
+        disponivelEmprestimoCalculado: undefined as unknown as number,
+        saldo: 5
+      });
+
+      const result = service.addItem(item, 3);
+
+      expect(result).toBe(true);
+      expect(service.items()[0].qtde).toBe(3);
+    });
+
+    it('deve rejeitar quantidade maior que saldo quando disponivelEmprestimoCalculado é undefined', () => {
+      const item = createTestItem({
+        disponivelEmprestimoCalculado: undefined as unknown as number,
+        saldo: 3
+      });
+
+      const result = service.addItem(item, 5);
+
+      expect(result).toBe(false);
+      expect(service.items().length).toBe(0);
+    });
+
+    it('deve permitir incremento usando saldo como fallback', () => {
+      const item = createTestItem({
+        disponivelEmprestimoCalculado: undefined as unknown as number,
+        saldo: 5
+      });
+
+      service.addItem(item, 2);
+      const result = service.addItem(item, 2); // Total 4, menor que saldo 5
+
+      expect(result).toBe(true);
+      expect(service.items()[0].qtde).toBe(4);
+    });
+
+    it('deve rejeitar incremento que exceda saldo quando disponivelEmprestimoCalculado é undefined', () => {
+      const item = createTestItem({
+        disponivelEmprestimoCalculado: undefined as unknown as number,
+        saldo: 3
+      });
+
+      service.addItem(item, 2);
+      const result = service.addItem(item, 2); // Total seria 4, excede saldo 3
+
+      expect(result).toBe(false);
+      expect(service.items()[0].qtde).toBe(2);
+    });
+
+    it('deve validar updateQuantity usando saldo como fallback', () => {
+      const item = createTestItem({
+        disponivelEmprestimoCalculado: undefined as unknown as number,
+        saldo: 5
+      });
+
+      service.addItem(item, 2);
+      const result = service.updateQuantity(item.id, 4);
+
+      expect(result).toBe(true);
+      expect(service.items()[0].qtde).toBe(4);
+    });
+
+    it('deve rejeitar updateQuantity que excede saldo quando disponivelEmprestimoCalculado é undefined', () => {
+      const item = createTestItem({
+        disponivelEmprestimoCalculado: undefined as unknown as number,
+        saldo: 3
+      });
+
+      service.addItem(item, 2);
+      const result = service.updateQuantity(item.id, 5);
+
+      expect(result).toBe(false);
+      expect(service.items()[0].qtde).toBe(2);
+    });
+
+    it('deve retornar 0 como disponibilidade quando ambos são undefined', () => {
+      const item = createTestItem({
+        disponivelEmprestimoCalculado: undefined as unknown as number,
+        saldo: undefined as unknown as number
+      });
+
+      const result = service.addItem(item, 1);
+
+      expect(result).toBe(false);
+      expect(service.items().length).toBe(0);
+    });
+  });
 });
