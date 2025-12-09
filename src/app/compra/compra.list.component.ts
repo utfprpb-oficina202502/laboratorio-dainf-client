@@ -1,12 +1,14 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, Injector, inject} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
-import {TableColumn} from '../framework/model/table-config.interface';
 import {Compra} from './compra';
 import {CompraService} from './compra.service';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
 import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
-import {createTableConfig} from '../framework/utils/table-config.factory';
+import {createListComponentConfig} from '../framework/utils/table-config.factory';
+import {MenuItem} from 'primeng/api';
+import { SharedListComponentBase } from '../framework/component/shared-list-base.component';
+import { ListComponentConfig } from '../framework/utils/table-config.factory';
 
 @Component({
     selector: 'app-list-compra',
@@ -20,89 +22,84 @@ import {createTableConfig} from '../framework/utils/table-config.factory';
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => CompraListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CompraListComponent extends PrimeCrudListComponent<Compra, number> {
-  protected override service = inject(CompraService);
-  protected override columnsTable = ['id', 'fornecedorNomeFantasia', 'fornecedorRazaoSocial', 'dataCompra', 'actions'];
-  protected override urlForm = 'compra/form';
+export class CompraListComponent extends SharedListComponentBase<
+  Compra,
+  ListComponentConfig,
+  CompraService
+> {
+  public static readonly listConfig = createListComponentConfig(
+    [
+      {
+        field: 'fornecedorNomeFantasia',
+        header: 'Fornecedor',
+        type: 'text',
+        sortable: true,
+        filterable: true,
+        minWidth: '16rem'
+      },
+      {
+        field: 'fornecedorRazaoSocial',
+        header: 'Razão Social',
+        type: 'text',
+        sortable: true,
+        filterable: true,
+        minWidth: '16rem'
+      },
+      {
+        field: 'dataCompra',
+        header: 'Data da Compra',
+        type: 'date',
+        sortable: true,
+        filterable: true,
+        width: '12rem',
+        align: 'center'
+      }
+    ],
+    ['fornecedorNomeFantasia', 'fornecedorRazaoSocial', 'dataCompra'],
+    'dataCompra',
+    'Compras',
+    'compra-list'
+  );
 
-  private readonly tableColumns: TableColumn[] = [
-    {
-      field: 'id',
-      header: 'Código',
-      type: 'number',
-      sortable: true,
-      filterable: true,
-      width: '8rem',
-      align: 'center'
-    },
-    {
-      field: 'fornecedorNomeFantasia',
-      header: 'Nome Fantasia',
-      type: 'text',
-      sortable: true,
-      filterable: true,
-      minWidth: '14rem'
-    },
-    {
-      field: 'fornecedorRazaoSocial',
-      header: 'Razão Social',
-      type: 'text',
-      sortable: true,
-      filterable: true,
-      minWidth: '14rem'
-    },
-    {
-      field: 'dataCompra',
-      header: 'Data da Compra',
-      type: 'date',
-      sortable: true,
-      filterable: true,
-      width: '14rem',
-      align: 'center'
-    },
-    {
-      field: 'actions',
-      header: 'Opções',
-      type: 'custom',
-      sortable: false,
-      filterable: false,
-      exportable: false,
-      toggleable: false,
-      width: '12rem',
-      align: 'center'
-    }
-  ];
+  contextMenuItems: MenuItem[] = [];
+  columnsTable: string[] = [];
+  urlForm = 'compra/form';
 
   constructor() {
-    super();
-
-    this.hostListenerColumnEnable = false;
+    super({
+      entityName: 'Compra',
+      entityPluralName: 'Compras',
+      exportFileName: 'compras',
+      listConfig: CompraListComponent.listConfig,
+      entityService: inject(CompraService),
+      injector: inject(Injector)
+    });
     this.configureTable();
   }
 
-  protected override getEntityName(): string {
-    return 'Compra';
+  openOptions(event: Event, compra: Compra): void {
+    this.contextMenuItems = [
+      {
+        label: 'Editar',
+        icon: 'pi pi-pencil',
+        command: () => this.edit(compra.id)
+      },
+      {
+        label: 'Remover',
+        icon: 'pi pi-trash',
+        command: () => this.delete(compra.id)
+      }
+    ];
+    const menu = this.actionsMenu?.();
+    if (menu && typeof menu.toggle === 'function') {
+      menu.toggle(event);
+    }
   }
 
-  protected override getEntityPluralName(): string {
-    return 'Compras';
-  }
-
-  protected override getExportFileName(): string {
-    return 'compras';
-  }
-
-  private configureTable(): void {
-    this.tableConfig = createTableConfig({
-      columns: this.tableColumns,
-      globalFilterFields: ['id', 'fornecedorNomeFantasia', 'fornecedorRazaoSocial', 'dataCompra'],
-      defaultSortField: 'id',
-      caption: 'Compras',
-      stateKey: 'compra-list',
-      // ...outras propriedades específicas...
-    });
-
-    this.columnsTable = this.tableConfig.columns.map(column => column.field);
-    this.displayedColumns = [...this.columnsTable];
+  onKeyDown(event: KeyboardEvent, compra: Compra): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.openOptions(event, compra);
+    }
   }
 }
