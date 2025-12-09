@@ -26,12 +26,6 @@ export class SolicitacaoCompraListComponent extends SharedListComponentBase<Soli
   readonly service = inject(SolicitacaoCompraService);
   urlForm = 'solicitacaoCompra/form';
 
-  // Ensure required PrimeCrudListComponent properties are present for type compatibility
-  protected readonly router = super['router'];
-  protected readonly messageService = super['messageService'];
-  protected readonly confirmationService = super['confirmationService'];
-  protected readonly loaderService = super['loaderService'];
-
   constructor() {
     const listConfig = createListComponentConfig(
       [
