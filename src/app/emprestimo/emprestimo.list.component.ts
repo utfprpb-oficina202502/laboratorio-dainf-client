@@ -174,11 +174,11 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     }
 
     return emprestimo.emprestimoDevolucaoItem.some(
-      edi => edi.item?.id === emprestimoItem.item.id && Number(edi.qtde) === Number(emprestimoItem.qtde)
+      edi => edi.item?.id === emprestimoItem.item?.id && Number(edi.qtde) === Number(emprestimoItem.qtde)
     );
   }
 
-  // Getter for backwards compatibility with custom methods
+  // Getter para compatibilidade com métodos customizados
   protected get emprestimoService(): EmprestimoService {
     return this.service;
   }
@@ -536,8 +536,8 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
    */
   abrirDialogItens(emprestimo: Emprestimo): void {
     this.actionsMenu().hide();
-    // Initially set the selected emprestimo to show basic info in header;
-    // when full data is loaded from backend we replace it with the complete object
+    // Define inicialmente o empréstimo selecionado para exibir informações básicas no cabeçalho;
+    // quando os dados completos forem carregados do backend, substituímos pelo objeto completo
     this.emprestimoSelecionadoParaItens = emprestimo;
     this.dialogItensVisible = true;
     this.loadingItensDialog.set(true);
@@ -545,7 +545,7 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
 
     this.emprestimoService.findOne(emprestimo.id).subscribe({
       next: (emprestimoCompleto) => {
-        // Replace selected emprestimo with the complete object returned by the backend
+        // Substitui o empréstimo selecionado pelo objeto completo retornado pelo backend
         this.emprestimoSelecionadoParaItens = emprestimoCompleto;
         this.itensDoEmprestimo.set(emprestimoCompleto.emprestimoItem || []);
         this.loadingItensDialog.set(false);
