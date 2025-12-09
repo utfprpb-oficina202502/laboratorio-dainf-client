@@ -10,7 +10,8 @@ import {
 } from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
-import {Subscription} from 'rxjs';
+import {Subject, Subscription} from 'rxjs';
+import {map} from 'rxjs/operators';
 import {NAVIGATION, Z_INDEX} from '../framework/constants';
 import {
   PrimeReactiveCrudFormComponent
@@ -25,7 +26,6 @@ import {EmprestimoService} from '../emprestimo/emprestimo.service';
 import {FileUpload, FileUploadModule} from 'primeng/fileupload';
 import {environment} from '../../environments/environment';
 import {ItemImage} from './itemImage';
-import {LoggerService} from '../framework/service/logger.service';
 import {ConfirmationService, SortEvent} from 'primeng/api';
 import {CartService} from '../framework/service/cart.service';
 import {ItemAvailabilityUtil} from '../framework/utils/item-availability.util';
@@ -102,17 +102,16 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   private readonly emprestimoService = inject(EmprestimoService);
   // Constants for template
   protected readonly Z_INDEX = Z_INDEX;
-  private grupoSubscription?: Subscription;
+  /** Subject para debounce da busca de grupos */
+  private readonly grupoSearchSubject = new Subject<string>();
   private imagesSubscription?: Subscription;
   private emprestimosSubscription?: Subscription;
-  protected readonly logger = inject(LoggerService);
   private readonly confirmationService = inject(ConfirmationService);
   protected readonly cartService = inject(CartService);
 
   // Signals for component state
   protected readonly grupoList = signal<Grupo[]>([]);
   protected readonly grupoLoading = signal(false);
-  protected readonly grupoTotalRecords = signal(0);
   protected readonly tipoItemOptions = signal<TipoItemOption[]>([
     { label: 'Consumo', value: 'C' },
     { label: 'Permanente', value: 'P' }
@@ -136,11 +135,6 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   protected readonly emprestimosFirst = signal(0);
   protected readonly emprestimosSortField = signal('id');
   protected readonly emprestimosSortOrder = signal(1); // 1 for ascending, -1 for descending
-
-  // Pagination state for Grupo autocomplete
-  private readonly GRUPO_PAGE_SIZE = 10;
-  private grupoPage = 0;
-  private grupoQuery = '';
 
   // Cart signals
   protected readonly cartQuantity = signal(1);
@@ -245,6 +239,15 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
         }
       }
     });
+
+    // Configura debounce para busca de grupos usando método da classe base
+    this.setupAutocompleteDebounce(
+      this.grupoSearchSubject,
+      (query) => this.grupoService.completePaged(query, 0, 20).pipe(map(r => r.content)),
+      this.grupoList,
+      'Erro ao buscar grupos',
+      {loadingSignal: this.grupoLoading}
+    );
   }
 
   /**
@@ -334,68 +337,11 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
   }
 
   /**
-   * Find grupos for autocomplete with pagination
+   * Busca grupos para autocomplete com debounce.
+   * O debounce evita chamadas excessivas à API durante a digitação.
    */
   findGrupos($event: AutoCompleteCompleteEvent): void {
-    this.cancelGrupoRequest();
-
-    // Reset pagination on new query
-    if ($event.query !== this.grupoQuery) {
-      this.grupoPage = 0;
-      this.grupoList.set([]);
-    }
-    this.grupoQuery = $event.query;
-
-    this.loadGruposPage();
-  }
-
-  /**
-   * Handler for p-autoComplete onLazyLoad (virtual scroll)
-   */
-  onGrupoLazyLoad(event: { first: number; last: number }): void {
-    this.cancelGrupoRequest(); // Cancel previous request to prevent race condition
-
-    const currentLength = this.grupoList().length;
-    const neededPage = Math.floor(event.last / this.GRUPO_PAGE_SIZE);
-
-    // Load next page if approaching end and more records exist
-    if (neededPage >= this.grupoPage && currentLength < this.grupoTotalRecords()) {
-      this.grupoPage = neededPage;
-      this.loadGruposPage();
-    }
-  }
-
-  /**
-   * Load a page of grupos
-   */
-  private loadGruposPage(): void {
-    this.grupoLoading.set(true);
-
-    this.grupoSubscription = this.grupoService
-    .completePaged(this.grupoQuery, this.grupoPage, this.GRUPO_PAGE_SIZE)
-    .subscribe({
-      next: (response) => {
-        // Append to existing list for virtual scroll
-        const currentList = this.grupoList();
-        if (this.grupoPage === 0) {
-          this.grupoList.set(response.content);
-        } else {
-          this.grupoList.set([...currentList, ...response.content]);
-        }
-        this.grupoTotalRecords.set(response.totalElements);
-        this.grupoLoading.set(false);
-      },
-      error: (error) => {
-        this.logger.error('Error fetching grupos', error);
-        this.grupoLoading.set(false);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erro',
-          detail: 'Erro ao carregar grupos. Tente novamente.',
-          life: 5000
-        });
-      }
-    });
+    this.handleAutocompleteQuery($event.query, this.grupoSearchSubject, this.grupoList, []);
   }
 
   /**
@@ -426,15 +372,6 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
       this.callback = callback;
     } else {
       callback();
-    }
-  }
-
-  /**
-   * Cancel ongoing grupo request
-   */
-  private cancelGrupoRequest(): void {
-    if (this.grupoSubscription && !this.grupoSubscription.closed) {
-      this.grupoSubscription.unsubscribe();
     }
   }
 
@@ -902,7 +839,7 @@ export class ItemFormComponent extends PrimeReactiveCrudFormComponent<Item, numb
    * Cleanup on component destroy
    */
   ngOnDestroy(): void {
-    this.cancelGrupoRequest();
+    this.grupoSearchSubject.complete();
     this.cancelImagesRequest();
     this.cancelEmprestimosRequest();
     if (this.navigationTimerId) {

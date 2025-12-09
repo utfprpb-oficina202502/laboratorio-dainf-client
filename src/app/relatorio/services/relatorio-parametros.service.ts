@@ -1,5 +1,6 @@
-import {Injectable} from '@angular/core';
+import {inject, Injectable} from '@angular/core';
 import {AtalhoPeriodo} from '../models/relatorio-card.interface';
+import {LoggerService} from '../../framework/service/logger.service';
 
 /**
  * Interface para parâmetros salvos de um relatório.
@@ -42,6 +43,8 @@ export interface PeriodoDatas {
  */
 @Injectable({providedIn: 'root'})
 export class RelatorioParametrosService {
+  private readonly logger = inject(LoggerService);
+
   /**
    * Labels para exibição dos atalhos de período.
    */
@@ -123,7 +126,7 @@ export class RelatorioParametrosService {
       };
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(saved));
     } catch (e) {
-      console.error('Erro ao salvar parâmetros:', e);
+      this.logger.error('Erro ao salvar parâmetros', e);
     }
   }
 
@@ -157,7 +160,7 @@ export class RelatorioParametrosService {
       delete saved[relatorioId];
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(saved));
     } catch (e) {
-      console.error('Erro ao limpar parâmetros:', e);
+      this.logger.error('Erro ao limpar parâmetros', e);
     }
   }
 

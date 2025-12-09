@@ -4,12 +4,14 @@ import {
   computed,
   effect,
   inject,
+  OnDestroy,
   OnInit,
   signal
 } from '@angular/core';
 import {NgOptimizedImage} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Router} from '@angular/router';
+import {Subject} from 'rxjs';
 import {Z_INDEX} from '../framework/constants';
 
 import {Reserva} from './reserva';
@@ -69,7 +71,7 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva, number> implements OnInit {
+export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva, number> implements OnInit, OnDestroy {
   // Constants for template
   protected readonly Z_INDEX = Z_INDEX;
 
@@ -81,6 +83,8 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
   protected readonly breakpointService = inject(BreakpointService);
   private readonly cartService = inject(CartService);
   private readonly routerRef = inject(Router);
+  /** Subject para debounce da busca de itens */
+  private readonly itemSearchSubject = new Subject<string>();
 
   // Signals for state management
   protected readonly itemList = signal<Item[]>([]);
@@ -121,6 +125,14 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
   constructor() {
     super();
 
+    // Configura debounce para busca de itens usando método da classe base
+    this.setupAutocompleteDebounce(
+      this.itemSearchSubject,
+      (query) => this.itemService.completeItem(query, true),
+      this.itemList,
+      'Erro ao buscar itens'
+    );
+
     // Auto-save dos itens da reserva quando mudam
     effect(() => {
       const items = this.reservaItems();
@@ -148,6 +160,10 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
         });
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.itemSearchSubject.complete();
   }
 
   /**
@@ -279,12 +295,11 @@ export class ReservaFormComponent extends PrimeReactiveCrudFormComponent<Reserva
   }
 
   /**
-   * Autocomplete for Items
+   * Busca itens para autocomplete com debounce.
+   * O debounce evita chamadas excessivas à API durante a digitação.
    */
   findProdutos(event: AutoCompleteCompleteEvent): void {
-    this.itemService.completeItem(event.query, true).subscribe(e => {
-      this.itemList.set(e);
-    });
+    this.handleAutocompleteQuery(event.query, this.itemSearchSubject, this.itemList, []);
   }
 
   /**

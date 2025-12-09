@@ -1,6 +1,13 @@
-import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
-
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnDestroy,
+  signal
+} from '@angular/core';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import {Subject} from 'rxjs';
 
 import {SolicitacaoCompra} from './solicitacaoCompra';
 import {SolicitacaoCompraService} from './solicitacaoCompra.service';
@@ -52,13 +59,15 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SolicitacaoCompraFormComponent extends PrimeReactiveCrudFormComponent<SolicitacaoCompra, number> {
+export class SolicitacaoCompraFormComponent extends PrimeReactiveCrudFormComponent<SolicitacaoCompra, number> implements OnDestroy {
   protected override service = inject(SolicitacaoCompraService);
   protected override urlList = '/solicitacao-compra';
   protected override type = SolicitacaoCompra;
   private readonly fb = inject(FormBuilder);
   private readonly itemService = inject(ItemService);
   protected readonly breakpointService = inject(BreakpointService);
+  /** Subject para debounce da busca de itens */
+  private readonly itemSearchSubject = new Subject<string>();
 
   // Signals for state management
   protected readonly itemList = signal<Item[]>([]);
@@ -77,6 +86,18 @@ export class SolicitacaoCompraFormComponent extends PrimeReactiveCrudFormCompone
 
   constructor() {
     super();
+
+    // Configura debounce para busca de itens usando método da classe base
+    this.setupAutocompleteDebounce(
+      this.itemSearchSubject,
+      (query) => this.itemService.completeItem(query, false),
+      this.itemList,
+      'Erro ao buscar itens'
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.itemSearchSubject.complete();
   }
 
   /**
@@ -101,12 +122,11 @@ export class SolicitacaoCompraFormComponent extends PrimeReactiveCrudFormCompone
   }
 
   /**
-   * Autocomplete for Items
+   * Busca itens para autocomplete com debounce.
+   * O debounce evita chamadas excessivas à API durante a digitação.
    */
   findProdutos(event: AutoCompleteCompleteEvent): void {
-    this.itemService.completeItem(event.query, false).subscribe(e => {
-      this.itemList.set(e);
-    });
+    this.handleAutocompleteQuery(event.query, this.itemSearchSubject, this.itemList, []);
   }
 
   /**
@@ -132,8 +152,7 @@ export class SolicitacaoCompraFormComponent extends PrimeReactiveCrudFormCompone
     const existingIndex = currentItems.findIndex(si => si.item.id === item.id);
 
     if (existingIndex >= 0) {
-      const novaQtde = Number(currentItems[existingIndex].qtde) + Number(qtde);
-      currentItems[existingIndex].qtde = novaQtde;
+      currentItems[existingIndex].qtde = Number(currentItems[existingIndex].qtde) + Number(qtde);
     } else {
       const newSolicitacaoItem = new SolicitacaoCompraItem();
       newSolicitacaoItem.item = item;

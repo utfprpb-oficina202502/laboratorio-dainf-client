@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import {NgOptimizedImage} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
-import {Subscription} from 'rxjs';
+import {Subject} from 'rxjs';
 import {Emprestimo} from './emprestimo';
 import {EmprestimoService} from './emprestimo.service';
 import {
@@ -47,7 +47,6 @@ import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
 import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.component';
-import {LoggerService} from '../framework/service/logger.service';
 import {formatarHistoricoReserva} from '../framework/utils/historico-transicao.utils';
 
 @Component({
@@ -85,13 +84,14 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   private readonly fb = inject(FormBuilder);
   private readonly itemService = inject(ItemService);
   private readonly usuarioService = inject(UsuarioService);
-  protected readonly logger = inject(LoggerService);
   protected readonly itemLoading = signal(false);
+  /** Subject para debounce da busca de itens */
+  private readonly itemSearchSubject = new Subject<string>();
+  /** Subject para debounce da busca de usuários */
+  private readonly usuarioSearchSubject = new Subject<string>();
 
   // State signals
   protected readonly itemList = signal<Item[]>([]);
-  protected readonly itemTotalRecords = signal(0);
-  private itemSubscription?: Subscription;
   protected readonly usuarioList = signal<Usuario[]>([]);
   protected readonly emprestimoItems = signal<EmprestimoItem[]>([]);
   protected readonly maxDateEmprestimo = signal<Date>(new Date());
@@ -99,10 +99,6 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   protected readonly documentoUsuario = signal<string>('');
   protected readonly disableForm = signal<boolean>(false);
   protected readonly idReserva = signal<number>(0);
-  // Pagination state for Item autocomplete
-  private readonly ITEM_PAGE_SIZE = 10;
-  private itemPage = 0;
-  private itemQuery = '';
 
   // Temporary signals for adding items
   protected tempItem = signal<Item | null>(null);
@@ -146,6 +142,35 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
             }
           }
         });
+      }
+    });
+
+    // Configura debounce para busca de itens usando método da classe base
+    this.setupAutocompleteDebounce(
+      this.itemSearchSubject,
+      (query) => this.itemService.completeItem(query, true),
+      this.itemList,
+      'Erro ao buscar itens',
+      {loadingSignal: this.itemLoading}
+    );
+
+    // Configura debounce para busca de usuários usando método da classe base
+    this.setupAutocompleteDebounce(
+      this.usuarioSearchSubject,
+      (query) => this.usuarioService.completeCustom(query),
+      this.usuarioList,
+      'Erro ao buscar usuários'
+    );
+
+    // Auto-seleção de usuário quando apenas um resultado é encontrado
+    effect(() => {
+      const usuarios = this.usuarioList();
+      if (usuarios.length === 1) {
+        const formGroup = this.form();
+        if (formGroup) {
+          formGroup.patchValue({usuarioEmprestimo: usuarios[0]});
+          this.documentoUsuario.set(usuarios[0].documento);
+        }
       }
     });
   }
@@ -482,84 +507,19 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   }
 
   /**
-   * Autocomplete for Items with pagination
+   * Busca itens para autocomplete com debounce.
+   * O debounce evita chamadas excessivas à API durante a digitação.
    */
   findProdutos(event: AutoCompleteCompleteEvent): void {
-    this.cancelItemRequest(); // Cancel previous request to prevent race condition
-
-    // Reset pagination on new query
-    if (event.query !== this.itemQuery) {
-      this.itemPage = 0;
-      this.itemList.set([]);
-    }
-    this.itemQuery = event.query;
-
-    this.loadItemsPage();
-  }
-
-  /**
-   * Handler for p-autoComplete onLazyLoad (virtual scroll)
-   */
-  onItemLazyLoad(event: { first: number; last: number }): void {
-    this.cancelItemRequest(); // Cancel previous request to prevent race condition
-
-    const currentLength = this.itemList().length;
-    const neededPage = Math.floor(event.last / this.ITEM_PAGE_SIZE);
-
-    // Load next page if approaching end and more records exist
-    if (neededPage >= this.itemPage && currentLength < this.itemTotalRecords()) {
-      this.itemPage = neededPage;
-      this.loadItemsPage();
-    }
+    this.handleAutocompleteQuery(event.query, this.itemSearchSubject, this.itemList, []);
   }
 
   /**
    * Cleanup subscriptions on destroy
    */
   ngOnDestroy(): void {
-    this.cancelItemRequest();
-  }
-
-  /**
-   * Load a page of items
-   */
-  private loadItemsPage(): void {
-    this.itemLoading.set(true);
-
-    this.itemSubscription = this.itemService
-    .completeItemPaged(this.itemQuery, true, this.itemPage, this.ITEM_PAGE_SIZE)
-    .subscribe({
-      next: (response) => {
-        // Append to existing list for virtual scroll
-        const currentList = this.itemList();
-        if (this.itemPage === 0) {
-          this.itemList.set(response.content);
-        } else {
-          this.itemList.set([...currentList, ...response.content]);
-        }
-        this.itemTotalRecords.set(response.totalElements);
-        this.itemLoading.set(false);
-      },
-      error: (error) => {
-        this.logger.error('Error fetching items', error);
-        this.itemLoading.set(false);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erro',
-          detail: 'Erro ao carregar itens. Tente novamente.',
-          life: 5000
-        });
-      }
-    });
-  }
-
-  /**
-   * Cancel ongoing item request
-   */
-  private cancelItemRequest(): void {
-    if (this.itemSubscription && !this.itemSubscription.closed) {
-      this.itemSubscription.unsubscribe();
-    }
+    this.itemSearchSubject.complete();
+    this.usuarioSearchSubject.complete();
   }
 
   /**
@@ -574,25 +534,11 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   }
 
   /**
-   * Autocomplete for Usuarios
+   * Busca usuários para autocomplete com debounce.
+   * O debounce evita chamadas excessivas à API durante a digitação.
    */
   findUsuarios(event: AutoCompleteCompleteEvent): void {
-    this.usuarioService.completeCustom(event.query).subscribe({
-      next: (usuarios) => {
-        this.usuarioList.set(usuarios);
-        if (usuarios.length === 1) {
-          const formGroup = this.form();
-          if (formGroup) {
-            formGroup.patchValue({usuarioEmprestimo: usuarios[0]});
-            this.documentoUsuario.set(usuarios[0].documento);
-          }
-        }
-      },
-      error: (error) => {
-        this.logger.error('Erro ao buscar usuários', error);
-        this.usuarioList.set([]);
-      }
-    });
+    this.handleAutocompleteQuery(event.query, this.usuarioSearchSubject, this.usuarioList, []);
   }
 
   /**

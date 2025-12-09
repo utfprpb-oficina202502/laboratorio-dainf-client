@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {Injectable, isDevMode} from '@angular/core';
 
 /**
  * Serviço de abstração de armazenamento que usa localStorage.
@@ -22,7 +22,9 @@ export class StorageService {
     try {
       this.getStorage().setItem(key, value);
     } catch (error) {
-      console.error('Erro ao armazenar item:', error);
+      if (isDevMode()) {
+        console.error('Erro ao armazenar item:', error);
+      }
     }
   }
 
@@ -33,7 +35,9 @@ export class StorageService {
     try {
       return this.getStorage().getItem(key);
     } catch (error) {
-      console.error('Erro ao recuperar item:', error);
+      if (isDevMode()) {
+        console.error('Erro ao recuperar item:', error);
+      }
       return null;
     }
   }
@@ -45,7 +49,9 @@ export class StorageService {
     try {
       this.getStorage().removeItem(key);
     } catch (error) {
-      console.error('Erro ao remover item:', error);
+      if (isDevMode()) {
+        console.error('Erro ao remover item:', error);
+      }
     }
   }
 
@@ -56,7 +62,9 @@ export class StorageService {
     try {
       this.getStorage().clear();
     } catch (error) {
-      console.error('Erro ao limpar storage:', error);
+      if (isDevMode()) {
+        console.error('Erro ao limpar storage:', error);
+      }
     }
   }
 

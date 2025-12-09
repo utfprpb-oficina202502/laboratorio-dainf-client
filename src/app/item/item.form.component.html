@@ -245,11 +245,7 @@
                     minQueryLength="2"
                     placeholder="Digite para buscar..."
                     [suggestions]="grupoList()"
-                    (onLazyLoad)="onGrupoLazyLoad($event)"
-                    [lazy]="true"
-                    [virtualScrollItemSize]="40"
                     (completeMethod)="findGrupos($event)"
-                    [virtualScroll]="true"
                     styleClass="flex-1"
                     inputStyleClass="w-full">
                   </p-autoComplete>

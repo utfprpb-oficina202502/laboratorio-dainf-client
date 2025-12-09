@@ -1,6 +1,13 @@
-import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
-
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnDestroy,
+  signal
+} from '@angular/core';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import {Subject} from 'rxjs';
 
 import {Saida} from './saida';
 import {SaidaService} from './saida.service';
@@ -52,13 +59,15 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SaidaFormComponent extends PrimeReactiveCrudFormComponent<Saida, number> {
+export class SaidaFormComponent extends PrimeReactiveCrudFormComponent<Saida, number> implements OnDestroy {
   protected override service = inject(SaidaService);
   protected override urlList = '/saida';
   protected override type = Saida;
   private readonly fb = inject(FormBuilder);
   private readonly itemService = inject(ItemService);
   protected readonly breakpointService = inject(BreakpointService);
+  /** Subject para debounce da busca de itens */
+  private readonly itemSearchSubject = new Subject<string>();
 
   // Signals for state management
   protected readonly itemList = signal<Item[]>([]);
@@ -84,6 +93,18 @@ export class SaidaFormComponent extends PrimeReactiveCrudFormComponent<Saida, nu
 
   constructor() {
     super();
+
+    // Configura debounce para busca de itens usando método da classe base
+    this.setupAutocompleteDebounce(
+      this.itemSearchSubject,
+      (query) => this.itemService.completeItem(query, true),
+      this.itemList,
+      'Erro ao buscar itens'
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.itemSearchSubject.complete();
   }
 
   /**
@@ -108,12 +129,11 @@ export class SaidaFormComponent extends PrimeReactiveCrudFormComponent<Saida, nu
   }
 
   /**
-   * Autocomplete for Items
+   * Busca itens para autocomplete com debounce.
+   * O debounce evita chamadas excessivas à API durante a digitação.
    */
   findProdutos(event: AutoCompleteCompleteEvent): void {
-    this.itemService.completeItem(event.query, true).subscribe(e => {
-      this.itemList.set(e);
-    });
+    this.handleAutocompleteQuery(event.query, this.itemSearchSubject, this.itemList, []);
   }
 
   /**

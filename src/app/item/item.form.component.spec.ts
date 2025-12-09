@@ -311,33 +311,55 @@ describe('ItemFormComponent', () => {
       fixture.detectChanges();
     });
 
-    it('should fetch grupos on autocomplete event', () => {
+    it('should fetch grupos on autocomplete event with debounce', fakeAsync(() => {
       grupoService.completePaged.mockReturnValue(of(mockPageResponse));
 
       component.findGrupos({query: 'Eletr'} as any);
 
-      expect(grupoService.completePaged).toHaveBeenCalledWith('Eletr', 0, 10);
-      expect(component['grupoList']()).toEqual(mockPageResponse.content);
-    });
+      // Before debounce triggers, service should not be called
+      expect(grupoService.completePaged).not.toHaveBeenCalled();
 
-    it('should handle error when fetching grupos', () => {
+      // Advance time to trigger debounce (300ms)
+      tick(300);
+
+      expect(grupoService.completePaged).toHaveBeenCalledWith('Eletr', 0, 20);
+      expect(component['grupoList']()).toEqual(mockPageResponse.content);
+    }));
+
+    it('should handle error when fetching grupos with debounce', fakeAsync(() => {
       const error = new Error('Network error');
       grupoService.completePaged.mockReturnValue(throwError(() => error));
 
       component.findGrupos({query: 'test'} as any);
+      tick(300);
 
-      expect(loggerService.error).toHaveBeenCalledWith('Error fetching grupos', error);
-    });
+      expect(loggerService.error).toHaveBeenCalledWith('Erro ao buscar grupos', error);
+    }));
 
-    it('should cancel previous grupo request before making new one', () => {
+    it('should use distinctUntilChanged to avoid duplicate requests', fakeAsync(() => {
+      grupoService.completePaged.mockReturnValue(of(mockPageResponse));
+
+      component.findGrupos({query: 'test'} as any);
+      tick(100);
+      component.findGrupos({query: 'test'} as any); // Same query
+      tick(300);
+
+      // Should only call once due to distinctUntilChanged
+      expect(grupoService.completePaged).toHaveBeenCalledTimes(1);
+    }));
+
+    it('should use switchMap to cancel previous requests', fakeAsync(() => {
       grupoService.completePaged.mockReturnValue(of(mockPageResponse));
 
       component.findGrupos({query: 'first'} as any);
+      tick(100);
       component.findGrupos({query: 'second'} as any);
+      tick(300);
 
-      // Subscription should be canceled and new one created
-      expect(grupoService.completePaged).toHaveBeenCalledTimes(2);
-    });
+      // Due to debounce, only the last query should trigger a request
+      expect(grupoService.completePaged).toHaveBeenCalledTimes(1);
+      expect(grupoService.completePaged).toHaveBeenCalledWith('second', 0, 20);
+    }));
   });
 
   describe('Image Management', () => {
@@ -678,21 +700,18 @@ describe('ItemFormComponent', () => {
   });
 
   describe('Component Cleanup', () => {
-    it('should cancel grupo subscription on destroy', () => {
-      const mockPageResponse = {
-        content: mockGrupos,
-        totalElements: mockGrupos.length,
-        totalPages: 1,
-        size: 10,
-        number: 0
-      };
-      grupoService.completePaged.mockReturnValue(of(mockPageResponse));
-      component.findGrupos({query: 'test'} as any);
+    it('should complete grupoSearchSubject on destroy', () => {
+      // Access the private Subject to verify it completes on destroy
+      const grupoSearchSubject = component['grupoSearchSubject'];
+      let completed = false;
+      grupoSearchSubject.subscribe({
+        complete: () => completed = true
+      });
 
       component.ngOnDestroy();
 
-      // No errors should be thrown
-      expect(component['grupoSubscription']?.closed).toBeTruthy();
+      // Subject should be completed
+      expect(completed).toBe(true);
     });
 
     it('should cancel images subscription on destroy', () => {
@@ -949,11 +968,6 @@ describe('ItemFormComponent', () => {
       component.ngOnInit();
       fixture.detectChanges();
       component['object'].set(mockItem);
-    });
-
-    it('cancelGrupoRequest não quebra se subscription já fechada', () => {
-      component['grupoSubscription'] = { closed: true, unsubscribe: jest.fn() } as any;
-      expect(() => component['cancelGrupoRequest']()).not.toThrow();
     });
 
     it('cancelImagesRequest não quebra se subscription já fechada', () => {
