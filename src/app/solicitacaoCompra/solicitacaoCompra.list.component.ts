@@ -21,50 +21,51 @@ import { SharedListComponentBase } from '../framework/component/shared-list-base
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SolicitacaoCompraListComponent extends SharedListComponentBase<SolicitacaoCompra, ListComponentConfig, SolicitacaoCompraService> {
+  public static readonly listConfig = createListComponentConfig(
+    [
+      {
+        field: 'descricao',
+        header: 'Descrição',
+        type: 'text',
+        sortable: true,
+        filterable: true,
+        minWidth: '20rem'
+      },
+      {
+        field: 'dataSolicitacao',
+        header: 'Data Solicitação',
+        type: 'date',
+        sortable: true,
+        filterable: true,
+        width: '12rem',
+        align: 'center'
+      },
+      {
+        field: 'usuarioNome',
+        header: 'Usuário',
+        type: 'text',
+        sortable: true,
+        filterable: true,
+        minWidth: '16rem'
+      }
+    ],
+    ['descricao', 'dataSolicitacao', 'usuarioNome'],
+    'descricao',
+    'Solicitações de Compra',
+    'solicitacao-compra-list'
+  );
+
   columnsTable: string[] = [];
   contextMenuItems: MenuItem[] = [];
   readonly service = inject(SolicitacaoCompraService);
   urlForm = 'solicitacaoCompra/form';
 
   constructor() {
-    const listConfig = createListComponentConfig(
-      [
-        {
-          field: 'descricao',
-          header: 'Descrição',
-          type: 'text',
-          sortable: true,
-          filterable: true,
-          minWidth: '20rem'
-        },
-        {
-          field: 'dataSolicitacao',
-          header: 'Data Solicitação',
-          type: 'date',
-          sortable: true,
-          filterable: true,
-          width: '12rem',
-          align: 'center'
-        },
-        {
-          field: 'usuarioNome',
-          header: 'Usuário',
-          type: 'text',
-          sortable: true,
-          filterable: true,
-          minWidth: '16rem'
-        }
-      ],
-      ['descricao', 'dataSolicitacao', 'usuarioNome'],
-      'descricao',
-      'Solicitações de Compra',
-      'solicitacao-compra-list'
-    );
     super({
       entityName: 'Solicitação de Compra',
       entityPluralName: 'Solicitações de Compra',
       exportFileName: 'solicitacoes-compra',
-      listConfig,
+      listConfig: SolicitacaoCompraListComponent.listConfig,
       entityService: inject(SolicitacaoCompraService),
       injector: inject(Injector)
     });
@@ -84,6 +85,10 @@ export class SolicitacaoCompraListComponent extends SharedListComponentBase<Soli
         command: () => this.delete(solicitacaoCompra.id)
       }
     ];
+    const menu = this.actionsMenu?.();
+    if (menu && typeof menu.toggle === 'function') {
+      menu.toggle(_event);
+    }
   }
 
   onKeyDown(event: KeyboardEvent, solicitacaoCompra: SolicitacaoCompra): void {
@@ -91,14 +96,6 @@ export class SolicitacaoCompraListComponent extends SharedListComponentBase<Soli
       event.preventDefault();
       this.openOptions(event, solicitacaoCompra);
     }
-  }
-
-  edit(_id: number): void {
-    // Implement edit logic or call base method
-  }
-
-  delete(_id: number): void {
-    // Implement delete logic or call base method
   }
 
 }
