@@ -48,6 +48,7 @@ import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
 import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.component';
 import {LoggerService} from '../framework/services/logger.service';
+import {formatarHistoricoReserva} from '../framework/utils/historico-transicao.utils';
 
 @Component({
   selector: 'app-form-emprestimo',
@@ -1118,9 +1119,16 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
 
     const formGroup = this.form();
     if (formGroup) {
+      const observacaoComHistorico = formatarHistoricoReserva(
+        reserva.id,
+        reserva.usuario?.nome || 'Usuário desconhecido',
+        reserva.dataReserva,
+        reserva.observacao
+      );
+
       formGroup.patchValue({
         usuarioEmprestimo: reserva.usuario,
-        observacao: reserva.observacao
+        observacao: observacaoComHistorico
       });
     }
     if (reserva.usuario?.documento) {
