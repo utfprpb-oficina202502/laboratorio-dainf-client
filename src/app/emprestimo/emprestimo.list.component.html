@@ -471,7 +471,7 @@
             </td>
             <td class="text-center">{{ emprestimoItem.qtde }}</td>
             <td class="text-center">
-              @if (emprestimoItem.devolver) {
+              @if (hasDevolucao(emprestimoItem)) {
                 <p-tag severity="success" value="Sim"></p-tag>
               } @else {
                 <p-tag severity="secondary" value="Não"></p-tag>
