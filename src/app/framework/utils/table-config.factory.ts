@@ -92,3 +92,78 @@ export function createTableConfig(partialConfig: Partial<TableConfiguration>): T
   }
   return config;
 }
+
+/**
+ * Cria configuração padrão para coluna de ID/Código
+ * @returns Configuração da coluna ID
+ */
+export function createIdColumn(): TableColumn {
+  return {
+    field: 'id',
+    header: 'Código',
+    type: 'number',
+    sortable: true,
+    filterable: true,
+    width: '8rem',
+    align: 'center'
+  };
+}
+
+/**
+ * Cria configuração padrão para coluna de ações
+ * @returns Configuração da coluna de ações
+ */
+export function createActionsColumn(): TableColumn {
+  return {
+    field: 'actions',
+    header: 'Opções',
+    type: 'custom',
+    sortable: false,
+    filterable: false,
+    exportable: false,
+    toggleable: false,
+    width: '12rem',
+    align: 'center'
+  };
+}
+
+/**
+ * Interface para configuração de componentes de lista
+ */
+export interface ListComponentConfig {
+  entityColumns: TableColumn[];
+  globalFilterFields: string[];
+  defaultSortField: string;
+  caption: string;
+  stateKey: string;
+  columnsTable: string[];
+}
+
+/**
+ * Cria configuração completa para componentes de lista
+ * @param entityColumns Colunas específicas da entidade
+ * @param globalFilterFields Campos para filtro global
+ * @param defaultSortField Campo padrão para ordenação
+ * @param caption Título da tabela
+ * @param stateKey Chave para estado da tabela
+ * @returns Configuração completa da tabela
+ */
+export function createListComponentConfig(
+  entityColumns: TableColumn[],
+  globalFilterFields: string[],
+  defaultSortField: string,
+  caption: string,
+  stateKey: string
+): ListComponentConfig {
+  const columns = [createIdColumn(), ...entityColumns, createActionsColumn()];
+  const columnsTable = columns.map(column => column.field);
+
+  return {
+    entityColumns,
+    globalFilterFields: ['id', ...globalFilterFields],
+    defaultSortField,
+    caption,
+    stateKey,
+    columnsTable
+  };
+}

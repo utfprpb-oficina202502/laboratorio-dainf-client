@@ -1046,8 +1046,43 @@ describe('EmprestimoListComponent', () => {
       component.abrirDialogItens(emprestimo);
 
       expect(component.dialogItensVisible).toBe(true);
-      expect(component.emprestimoSelecionadoParaItens).toBe(emprestimo);
+      // After loading full object from backend, selected should be replaced
+      expect(component.emprestimoSelecionadoParaItens).toBe(mockEmprestimoCompleto);
       expect(emprestimoService.findOne).toHaveBeenCalledWith(1);
+    });
+
+    it('deve retornar true em hasDevolucao quando existir devolucao correspondente (id + qtde)', () => {
+      const emprestimo = EmprestimoTestFactory.createPendente({id: 2});
+      const mockEmprestimoCompleto = EmprestimoTestFactory.createPendente({
+        id: 2,
+        emprestimoItem: [{ id: 10, item: { id: 100, nome: 'Item A' }, qtde: 3 } as any],
+        emprestimoDevolucaoItem: [{ id: 50, item: { id: 100, nome: 'Item A' }, qtde: 3 } as any]
+      });
+
+      emprestimoService.findOne.mockReturnValue(of(mockEmprestimoCompleto));
+
+      component.abrirDialogItens(emprestimo);
+
+      const loadedItems = component.itensDoEmprestimo();
+      expect(loadedItems.length).toBe(1);
+      expect(component.hasDevolucao(loadedItems[0])).toBe(true);
+    });
+
+    it('deve retornar false em hasDevolucao quando nao existir devolucao correspondente', () => {
+      const emprestimo = EmprestimoTestFactory.createPendente({id: 3});
+      const mockEmprestimoCompleto = EmprestimoTestFactory.createPendente({
+        id: 3,
+        emprestimoItem: [{ id: 11, item: { id: 101, nome: 'Item B' }, qtde: 2 } as any],
+        emprestimoDevolucaoItem: [{ id: 51, item: { id: 102, nome: 'Outro Item' }, qtde: 2 } as any]
+      });
+
+      emprestimoService.findOne.mockReturnValue(of(mockEmprestimoCompleto));
+
+      component.abrirDialogItens(emprestimo);
+
+      const loadedItems = component.itensDoEmprestimo();
+      expect(loadedItems.length).toBe(1);
+      expect(component.hasDevolucao(loadedItems[0])).toBe(false);
     });
 
     it('deve definir loading durante carregamento de itens', () => {

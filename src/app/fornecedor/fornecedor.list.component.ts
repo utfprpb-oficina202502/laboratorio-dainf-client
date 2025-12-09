@@ -1,15 +1,14 @@
-import {ChangeDetectionStrategy, Component, forwardRef, inject, viewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, Injector, inject} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
-import {TableColumn} from '../framework/model/table-config.interface';
 import {Fornecedor} from './fornecedor';
 import {FornecedorService} from './fornecedor.service';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
 import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
 import {CpfCnpjPipe} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe";
-import {createTableConfig} from '../framework/utils/table-config.factory';
+import {createListComponentConfig} from '../framework/utils/table-config.factory';
 import {MenuItem} from 'primeng/api';
-import {Popover} from 'primeng/popover';
+import { SharedListComponentBase } from '../framework/component/shared-list-base.component';
 
 @Component({
     selector: 'app-list-fornecedor',
@@ -24,82 +23,59 @@ import {Popover} from 'primeng/popover';
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => FornecedorListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, number> {
-  protected override service = inject(FornecedorService);
-  protected override columnsTable = ['id', 'razaoSocial', 'nomeFantasia', 'cnpj', 'actions'];
-  protected override urlForm = 'fornecedor/form';
+export class FornecedorListComponent extends SharedListComponentBase<Fornecedor, any, FornecedorService> {
+  public readonly listConfig = createListComponentConfig(
+    [
+      {
+        field: 'razaoSocial',
+        header: 'Razão Social',
+        type: 'text',
+        sortable: true,
+        filterable: true,
+        minWidth: '20rem'
+      },
+      {
+        field: 'nomeFantasia',
+        header: 'Nome Fantasia',
+        type: 'text',
+        sortable: true,
+        filterable: true,
+        minWidth: '18rem'
+      },
+      {
+        field: 'cnpj',
+        header: 'CNPJ',
+        type: 'custom',
+        sortable: true,
+        filterable: true,
+        width: '14rem',
+        align: 'center'
+      }
+    ],
+    ['razaoSocial', 'nomeFantasia', 'cnpj'],
+    'razaoSocial',
+    'Fornecedores',
+    'fornecedor-list'
+  );
 
-  readonly actionsMenu = viewChild.required<Popover>('actionsMenu');
   contextMenuItems: MenuItem[] = [];
-
-  private readonly tableColumns: TableColumn[] = [
-    {
-      field: 'id',
-      header: 'Código',
-      type: 'number',
-      sortable: true,
-      filterable: true,
-      width: '8rem',
-      align: 'center'
-    },
-    {
-      field: 'razaoSocial',
-      header: 'Razão Social',
-      type: 'text',
-      sortable: true,
-      filterable: true,
-      minWidth: '20rem'
-    },
-    {
-      field: 'nomeFantasia',
-      header: 'Nome Fantasia',
-      type: 'text',
-      sortable: true,
-      filterable: true,
-      minWidth: '18rem'
-    },
-    {
-      field: 'cnpj',
-      header: 'CNPJ',
-      type: 'custom',
-      sortable: true,
-      filterable: true,
-      width: '14rem',
-      align: 'center'
-    },
-    {
-      field: 'actions',
-      header: 'Opções',
-      type: 'custom',
-      sortable: false,
-      filterable: false,
-      exportable: false,
-      toggleable: false,
-      width: '12rem',
-      align: 'center'
-    }
-  ];
+  readonly service = inject(FornecedorService);
+  columnsTable: string[] = [];
+  urlForm = 'fornecedor/form';
 
   constructor() {
-    super();
-
-    this.hostListenerColumnEnable = false;
+    super({
+      entityName: 'Fornecedor',
+      entityPluralName: 'Fornecedores',
+      exportFileName: 'fornecedores',
+      listConfig: FornecedorListComponent.prototype.listConfig,
+      entityService: inject(FornecedorService),
+      injector: inject(Injector)
+    });
     this.configureTable();
   }
 
-  protected override getEntityName(): string {
-    return 'Fornecedor';
-  }
-
-  protected override getEntityPluralName(): string {
-    return 'Fornecedores';
-  }
-
-  protected override getExportFileName(): string {
-    return 'fornecedores';
-  }
-
-  openOptions(event: Event, fornecedor: Fornecedor): void {
+  openOptions(_event: Event, fornecedor: Fornecedor): void {
     this.contextMenuItems = [
       {
         label: 'Editar',
@@ -112,8 +88,6 @@ export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, 
         command: () => this.delete(fornecedor.id)
       }
     ];
-
-    this.actionsMenu().toggle(event);
   }
 
   onKeyDown(event: KeyboardEvent, fornecedor: Fornecedor): void {
@@ -123,17 +97,12 @@ export class FornecedorListComponent extends PrimeCrudListComponent<Fornecedor, 
     }
   }
 
-  private configureTable(): void {
-    this.tableConfig = createTableConfig({
-      columns: this.tableColumns,
-      globalFilterFields: ['id', 'razaoSocial', 'nomeFantasia', 'cnpj'],
-      defaultSortField: 'razaoSocial',
-      caption: 'Fornecedores',
-      stateKey: 'fornecedor-list',
-      // ...outras propriedades específicas...
-    });
-
-    this.columnsTable = this.tableConfig.columns.map(column => column.field);
-    this.displayedColumns = [...this.columnsTable];
+  edit(_id: number): void {
+    // Implement edit logic or call base method
   }
+
+  delete(_id: number): void {
+    // Implement delete logic or call base method
+  }
+
 }

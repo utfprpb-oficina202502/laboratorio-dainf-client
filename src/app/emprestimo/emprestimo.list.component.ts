@@ -163,7 +163,33 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     });
   }
 
-  // Getter for backwards compatibility with custom methods
+  /**
+   * Verifica se existe um registro de devolução correspondente para o item
+   * comparando item.id e qtde dentro do objeto emprestimo selecionado.
+   */
+  hasDevolucao(emprestimoItem: EmprestimoItem): boolean {
+    const emprestimo = this.emprestimoSelecionadoParaItens;
+    const devolucao = emprestimo?.emprestimoDevolucaoItem;
+    if (!devolucao || !emprestimoItem?.item?.id) {
+      return false;
+    }
+
+    // 1) Tenta correspondência exata por item.id + qtde
+    const exactMatch = devolucao.some(
+      edi => edi.item?.id === emprestimoItem.item?.id && Number(edi.qtde) === Number(emprestimoItem.qtde)
+    );
+    if (exactMatch) return true;
+
+    // 2) Se não encontrou correspondência exata, agrupa por item.id e soma as quantidades
+    //    para verificar se a soma das devoluções para o mesmo item cobre a quantidade do emprestimoItem
+    const totalDevolvidoParaItem = devolucao
+      .filter(edi => edi.item?.id === emprestimoItem.item?.id)
+      .reduce((acc, edi) => acc + (Number(edi.qtde) || 0), 0);
+
+    return totalDevolvidoParaItem >= Number(emprestimoItem.qtde);
+  }
+
+  // Getter para compatibilidade com métodos customizados
   protected get emprestimoService(): EmprestimoService {
     return this.service;
   }
@@ -529,6 +555,8 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
    */
   abrirDialogItens(emprestimo: Emprestimo): void {
     this.actionsMenu().hide();
+    // Define inicialmente o empréstimo selecionado para exibir informações básicas no cabeçalho;
+    // quando os dados completos forem carregados do backend, substituímos pelo objeto completo
     this.emprestimoSelecionadoParaItens = emprestimo;
     this.dialogItensVisible = true;
     this.loadingItensDialog.set(true);
@@ -536,6 +564,8 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
 
     this.emprestimoService.findOne(emprestimo.id).subscribe({
       next: (emprestimoCompleto) => {
+        // Substitui o empréstimo selecionado pelo objeto completo retornado pelo backend
+        this.emprestimoSelecionadoParaItens = emprestimoCompleto;
         this.itensDoEmprestimo.set(emprestimoCompleto.emprestimoItem || []);
         this.loadingItensDialog.set(false);
         this.cdr?.markForCheck();
