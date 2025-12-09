@@ -8,9 +8,9 @@ import {of, throwError} from 'rxjs';
 import {CatalogoComponent} from './catalogo.component';
 import {ItemService} from '../item.service';
 import {GrupoService} from '../../grupo/grupo.service';
-import {CartService} from '../../framework/services/cart.service';
-import {BreakpointService} from '../../framework/services/breakpoint.service';
-import {LoggerService} from '../../framework/services/logger.service';
+import {CartService} from '../../framework/service/cart.service';
+import {BreakpointService} from '../../framework/service/breakpoint.service';
+import {LoggerService} from '../../framework/service/logger.service';
 import {Item} from '../item';
 import {Grupo} from '../../grupo/grupo';
 

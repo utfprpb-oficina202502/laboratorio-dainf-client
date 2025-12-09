@@ -6,7 +6,7 @@ import {
   inject,
   signal
 } from '@angular/core';
-import {CommonModule} from '@angular/common';
+
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {Z_INDEX} from '../framework/constants';
@@ -32,7 +32,7 @@ import {FormFieldComponent} from '../framework/component/form-field.component';
 import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
-import {LoggerService} from '../framework/services/logger.service';
+import {LoggerService} from '../framework/service/logger.service';
 
 interface PermissaoSelectItem {
   label: string;
@@ -43,10 +43,8 @@ interface PermissaoSelectItem {
   selector: 'app-form-usuario',
   templateUrl: './usuario.form.component.html',
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     FormsModule,
-    // PrimeNG
     CardModule,
     InputTextModule,
     ButtonModule,
@@ -55,7 +53,6 @@ interface PermissaoSelectItem {
     MultiSelectModule,
     PasswordModule,
     InputMaskModule,
-    // Custom
     FormFieldComponent,
     VoltarComponent,
     CancelarComponent,

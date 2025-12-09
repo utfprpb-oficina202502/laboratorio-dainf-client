@@ -26,14 +26,14 @@ import {LoginService} from '../../login/login.service';
 import {PermissionService} from '../service/permission.service';
 import {ColumnState, TableColumn, TableConfiguration} from '../model/table-config.interface';
 import {debounceTime, distinctUntilChanged, fromEvent, Subject, takeUntil} from 'rxjs';
-import {LoggerService} from '../services/logger.service';
-import {TableExportService} from '../services/table-export.service';
-import {TableStateManagerService} from '../services/table-state-manager.service';
-import {KeyboardShortcut, TableKeyboardService} from '../services/table-keyboard.service';
-import {TableColumnManagerService} from '../services/table-column-manager.service';
-import {TableRowExpansionManagerService} from '../services/table-row-expansion-manager.service';
-import {StorageService} from '../services/storage.service';
-import {BreakpointService} from '../services/breakpoint.service';
+import {LoggerService} from '../service/logger.service';
+import {TableExportService} from '../service/table-export.service';
+import {TableStateManagerService} from '../service/table-state-manager.service';
+import {KeyboardShortcut, TableKeyboardService} from '../service/table-keyboard.service';
+import {TableColumnManagerService} from '../service/table-column-manager.service';
+import {TableRowExpansionManagerService} from '../service/table-row-expansion-manager.service';
+import {StorageService} from '../service/storage.service';
+import {BreakpointService} from '../service/breakpoint.service';
 import {SORT_ORDER, SortOrderType} from '../constants';
 
 @Directive()
@@ -41,7 +41,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
 
   // Loading state signal for skeleton screens
   public readonly loading = signal<boolean>(false);
-  // Core services - now injected in child classes
+  // Core service - now injected in child classes
   protected abstract service: CrudService<T, ID>;
   protected abstract columnsTable: string[];
   protected abstract urlForm: string;
@@ -179,7 +179,7 @@ export abstract class PrimeCrudListComponent<T, ID> implements OnInit, OnDestroy
   private stateStorageRef?: Storage;
 
   constructor() {
-    // Inject all required services using inject() function
+    // Inject all required service using inject() function
     this.injector = inject(Injector);
     this.router = inject(Router);
     this.messageService = inject(MessageService);

@@ -1,10 +1,10 @@
 import {ChangeDetectionStrategy, Component} from '@angular/core';
-import {CommonModule} from '@angular/common';
+
 import {SkeletonModule} from 'primeng/skeleton';
 
 @Component({
   selector: 'app-skeleton-card',
-  imports: [CommonModule, SkeletonModule],
+  imports: [SkeletonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="skeleton-card">

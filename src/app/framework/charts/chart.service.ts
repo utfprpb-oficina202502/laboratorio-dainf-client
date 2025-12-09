@@ -1,8 +1,8 @@
 import {effect, inject, Injectable} from '@angular/core';
-import {ThemeService} from '../services/theme.service';
+import {ThemeService} from '../service/theme.service';
 import {chartColorSchemes, ChartColorsConfig} from './chart-colors.config';
-import {LoggerService} from '../services/logger.service';
-import {BreakpointService} from '../services/breakpoint.service';
+import {LoggerService} from '../service/logger.service';
+import {BreakpointService} from '../service/breakpoint.service';
 
 // Type imports para manter a tipagem sem forçar o bundling
 import type * as am5Types from '@amcharts/amcharts5';

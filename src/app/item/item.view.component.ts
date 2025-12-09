@@ -1,5 +1,5 @@
 import {Component, inject, Injector, OnInit} from '@angular/core';
-import {CommonModule, NgOptimizedImage} from '@angular/common';
+import {NgOptimizedImage} from '@angular/common';
 import {Item} from './item';
 import {ItemService} from './item.service';
 import {Reserva} from '../reserva/reserva';
@@ -15,9 +15,7 @@ import {CardModule} from 'primeng/card';
     selector: 'app-view-item',
     templateUrl: './item.view.component.html',
   imports: [
-    CommonModule,
     NgOptimizedImage,
-    // PrimeNG
     DataViewModule,
     TagModule,
     ButtonModule,

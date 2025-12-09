@@ -1,7 +1,7 @@
 import {ComponentFixture, fakeAsync, flush, TestBed, tick} from '@angular/core/testing';
 import {UsageChartComponent} from './usage-chart.component';
 import {ChartService} from '../../../framework/charts/chart.service';
-import {LoggerService} from '../../../framework/services/logger.service';
+import {LoggerService} from '../../../framework/service/logger.service';
 import {HistoricoUsoMensal} from '../../models/dashboard.models';
 
 /**

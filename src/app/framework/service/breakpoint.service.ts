@@ -20,7 +20,6 @@ import {BreakpointObserver, Breakpoints} from '@angular/cdk/layout';
  * Uso em templates:
  * ```html
  * <p-datePicker
- *   [touchUI]="breakpointService.isMobile()"
  *   [readonlyInput]="breakpointService.isMobile()">
  * </p-datePicker>
  * ```

@@ -1,8 +1,8 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {Router} from '@angular/router';
 import {ItemViewModeToggleComponent} from './item-view-mode-toggle.component';
-import {CartService} from '../../framework/services/cart.service';
-import {BreakpointService} from '../../framework/services/breakpoint.service';
+import {CartService} from '../../framework/service/cart.service';
+import {BreakpointService} from '../../framework/service/breakpoint.service';
 import {signal} from '@angular/core';
 
 describe('ItemViewModeToggleComponent', () => {

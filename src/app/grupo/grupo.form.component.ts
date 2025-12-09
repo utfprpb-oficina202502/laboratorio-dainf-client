@@ -7,7 +7,7 @@ import {
   OnInit,
   signal
 } from '@angular/core';
-import {CommonModule} from '@angular/common';
+
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Subject, Subscription} from 'rxjs';
 import {debounceTime, distinctUntilChanged, takeUntil} from 'rxjs/operators';
@@ -35,17 +35,15 @@ import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
 import {FormFieldComponent} from '../framework/component/form-field.component';
-import {LoggerService} from '../framework/services/logger.service';
+import {LoggerService} from '../framework/service/logger.service';
 
 @Component({
   selector: 'app-form-grupo',
   templateUrl: './grupo.form.component.html',
   styleUrls: ['./grupo.form.component.css'],
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     FormsModule,
-    // PrimeNG
     CardModule,
     InputTextModule,
     ButtonModule,
@@ -55,11 +53,10 @@ import {LoggerService} from '../framework/services/logger.service';
     ProgressSpinnerModule,
     IconFieldModule,
     InputIconModule,
-    // Custom
     VoltarComponent,
     CancelarComponent,
     SalvarComponent,
-    FormFieldComponent,
+    FormFieldComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

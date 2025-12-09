@@ -1,19 +1,26 @@
-import { ChangeDetectionStrategy, Component, signal, inject } from '@angular/core';
-import { OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { CardModule } from 'primeng/card';
-import { ConfiguracoesService, Configuracoes } from './configuracoes.service';
-import { Router } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal
+} from '@angular/core';
+
+import {FormsModule} from '@angular/forms';
+import {ButtonModule} from 'primeng/button';
+import {InputTextModule} from 'primeng/inputtext';
+import {CardModule} from 'primeng/card';
+import {Configuracoes, ConfiguracoesService} from './configuracoes.service';
+import {Router} from '@angular/router';
 
 @Component({
   selector: 'app-configuracoes',
   templateUrl: './configuracoes.component.html',
   styleUrls: ['./configuracoes.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, ButtonModule, InputTextModule, CardModule]
+  imports: [FormsModule, ButtonModule, InputTextModule, CardModule]
 })
 export class ConfiguracoesComponent implements OnInit, OnDestroy {
   protected readonly nadaConstaEmail = signal('');

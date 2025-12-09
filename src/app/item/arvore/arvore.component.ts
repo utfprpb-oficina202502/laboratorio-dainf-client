@@ -7,16 +7,16 @@ import {
   OnInit,
   signal
 } from '@angular/core';
-import {CommonModule} from '@angular/common';
+
 import {Router} from '@angular/router';
 
 import {Item} from '../item';
 import {ItemService} from '../item.service';
 import {GrupoService} from '../../grupo/grupo.service';
 import {Grupo} from '../../grupo/grupo';
-import {CartService} from '../../framework/services/cart.service';
-import {BreakpointService} from '../../framework/services/breakpoint.service';
-import {LoggerService} from '../../framework/services/logger.service';
+import {CartService} from '../../framework/service/cart.service';
+import {BreakpointService} from '../../framework/service/breakpoint.service';
+import {LoggerService} from '../../framework/service/logger.service';
 import {ItemAvailabilityUtil} from '../../framework/utils/item-availability.util';
 import {IMAGE, NAVIGATION, TREE} from '../../framework/constants';
 import {environment} from '../../../environments/environment';
@@ -63,7 +63,6 @@ interface TreeNodeData {
   templateUrl: './arvore.component.html',
   styleUrl: './arvore.component.css',
   imports: [
-    CommonModule,
     FormsModule,
     TreeModule,
     ButtonModule,

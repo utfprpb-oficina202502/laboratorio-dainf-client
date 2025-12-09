@@ -7,10 +7,10 @@ import {
   output,
   signal
 } from '@angular/core';
-import {CommonModule} from '@angular/common';
+
 
 import {Item} from '../../../item';
-import {CartService} from '../../../../framework/services/cart.service';
+import {CartService} from '../../../../framework/service/cart.service';
 import {environment} from '../../../../../environments/environment';
 
 import {ButtonModule} from 'primeng/button';
@@ -38,7 +38,6 @@ import {FormsModule} from '@angular/forms';
   templateUrl: './item-card.component.html',
   styleUrl: './item-card.component.css',
   imports: [
-    CommonModule,
     FormsModule,
     ButtonModule,
     CardModule,

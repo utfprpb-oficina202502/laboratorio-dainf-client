@@ -2,7 +2,7 @@ import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {signal} from '@angular/core';
 
 import {ItemCardComponent} from './item-card.component';
-import {CartService} from '../../../../framework/services/cart.service';
+import {CartService} from '../../../../framework/service/cart.service';
 import {Item} from '../../../item';
 import {Grupo} from '../../../../grupo/grupo';
 

@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, input, output} from '@angular/core';
-import {CommonModule} from '@angular/common';
+
 import {ButtonModule} from 'primeng/button';
 import {TooltipModule} from 'primeng/tooltip';
 
@@ -9,7 +9,7 @@ import {TooltipModule} from 'primeng/tooltip';
  */
 @Component({
   selector: 'app-action-buttons',
-  imports: [CommonModule, ButtonModule, TooltipModule],
+  imports: [ButtonModule, TooltipModule],
   templateUrl: './action-buttons.component.html',
   styleUrls: ['./action-buttons.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

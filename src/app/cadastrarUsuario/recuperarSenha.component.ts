@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit} from "@angular/core";
-import {CommonModule, NgOptimizedImage} from "@angular/common";
+import {NgOptimizedImage} from "@angular/common";
 import {
   AbstractControl,
   FormBuilder,
@@ -14,15 +14,14 @@ import {ProgressBar} from "primeng/progressbar";
 import {InputTextModule} from "primeng/inputtext";
 import {CadastrarUsuarioService} from "./cadastrarUsuario.service";
 import {extractRouteParam, parseStringParam} from "../framework/utils/route-params.operators";
-import {ErrorHandlerService} from "../framework/services/error-handler.service";
-import {FormValidationService} from "../framework/services/form-validation.service";
+import {ErrorHandlerService} from "../framework/service/error-handler.service";
+import {FormValidationService} from "../framework/service/form-validation.service";
 
 @Component({
     selector: "app-recuperar-senha",
     templateUrl: "./recuperarSenha.component.html",
     styleUrls: ["./recuperarSenha.component.css"],
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     NgOptimizedImage,
     ProgressBar,

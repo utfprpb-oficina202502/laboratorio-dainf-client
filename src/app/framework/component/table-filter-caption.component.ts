@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, input, output} from '@angular/core';
-import {CommonModule} from '@angular/common';
+
 import {ButtonModule} from 'primeng/button';
 import {InputTextModule} from 'primeng/inputtext';
 import {IconFieldModule} from 'primeng/iconfield';
@@ -11,7 +11,7 @@ import {InputIconModule} from 'primeng/inputicon';
  */
 @Component({
   selector: 'app-table-filter-caption',
-  imports: [CommonModule, ButtonModule, InputTextModule, IconFieldModule, InputIconModule],
+  imports: [ButtonModule, InputTextModule, IconFieldModule, InputIconModule],
   template: `
     <div class="flex items-center justify-end gap-2 flex-wrap">
       <p-iconField iconPosition="left" class="flex-grow-0 flex-shrink min-w-[200px] max-w-[300px]">

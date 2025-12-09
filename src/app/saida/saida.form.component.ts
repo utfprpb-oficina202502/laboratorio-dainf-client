@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
-import {CommonModule} from '@angular/common';
+
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 
 import {Saida} from './saida';
@@ -10,7 +10,7 @@ import {
 import {Item} from '../item/item';
 import {ItemService} from '../item/item.service';
 import {SaidaItem} from './saidaItem';
-import {BreakpointService} from '../framework/services/breakpoint.service';
+import {BreakpointService} from '../framework/service/breakpoint.service';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
@@ -35,10 +35,8 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
   styleUrls: ['./saida.form.component.css'],
   imports: [
     CadastroRapidoComponent,
-    CommonModule,
     ReactiveFormsModule,
     FormsModule,
-    // PrimeNG
     CardModule,
     InputTextModule,
     AutoCompleteModule,
@@ -47,12 +45,10 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
     TableModule,
     TooltipModule,
     TextareaModule,
-    // Custom
     FormFieldComponent,
     VoltarComponent,
     CancelarComponent,
-    SalvarComponent,
-
+    SalvarComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

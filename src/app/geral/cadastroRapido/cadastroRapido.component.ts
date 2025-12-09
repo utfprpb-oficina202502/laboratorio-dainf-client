@@ -1,4 +1,4 @@
-import {Component, computed, inject, input} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, input} from '@angular/core';
 import {Router} from '@angular/router';
 import {Tooltip} from 'primeng/tooltip';
 
@@ -21,7 +21,8 @@ import {Tooltip} from 'primeng/tooltip';
   selector: 'app-cadastro-rapido',
   templateUrl: './cadastroRapido.component.html',
   styleUrls: ['./cadastroRapido.component.css'],
-  imports: [Tooltip]
+  imports: [Tooltip],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CadastroRapidoComponent {
   /** Rota completa calculada a partir de href e id */

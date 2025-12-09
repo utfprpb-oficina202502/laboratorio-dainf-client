@@ -7,7 +7,7 @@ import {
   signal,
   viewChild
 } from '@angular/core';
-import {CommonModule} from '@angular/common';
+
 import {FormsModule} from '@angular/forms';
 import {DialogModule} from 'primeng/dialog';
 import {InputTextModule} from 'primeng/inputtext';
@@ -49,7 +49,6 @@ import {Popover, PopoverModule} from 'primeng/popover';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
     FormsModule,
     CardModule,
     TableModule,

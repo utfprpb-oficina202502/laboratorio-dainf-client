@@ -1,9 +1,11 @@
 import {
+  afterNextRender,
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   effect,
   inject,
+  Injector,
   input,
   OnDestroy,
   signal
@@ -11,7 +13,7 @@ import {
 import {Card} from 'primeng/card';
 import {Skeleton} from 'primeng/skeleton';
 import {ChartService} from '../../../framework/charts/chart.service';
-import {LoggerService} from '../../../framework/services/logger.service';
+import {LoggerService} from '../../../framework/service/logger.service';
 import {HistoricoUsoMensal} from '../../models/dashboard.models';
 
 /**
@@ -50,6 +52,7 @@ export class UsageChartComponent implements AfterViewInit, OnDestroy {
   protected readonly hasData = signal(false);
   private readonly chartService = inject(ChartService);
   private readonly logger = inject(LoggerService);
+  private readonly injector = inject(Injector);
   private readonly containerId = 'usage-chart-container';
   private viewInitialized = false;
   private chartCreated = false;
@@ -65,8 +68,8 @@ export class UsageChartComponent implements AfterViewInit, OnDestroy {
         this.hasData.set(true);
 
         if (this.viewInitialized) {
-          // Aguardar o próximo ciclo para garantir que o container exista no DOM
-          setTimeout(() => this.createChart(data), 0);
+          // Aguardar o próximo render para garantir que o container exista no DOM
+          this.scheduleChartCreation(data);
         }
       } else if (!isLoading && data.length === 0) {
         this.hasData.set(false);
@@ -79,9 +82,20 @@ export class UsageChartComponent implements AfterViewInit, OnDestroy {
     const data = this.history();
     if (!this.loading() && data.length > 0) {
       this.hasData.set(true);
-      // Aguardar o próximo ciclo para garantir que o container exista no DOM
-      setTimeout(() => this.createChart(data), 0);
+      // Aguardar o próximo render para garantir que o container exista no DOM
+      this.scheduleChartCreation(data);
     }
+  }
+
+  /**
+   * Agenda a criação do gráfico após o próximo ciclo de renderização.
+   * Usa afterNextRender do Angular para garantir sincronização com o DOM.
+   * @param data Dados do histórico de uso
+   */
+  private scheduleChartCreation(data: HistoricoUsoMensal[]): void {
+    afterNextRender(() => {
+      this.createChart(data);
+    }, {injector: this.injector});
   }
 
   ngOnDestroy(): void {

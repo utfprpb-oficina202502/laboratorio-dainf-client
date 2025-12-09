@@ -229,7 +229,6 @@ describe('SolicitacaoCompraListComponent', () => {
 
     it('deve ter service configurado corretamente', () => {
       expect(component['service']).toBe(solicitacaoCompraService);
-      expect(component['entityService']).toBe(solicitacaoCompraService);
     });
   });
 

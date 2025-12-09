@@ -21,11 +21,11 @@ import {DialogModule} from 'primeng/dialog';
 import {MenuModule} from 'primeng/menu';
 import {NovoComponent} from '../geral/novo/novo.component';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
-import {BreakpointService} from '../framework/services/breakpoint.service';
+import {BreakpointService} from '../framework/service/breakpoint.service';
 import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
 import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
 import {createTableConfig} from '../framework/utils/table-config.factory';
-import {CartService} from '../framework/services/cart.service';
+import {CartService} from '../framework/service/cart.service';
 import {ItemViewModeToggleComponent} from './components/item-view-mode-toggle.component';
 
 @Component({

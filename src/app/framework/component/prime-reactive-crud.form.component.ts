@@ -15,12 +15,12 @@ import {LoaderService} from '../loader/loader.service';
 import {LoginService} from '../../login/login.service';
 import {Subject} from 'rxjs';
 import {takeUntil} from 'rxjs/operators';
-import {LoggerService} from '../services/logger.service';
+import {LoggerService} from '../service/logger.service';
 import {extractRouteParam, parseNumericId} from '../utils/route-params.operators';
-import {FormValidationService} from '../services/form-validation.service';
-import {FormStateManagerService} from '../services/form-state-manager.service';
-import {FormBusinessRulesService} from '../services/form-business-rules.service';
-import {ErrorHandlerService} from '../services/error-handler.service';
+import {FormValidationService} from '../service/form-validation.service';
+import {FormStateManagerService} from '../service/form-state-manager.service';
+import {FormBusinessRulesService} from '../service/form-business-rules.service';
+import {ErrorHandlerService} from '../service/error-handler.service';
 
 @Directive()
 export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, OnDestroy {
@@ -29,7 +29,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
   protected abstract urlList: string;
   protected abstract type?: new () => T;
 
-  // Injected services
+  // Injected service
   protected readonly router: Router;
   protected readonly messageService: MessageService;
   protected readonly route: ActivatedRoute;

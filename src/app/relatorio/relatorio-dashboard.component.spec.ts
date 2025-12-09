@@ -13,7 +13,7 @@ import {GerarRelatorioEvent} from './models/relatorio-card.interface';
 
 /**
  * Testes para RelatorioDashboardComponent
- * Cobre Strategy pattern, guarda de operação concorrente e integração com services
+ * Cobre Strategy pattern, guarda de operação concorrente e integração com service
  */
 describe('RelatorioDashboardComponent', () => {
   let component: RelatorioDashboardComponent;

@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 
 import {ToggleButtonModule} from 'primeng/togglebutton';
-import {ThemeService} from '../services/theme.service';
+import {ThemeService} from '../service/theme.service';
 import {FormsModule} from "@angular/forms";
 
 @Component({
@@ -14,7 +14,7 @@ import {FormsModule} from "@angular/forms";
     <div class="toggle-wrapper">
       <p-toggleButton
         [(ngModel)]="checked"
-        (onChange)="onToggle($event.checked ?? false)"
+        (onChange)="onToggle($event.checked)"
         [onIcon]="'pi pi-moon'"
         [offIcon]="'pi pi-sun'"
         [onLabel]="'Escuro'"

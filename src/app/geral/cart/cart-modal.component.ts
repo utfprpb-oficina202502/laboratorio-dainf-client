@@ -2,8 +2,8 @@ import {ChangeDetectionStrategy, Component, inject, model} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {Router} from '@angular/router';
 
-import {CartService} from '../../framework/services/cart.service';
-import {BreakpointService} from '../../framework/services/breakpoint.service';
+import {CartService} from '../../framework/service/cart.service';
+import {BreakpointService} from '../../framework/service/breakpoint.service';
 import {CartItemComponent} from './cart-item.component';
 
 import {DrawerModule} from 'primeng/drawer';

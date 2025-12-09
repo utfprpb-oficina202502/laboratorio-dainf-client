@@ -7,7 +7,7 @@ import {
   OnDestroy,
   signal
 } from '@angular/core';
-import {CommonModule, NgOptimizedImage} from '@angular/common';
+import {NgOptimizedImage} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
 import {Emprestimo} from './emprestimo';
@@ -47,7 +47,7 @@ import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
 import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.component';
-import {LoggerService} from '../framework/services/logger.service';
+import {LoggerService} from '../framework/service/logger.service';
 import {formatarHistoricoReserva} from '../framework/utils/historico-transicao.utils';
 
 @Component({
@@ -56,11 +56,9 @@ import {formatarHistoricoReserva} from '../framework/utils/historico-transicao.u
   styleUrls: ['./emprestimo.form.component.css'],
   imports: [
     CadastroRapidoComponent,
-    CommonModule,
     NgOptimizedImage,
     ReactiveFormsModule,
     FormsModule,
-    // PrimeNG
     CardModule,
     InputTextModule,
     TextareaModule,
@@ -73,7 +71,6 @@ import {formatarHistoricoReserva} from '../framework/utils/historico-transicao.u
     DialogModule,
     ScrollPanelModule,
     TagModule,
-    // Custom
     FormFieldComponent,
     VoltarComponent,
     CancelarComponent,

@@ -1,7 +1,7 @@
 import {Directive, forwardRef} from '@angular/core';
 import {FormControl, NG_VALIDATORS, Validator} from '@angular/forms';
-import {StringUtils} from '../../util/string.utils';
-import {CpfCnpjUtil} from '../../util/cpfCnpj.util';
+import {StringUtils} from '../../utils/string.utils';
+import {CpfCnpjUtil} from '../../utils/cpfCnpj.util';
 
 @Directive({
   selector: '[appValidateCnpj][ngModel],[appValidateCnpj][formControl]',

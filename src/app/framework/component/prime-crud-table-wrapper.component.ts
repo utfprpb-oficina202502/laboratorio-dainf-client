@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, input} from '@angular/core';
-import {CommonModule} from '@angular/common';
+
 import {SkeletonTableComponent} from './skeleton-table.component';
 import {CrudListAriaAnnouncerComponent} from './crud-list-aria-announcer.component';
 
@@ -54,7 +54,7 @@ import {CrudListAriaAnnouncerComponent} from './crud-list-aria-announcer.compone
  */
 @Component({
   selector: 'app-prime-crud-table-wrapper',
-  imports: [CommonModule, SkeletonTableComponent, CrudListAriaAnnouncerComponent],
+  imports: [SkeletonTableComponent, CrudListAriaAnnouncerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <!-- ARIA live region integrado automaticamente -->

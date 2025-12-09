@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit} from "@angular/core";
-import {CommonModule, NgOptimizedImage} from "@angular/common";
+import {NgOptimizedImage} from "@angular/common";
 import {ActivatedRoute, Router} from "@angular/router";
 import {MessageService} from "primeng/api";
 import {ProgressBar} from "primeng/progressbar";
@@ -11,7 +11,6 @@ import {extractRouteParam, parseStringParam} from "../framework/utils/route-para
     templateUrl: "./confirmarEmail.component.html",
     styleUrls: ["./confirmarEmail.component.css"],
   imports: [
-    CommonModule,
     NgOptimizedImage,
     ProgressBar
   ],

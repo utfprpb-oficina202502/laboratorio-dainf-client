@@ -7,7 +7,7 @@ import {
   OnInit,
   signal
 } from '@angular/core';
-import {CommonModule, NgOptimizedImage} from '@angular/common';
+import {NgOptimizedImage} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Router} from '@angular/router';
 import {Z_INDEX} from '../framework/constants';
@@ -21,8 +21,8 @@ import {Item} from '../item/item';
 import {ItemService} from '../item/item.service';
 import {ReservaItem} from './reservaItem';
 import {ItemImage} from '../item/itemImage';
-import {BreakpointService} from '../framework/services/breakpoint.service';
-import {CartItem, CartService} from '../framework/services/cart.service';
+import {BreakpointService} from '../framework/service/breakpoint.service';
+import {CartItem, CartService} from '../framework/service/cart.service';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
@@ -49,11 +49,9 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
   styleUrls: ['./reserva.form.component.css'],
   imports: [
     CadastroRapidoComponent,
-    CommonModule,
     NgOptimizedImage,
     ReactiveFormsModule,
     FormsModule,
-    // PrimeNG
     CardModule,
     InputTextModule,
     AutoCompleteModule,
@@ -64,7 +62,6 @@ import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.co
     TextareaModule,
     DialogModule,
     CarouselModule,
-    // Custom
     FormFieldComponent,
     VoltarComponent,
     CancelarComponent,

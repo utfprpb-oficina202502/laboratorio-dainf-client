@@ -1,23 +1,23 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
-import { MessageService, ConfirmationService } from 'primeng/api';
-import { of } from 'rxjs';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {Component} from '@angular/core';
+import {Router} from '@angular/router';
+import {ConfirmationService, MessageService} from 'primeng/api';
+import {of} from 'rxjs';
 
-import { PrimeCrudListComponent } from './prime-crud.list.component';
-import { CrudService } from '../service/crud.service';
-import { LoaderService } from '../loader/loader.service';
-import { LoginService } from '../../login/login.service';
-import { PermissionService } from '../service/permission.service';
-import { LoggerService } from '../services/logger.service';
-import { TableExportService } from '../services/table-export.service';
-import { TableStateManagerService } from '../services/table-state-manager.service';
-import { TableKeyboardService } from '../services/table-keyboard.service';
-import { TableColumnManagerService } from '../services/table-column-manager.service';
-import { TableRowExpansionManagerService } from '../services/table-row-expansion-manager.service';
-import { StorageService } from '../services/storage.service';
-import { BreakpointService } from '../services/breakpoint.service';
-import { Exception } from '../../exception/exception';
+import {PrimeCrudListComponent} from './prime-crud.list.component';
+import {CrudService} from '../service/crud.service';
+import {LoaderService} from '../loader/loader.service';
+import {LoginService} from '../../login/login.service';
+import {PermissionService} from '../service/permission.service';
+import {LoggerService} from '../service/logger.service';
+import {TableExportService} from '../service/table-export.service';
+import {TableStateManagerService} from '../service/table-state-manager.service';
+import {TableKeyboardService} from '../service/table-keyboard.service';
+import {TableColumnManagerService} from '../service/table-column-manager.service';
+import {TableRowExpansionManagerService} from '../service/table-row-expansion-manager.service';
+import {StorageService} from '../service/storage.service';
+import {BreakpointService} from '../service/breakpoint.service';
+import {Exception} from '../../exception/exception';
 
 // Mock entity for testing
 interface TestEntity {

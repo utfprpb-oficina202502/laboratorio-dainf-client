@@ -1,7 +1,7 @@
 import {Directive, forwardRef} from '@angular/core';
 import {FormControl, NG_VALIDATORS, Validator} from '@angular/forms';
-import {StringUtils} from '../../util/string.utils';
-import {EmailUtil} from '../../util/email.util';
+import {StringUtils} from '../../utils/string.utils';
+import {EmailUtil} from '../../utils/email.util';
 
 @Directive({
   selector: '[appValidateEmail][ngModel],[appValidateEmail][formControl]',

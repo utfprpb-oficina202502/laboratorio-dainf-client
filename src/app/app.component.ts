@@ -17,9 +17,9 @@ import {
 import {LoginService} from './login/login.service';
 import {Subject, Subscription} from 'rxjs';
 import {LoaderService} from './framework/loader/loader.service';
-import {ThemeService} from './framework/services/theme.service';
-import {BFCacheService} from './framework/services/bfcache.service';
-import {PwaService} from './framework/services/pwa.service';
+import {ThemeService} from './framework/service/theme.service';
+import {BFCacheService} from './framework/service/bfcache.service';
+import {PwaService} from './framework/service/pwa.service';
 import {Z_INDEX} from './framework/constants';
 import {NavbarComponent} from './navbar/navbar.component';
 import {SidenavComponent} from './sidenav/sidenav.component';

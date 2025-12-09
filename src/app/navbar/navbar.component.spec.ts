@@ -4,8 +4,8 @@ import {MessageService} from 'primeng/api';
 import {NavbarComponent} from './navbar.component';
 import {LoginService} from '../login/login.service';
 import {SidenavService} from '../sidenav/sidenav.service';
-import {StorageService} from '../framework/services/storage.service';
-import {LoggerService} from '../framework/services/logger.service';
+import {StorageService} from '../framework/service/storage.service';
+import {LoggerService} from '../framework/service/logger.service';
 import {ServiceMockFactory} from '../framework/testing/test-helpers';
 
 /**

@@ -7,19 +7,19 @@ import {
   OnInit,
   signal
 } from '@angular/core';
-import {CommonModule} from '@angular/common';
+
 import {FormsModule} from '@angular/forms';
 import {Router} from '@angular/router';
 
 import {Item} from '../item';
 import {ItemService} from '../item.service';
 import {ItemCardComponent} from './components/item-card';
-import {CartService} from '../../framework/services/cart.service';
+import {CartService} from '../../framework/service/cart.service';
 import {GrupoService} from '../../grupo/grupo.service';
 import {Grupo} from '../../grupo/grupo';
 import {PageResponse} from '../../framework/service/crud.service';
-import {BreakpointService} from '../../framework/services/breakpoint.service';
-import {LoggerService} from '../../framework/services/logger.service';
+import {BreakpointService} from '../../framework/service/breakpoint.service';
+import {LoggerService} from '../../framework/service/logger.service';
 import {NAVIGATION} from '../../framework/constants';
 
 import {ButtonModule} from 'primeng/button';
@@ -53,7 +53,6 @@ import {ItemViewModeToggleComponent} from '../components/item-view-mode-toggle.c
   templateUrl: './catalogo.component.html',
   styleUrl: './catalogo.component.css',
   imports: [
-    CommonModule,
     FormsModule,
     ItemCardComponent,
     ItemViewModeToggleComponent,

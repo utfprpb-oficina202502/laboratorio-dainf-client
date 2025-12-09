@@ -1,13 +1,13 @@
 import {computed, inject, Injectable, signal} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree,} from "@angular/router";
-import { of, Observable, throwError } from 'rxjs';
+import {Observable, of, throwError} from 'rxjs';
 import {Usuario} from "../usuario/usuario";
 import {environment} from "../../environments/environment";
 import {catchError, finalize, map, shareReplay, tap} from "rxjs/operators";
 import {UsuarioService} from "../usuario/usuario.service";
 import {Permissao} from "../usuario/permissao";
-import {StorageService} from "../framework/services/storage.service";
+import {StorageService} from "../framework/service/storage.service";
 import {JwtUtil} from "../framework/utils/jwt.util";
 
 @Injectable()
@@ -232,9 +232,7 @@ export class LoginService {
    */
   setAuthenticated(usuario?: Usuario) {
     let user = usuario;
-    if (!user) {
-      user = this.loadUserFromStorage();
-    }
+    user ??= this.loadUserFromStorage();
     if (user) {
       this._currentUser.set(user);
       this.persistUser(user);

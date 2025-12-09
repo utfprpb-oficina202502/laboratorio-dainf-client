@@ -4,7 +4,7 @@ import {signal, WritableSignal} from '@angular/core';
 import {SidenavComponent} from './sidenav.component';
 import {SidenavService} from './sidenav.service';
 import {LoginService} from '../login/login.service';
-import {BreakpointService} from '../framework/services/breakpoint.service';
+import {BreakpointService} from '../framework/service/breakpoint.service';
 import {BehaviorSubject, of} from 'rxjs';
 import {BreakpointState} from '@angular/cdk/layout';
 

@@ -8,7 +8,7 @@ import {catchError, finalize, switchMap} from "rxjs/operators";
 import {of} from "rxjs";
 import {ProgressBar} from "primeng/progressbar";
 import {NgOptimizedImage} from "@angular/common";
-import {StorageService} from "../framework/services/storage.service";
+import {StorageService} from "../framework/service/storage.service";
 
 @Component({
   selector: "app-login",

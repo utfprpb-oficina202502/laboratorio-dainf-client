@@ -195,7 +195,6 @@ describe('CompraListComponent', () => {
 
     it('deve ter service configurado corretamente', () => {
       expect(component['service']).toBe(compraService);
-      expect(component['entityService']).toBe(compraService);
     });
 
     it('deve ter listConfig configurado', () => {

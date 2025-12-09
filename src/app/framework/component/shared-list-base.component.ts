@@ -1,10 +1,15 @@
-import { PrimeCrudListComponent } from './prime-crud.list.component';
-import { Injector } from '@angular/core';
-import { createIdColumn, createActionsColumn, createTableConfig } from '../utils/table-config.factory';
-import { ListComponentConfig } from '../utils/table-config.factory';
-import { CrudService } from '../service/crud.service';
+import {PrimeCrudListComponent} from './prime-crud.list.component';
+import {Injector} from '@angular/core';
+import {
+  createActionsColumn,
+  createIdColumn,
+  createTableConfig,
+  ListComponentConfig
+} from '../utils/table-config.factory';
+import {CrudService} from '../service/crud.service';
+import {TableColumn} from '../model/table-config.interface';
 
-export interface SharedListComponentOptions<T, L extends ListComponentConfig, S extends CrudService<T, any>> {
+export interface SharedListComponentOptions<T, L extends ListComponentConfig, S extends CrudService<T, number>> {
   entityName: string;
   entityPluralName: string;
   exportFileName: string;
@@ -13,13 +18,12 @@ export interface SharedListComponentOptions<T, L extends ListComponentConfig, S 
   injector: Injector;
 }
 
-export abstract class SharedListComponentBase<T, L extends ListComponentConfig, S extends CrudService<T, any>> extends PrimeCrudListComponent<T, any> {
+export abstract class SharedListComponentBase<T, L extends ListComponentConfig, S extends CrudService<T, number>> extends PrimeCrudListComponent<T, number> {
   protected entityName: string;
   protected entityPluralName: string;
   protected exportFileName: string;
   protected listConfig: L;
   protected service: S;
-  protected entityService: S;
   protected injector: Injector;
 
   constructor(options: SharedListComponentOptions<T, L, S>) {
@@ -29,7 +33,6 @@ export abstract class SharedListComponentBase<T, L extends ListComponentConfig, 
     this.exportFileName = options.exportFileName;
     this.listConfig = options.listConfig;
     this.service = options.entityService;
-    this.entityService = options.entityService;
     this.injector = options.injector;
   }
 
@@ -61,7 +64,7 @@ export abstract class SharedListComponentBase<T, L extends ListComponentConfig, 
       stateKey: this.listConfig.stateKey,
       // ...other specific properties...
     });
-    this.columnsTable = this.tableConfig.columns.map((column: any) => column.field);
+    this.columnsTable = this.tableConfig.columns.map((column: TableColumn) => column.field);
     this.displayedColumns = [...this.columnsTable];
   }
 }

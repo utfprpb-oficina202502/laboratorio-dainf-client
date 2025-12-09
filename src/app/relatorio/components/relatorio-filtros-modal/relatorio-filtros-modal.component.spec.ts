@@ -5,7 +5,7 @@ import {signal} from '@angular/core';
 
 import {RelatorioFiltrosModalComponent} from './relatorio-filtros-modal.component';
 import {ItemService} from '../../../item/item.service';
-import {BreakpointService} from '../../../framework/services/breakpoint.service';
+import {BreakpointService} from '../../../framework/service/breakpoint.service';
 import {RelatorioCardConfig} from '../../models/relatorio-card.interface';
 import {Item} from '../../../item/item';
 

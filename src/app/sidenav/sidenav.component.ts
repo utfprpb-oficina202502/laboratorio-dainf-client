@@ -13,7 +13,7 @@ import {SidenavService} from "./sidenav.service";
 import {LoginService} from "../login/login.service";
 import {MenuItem as PrimeMenuItem} from 'primeng/api';
 import {ThemeToggleComponent} from '../framework/component/theme-toggle.component';
-import {BreakpointService} from '../framework/services/breakpoint.service';
+import {BreakpointService} from '../framework/service/breakpoint.service';
 import {Subject, takeUntil} from 'rxjs';
 
 export interface MenuItem {

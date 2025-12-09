@@ -1,7 +1,7 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {FormControl, Validators} from '@angular/forms';
 import {FormFieldComponent} from './form-field.component';
-import {FormValidationService} from '../services/form-validation.service';
+import {FormValidationService} from '../service/form-validation.service';
 
 describe('FormFieldComponent', () => {
   let component: FormFieldComponent;

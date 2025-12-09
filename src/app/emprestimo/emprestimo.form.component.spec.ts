@@ -8,7 +8,7 @@ import {ItemService} from '../item/item.service';
 import {UsuarioService} from '../usuario/usuario.service';
 import {LoaderService} from '../framework/loader/loader.service';
 import {LoginService} from '../login/login.service';
-import {LoggerService} from '../framework/services/logger.service';
+import {LoggerService} from '../framework/service/logger.service';
 import {Emprestimo} from './emprestimo';
 import {EmprestimoItem} from './emprestimoItem';
 import {StatusDevolucao} from './emprestimoDevolucaoItem';
