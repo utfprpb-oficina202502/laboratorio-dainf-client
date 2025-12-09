@@ -1,6 +1,7 @@
 import {ChangeDetectionStrategy, Component, computed, input, output} from '@angular/core';
 import {CommonModule, NgOptimizedImage} from '@angular/common';
 import {CartItem} from '../../framework/services/cart.service';
+import {ItemAvailabilityUtil} from '../../framework/utils/item-availability.util';
 
 import {ButtonModule} from 'primeng/button';
 import {InputNumberModule} from 'primeng/inputnumber';
@@ -54,9 +55,10 @@ export class CartItemComponent {
 
   /**
    * Disponibilidade máxima do item.
+   * Usa fallback para saldo quando disponivelEmprestimoCalculado não está definido.
    */
   protected readonly maxQuantity = computed(() =>
-    this.cartItem().item.disponivelEmprestimoCalculado
+    ItemAvailabilityUtil.getDisponibilidade(this.cartItem().item)
   );
 
   /**
@@ -70,7 +72,7 @@ export class CartItemComponent {
    * Indica se o item está esgotado (disponibilidade = 0).
    */
   protected readonly isUnavailable = computed(() =>
-    this.cartItem().item.disponivelEmprestimoCalculado === 0
+    ItemAvailabilityUtil.getDisponibilidade(this.cartItem().item) === 0
   );
 
   /**

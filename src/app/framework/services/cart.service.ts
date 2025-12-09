@@ -1,6 +1,7 @@
 import {computed, effect, inject, Injectable, signal} from '@angular/core';
 import {Item} from '../../item/item';
 import {LoggerService} from './logger.service';
+import {ItemAvailabilityUtil} from '../utils/item-availability.util';
 
 /**
  * Item no carrinho de reserva.
@@ -123,8 +124,8 @@ export class CartService {
       // Item já existe - incrementa quantidade
       const newQtde = currentItems[existingIndex].qtde + qtde;
 
-      // Valida disponibilidade
-      if (newQtde > item.disponivelEmprestimoCalculado) {
+      // Valida disponibilidade (usa fallback para saldo)
+      if (newQtde > ItemAvailabilityUtil.getDisponibilidade(item)) {
         return false;
       }
 
@@ -132,8 +133,8 @@ export class CartService {
       updated[existingIndex] = {...updated[existingIndex], qtde: newQtde};
       this._items.set(updated);
     } else {
-      // Novo item - valida disponibilidade
-      if (qtde > item.disponivelEmprestimoCalculado) {
+      // Novo item - valida disponibilidade (usa fallback para saldo)
+      if (qtde > ItemAvailabilityUtil.getDisponibilidade(item)) {
         return false;
       }
 
@@ -176,8 +177,8 @@ export class CartService {
 
     const item = currentItems[existingIndex].item;
 
-    // Valida disponibilidade
-    if (qtde > item.disponivelEmprestimoCalculado) {
+    // Valida disponibilidade (usa fallback para saldo)
+    if (qtde > ItemAvailabilityUtil.getDisponibilidade(item)) {
       return false;
     }
 
@@ -265,7 +266,7 @@ export class CartService {
    */
   private isSessionStorageAvailable(): boolean {
     try {
-      return typeof window !== 'undefined' && 'sessionStorage' in window && window.sessionStorage !== null;
+      return globalThis.window !== undefined && 'sessionStorage' in globalThis && globalThis.sessionStorage !== null;
     } catch {
       return false;
     }
