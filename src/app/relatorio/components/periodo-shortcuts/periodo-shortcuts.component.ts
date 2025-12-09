@@ -79,14 +79,53 @@ import {
       transform: scale(0.96);
     }
 
-    @media (max-width: 767px) {
+    /* Mobile: layout em grid para melhor aproveitamento (≤768px conforme BreakpointService) */
+    @media (max-width: 768px) {
       .periodo-shortcuts {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
+        gap: 0.375rem;
       }
 
       .periodo-shortcuts-label {
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.125rem;
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+      }
+
+      .periodo-shortcuts-chips {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        width: 100%;
+      }
+
+      :host ::ng-deep .periodo-chip {
+        justify-content: center;
+        text-align: center;
+        padding: 0.5rem 0.375rem;
+        min-height: 2.25rem; /* Área de toque mínima ~36px */
+        font-size: 0.6875rem;
+      }
+
+      :host ::ng-deep .periodo-chip .p-chip-label {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    /* Telas muito pequenas (320px - 374px): mantém 2 colunas com ajustes de tamanho */
+    @media (max-width: 374px) {
+      .periodo-shortcuts-chips {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.375rem;
+      }
+
+      :host ::ng-deep .periodo-chip {
+        font-size: 0.625rem;
+        padding: 0.375rem 0.25rem;
       }
     }
 

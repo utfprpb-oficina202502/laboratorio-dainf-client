@@ -104,12 +104,4 @@ export class FornecedorListComponent extends SharedListComponentBase<Fornecedor,
     }
   }
 
-  edit(_id: number): void {
-    // Implement edit logic or call base method
-  }
-
-  delete(_id: number): void {
-    // Implement delete logic or call base method
-  }
-
 }

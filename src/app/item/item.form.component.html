@@ -558,6 +558,7 @@
         [totalRecords]="emprestimosTotalRecords()"
         [paginator]="emprestimosTotalRecords() > emprestimosRows()"
         [rowsPerPageOptions]="[5, 10, 25, 50]"
+        paginatorDropdownAppendTo="body"
         [lazy]="true"
         [lazyLoadOnInit]="false"
         (onPage)="onEmprestimosPageChange($event)"

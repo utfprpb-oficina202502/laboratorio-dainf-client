@@ -277,7 +277,7 @@ describe('ActivityTimelineComponent', () => {
       const items = component['timelineItems']();
       const link = component['getRouterLink'](items[0]);
 
-      expect(link).toEqual(['/emprestimo', '123']);
+      expect(link).toEqual(['/emprestimo/form', '123']);
     });
 
     it('deve gerar rota para reserva', () => {
@@ -291,7 +291,7 @@ describe('ActivityTimelineComponent', () => {
       const items = component['timelineItems']();
       const link = component['getRouterLink'](items[0]);
 
-      expect(link).toEqual(['/reserva', '456']);
+      expect(link).toEqual(['/reserva/form', '456']);
     });
   });
 

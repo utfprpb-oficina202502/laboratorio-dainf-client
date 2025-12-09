@@ -158,10 +158,10 @@ export class ActivityTimelineComponent {
   protected readonly hasActivities = computed(() => this.timelineItems().length > 0);
 
   /**
-   * Retorna a rota para o item referenciado.
+   * Retorna a rota para o formulário do item referenciado.
    */
   protected getRouterLink(item: TimelineItem): string[] {
-    const basePath = item.activity.referenciaTipo === 'EMPRESTIMO' ? '/emprestimo' : '/reserva';
+    const basePath = item.activity.referenciaTipo === 'EMPRESTIMO' ? '/emprestimo/form' : '/reserva/form';
     return [basePath, item.activity.referenciaId.toString()];
   }
 

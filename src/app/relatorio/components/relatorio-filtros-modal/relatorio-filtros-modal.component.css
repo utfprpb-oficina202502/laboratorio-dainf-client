@@ -3,6 +3,7 @@
   display: flex;
   align-items: center;
   gap: 0.875rem;
+  min-width: 0; /* Permite que flex children encolham */
 }
 
 .modal-header-icon {
@@ -11,6 +12,7 @@
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
+  min-width: 2.5rem; /* Garante largura mínima */
   border-radius: 10px;
   flex-shrink: 0;
 }
@@ -23,6 +25,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
+  min-width: 0; /* Permite truncamento se necessário */
+  flex: 1;
 }
 
 .modal-title {
@@ -30,12 +34,19 @@
   font-weight: 600;
   color: var(--color-text-primary);
   line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .modal-subtitle {
   font-size: 0.8125rem;
   color: var(--color-text-secondary);
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Conteúdo */
@@ -136,11 +147,17 @@
   justify-content: center;
 }
 
-/* Responsividade */
-@media (max-width: 767px) {
+/* Responsividade - Mobile (≤768px conforme BreakpointService) */
+@media (max-width: 768px) {
+  .modal-header {
+    gap: 0.75rem;
+  }
+
   .modal-header-icon {
     width: 2.25rem;
     height: 2.25rem;
+    min-width: 2.25rem;
+    border-radius: 8px;
   }
 
   .modal-header-icon i {
@@ -151,33 +168,152 @@
     font-size: 1rem;
   }
 
+  .modal-subtitle {
+    font-size: 0.75rem;
+    -webkit-line-clamp: 2;
+  }
+
+  /* Conteúdo com mais espaço */
+  .modal-content {
+    padding: 0.75rem 0;
+  }
+
+  /* Campos com espaçamento otimizado */
+  .modal-fields {
+    gap: 1.25rem;
+  }
+
+  .modal-field {
+    gap: 0.375rem;
+  }
+
+  .modal-label {
+    font-size: 0.8125rem;
+    text-align: left; /* Alinha à esquerda no mobile para melhor leitura */
+  }
+
+  .field-hint {
+    font-size: 0.6875rem;
+    text-align: left;
+  }
+
+  /* Footer com botões lado a lado (grupo de botões) */
   .modal-footer {
-    flex-direction: column-reverse;
+    flex-direction: row;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
   }
 
   .modal-footer :deep(.p-button) {
-    width: 100%;
+    flex: 1; /* Distribui espaço igualmente */
+    min-width: unset; /* Remove min-width para mobile */
     justify-content: center;
+    padding: 0.625rem 0.5rem; /* Área de toque adequada */
+    font-size: 0.8125rem;
+  }
+
+  .modal-footer :deep(.p-button .p-button-label) {
+    font-size: 0.8125rem;
+  }
+
+  /* Texto simples centralizado */
+  .modal-simple-text {
+    font-size: 0.875rem;
+  }
+}
+
+/* Ajustes para telas muito pequenas (320px - 375px) */
+@media (max-width: 374px) {
+  .modal-header-icon {
+    width: 2rem;
+    height: 2rem;
+    min-width: 2rem;
+  }
+
+  .modal-header-icon i {
+    font-size: 1rem;
+  }
+
+  .modal-title {
+    font-size: 0.9375rem;
+  }
+
+  .modal-subtitle {
+    font-size: 0.6875rem;
+    -webkit-line-clamp: 1;
+  }
+
+  .modal-fields {
+    gap: 1rem;
+  }
+
+  .modal-label {
+    font-size: 0.75rem;
   }
 }
 
 /* Estilos globais do dialog */
-:host ::ng-deep .relatorio-filtros-modal {
+:host ::ng-deep .relatorio-modal {
   border-radius: 12px;
 }
 
-:host ::ng-deep .relatorio-filtros-modal .p-dialog-header {
+:host ::ng-deep .relatorio-modal .p-dialog-header {
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--p-surface-200, #e5e7eb);
 }
 
-:host ::ng-deep .relatorio-filtros-modal .p-dialog-content {
+:host ::ng-deep .relatorio-modal .p-dialog-content {
   padding: 1.25rem 1.5rem;
 }
 
-:host ::ng-deep .relatorio-filtros-modal .p-dialog-footer {
+:host ::ng-deep .relatorio-modal .p-dialog-footer {
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--p-surface-200, #e5e7eb);
+}
+
+/* Mobile: ajustes para o dialog (≤768px) */
+@media (max-width: 768px) {
+  :host ::ng-deep .relatorio-modal {
+    border-radius: 16px 16px 0 0; /* Bordas arredondadas apenas no topo */
+    margin: 0;
+    max-height: 90vh;
+  }
+
+  :host ::ng-deep .relatorio-modal .p-dialog-header {
+    padding: 1rem 1.25rem;
+  }
+
+  :host ::ng-deep .relatorio-modal .p-dialog-content {
+    padding: 1rem 1.25rem;
+    overflow-y: auto;
+  }
+
+  :host ::ng-deep .relatorio-modal .p-dialog-footer {
+    padding: 0.875rem 1.25rem;
+    padding-bottom: max(0.875rem, env(safe-area-inset-bottom)); /* Safe area para iOS */
+  }
+
+  /* Botão de fechar maior para toque */
+  :host ::ng-deep .relatorio-modal .p-dialog-header-close {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+/* Telas muito pequenas */
+@media (max-width: 374px) {
+  :host ::ng-deep .relatorio-modal .p-dialog-header {
+    padding: 0.875rem 1rem;
+  }
+
+  :host ::ng-deep .relatorio-modal .p-dialog-content {
+    padding: 0.875rem 1rem;
+  }
+
+  :host ::ng-deep .relatorio-modal .p-dialog-footer {
+    padding: 0.75rem 1rem;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
 }
 
 /* Dark mode */

@@ -350,6 +350,96 @@
 
 @layer overrides {
   /* ============================================================================
+     PrimeNG Tag/Badge - Design System UTFPR
+     Paleta refinada harmonizada com cores slate do tema
+     ============================================================================ */
+  /* Base - estilo comum para todas as tags */
+  .p-tag {
+    font-weight: 500 !important;
+    border: 1px solid transparent !important;
+  }
+
+  /* === TEMA CLARO - Fundos mais presentes com boa legibilidade === */
+  :root:not([data-theme="dark"]) .p-tag-info,
+  :root[data-theme="light"] .p-tag-info {
+    background: #dbeafe !important;
+    color: #1e40af !important;
+    border-color: #93c5fd !important;
+  }
+
+  :root:not([data-theme="dark"]) .p-tag-success,
+  :root[data-theme="light"] .p-tag-success {
+    background: #dcfce7 !important;
+    color: #166534 !important;
+    border-color: #86efac !important;
+  }
+
+  :root:not([data-theme="dark"]) .p-tag-warn,
+  :root[data-theme="light"] .p-tag-warn {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+    border-color: #fcd34d !important;
+  }
+
+  :root:not([data-theme="dark"]) .p-tag-danger,
+  :root[data-theme="light"] .p-tag-danger {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+    border-color: #fca5a5 !important;
+  }
+
+  :root:not([data-theme="dark"]) .p-tag-secondary,
+  :root[data-theme="light"] .p-tag-secondary {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  :root:not([data-theme="dark"]) .p-tag-contrast,
+  :root[data-theme="light"] .p-tag-contrast {
+    background: #1e293b !important;
+    color: #f1f5f9 !important;
+    border-color: transparent !important;
+  }
+
+  /* === TEMA ESCURO - Bordas coloridas com fundos slate === */
+  :root[data-theme="dark"] .p-tag-info {
+    background: #0f172a !important;
+    color: #7dd3fc !important;
+    border-color: #0ea5e9 !important;
+  }
+
+  :root[data-theme="dark"] .p-tag-success {
+    background: #0f172a !important;
+    color: #86efac !important;
+    border-color: #22c55e !important;
+  }
+
+  :root[data-theme="dark"] .p-tag-warn {
+    background: #0f172a !important;
+    color: #fde047 !important;
+    border-color: #eab308 !important;
+  }
+
+  :root[data-theme="dark"] .p-tag-danger {
+    background: #0f172a !important;
+    color: #fca5a5 !important;
+    border-color: #ef4444 !important;
+  }
+
+  :root[data-theme="dark"] .p-tag-secondary {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    border-color: #475569 !important;
+  }
+
+  :root[data-theme="dark"] .p-tag-contrast {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    border-color: transparent !important;
+  }
+
+  /* ============================================================================
      PrimeNG Overlay Z-Index Management
      Ensures all PrimeNG overlays (dialog, drawer, image, galleria) appear above
      the sidenav (desktop: 100, mobile: 1050) and navbar.

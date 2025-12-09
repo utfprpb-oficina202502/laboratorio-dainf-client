@@ -47,6 +47,7 @@
         [totalRecords]="totalElements"
         [paginator]="true"
         [rowsPerPageOptions]="tableConfig.pageSizeOptions || [5, 10, 25, 50, 100]"
+        paginatorDropdownAppendTo="body"
         (onPage)="onPageChange($event)"
         (onSort)="onSort($event)"
         [first]="first"
