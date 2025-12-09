@@ -163,7 +163,22 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
     });
   }
 
-  // Getter for backwards compatibility with custom methods
+  /**
+   * Verifica se existe um registro de devolução correspondente para o item
+   * comparando item.id e qtde dentro do objeto emprestimo selecionado.
+   */
+  hasDevolucao(emprestimoItem: EmprestimoItem): boolean {
+    const emprestimo = this.emprestimoSelecionadoParaItens;
+    if (!emprestimo?.emprestimoDevolucaoItem) {
+      return false;
+    }
+
+    return emprestimo.emprestimoDevolucaoItem.some(
+      edi => edi.item?.id === emprestimoItem.item?.id && Number(edi.qtde) === Number(emprestimoItem.qtde)
+    );
+  }
+
+  // Getter para compatibilidade com métodos customizados
   protected get emprestimoService(): EmprestimoService {
     return this.service;
   }
@@ -529,6 +544,8 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
    */
   abrirDialogItens(emprestimo: Emprestimo): void {
     this.actionsMenu().hide();
+    // Define inicialmente o empréstimo selecionado para exibir informações básicas no cabeçalho;
+    // quando os dados completos forem carregados do backend, substituímos pelo objeto completo
     this.emprestimoSelecionadoParaItens = emprestimo;
     this.dialogItensVisible = true;
     this.loadingItensDialog.set(true);
@@ -536,6 +553,8 @@ export class EmprestimoListComponent extends PrimeCrudListComponent<Emprestimo, 
 
     this.emprestimoService.findOne(emprestimo.id).subscribe({
       next: (emprestimoCompleto) => {
+        // Substitui o empréstimo selecionado pelo objeto completo retornado pelo backend
+        this.emprestimoSelecionadoParaItens = emprestimoCompleto;
         this.itensDoEmprestimo.set(emprestimoCompleto.emprestimoItem || []);
         this.loadingItensDialog.set(false);
         this.cdr?.markForCheck();
