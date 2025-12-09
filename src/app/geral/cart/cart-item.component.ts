@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, computed, input, output} from '@angular/core';
-import {CommonModule, NgOptimizedImage} from '@angular/common';
-import {CartItem} from '../../framework/services/cart.service';
+import {NgOptimizedImage} from '@angular/common';
+import {CartItem} from '../../framework/service/cart.service';
 import {ItemAvailabilityUtil} from '../../framework/utils/item-availability.util';
 
 import {ButtonModule} from 'primeng/button';
@@ -26,7 +26,6 @@ import {TooltipModule} from 'primeng/tooltip';
   selector: 'app-cart-item',
   templateUrl: './cart-item.component.html',
   imports: [
-    CommonModule,
     NgOptimizedImage,
     ButtonModule,
     InputNumberModule,

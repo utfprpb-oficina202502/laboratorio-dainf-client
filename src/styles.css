@@ -228,43 +228,6 @@
   }
 
   /* ============================================================================
-     DatePicker TouchUI - Centralização em Mobile
-     Bug fix: PrimeNG v20 não centraliza o overlay do touchUI automaticamente
-     Referência: https://github.com/primefaces/primeng/issues/17842
-     ============================================================================ */
-  /* Backdrop escuro para o touchUI */
-  .p-datepicker-mask {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.4);
-    z-index: 9998;
-  }
-
-  /* Overlay do calendário centralizado */
-  .p-datepicker.p-datepicker-touch-ui,
-  .p-datepicker.p-component.p-datepicker-touch-ui {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    min-width: min(90vw, 360px);
-    max-width: 95vw;
-    max-height: 90vh;
-    overflow: auto;
-    z-index: 9999;
-    border-radius: var(--radius-lg);
-    box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.25);
-  }
-
-  /* Ajuste para viewports muito pequenas */
-  @media (max-height: 500px) {
-    .p-datepicker.p-datepicker-touch-ui,
-    .p-datepicker.p-component.p-datepicker-touch-ui {
-      max-height: 85vh;
-    }
-  }
-
-  /* ============================================================================
      Filter Dialog - Nested styles
      ============================================================================ */
   .filtro-dialog.p-dialog {

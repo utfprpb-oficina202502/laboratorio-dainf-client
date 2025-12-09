@@ -1,5 +1,11 @@
-<a [routerLink]="href() + (id() ? '/' + id() : '')" routerLinkActive="active" tabindex="-1"
-   target="_blank"
-   class="link-cadastroRapido" pTooltip="Abrir Cadastro" tooltipPosition="left">
-  <i class="pi pi-external-link"></i>
+<a (auxclick)="onClick($event)"
+   (click)="onClick($event)"
+   [href]="fullRoute()"
+   aria-label="Abrir cadastro em nova página"
+   class="link-cadastroRapido"
+   pTooltip="Abrir Cadastro (Ctrl+Click para nova aba)"
+   rel="noopener noreferrer"
+   tabindex="-1"
+   tooltipPosition="left">
+  <i aria-hidden="true" class="pi pi-external-link"></i>
 </a>

@@ -25,9 +25,9 @@ import {EmprestimoService} from '../emprestimo/emprestimo.service';
 import {FileUpload, FileUploadModule} from 'primeng/fileupload';
 import {environment} from '../../environments/environment';
 import {ItemImage} from './itemImage';
-import {LoggerService} from '../framework/services/logger.service';
+import {LoggerService} from '../framework/service/logger.service';
 import {ConfirmationService, SortEvent} from 'primeng/api';
-import {CartService} from '../framework/services/cart.service';
+import {CartService} from '../framework/service/cart.service';
 import {ItemAvailabilityUtil} from '../framework/utils/item-availability.util';
 
 // PrimeNG

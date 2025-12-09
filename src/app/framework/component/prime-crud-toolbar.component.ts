@@ -8,7 +8,7 @@ import {TooltipModule} from 'primeng/tooltip';
 import {MultiSelectModule} from 'primeng/multiselect';
 import {PrimeCrudListComponent} from './prime-crud.list.component';
 import {Table} from 'primeng/table';
-import {LoggerService} from '../services/logger.service';
+import {LoggerService} from '../service/logger.service';
 
 @Component({
   selector: 'app-prime-crud-toolbar',

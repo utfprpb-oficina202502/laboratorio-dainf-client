@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit} from "@angular/core";
-import {CommonModule, NgOptimizedImage} from "@angular/common";
+import {NgOptimizedImage} from "@angular/common";
 import {
   AbstractControl,
   FormBuilder,
@@ -13,15 +13,14 @@ import {MessageService} from "primeng/api";
 import {ProgressBar} from "primeng/progressbar";
 import {InputTextModule} from "primeng/inputtext";
 import {CadastrarUsuarioService} from "./cadastrarUsuario.service";
-import {ErrorHandlerService} from "../framework/services/error-handler.service";
-import {FormValidationService} from "../framework/services/form-validation.service";
+import {ErrorHandlerService} from "../framework/service/error-handler.service";
+import {FormValidationService} from "../framework/service/form-validation.service";
 
 @Component({
     selector: "app-cadastrar-usuario",
     templateUrl: "./cadastrarUsuario.component.html",
     styleUrls: ["./cadastrarUsuario.component.css"],
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     NgOptimizedImage,
     ProgressBar,

@@ -1,10 +1,9 @@
+/* Estilos movidos para classes Tailwind no template quando possível */
 .link-cadastroRapido {
-  color: #292929;
-  float: right;
-  font-size: 1em;
-  position: relative;
+  @apply float-right text-base relative text-gray-800 no-underline cursor-pointer;
   top: 6px;
 }
+
 .link-cadastroRapido:hover {
-  text-decoration: none;
+  @apply text-primary no-underline;
 }

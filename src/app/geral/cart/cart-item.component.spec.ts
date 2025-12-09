@@ -1,6 +1,6 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {CartItemComponent} from './cart-item.component';
-import {CartItem} from '../../framework/services/cart.service';
+import {CartItem} from '../../framework/service/cart.service';
 import {Item} from '../../item/item';
 
 /**

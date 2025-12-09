@@ -242,6 +242,7 @@
   [baseZIndex]="Z_INDEX.DIALOG"
   [modal]="true"
   [appendTo]="'body'"
+  [contentStyle]="{ 'overflow': 'visible' }"
   class="dialog-sm-fixed">
 
   <form>
@@ -305,7 +306,6 @@
             dateFormat="dd/mm/yy"
             [style]="{ width: '100%' }"
             [readonlyInput]="breakpointService.isMobile()"
-            [touchUI]="breakpointService.isMobile()"
             [(ngModel)]="emprestimoFilter.dtIniEmp"
             inputStyleClass="w-full">
           </p-datePicker>
@@ -322,7 +322,6 @@
             dateFormat="dd/mm/yy"
             [style]="{ width: '100%' }"
             [readonlyInput]="breakpointService.isMobile()"
-            [touchUI]="breakpointService.isMobile()"
             [(ngModel)]="emprestimoFilter.dtFimEmp"
             inputStyleClass="w-full">
           </p-datePicker>
@@ -373,7 +372,6 @@
     [readonlyInput]="breakpointService.isMobile()"
     appendTo="body"
     (onSelect)="changePrazoDevolucao()"
-    [touchUI]="breakpointService.isMobile()"
     dataType="string"
     dateFormat="dd/mm/yy"
     [(ngModel)]="dtNovaData">

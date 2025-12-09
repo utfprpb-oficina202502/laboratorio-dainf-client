@@ -7,7 +7,7 @@ import {
   OnDestroy,
   signal
 } from '@angular/core';
-import {CommonModule, NgOptimizedImage} from '@angular/common';
+import {NgOptimizedImage} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
 import {Emprestimo} from './emprestimo';
@@ -47,7 +47,8 @@ import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
 import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.component';
-import {LoggerService} from '../framework/services/logger.service';
+import {LoggerService} from '../framework/service/logger.service';
+import {formatarHistoricoReserva} from '../framework/utils/historico-transicao.utils';
 
 @Component({
   selector: 'app-form-emprestimo',
@@ -55,11 +56,9 @@ import {LoggerService} from '../framework/services/logger.service';
   styleUrls: ['./emprestimo.form.component.css'],
   imports: [
     CadastroRapidoComponent,
-    CommonModule,
     NgOptimizedImage,
     ReactiveFormsModule,
     FormsModule,
-    // PrimeNG
     CardModule,
     InputTextModule,
     TextareaModule,
@@ -72,7 +71,6 @@ import {LoggerService} from '../framework/services/logger.service';
     DialogModule,
     ScrollPanelModule,
     TagModule,
-    // Custom
     FormFieldComponent,
     VoltarComponent,
     CancelarComponent,
@@ -1118,9 +1116,16 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
 
     const formGroup = this.form();
     if (formGroup) {
+      const observacaoComHistorico = formatarHistoricoReserva(
+        reserva.id,
+        reserva.usuario?.nome || 'Usuário desconhecido',
+        reserva.dataReserva,
+        reserva.observacao
+      );
+
       formGroup.patchValue({
         usuarioEmprestimo: reserva.usuario,
-        observacao: reserva.observacao
+        observacao: observacaoComHistorico
       });
     }
     if (reserva.usuario?.documento) {

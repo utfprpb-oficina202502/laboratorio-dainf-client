@@ -4,7 +4,7 @@ import {FormControl, FormGroup} from '@angular/forms';
 import {By} from '@angular/platform-browser';
 import {Confirmation, ConfirmationService, MessageService} from 'primeng/api';
 import {LoaderService} from '../loader/loader.service';
-import {LoggerService} from '../services/logger.service';
+import {LoggerService} from '../service/logger.service';
 import {LoginService} from '../../login/login.service';
 
 /**

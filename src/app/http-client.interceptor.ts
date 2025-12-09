@@ -4,7 +4,7 @@ import {MessageService} from "primeng/api";
 import {Observable, throwError, TimeoutError} from "rxjs";
 import {catchError, tap, timeout} from "rxjs/operators";
 import {inject, Injectable} from "@angular/core";
-import {StorageService} from "./framework/services/storage.service";
+import {StorageService} from "./framework/service/storage.service";
 import {JwtUtil} from "./framework/utils/jwt.util";
 import {isProblemDetail, ProblemDetail} from "./framework/model/problem-detail.interface";
 

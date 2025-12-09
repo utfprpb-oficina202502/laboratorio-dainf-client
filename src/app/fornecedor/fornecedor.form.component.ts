@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, inject, signal} from '@angular/core';
-import {CommonModule} from '@angular/common';
+
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Fornecedor} from './fornecedor';
 import {FornecedorService} from './fornecedor.service';
@@ -25,7 +25,7 @@ import {FormFieldComponent} from '../framework/component/form-field.component';
 import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
-import {LoggerService} from '../framework/services/logger.service';
+import {LoggerService} from '../framework/service/logger.service';
 
 // Directives
 
@@ -33,9 +33,7 @@ import {LoggerService} from '../framework/services/logger.service';
   selector: 'app-form-fornecedor',
   templateUrl: './fornecedor.form.component.html',
   imports: [
-    CommonModule,
     ReactiveFormsModule,
-    // PrimeNG
     CardModule,
     InputTextModule,
     TextareaModule,
@@ -43,7 +41,6 @@ import {LoggerService} from '../framework/services/logger.service';
     ButtonModule,
     TooltipModule,
     InputMaskModule,
-    // Custom
     FormFieldComponent,
     VoltarComponent,
     CancelarComponent,

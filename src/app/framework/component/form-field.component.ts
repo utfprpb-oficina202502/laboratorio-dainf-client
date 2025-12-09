@@ -1,7 +1,7 @@
 import {Component, inject, input} from '@angular/core';
-import {CommonModule} from '@angular/common';
+
 import {AbstractControl} from '@angular/forms';
-import {FormValidationService} from '../services/form-validation.service';
+import {FormValidationService} from '../service/form-validation.service';
 
 /**
  * Reusable form field wrapper component that handles validation display
@@ -16,7 +16,7 @@ import {FormValidationService} from '../services/form-validation.service';
  */
 @Component({
   selector: 'app-form-field',
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="flex flex-col gap-2">
       @if (label()) {

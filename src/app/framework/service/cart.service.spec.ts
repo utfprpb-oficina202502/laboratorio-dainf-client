@@ -287,6 +287,106 @@ describe('CartService', () => {
     });
   });
 
+  describe('validação de schema do sessionStorage', () => {
+    it('deve ignorar dados inválidos que não são array', () => {
+      sessionStorage.setItem('lab-cart', JSON.stringify({invalid: 'object'}));
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      const newService = TestBed.inject(CartService);
+
+      expect(newService.items().length).toBe(0);
+    });
+
+    it('deve filtrar itens sem estrutura de CartItem', () => {
+      const invalidData = [
+        {item: createTestItem({id: 1}), qtde: 2}, // Válido
+        {invalid: 'data'}, // Inválido: não tem item nem qtde
+        null, // Inválido: null
+        'string', // Inválido: string
+      ];
+      sessionStorage.setItem('lab-cart', JSON.stringify(invalidData));
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      const newService = TestBed.inject(CartService);
+
+      expect(newService.items().length).toBe(1);
+      expect(newService.items()[0].item.id).toBe(1);
+    });
+
+    it('deve filtrar itens com qtde inválida', () => {
+      const invalidData = [
+        {item: createTestItem({id: 1}), qtde: 2}, // Válido
+        {item: createTestItem({id: 2}), qtde: 0}, // Inválido: qtde 0
+        {item: createTestItem({id: 3}), qtde: -1}, // Inválido: qtde negativa
+        {item: createTestItem({id: 4}), qtde: 'abc'}, // Inválido: qtde não numérica
+      ];
+      sessionStorage.setItem('lab-cart', JSON.stringify(invalidData));
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      const newService = TestBed.inject(CartService);
+
+      expect(newService.items().length).toBe(1);
+      expect(newService.items()[0].item.id).toBe(1);
+    });
+
+    it('deve filtrar itens sem id válido', () => {
+      const invalidData = [
+        {item: createTestItem({id: 1}), qtde: 2}, // Válido
+        {item: {...createTestItem(), id: 0}, qtde: 1}, // Inválido: id 0
+        {item: {...createTestItem(), id: -1}, qtde: 1}, // Inválido: id negativo
+        {item: {...createTestItem(), id: 'abc' as unknown as number}, qtde: 1}, // Inválido: id não numérico
+      ];
+      sessionStorage.setItem('lab-cart', JSON.stringify(invalidData));
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      const newService = TestBed.inject(CartService);
+
+      expect(newService.items().length).toBe(1);
+      expect(newService.items()[0].item.id).toBe(1);
+    });
+
+    it('deve filtrar itens sem nome válido', () => {
+      const invalidData = [
+        {item: createTestItem({id: 1}), qtde: 2}, // Válido
+        {item: {...createTestItem({id: 2}), nome: ''}, qtde: 1}, // Inválido: nome vazio
+        {item: {...createTestItem({id: 3}), nome: null as unknown as string}, qtde: 1}, // Inválido: nome null
+        {item: {...createTestItem({id: 4}), nome: 123 as unknown as string}, qtde: 1}, // Inválido: nome não string
+      ];
+      sessionStorage.setItem('lab-cart', JSON.stringify(invalidData));
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      const newService = TestBed.inject(CartService);
+
+      expect(newService.items().length).toBe(1);
+      expect(newService.items()[0].item.id).toBe(1);
+    });
+
+    it('deve lidar com JSON inválido no sessionStorage', () => {
+      sessionStorage.setItem('lab-cart', 'invalid json {{{');
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      const newService = TestBed.inject(CartService);
+
+      expect(newService.items().length).toBe(0);
+    });
+
+    it('deve aceitar array vazio', () => {
+      sessionStorage.setItem('lab-cart', JSON.stringify([]));
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      const newService = TestBed.inject(CartService);
+
+      expect(newService.items().length).toBe(0);
+    });
+  });
+
   describe('fallback para saldo quando disponivelEmprestimoCalculado é undefined', () => {
     it('deve usar saldo como fallback ao adicionar item', () => {
       const item = createTestItem({

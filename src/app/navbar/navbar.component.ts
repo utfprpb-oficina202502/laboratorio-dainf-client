@@ -7,8 +7,8 @@ import {ToolbarModule as PrimeToolbarModule} from 'primeng/toolbar';
 import {ButtonModule} from 'primeng/button';
 import {TooltipModule} from 'primeng/tooltip';
 import {TieredMenuModule} from 'primeng/tieredmenu';
-import {LoggerService} from '../framework/services/logger.service';
-import {StorageService} from '../framework/services/storage.service';
+import {LoggerService} from '../framework/service/logger.service';
+import {StorageService} from '../framework/service/storage.service';
 import {CartBadgeComponent} from '../geral/cart';
 
 @Component({

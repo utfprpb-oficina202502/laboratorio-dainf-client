@@ -10,7 +10,7 @@ import {ItemService} from './item.service';
 import {GrupoService} from '../grupo/grupo.service';
 import {LoaderService} from '../framework/loader/loader.service';
 import {LoginService} from '../login/login.service';
-import {LoggerService} from '../framework/services/logger.service';
+import {LoggerService} from '../framework/service/logger.service';
 import {Item} from './item';
 import {Grupo} from '../grupo/grupo';
 import {ItemImage} from './itemImage';
@@ -18,7 +18,7 @@ import {Emprestimo} from '../emprestimo/emprestimo';
 import {EmprestimoService} from '../emprestimo/emprestimo.service';
 import {Usuario} from '../usuario/usuario';
 import {PageResponse} from '../framework/service/crud.service';
-import {CartService} from '../framework/services/cart.service';
+import {CartService} from '../framework/service/cart.service';
 import {signal} from '@angular/core';
 
 /**

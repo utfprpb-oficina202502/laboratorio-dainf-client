@@ -3,7 +3,7 @@ import {HomeComponent} from './home.component';
 import {HomeService} from './home.service';
 import {LoginService} from '../login/login.service';
 import {ChartService} from '../framework/charts/chart.service';
-import {LoggerService} from '../framework/services/logger.service';
+import {LoggerService} from '../framework/service/logger.service';
 import {DatePipe} from '@angular/common';
 import {of, throwError} from 'rxjs';
 import {DashboardEmprestimoCountRange} from './dashboard/dashboardEmprestimoCountRange';

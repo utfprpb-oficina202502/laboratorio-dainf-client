@@ -8,7 +8,7 @@ import {
   OnInit,
   signal
 } from "@angular/core";
-import {CommonModule, DatePipe} from '@angular/common';
+import {DatePipe} from '@angular/common';
 import {RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 import {catchError, finalize, forkJoin, of} from 'rxjs';
@@ -17,10 +17,10 @@ import {Z_INDEX} from '../framework/constants';
 import {DashboardEmprestimoCountRange} from "./dashboard/dashboardEmprestimoCountRange";
 import {HomeService} from "./home.service";
 import {LoginService} from "../login/login.service";
-import {DateUtil} from "../framework/util/dateUtil";
+import {DateUtil} from "../framework/utils/dateUtil";
 import {ChartService} from "../framework/charts/chart.service";
-import {LoggerService} from "../framework/services/logger.service";
-import {BreakpointService} from "../framework/services/breakpoint.service";
+import {LoggerService} from "../framework/service/logger.service";
+import {BreakpointService} from "../framework/service/breakpoint.service";
 import {MessageService} from 'primeng/api';
 
 // PrimeNG
@@ -65,27 +65,22 @@ import {AtalhoPeriodo} from '../relatorio/models/relatorio-card.interface';
   styleUrls: ["./home.component.css"],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
     RouterLink,
     FormsModule,
-    // PrimeNG
     DialogModule,
     TooltipModule,
     DatePickerModule,
     PanelModule,
     ButtonModule,
-    // Custom - Dashboard Admin
     StatCardComponent,
     SkeletonCardComponent,
     SkeletonChartComponent,
-    // Custom - Dashboard Aluno/Professor
     AlertCenterComponent,
     LoanStatCardsComponent,
     LoanCalendarComponent,
     ActivityTimelineComponent,
     UsageChartComponent,
     FrequentItemsComponent,
-    // Componentes compartilhados
     PeriodoShortcutsComponent
   ]
 })

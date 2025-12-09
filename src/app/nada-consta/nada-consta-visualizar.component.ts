@@ -1,13 +1,19 @@
-import { Component, OnDestroy, inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { NadaConstaService, NadaConsta } from './nada-consta.service';
-import { Subject, takeUntil } from 'rxjs';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  inject,
+  OnDestroy
+} from '@angular/core';
+
+import {FormsModule} from '@angular/forms';
+import {NadaConsta, NadaConstaService} from './nada-consta.service';
+import {Subject, takeUntil} from 'rxjs';
 // PrimeNG modules
-import { CardModule } from 'primeng/card';
-import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
-import { ProgressBarModule } from 'primeng/progressbar';
+import {CardModule} from 'primeng/card';
+import {InputTextModule} from 'primeng/inputtext';
+import {ButtonModule} from 'primeng/button';
+import {ProgressBarModule} from 'primeng/progressbar';
 
 @Component({
   selector: 'app-nada-consta-visualizar',
@@ -16,7 +22,6 @@ import { ProgressBarModule } from 'primeng/progressbar';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
     FormsModule,
     CardModule,
     InputTextModule,

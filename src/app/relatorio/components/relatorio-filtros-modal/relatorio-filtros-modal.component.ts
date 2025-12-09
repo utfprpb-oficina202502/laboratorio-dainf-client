@@ -36,7 +36,7 @@ import {FormatoRelatorio} from '../../models/formato-relatorio.type';
 import {PeriodoDatas} from '../../services/relatorio-parametros.service';
 import {ItemService} from '../../../item/item.service';
 import {Item} from '../../../item/item';
-import {BreakpointService} from '../../../framework/services/breakpoint.service';
+import {BreakpointService} from '../../../framework/service/breakpoint.service';
 import {PeriodoShortcutsComponent} from '../periodo-shortcuts/periodo-shortcuts.component';
 
 /**

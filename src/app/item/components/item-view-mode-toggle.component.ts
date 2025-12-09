@@ -2,8 +2,8 @@ import {ChangeDetectionStrategy, Component, computed, inject, input, output} fro
 import {FormsModule} from '@angular/forms';
 import {Router} from '@angular/router';
 
-import {CartService} from '../../framework/services/cart.service';
-import {BreakpointService} from '../../framework/services/breakpoint.service';
+import {CartService} from '../../framework/service/cart.service';
+import {BreakpointService} from '../../framework/service/breakpoint.service';
 
 import {SelectButtonModule} from 'primeng/selectbutton';
 import {ButtonModule} from 'primeng/button';

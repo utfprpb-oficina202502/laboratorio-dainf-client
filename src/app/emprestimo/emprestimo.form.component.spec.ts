@@ -8,7 +8,7 @@ import {ItemService} from '../item/item.service';
 import {UsuarioService} from '../usuario/usuario.service';
 import {LoaderService} from '../framework/loader/loader.service';
 import {LoginService} from '../login/login.service';
-import {LoggerService} from '../framework/services/logger.service';
+import {LoggerService} from '../framework/service/logger.service';
 import {Emprestimo} from './emprestimo';
 import {EmprestimoItem} from './emprestimoItem';
 import {StatusDevolucao} from './emprestimoDevolucaoItem';
@@ -1413,6 +1413,7 @@ describe('EmprestimoFormComponent', () => {
       const mockReserva = {
         id: 123,
         descricao: 'Reserva teste',
+        dataReserva: '15/01/2025',
         observacao: 'Observação de teste',
         usuario: {
           id: 1,
@@ -1434,7 +1435,12 @@ describe('EmprestimoFormComponent', () => {
 
         const formGroup = component.form();
         expect(formGroup?.get('usuarioEmprestimo')?.value).toEqual(mockReserva.usuario);
-        expect(formGroup?.get('observacao')?.value).toBe('Observação de teste');
+
+        // Observação agora inclui histórico de transição
+        const observacao = formGroup?.get('observacao')?.value;
+        expect(observacao).toContain('--- Histórico de Transição ---');
+        expect(observacao).toContain('[RESERVA #123] Criado por João Silva em 15/01/2025');
+        expect(observacao).toContain('Observação de teste');
         done();
       }, 50);
     });    it('should create emprestimoItems from reservaItems with correct devolver flag for permanent items', () => {

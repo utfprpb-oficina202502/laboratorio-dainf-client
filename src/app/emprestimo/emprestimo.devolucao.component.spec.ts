@@ -8,7 +8,7 @@ import {Emprestimo} from './emprestimo';
 import {Item} from '../item/item';
 import {LoaderService} from '../framework/loader/loader.service';
 import {LoginService} from '../login/login.service';
-import {LoggerService} from '../framework/services/logger.service';
+import {LoggerService} from '../framework/service/logger.service';
 import {CdkDragDrop} from '@angular/cdk/drag-drop';
 
 // Polyfill para structuredClone no ambiente de testes Node.js

@@ -6,7 +6,7 @@ import {
   inject,
   signal
 } from '@angular/core';
-import {CommonModule} from '@angular/common';
+
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {Z_INDEX} from '../framework/constants';
@@ -32,16 +32,14 @@ import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
 import {FormFieldComponent} from '../framework/component/form-field.component';
-import {LoggerService} from '../framework/services/logger.service';
-import {StorageService} from '../framework/services/storage.service';
+import {LoggerService} from '../framework/service/logger.service';
+import {StorageService} from '../framework/service/storage.service';
 
 @Component({
   selector: 'app-edit-usuario',
   templateUrl: './usuario.edit.component.html',
   imports: [
-    CommonModule,
     ReactiveFormsModule,
-    // PrimeNG
     CardModule,
     InputTextModule,
     ButtonModule,
@@ -49,7 +47,6 @@ import {StorageService} from '../framework/services/storage.service';
     DialogModule,
     MultiSelectModule,
     PasswordModule,
-    // Custom
     VoltarComponent,
     CancelarComponent,
     SalvarComponent,

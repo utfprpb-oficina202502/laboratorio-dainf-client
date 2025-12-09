@@ -5,7 +5,7 @@ import {ButtonModule} from 'primeng/button';
 import {Skeleton} from 'primeng/skeleton';
 import {Tag} from 'primeng/tag';
 import {TooltipModule} from 'primeng/tooltip';
-import {CartService} from '../../../framework/services/cart.service';
+import {CartService} from '../../../framework/service/cart.service';
 import {Item} from '../../../item/item';
 import {ItemFrequenteUsuario} from '../../models/dashboard.models';
 

@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, forwardRef, Injector, inject} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {Fornecedor} from './fornecedor';
 import {FornecedorService} from './fornecedor.service';
@@ -6,9 +6,12 @@ import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.mod
 import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
 import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
 import {CpfCnpjPipe} from "../framework/pipe/cpfCnpj/cpfCnpj.pipe";
-import {createListComponentConfig} from '../framework/utils/table-config.factory';
+import {
+  createListComponentConfig,
+  ListComponentConfig
+} from '../framework/utils/table-config.factory';
 import {MenuItem} from 'primeng/api';
-import { SharedListComponentBase } from '../framework/component/shared-list-base.component';
+import {SharedListComponentBase} from '../framework/component/shared-list-base.component';
 
 @Component({
     selector: 'app-list-fornecedor',
@@ -23,7 +26,7 @@ import { SharedListComponentBase } from '../framework/component/shared-list-base
   providers: [{ provide: PrimeCrudListComponent, useExisting: forwardRef(() => FornecedorListComponent) }],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FornecedorListComponent extends SharedListComponentBase<Fornecedor, any, FornecedorService> {
+export class FornecedorListComponent extends SharedListComponentBase<Fornecedor, ListComponentConfig, FornecedorService> {
   public readonly listConfig = createListComponentConfig(
     [
       {

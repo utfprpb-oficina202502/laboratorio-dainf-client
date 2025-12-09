@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, inject, OnInit, signal, viewChild} from '@angular/core';
-import {CommonModule} from '@angular/common';
+
 import {FormsModule} from '@angular/forms';
 import {ActivatedRoute, Router} from '@angular/router';
 import {take} from 'rxjs';
@@ -33,7 +33,7 @@ import {TooltipModule} from 'primeng/tooltip';
 import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
-import {BreakpointService} from '../framework/services/breakpoint.service';
+import {BreakpointService} from '../framework/service/breakpoint.service';
 import {FormFieldComponent} from '../framework/component/form-field.component';
 
 @Component({
@@ -42,9 +42,7 @@ import {FormFieldComponent} from '../framework/component/form-field.component';
     styleUrls: ['./emprestimo.devolucao.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
     FormsModule,
-    // PrimeNG
     ButtonModule,
     CardModule,
     DatePickerModule,
@@ -55,13 +53,11 @@ import {FormFieldComponent} from '../framework/component/form-field.component';
     TagModule,
     TextareaModule,
     TooltipModule,
-    // Angular CDK
     DragDropModule,
-    // Custom
     CancelarComponent,
     FormFieldComponent,
     SalvarComponent,
-    VoltarComponent,
+    VoltarComponent
   ]
 })
 export class EmprestimoDevolucaoComponent implements OnInit {

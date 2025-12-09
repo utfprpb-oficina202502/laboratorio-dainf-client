@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, Component, inject, signal} from '@angular/core';
-import {CommonModule} from '@angular/common';
 
-import {CartService} from '../../framework/services/cart.service';
+
+import {CartService} from '../../framework/service/cart.service';
 import {CartModalComponent} from './cart-modal.component';
 
 import {ButtonModule} from 'primeng/button';
@@ -23,7 +23,6 @@ import {TooltipModule} from 'primeng/tooltip';
   selector: 'app-cart-badge',
   templateUrl: './cart-badge.component.html',
   imports: [
-    CommonModule,
     CartModalComponent,
     ButtonModule,
     BadgeModule,

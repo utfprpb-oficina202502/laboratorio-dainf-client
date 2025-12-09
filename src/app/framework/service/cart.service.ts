@@ -243,6 +243,7 @@ export class CartService {
 
   /**
    * Carrega o carrinho do sessionStorage.
+   * Valida a estrutura dos dados antes de usar para evitar dados corrompidos.
    * @internal
    */
   private loadFromSession(): void {
@@ -250,14 +251,62 @@ export class CartService {
       if (this.isSessionStorageAvailable()) {
         const stored = sessionStorage.getItem(CART_STORAGE_KEY);
         if (stored) {
-          const items: CartItem[] = JSON.parse(stored);
-          this._items.set(items);
+          const parsed = JSON.parse(stored);
+          const validItems = this.validateCartItems(parsed);
+          this._items.set(validItems);
         }
       }
     } catch (error) {
       this.logger.error('Erro ao carregar carrinho do sessionStorage', error);
       this._items.set([]);
     }
+  }
+
+  /**
+   * Valida e filtra itens do carrinho carregados do storage.
+   * Remove itens com estrutura inválida para garantir integridade dos dados.
+   * @param data Dados parseados do sessionStorage
+   * @returns Array de CartItem válidos
+   * @internal
+   */
+  private validateCartItems(data: unknown): CartItem[] {
+    if (!Array.isArray(data)) {
+      this.logger.warn('Dados do carrinho inválidos: não é um array');
+      return [];
+    }
+
+    return data.filter((item): item is CartItem => {
+      // Valida estrutura do CartItem
+      if (!item || typeof item !== 'object') {
+        return false;
+      }
+
+      const cartItem = item as Record<string, unknown>;
+
+      // Valida quantidade
+      if (typeof cartItem['qtde'] !== 'number' || cartItem['qtde'] <= 0) {
+        return false;
+      }
+
+      // Valida estrutura mínima do Item
+      const innerItem = cartItem['item'];
+      if (!innerItem || typeof innerItem !== 'object') {
+        return false;
+      }
+
+      const itemObj = innerItem as Record<string, unknown>;
+
+      // Campos obrigatórios do Item
+      if (typeof itemObj['id'] !== 'number' || itemObj['id'] <= 0) {
+        return false;
+      }
+
+      if (typeof itemObj['nome'] !== 'string' || !itemObj['nome']) {
+        return false;
+      }
+
+      return true;
+    });
   }
 
   /**

@@ -6,13 +6,13 @@ import {of} from 'rxjs';
 import {UsuarioEditComponent} from './usuario.edit.component';
 import {UsuarioService} from './usuario.service';
 import {LoaderService} from '../framework/loader/loader.service';
-import {LoggerService} from '../framework/services/logger.service';
-import {StorageService} from '../framework/services/storage.service';
+import {LoggerService} from '../framework/service/logger.service';
+import {StorageService} from '../framework/service/storage.service';
 import {LoginService} from '../login/login.service';
-import {FormValidationService} from '../framework/services/form-validation.service';
-import {FormStateManagerService} from '../framework/services/form-state-manager.service';
-import {FormBusinessRulesService} from '../framework/services/form-business-rules.service';
-import {ErrorHandlerService} from '../framework/services/error-handler.service';
+import {FormValidationService} from '../framework/service/form-validation.service';
+import {FormStateManagerService} from '../framework/service/form-state-manager.service';
+import {FormBusinessRulesService} from '../framework/service/form-business-rules.service';
+import {ErrorHandlerService} from '../framework/service/error-handler.service';
 import {PermissaoTestFactory, UsuarioTestFactory} from './usuario.test-factory';
 
 describe('UsuarioEditComponent', () => {

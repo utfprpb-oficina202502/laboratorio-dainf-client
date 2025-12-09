@@ -2,7 +2,7 @@ import {TestBed} from '@angular/core/testing';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {Router} from '@angular/router';
 import {LoginService} from './login.service';
-import {StorageService} from '../framework/services/storage.service';
+import {StorageService} from '../framework/service/storage.service';
 import {UsuarioService} from '../usuario/usuario.service';
 import {Usuario} from '../usuario/usuario';
 import {environment} from '../../environments/environment';

@@ -2,6 +2,7 @@
   (visibleChange)="visibleChange.emit($event)"
   [breakpoints]="{'768px': '95vw'}"
   [closable]="true"
+  [contentStyle]="{ 'overflow': 'visible' }"
   [draggable]="false"
   [focusOnShow]="false"
   [header]="config().titulo"
@@ -71,7 +72,6 @@
                   [inputId]="'modal-campo-' + campo.nome"
                   [ngModel]="valores()[campo.nome]"
                   [showIcon]="true"
-                  [touchUI]="breakpointService.isMobile()"
                   appendTo="body"
                   dateFormat="dd/mm/yy"/>
               }

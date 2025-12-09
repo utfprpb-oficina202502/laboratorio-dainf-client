@@ -1,6 +1,6 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {FrequentItemsComponent} from './frequent-items.component';
-import {CartService} from '../../../framework/services/cart.service';
+import {CartService} from '../../../framework/service/cart.service';
 import {provideRouter} from '@angular/router';
 import {ItemFrequenteUsuario} from '../../models/dashboard.models';
 
