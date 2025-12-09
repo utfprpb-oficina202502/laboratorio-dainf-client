@@ -21,40 +21,6 @@ import { SharedListComponentBase } from '../framework/component/shared-list-base
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SolicitacaoCompraListComponent extends SharedListComponentBase<SolicitacaoCompra, ListComponentConfig, SolicitacaoCompraService> {
-  public readonly listConfig = createListComponentConfig(
-    [
-      {
-        field: 'descricao',
-        header: 'Descrição',
-        type: 'text',
-        sortable: true,
-        filterable: true,
-        minWidth: '20rem'
-      },
-      {
-        field: 'dataSolicitacao',
-        header: 'Data Solicitação',
-        type: 'date',
-        sortable: true,
-        filterable: true,
-        width: '12rem',
-        align: 'center'
-      },
-      {
-        field: 'usuarioNome',
-        header: 'Usuário',
-        type: 'text',
-        sortable: true,
-        filterable: true,
-        minWidth: '16rem'
-      }
-    ],
-    ['descricao', 'dataSolicitacao', 'usuarioNome'],
-    'descricao',
-    'Solicitações de Compra',
-    'solicitacao-compra-list'
-  );
-
   columnsTable: string[] = [];
   contextMenuItems: MenuItem[] = [];
   readonly service = inject(SolicitacaoCompraService);
@@ -67,11 +33,44 @@ export class SolicitacaoCompraListComponent extends SharedListComponentBase<Soli
   protected readonly loaderService = super['loaderService'];
 
   constructor() {
+    const listConfig = createListComponentConfig(
+      [
+        {
+          field: 'descricao',
+          header: 'Descrição',
+          type: 'text',
+          sortable: true,
+          filterable: true,
+          minWidth: '20rem'
+        },
+        {
+          field: 'dataSolicitacao',
+          header: 'Data Solicitação',
+          type: 'date',
+          sortable: true,
+          filterable: true,
+          width: '12rem',
+          align: 'center'
+        },
+        {
+          field: 'usuarioNome',
+          header: 'Usuário',
+          type: 'text',
+          sortable: true,
+          filterable: true,
+          minWidth: '16rem'
+        }
+      ],
+      ['descricao', 'dataSolicitacao', 'usuarioNome'],
+      'descricao',
+      'Solicitações de Compra',
+      'solicitacao-compra-list'
+    );
     super({
       entityName: 'Solicitação de Compra',
       entityPluralName: 'Solicitações de Compra',
       exportFileName: 'solicitacoes-compra',
-      listConfig: SolicitacaoCompraListComponent.prototype.listConfig,
+      listConfig,
       entityService: inject(SolicitacaoCompraService),
       injector: inject(Injector)
     });

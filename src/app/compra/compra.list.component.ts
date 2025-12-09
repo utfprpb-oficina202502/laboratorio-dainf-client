@@ -27,7 +27,7 @@ export class CompraListComponent extends SharedListComponentBase<
   ListComponentConfig,
   CompraService
 > {
-  public readonly listConfig = createListComponentConfig(
+  public static readonly listConfig = createListComponentConfig(
     [
       {
         field: 'fornecedorNomeFantasia',
@@ -70,7 +70,7 @@ export class CompraListComponent extends SharedListComponentBase<
       entityName: 'Compra',
       entityPluralName: 'Compras',
       exportFileName: 'compras',
-      listConfig: CompraListComponent.prototype.listConfig,
+      listConfig: CompraListComponent.listConfig,
       entityService: inject(CompraService),
       injector: inject(Injector)
     });
@@ -101,13 +101,5 @@ export class CompraListComponent extends SharedListComponentBase<
       event.preventDefault();
       this.openOptions(event, compra);
     }
-  }
-
-  edit(_id: number): void {
-    // Implement edit logic or call base method
-  }
-
-  delete(_id: number): void {
-    // Implement delete logic or call base method
   }
 }
