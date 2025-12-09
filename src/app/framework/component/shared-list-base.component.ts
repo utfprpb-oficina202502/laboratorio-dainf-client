@@ -1,28 +1,36 @@
 import { PrimeCrudListComponent } from './prime-crud.list.component';
 import { Injector } from '@angular/core';
 import { createIdColumn, createActionsColumn, createTableConfig } from '../utils/table-config.factory';
+import { ListComponentConfig } from '../utils/table-config.factory';
+import { CrudService } from '../service/crud.service';
 
-export interface SharedListComponentOptions {
+export interface SharedListComponentOptions<T, L extends ListComponentConfig, S extends CrudService<T, any>> {
   entityName: string;
   entityPluralName: string;
   exportFileName: string;
-  listConfig: any;
-  entityService: any;
+  listConfig: L;
+  entityService: S;
   injector: Injector;
 }
 
-export abstract class SharedListComponentBase<T, K> extends PrimeCrudListComponent<T, K> {
+export abstract class SharedListComponentBase<T, L extends ListComponentConfig, S extends CrudService<T, any>> extends PrimeCrudListComponent<T, any> {
   protected entityName: string;
   protected entityPluralName: string;
   protected exportFileName: string;
-  protected listConfig: any;
+  protected listConfig: L;
+  protected service: S;
+  protected entityService: S;
+  protected injector: Injector;
 
-  constructor(options: SharedListComponentOptions) {
+  constructor(options: SharedListComponentOptions<T, L, S>) {
     super();
     this.entityName = options.entityName;
     this.entityPluralName = options.entityPluralName;
     this.exportFileName = options.exportFileName;
     this.listConfig = options.listConfig;
+    this.service = options.entityService;
+    this.entityService = options.entityService;
+    this.injector = options.injector;
   }
 
   getEntityName(): string {
