@@ -14,7 +14,7 @@ import {FormsModule} from "@angular/forms";
     <div class="toggle-wrapper">
       <p-toggleButton
         [(ngModel)]="checked"
-        (onChange)="onToggle($event.checked)"
+        (onChange)="onToggle($event)"
         [onIcon]="'pi pi-moon'"
         [offIcon]="'pi pi-sun'"
         [onLabel]="'Escuro'"
@@ -56,7 +56,9 @@ export class ThemeToggleComponent {
     this.checked = themeService.isDarkMode();
   }
 
-  onToggle(checked: boolean): void {
+  onToggle(event: any): void {
+    // event.checked é boolean, mas pode ser undefined se o evento for disparado incorretamente
+    const checked = event?.checked === true;
     this.themeService.setTheme(checked ? 'dark' : 'light');
   }
 }

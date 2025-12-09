@@ -78,7 +78,7 @@ export class FornecedorListComponent extends SharedListComponentBase<Fornecedor,
     this.configureTable();
   }
 
-  openOptions(_event: Event, fornecedor: Fornecedor): void {
+  openOptions(event: Event, fornecedor: Fornecedor): void {
     this.contextMenuItems = [
       {
         label: 'Editar',
@@ -91,6 +91,10 @@ export class FornecedorListComponent extends SharedListComponentBase<Fornecedor,
         command: () => this.delete(fornecedor.id)
       }
     ];
+    const menu = this.actionsMenu?.();
+    if (menu && typeof menu.toggle === 'function') {
+      menu.toggle(event);
+    }
   }
 
   onKeyDown(event: KeyboardEvent, fornecedor: Fornecedor): void {
