@@ -29,16 +29,6 @@ export class CompraListComponent extends SharedListComponentBase<
 > {
   public readonly listConfig = createListComponentConfig(
     [
-      // Não inclua 'id' nem 'actions' aqui, o base já adiciona
-      {
-        field: 'dataCompra',
-        header: 'Data da Compra',
-        type: 'date',
-        sortable: true,
-        filterable: true,
-        width: '12rem',
-        align: 'center'
-      },
       {
         field: 'fornecedorNomeFantasia',
         header: 'Fornecedor',
@@ -54,9 +44,18 @@ export class CompraListComponent extends SharedListComponentBase<
         sortable: true,
         filterable: true,
         minWidth: '16rem'
+      },
+      {
+        field: 'dataCompra',
+        header: 'Data da Compra',
+        type: 'date',
+        sortable: true,
+        filterable: true,
+        width: '12rem',
+        align: 'center'
       }
     ],
-    ['dataCompra', 'fornecedorNomeFantasia', 'fornecedorRazaoSocial'],
+    ['fornecedorNomeFantasia', 'fornecedorRazaoSocial', 'dataCompra'],
     'dataCompra',
     'Compras',
     'compra-list'

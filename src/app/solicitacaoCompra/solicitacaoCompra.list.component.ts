@@ -32,15 +32,6 @@ export class SolicitacaoCompraListComponent extends SharedListComponentBase<Soli
         minWidth: '20rem'
       },
       {
-        field: 'status',
-        header: 'Status',
-        type: 'custom',
-        sortable: true,
-        filterable: true,
-        width: '10rem',
-        align: 'center'
-      },
-      {
         field: 'dataSolicitacao',
         header: 'Data Solicitação',
         type: 'date',
@@ -48,9 +39,17 @@ export class SolicitacaoCompraListComponent extends SharedListComponentBase<Soli
         filterable: true,
         width: '12rem',
         align: 'center'
+      },
+      {
+        field: 'usuarioNome',
+        header: 'Usuário',
+        type: 'text',
+        sortable: true,
+        filterable: true,
+        minWidth: '16rem'
       }
     ],
-    ['descricao', 'status', 'dataSolicitacao'],
+    ['descricao', 'dataSolicitacao', 'usuarioNome'],
     'descricao',
     'Solicitações de Compra',
     'solicitacao-compra-list'
