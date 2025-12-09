@@ -237,7 +237,16 @@ describe('NavbarComponent', () => {
       // Menu toggle é gerenciado pelo PrimeNG TieredMenu
     });
 
-    it('deve criar opções de dropdown no ngOnInit', () => {
+    it('deve criar opções de dropdown no ngOnInit para usuários não-admin', () => {
+      component.ngOnInit();
+
+      expect(component.items).toHaveLength(2);
+      expect(component.items[0].label).toBe('Meus dados');
+      expect(component.items[1].label).toBe('Sair');
+    });
+
+    it('deve criar opções de dropdown com Configurações para administradores', () => {
+      mockLoginService.hasAnyRole = jest.fn().mockReturnValue(true);
       component.ngOnInit();
 
       expect(component.items).toHaveLength(3);
@@ -377,7 +386,8 @@ describe('NavbarComponent', () => {
   });
 
   describe('Cobertura complementar', () => {
-    it('deve chamar navegação para configurações ao acionar item do dropdown', () => {
+    it('deve chamar navegação para configurações ao acionar item do dropdown (admin)', () => {
+      mockLoginService.hasAnyRole = jest.fn().mockReturnValue(true);
       component.ngOnInit();
       const configItem = component.items.find(item => item.label === 'Configurações');
       const routerSpy = jest.spyOn((component as any).router, 'navigate');
