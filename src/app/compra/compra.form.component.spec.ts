@@ -248,11 +248,12 @@ describe('CompraFormComponent', () => {
       component.findFornecedores({query: 'test'} as any);
       tick(300);
 
-      expect(loggerService.error).toHaveBeenCalledWith('Erro ao buscar fornecedores:', error);
+      expect(loggerService.error).toHaveBeenCalledWith('Erro ao buscar fornecedores', error);
       expect(messageService.add).toHaveBeenCalledWith({
         severity: 'error',
         summary: 'Erro',
-        detail: 'Não foi possível buscar fornecedores. Tente novamente.'
+        detail: 'Erro ao buscar fornecedores. Tente novamente.',
+        life: 5000
       });
     }));
 
@@ -301,11 +302,12 @@ describe('CompraFormComponent', () => {
       component.findProdutos({query: 'test'} as any);
       tick(300);
 
-      expect(loggerService.error).toHaveBeenCalledWith('Erro ao buscar itens:', error);
+      expect(loggerService.error).toHaveBeenCalledWith('Erro ao buscar itens', error);
       expect(messageService.add).toHaveBeenCalledWith({
         severity: 'error',
         summary: 'Erro',
-        detail: 'Não foi possível buscar itens. Tente novamente.'
+        detail: 'Erro ao buscar itens. Tente novamente.',
+        life: 5000
       });
     }));
   });

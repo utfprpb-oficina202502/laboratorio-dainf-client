@@ -1,6 +1,7 @@
-import {Injectable, signal} from '@angular/core';
+import {inject, Injectable, signal} from '@angular/core';
 import {FORMATO_EXTENSAO, FormatoRelatorio} from '../models/formato-relatorio.type';
 import {DownloadHistory, DownloadHistoryItem} from '../models/download-history.interface';
+import {LoggerService} from '../../framework/service/logger.service';
 
 /**
  * Service para gerenciar downloads de relatórios e histórico.
@@ -26,6 +27,8 @@ import {DownloadHistory, DownloadHistoryItem} from '../models/download-history.i
  */
 @Injectable({providedIn: 'root'})
 export class RelatorioDownloadService {
+  private readonly logger = inject(LoggerService);
+
   // Constantes estáticas - inicializadas antes de qualquer instância
   private static readonly STORAGE_KEY = 'laboratorio-relatorio-downloads';
   private static readonly MAX_ITEMS = 10;
@@ -49,7 +52,7 @@ export class RelatorioDownloadService {
    * @param nomeArquivo Nome do arquivo para download
    */
   downloadBlob(blob: Blob, nomeArquivo: string): void {
-    const url = window.URL.createObjectURL(blob);
+    const url = globalThis.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = nomeArquivo;
@@ -61,14 +64,14 @@ export class RelatorioDownloadService {
     try {
       link.click();
     } catch (error) {
-      console.error('Erro ao iniciar download:', error);
+      this.logger.error('Erro ao iniciar download', error);
     } finally {
       // Remove o elemento do DOM imediatamente
       link.remove();
 
       // Revoga a Object URL após um delay para garantir que o download iniciou
       setTimeout(() => {
-        window.URL.revokeObjectURL(url);
+        globalThis.URL.revokeObjectURL(url);
       }, RelatorioDownloadService.REVOKE_DELAY_MS);
     }
   }
@@ -146,13 +149,13 @@ export class RelatorioDownloadService {
 
       // Verifica versão do schema para migrações futuras
       if (data.version !== RelatorioDownloadService.SCHEMA_VERSION) {
-        console.warn('Versão do histórico incompatível, limpando...');
+        this.logger.warn('Versão do histórico incompatível, limpando...');
         return [];
       }
 
       return data.items || [];
     } catch (e) {
-      console.error('Erro ao carregar histórico de downloads:', e);
+      this.logger.error('Erro ao carregar histórico de downloads', e);
       return [];
     }
   }
@@ -169,7 +172,7 @@ export class RelatorioDownloadService {
     try {
       localStorage.setItem(RelatorioDownloadService.STORAGE_KEY, JSON.stringify(data));
     } catch (e) {
-      console.error('Erro ao salvar histórico de downloads:', e);
+      this.logger.error('Erro ao salvar histórico de downloads', e);
     }
   }
 

@@ -112,8 +112,11 @@ describe('RelatorioDownloadService', () => {
       // Não deve lançar exceção
       expect(() => service.downloadBlob(mockBlob, 'test.txt')).not.toThrow();
 
-      // Deve logar o erro
-      expect(consoleSpy).toHaveBeenCalledWith('Erro ao iniciar download:', expect.any(Error));
+      // Deve logar o erro (LoggerService formata com timestamp e prefixo [ERROR])
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Erro ao iniciar download'),
+        expect.any(Error)
+      );
 
       // Cleanup ainda deve ocorrer (finally block)
       expect(removeSpy).toHaveBeenCalled();

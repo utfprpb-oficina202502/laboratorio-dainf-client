@@ -2,15 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   inject,
   OnDestroy,
   signal
 } from '@angular/core';
-import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
-import {of, Subject} from 'rxjs';
-import {catchError, debounceTime, distinctUntilChanged, filter, switchMap} from 'rxjs/operators';
+import {Subject} from 'rxjs';
 
 import {SolicitacaoCompra} from './solicitacaoCompra';
 import {SolicitacaoCompraService} from './solicitacaoCompra.service';
@@ -21,7 +18,6 @@ import {Item} from '../item/item';
 import {ItemService} from '../item/item.service';
 import {SolicitacaoCompraItem} from './solicitacaoCompraItem';
 import {BreakpointService} from '../framework/service/breakpoint.service';
-import {LoggerService} from '../framework/service/logger.service';
 
 // PrimeNG
 import {CardModule} from 'primeng/card';
@@ -70,12 +66,6 @@ export class SolicitacaoCompraFormComponent extends PrimeReactiveCrudFormCompone
   private readonly fb = inject(FormBuilder);
   private readonly itemService = inject(ItemService);
   protected readonly breakpointService = inject(BreakpointService);
-  /** Tempo de debounce para busca (ms) */
-  private static readonly SEARCH_DEBOUNCE_MS = 300;
-  /** Quantidade mínima de caracteres para busca */
-  private static readonly MIN_SEARCH_LENGTH = 2;
-  protected readonly logger = inject(LoggerService);
-  private readonly destroyRef = inject(DestroyRef);
   /** Subject para debounce da busca de itens */
   private readonly itemSearchSubject = new Subject<string>();
 
@@ -97,25 +87,13 @@ export class SolicitacaoCompraFormComponent extends PrimeReactiveCrudFormCompone
   constructor() {
     super();
 
-    // Configura debounce para busca de itens
-    this.itemSearchSubject.pipe(
-      debounceTime(SolicitacaoCompraFormComponent.SEARCH_DEBOUNCE_MS),
-      distinctUntilChanged(),
-      filter(query => query.length >= SolicitacaoCompraFormComponent.MIN_SEARCH_LENGTH),
-      switchMap(query => this.itemService.completeItem(query, false).pipe(
-        catchError(error => {
-          this.logger.error('Erro ao buscar itens', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erro',
-            detail: 'Erro ao carregar itens. Tente novamente.',
-            life: 5000
-          });
-          return of([]);
-        })
-      )),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(items => this.itemList.set(items));
+    // Configura debounce para busca de itens usando método da classe base
+    this.setupAutocompleteDebounce(
+      this.itemSearchSubject,
+      (query) => this.itemService.completeItem(query, false),
+      this.itemList,
+      'Erro ao buscar itens'
+    );
   }
 
   ngOnDestroy(): void {
@@ -148,12 +126,7 @@ export class SolicitacaoCompraFormComponent extends PrimeReactiveCrudFormCompone
    * O debounce evita chamadas excessivas à API durante a digitação.
    */
   findProdutos(event: AutoCompleteCompleteEvent): void {
-    const query = event.query;
-    if (query.length < SolicitacaoCompraFormComponent.MIN_SEARCH_LENGTH) {
-      this.itemList.set([]);
-      return;
-    }
-    this.itemSearchSubject.next(query);
+    this.handleAutocompleteQuery(event.query, this.itemSearchSubject, this.itemList, []);
   }
 
   /**

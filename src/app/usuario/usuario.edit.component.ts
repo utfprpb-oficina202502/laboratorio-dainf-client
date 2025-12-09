@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  DestroyRef,
-  inject,
-  signal
-} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
@@ -61,9 +54,6 @@ export class UsuarioEditComponent extends PrimeReactiveCrudFormComponent<Usuario
   protected override service = inject(UsuarioService);
   protected override urlList = '/usuario';
   protected override type = Usuario;
-
-  // Injeção de DestroyRef para gerenciamento automático de subscriptions
-  private readonly destroyRef = inject(DestroyRef);
 
   // Signals for state management
   protected readonly dialogChangeSenha = signal(false);

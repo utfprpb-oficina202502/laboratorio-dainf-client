@@ -2,19 +2,32 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {CrudService} from '../service/crud.service';
 import {
   ChangeDetectorRef,
+  DestroyRef,
   Directive,
   inject,
   Injector,
   OnDestroy,
   OnInit,
-  signal
+  signal,
+  WritableSignal
 } from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {FormGroup} from '@angular/forms';
 import {MessageService} from 'primeng/api';
 import {LoaderService} from '../loader/loader.service';
 import {LoginService} from '../../login/login.service';
-import {Subject} from 'rxjs';
-import {takeUntil} from 'rxjs/operators';
+import {Observable, of, Subject} from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  finalize,
+  map,
+  switchMap,
+  takeUntil
+} from 'rxjs/operators';
+import {HttpErrorResponse} from '@angular/common/http';
 import {LoggerService} from '../service/logger.service';
 import {extractRouteParam, parseNumericId} from '../utils/route-params.operators';
 import {FormValidationService} from '../service/form-validation.service';
@@ -42,6 +55,13 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
   protected readonly formStateManager: FormStateManagerService;
   protected readonly formBusinessRules: FormBusinessRulesService;
   protected readonly errorHandler: ErrorHandlerService;
+  /** Tempo de debounce padrão para autocomplete (ms) */
+  protected static readonly DEFAULT_DEBOUNCE_MS = 300;
+  /** Quantidade mínima de caracteres para busca no autocomplete */
+  protected static readonly DEFAULT_MIN_SEARCH_LENGTH = 2;
+  /** Regex para validação de caracteres permitidos em busca (inclui acentos pt-BR) */
+  protected static readonly ALLOWED_SEARCH_CHARS = /^[a-zA-Z0-9\s\-_.@áàâãéèêíìîóòôõúùûçÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ]+$/;
+  protected readonly destroyRef: DestroyRef;
 
   // Signals for state management
   protected readonly isEditing = signal(false);
@@ -68,6 +88,7 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
     this.formStateManager = inject(FormStateManagerService);
     this.formBusinessRules = inject(FormBusinessRulesService);
     this.errorHandler = inject(ErrorHandlerService);
+    this.destroyRef = inject(DestroyRef);
   }
 
   protected abstract buildForm(): FormGroup;
@@ -347,5 +368,152 @@ export abstract class PrimeReactiveCrudFormComponent<T, ID> implements OnInit, O
   protected setTodayAsDefaultDate(fieldName: string): void {
     const formGroup = this.form();
     this.formBusinessRules.setTodayAsDefaultDate(formGroup, fieldName);
+  }
+
+  /**
+   * Configura debounce para busca de autocomplete.
+   * Centraliza a lógica comum de debounce, distinctUntilChanged, switchMap e tratamento de erro.
+   *
+   * Inclui:
+   * - Sanitização de input (trim + validação de caracteres)
+   * - Tratamento de erros HTTP específicos (401, 403, 404, network)
+   * - Gerenciamento seguro do loadingSignal com finalize
+   *
+   * @param searchSubject Subject que recebe as queries de busca
+   * @param searchFn Função que executa a busca no serviço
+   * @param resultSignal Signal para armazenar os resultados
+   * @param errorMessage Mensagem de erro para o logger
+   * @param options Opções adicionais (minLength, debounceMs, loadingSignal, emptyValue)
+   *
+   * @example
+   * ```typescript
+   * // No constructor do componente:
+   * this.setupAutocompleteDebounce(
+   *   this.itemSearchSubject,
+   *   (query) => this.itemService.completeItem(query, true), // true = apenas disponíveis
+   *   this.itemList,
+   *   'Erro ao buscar itens',
+   *   { loadingSignal: this.itemLoading }
+   * );
+   * ```
+   */
+  protected setupAutocompleteDebounce<R>(
+    searchSubject: Subject<string>,
+    searchFn: (query: string) => Observable<R>,
+    resultSignal: WritableSignal<R>,
+    errorMessage: string,
+    options?: {
+      /** Quantidade mínima de caracteres para busca (padrão: 2) */
+      minLength?: number;
+      /** Tempo de debounce em ms (padrão: 300) */
+      debounceMs?: number;
+      /** Signal de loading para indicar carregamento */
+      loadingSignal?: WritableSignal<boolean>;
+      /** Valor a ser usado em caso de erro (padrão: [] vazio) */
+      emptyValue?: R;
+    }
+  ): void {
+    const minLength = options?.minLength ?? PrimeReactiveCrudFormComponent.DEFAULT_MIN_SEARCH_LENGTH;
+    const debounceMs = options?.debounceMs ?? PrimeReactiveCrudFormComponent.DEFAULT_DEBOUNCE_MS;
+    const loadingSignal = options?.loadingSignal;
+
+    searchSubject.pipe(
+      debounceTime(debounceMs),
+      // Sanitização: trim e filtragem de caracteres inválidos
+      map(query => query.trim()),
+      distinctUntilChanged(),
+      filter(query => query.length >= minLength),
+      // Validação de segurança: apenas caracteres permitidos
+      filter(query => PrimeReactiveCrudFormComponent.ALLOWED_SEARCH_CHARS.test(query)),
+      switchMap(query => {
+        loadingSignal?.set(true);
+        return searchFn(query).pipe(
+          catchError((error: HttpErrorResponse | Error) => {
+            this.logger.error(errorMessage, error);
+
+            // Determina mensagem específica baseada no tipo/status do erro
+            const detail = this.getErrorDetail(error, errorMessage);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erro',
+              detail,
+              life: 5000
+            });
+
+            // Retorna o emptyValue se fornecido, senão usa array vazio
+            return of(options?.emptyValue ?? ([] as unknown as R));
+          }),
+          // Garante que loadingSignal seja resetado mesmo em caso de erro
+          finalize(() => loadingSignal?.set(false))
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: (result) => {
+        resultSignal.set(result);
+      }
+    });
+  }
+
+  /**
+   * Handler genérico para evento de autocomplete.
+   * Verifica tamanho mínimo da query e emite para o Subject.
+   * A sanitização completa (trim + regex) é feita no setupAutocompleteDebounce.
+   *
+   * @param query Query digitada pelo usuário
+   * @param searchSubject Subject para emitir a query
+   * @param resultSignal Signal para limpar se query muito curta
+   * @param emptyValue Valor vazio para limpar o signal
+   * @param minLength Tamanho mínimo da query (padrão: 2)
+   *
+   * @example
+   * ```typescript
+   * findProdutos(event: AutoCompleteCompleteEvent): void {
+   *   this.handleAutocompleteQuery(event.query, this.itemSearchSubject, this.itemList, []);
+   * }
+   * ```
+   */
+  protected handleAutocompleteQuery<R>(
+    query: string,
+    searchSubject: Subject<string>,
+    resultSignal: WritableSignal<R>,
+    emptyValue: R,
+    minLength = PrimeReactiveCrudFormComponent.DEFAULT_MIN_SEARCH_LENGTH
+  ): void {
+    // Sanitização básica - trim será reaplicado no pipe
+    const sanitizedQuery = query.trim();
+
+    if (sanitizedQuery.length < minLength) {
+      resultSignal.set(emptyValue);
+      return;
+    }
+    searchSubject.next(sanitizedQuery);
+  }
+
+  /**
+   * Retorna mensagem de erro específica baseada no status HTTP.
+   * @param error Erro capturado (HttpErrorResponse ou Error genérico)
+   * @param defaultMessage Mensagem padrão para erros desconhecidos
+   */
+  private getErrorDetail(error: HttpErrorResponse | Error, defaultMessage: string): string {
+    if (error instanceof HttpErrorResponse) {
+      switch (error.status) {
+        case 0:
+          return 'Sem conexão com o servidor. Verifique sua internet.';
+        case 401:
+          return 'Sessão expirada. Faça login novamente.';
+        case 403:
+          return 'Sem permissão para acessar esses dados.';
+        case 404:
+          return 'Recurso não encontrado.';
+        case 500:
+        case 502:
+        case 503:
+          return 'Erro no servidor. Tente novamente em alguns instantes.';
+        default:
+          return `${defaultMessage}. Tente novamente.`;
+      }
+    }
+    return `${defaultMessage}. Tente novamente.`;
   }
 }

@@ -140,7 +140,13 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
     }
 
     // Add standard actions based on permissions
-    if (!isReadOnly) {
+    if (isReadOnly) {
+      this.contextMenuItems.push({
+        label: 'Visualizar',
+        icon: 'pi pi-eye',
+        command: () => this.edit(this.getItemId(reserva))
+      });
+    } else {
       if (this.canEdit()) {
         this.contextMenuItems.push({
           label: 'Editar',
@@ -156,12 +162,6 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
           command: () => this.delete(this.getItemId(reserva))
         });
       }
-    } else {
-      this.contextMenuItems.push({
-        label: 'Visualizar',
-        icon: 'pi pi-eye',
-        command: () => this.edit(this.getItemId(reserva))
-      });
     }
 
     this.actionsMenu().toggle(event);
@@ -191,7 +191,7 @@ export class ReservaListComponent extends PrimeCrudListComponent<Reserva, number
         this.router.navigate(['emprestimo/form/reserva']);
       },
       error: (error: unknown) => {
-        console.error('Erro ao buscar dados completos da reserva:', error);
+        this.logger.error('Erro ao buscar dados completos da reserva', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Erro',

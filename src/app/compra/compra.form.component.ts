@@ -2,16 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   inject,
   OnDestroy,
   signal
 } from '@angular/core';
-import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {CommonModule} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
-import {of, Subject} from 'rxjs';
-import {catchError, debounceTime, distinctUntilChanged, filter, switchMap} from 'rxjs/operators';
+import {Subject} from 'rxjs';
 
 import {Compra} from './compra';
 import {CompraService} from './compra.service';
@@ -73,11 +70,6 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
   private readonly fb = inject(FormBuilder);
   private readonly fornecedorService = inject(FornecedorService);
   private readonly itemService = inject(ItemService);
-  /** Tempo de debounce para busca (ms) */
-  private static readonly SEARCH_DEBOUNCE_MS = 300;
-  /** Quantidade mínima de caracteres para busca */
-  private static readonly MIN_SEARCH_LENGTH = 2;
-  private readonly destroyRef = inject(DestroyRef);
   /** Subject para debounce da busca de fornecedores */
   private readonly fornecedorSearchSubject = new Subject<string>();
   /** Subject para debounce da busca de itens */
@@ -111,43 +103,21 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
   constructor() {
     super();
 
-    // Configura debounce para busca de fornecedores
-    this.fornecedorSearchSubject.pipe(
-      debounceTime(CompraFormComponent.SEARCH_DEBOUNCE_MS),
-      distinctUntilChanged(),
-      filter(query => query.length >= CompraFormComponent.MIN_SEARCH_LENGTH),
-      switchMap(query => this.fornecedorService.complete(query).pipe(
-        catchError(err => {
-          this.logger.error('Erro ao buscar fornecedores:', err);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erro',
-            detail: 'Não foi possível buscar fornecedores. Tente novamente.'
-          });
-          return of([]);
-        })
-      )),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(fornecedores => this.fornecedorList.set(fornecedores));
+    // Configura debounce para busca de fornecedores usando método da classe base
+    this.setupAutocompleteDebounce(
+      this.fornecedorSearchSubject,
+      (query) => this.fornecedorService.complete(query),
+      this.fornecedorList,
+      'Erro ao buscar fornecedores'
+    );
 
-    // Configura debounce para busca de itens
-    this.itemSearchSubject.pipe(
-      debounceTime(CompraFormComponent.SEARCH_DEBOUNCE_MS),
-      distinctUntilChanged(),
-      filter(query => query.length >= CompraFormComponent.MIN_SEARCH_LENGTH),
-      switchMap(query => this.itemService.completeItem(query, false).pipe(
-        catchError(err => {
-          this.logger.error('Erro ao buscar itens:', err);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erro',
-            detail: 'Não foi possível buscar itens. Tente novamente.'
-          });
-          return of([]);
-        })
-      )),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(items => this.itemList.set(items));
+    // Configura debounce para busca de itens usando método da classe base
+    this.setupAutocompleteDebounce(
+      this.itemSearchSubject,
+      (query) => this.itemService.completeItem(query, false),
+      this.itemList,
+      'Erro ao buscar itens'
+    );
   }
 
   ngOnDestroy(): void {
@@ -180,12 +150,7 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
    * O debounce evita chamadas excessivas à API durante a digitação.
    */
   findFornecedores(event: AutoCompleteCompleteEvent): void {
-    const query = event.query;
-    if (query.length < CompraFormComponent.MIN_SEARCH_LENGTH) {
-      this.fornecedorList.set([]);
-      return;
-    }
-    this.fornecedorSearchSubject.next(query);
+    this.handleAutocompleteQuery(event.query, this.fornecedorSearchSubject, this.fornecedorList, []);
   }
 
   /**
@@ -193,12 +158,7 @@ export class CompraFormComponent extends PrimeReactiveCrudFormComponent<Compra, 
    * O debounce evita chamadas excessivas à API durante a digitação.
    */
   findProdutos(event: AutoCompleteCompleteEvent): void {
-    const query = event.query;
-    if (query.length < CompraFormComponent.MIN_SEARCH_LENGTH) {
-      this.itemList.set([]);
-      return;
-    }
-    this.itemSearchSubject.next(query);
+    this.handleAutocompleteQuery(event.query, this.itemSearchSubject, this.itemList, []);
   }
 
   /**

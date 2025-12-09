@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  DestroyRef,
-  inject,
-  signal
-} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, signal} from '@angular/core';
 
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
@@ -32,7 +25,6 @@ import {FormFieldComponent} from '../framework/component/form-field.component';
 import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
-import {LoggerService} from '../framework/service/logger.service';
 
 interface PermissaoSelectItem {
   label: string;
@@ -68,8 +60,6 @@ export class UsuarioFormComponent extends PrimeReactiveCrudFormComponent<Usuario
   protected override urlList = '/usuario';
   protected override type = Usuario;
   private readonly fb = inject(FormBuilder);
-  protected readonly logger = inject(LoggerService);
-  private readonly destroyRef = inject(DestroyRef);
 
   // Signals for dropdown options and dialog state
   protected readonly grupoAcessoDropdown = signal<PermissaoSelectItem[]>([]);

@@ -2,17 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   effect,
   inject,
   OnDestroy,
   signal
 } from '@angular/core';
-import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {NgOptimizedImage} from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
-import {of, Subject, Subscription} from 'rxjs';
-import {catchError, debounceTime, distinctUntilChanged, filter, switchMap} from 'rxjs/operators';
+import {Subject} from 'rxjs';
 import {Emprestimo} from './emprestimo';
 import {EmprestimoService} from './emprestimo.service';
 import {
@@ -50,7 +47,6 @@ import {VoltarComponent} from '../geral/voltar/voltar.component';
 import {CancelarComponent} from '../geral/cancelar/cancelar.component';
 import {SalvarComponent} from '../geral/salvar/salvar.component';
 import {CadastroRapidoComponent} from '../geral/cadastroRapido/cadastroRapido.component';
-import {LoggerService} from '../framework/service/logger.service';
 import {formatarHistoricoReserva} from '../framework/utils/historico-transicao.utils';
 
 @Component({
@@ -88,13 +84,7 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   private readonly fb = inject(FormBuilder);
   private readonly itemService = inject(ItemService);
   private readonly usuarioService = inject(UsuarioService);
-  /** Tempo de debounce para busca (ms) */
-  private static readonly SEARCH_DEBOUNCE_MS = 300;
-  protected readonly logger = inject(LoggerService);
   protected readonly itemLoading = signal(false);
-  /** Quantidade mínima de caracteres para busca */
-  private static readonly MIN_SEARCH_LENGTH = 2;
-  private readonly destroyRef = inject(DestroyRef);
   /** Subject para debounce da busca de itens */
   private readonly itemSearchSubject = new Subject<string>();
   /** Subject para debounce da busca de usuários */
@@ -102,7 +92,6 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
 
   // State signals
   protected readonly itemList = signal<Item[]>([]);
-  private readonly itemSubscription?: Subscription;
   protected readonly usuarioList = signal<Usuario[]>([]);
   protected readonly emprestimoItems = signal<EmprestimoItem[]>([]);
   protected readonly maxDateEmprestimo = signal<Date>(new Date());
@@ -156,57 +145,31 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
       }
     });
 
-    // Configura debounce para busca de itens
-    this.itemSearchSubject.pipe(
-      debounceTime(EmprestimoFormComponent.SEARCH_DEBOUNCE_MS),
-      distinctUntilChanged(),
-      filter(query => query.length >= EmprestimoFormComponent.MIN_SEARCH_LENGTH),
-      switchMap(query => {
-        this.itemLoading.set(true);
-        return this.itemService.completeItem(query, true).pipe(
-          catchError(error => {
-            this.logger.error('Erro ao buscar itens', error);
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erro',
-              detail: 'Erro ao carregar itens. Tente novamente.',
-              life: 5000
-            });
-            return of([]);
-          })
-        );
-      }),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe({
-      next: (items) => {
-        this.itemList.set(items);
-        this.itemLoading.set(false);
-      }
-    });
+    // Configura debounce para busca de itens usando método da classe base
+    this.setupAutocompleteDebounce(
+      this.itemSearchSubject,
+      (query) => this.itemService.completeItem(query, true),
+      this.itemList,
+      'Erro ao buscar itens',
+      {loadingSignal: this.itemLoading}
+    );
 
-    // Configura debounce para busca de usuários
-    this.usuarioSearchSubject.pipe(
-      debounceTime(EmprestimoFormComponent.SEARCH_DEBOUNCE_MS),
-      distinctUntilChanged(),
-      filter(query => query.length >= EmprestimoFormComponent.MIN_SEARCH_LENGTH),
-      switchMap(query => {
-        return this.usuarioService.completeCustom(query).pipe(
-          catchError(error => {
-            this.logger.error('Erro ao buscar usuários', error);
-            return of([]);
-          })
-        );
-      }),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe({
-      next: (usuarios) => {
-        this.usuarioList.set(usuarios);
-        if (usuarios.length === 1) {
-          const formGroup = this.form();
-          if (formGroup) {
-            formGroup.patchValue({usuarioEmprestimo: usuarios[0]});
-            this.documentoUsuario.set(usuarios[0].documento);
-          }
+    // Configura debounce para busca de usuários usando método da classe base
+    this.setupAutocompleteDebounce(
+      this.usuarioSearchSubject,
+      (query) => this.usuarioService.completeCustom(query),
+      this.usuarioList,
+      'Erro ao buscar usuários'
+    );
+
+    // Auto-seleção de usuário quando apenas um resultado é encontrado
+    effect(() => {
+      const usuarios = this.usuarioList();
+      if (usuarios.length === 1) {
+        const formGroup = this.form();
+        if (formGroup) {
+          formGroup.patchValue({usuarioEmprestimo: usuarios[0]});
+          this.documentoUsuario.set(usuarios[0].documento);
         }
       }
     });
@@ -548,12 +511,7 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
    * O debounce evita chamadas excessivas à API durante a digitação.
    */
   findProdutos(event: AutoCompleteCompleteEvent): void {
-    const query = event.query;
-    if (query.length < EmprestimoFormComponent.MIN_SEARCH_LENGTH) {
-      this.itemList.set([]);
-      return;
-    }
-    this.itemSearchSubject.next(query);
+    this.handleAutocompleteQuery(event.query, this.itemSearchSubject, this.itemList, []);
   }
 
   /**
@@ -562,16 +520,6 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
   ngOnDestroy(): void {
     this.itemSearchSubject.complete();
     this.usuarioSearchSubject.complete();
-    this.cancelItemRequest();
-  }
-
-  /**
-   * Cancel ongoing item request
-   */
-  private cancelItemRequest(): void {
-    if (this.itemSubscription && !this.itemSubscription.closed) {
-      this.itemSubscription.unsubscribe();
-    }
   }
 
   /**
@@ -590,12 +538,7 @@ export class EmprestimoFormComponent extends PrimeReactiveCrudFormComponent<Empr
    * O debounce evita chamadas excessivas à API durante a digitação.
    */
   findUsuarios(event: AutoCompleteCompleteEvent): void {
-    const query = event.query;
-    if (query.length < EmprestimoFormComponent.MIN_SEARCH_LENGTH) {
-      this.usuarioList.set([]);
-      return;
-    }
-    this.usuarioSearchSubject.next(query);
+    this.handleAutocompleteQuery(event.query, this.usuarioSearchSubject, this.usuarioList, []);
   }
 
   /**

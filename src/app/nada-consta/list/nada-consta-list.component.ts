@@ -7,7 +7,6 @@ import {
   signal,
   viewChild
 } from '@angular/core';
-
 import {FormsModule} from '@angular/forms';
 import {DialogModule} from 'primeng/dialog';
 import {InputTextModule} from 'primeng/inputtext';
@@ -368,13 +367,13 @@ export class NadaConstaListComponent extends PrimeCrudListComponent<NadaConsta, 
   }
 
   reenviarNadaConsta(element: NadaConsta): void {
-    // Use console.log instead of alert to be test-friendly and avoid JSDOM/windows issues
-    console.warn(`Reenviar Nada Consta para registro ID ${element.id}`);
+    // Placeholder para funcionalidade futura
+    this.logger.warn(`Reenviar Nada Consta para registro ID ${element.id}`);
   }
 
   atualizarStatus(element: NadaConsta): void {
-    // Use console.warn instead of alert to be test-friendly
-    console.warn(`Atualizar status do registro ID ${element.id}`);
+    // Placeholder para funcionalidade futura
+    this.logger.warn(`Atualizar status do registro ID ${element.id}`);
   }
 
   protected override urlForm = '';
