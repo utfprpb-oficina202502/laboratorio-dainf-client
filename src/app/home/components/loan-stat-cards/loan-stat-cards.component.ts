@@ -41,23 +41,64 @@ export class LoanStatCardsComponent {
   /** Indica se os dados estão carregando */
   readonly loading = input<boolean>(false);
 
-  /** Texto formatado para próxima devolução */
+  /**
+   * Título dinâmico do card baseado no estado do empréstimo.
+   * - Sem empréstimos: "Nenhum Empréstimo" (positivo)
+   * - Atrasado: "Devolução Atrasada" (urgente)
+   * - Vence hoje: "Devolução Hoje" (atenção)
+   * - Outros casos: "Próx. Devolução"
+   */
+  protected readonly proximaDevolucaoTitle = computed(() => {
+    const stats = this.stats();
+    if (!stats || stats.diasParaProximaDevolucao === null || stats.diasParaProximaDevolucao === undefined) {
+      return 'Nenhum Empréstimo';
+    }
+
+    const dias = stats.diasParaProximaDevolucao;
+    if (dias < 0) return 'Devolução Atrasada';
+    if (dias === 0) return 'Devolução Hoje';
+    return 'Próx. Devolução';
+  });
+
+  /**
+   * Cor do card baseada no estado do empréstimo.
+   * - Verde (#22C55E): sem pendências ou prazo > 7 dias
+   * - Vermelho (#EF4444): atrasado
+   * - Amarelo (#F59E0B): vence em breve (0-7 dias)
+   */
+  protected readonly proximaDevolucaoColor = computed(() => {
+    const stats = this.stats();
+    if (!stats || stats.diasParaProximaDevolucao === null || stats.diasParaProximaDevolucao === undefined) {
+      return '#22C55E';
+    }
+
+    const dias = stats.diasParaProximaDevolucao;
+    if (dias < 0) return '#EF4444';
+    if (dias > 7) return '#22C55E';
+    return '#F59E0B';
+  });
+
+  /**
+   * Texto formatado para próxima devolução.
+   * - Sem empréstimos: "✓"
+   * - Atrasado: "X dias" (quantidade de dias em atraso)
+   * - Hoje: "Hoje"
+   * - Amanhã: "Amanhã"
+   * - Outros: "X dias"
+   */
   protected readonly proximaDevolucaoText = computed(() => {
     const stats = this.stats();
     if (!stats || stats.diasParaProximaDevolucao === null || stats.diasParaProximaDevolucao === undefined) {
-      return '-';
+      return '✓';
     }
 
     const dias = stats.diasParaProximaDevolucao;
     if (dias < 0) {
-      return `${Math.abs(dias)} dia(s) atrás`;
+      const diasAtraso = Math.abs(dias);
+      return diasAtraso === 1 ? '1 dia' : `${diasAtraso} dias`;
     }
-    if (dias === 0) {
-      return 'Hoje';
-    }
-    if (dias === 1) {
-      return '1 dia';
-    }
+    if (dias === 0) return 'Hoje';
+    if (dias === 1) return 'Amanhã';
     return `${dias} dias`;
   });
 }

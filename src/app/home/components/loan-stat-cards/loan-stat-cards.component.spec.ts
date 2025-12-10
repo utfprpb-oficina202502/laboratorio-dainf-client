@@ -91,18 +91,18 @@ describe('LoanStatCardsComponent', () => {
   });
 
   describe('proximaDevolucaoText computed', () => {
-    it('deve retornar "-" quando stats é null', () => {
+    it('deve retornar "✓" quando stats é null (sem empréstimos)', () => {
       fixture.componentRef.setInput('stats', null);
       fixture.detectChanges();
 
-      expect(component['proximaDevolucaoText']()).toBe('-');
+      expect(component['proximaDevolucaoText']()).toBe('✓');
     });
 
-    it('deve retornar "-" quando diasParaProximaDevolucao é null', () => {
+    it('deve retornar "✓" quando diasParaProximaDevolucao é null', () => {
       fixture.componentRef.setInput('stats', createMockStats({diasParaProximaDevolucao: null}));
       fixture.detectChanges();
 
-      expect(component['proximaDevolucaoText']()).toBe('-');
+      expect(component['proximaDevolucaoText']()).toBe('✓');
     });
 
     it('deve retornar "Hoje" quando diasParaProximaDevolucao é 0', () => {
@@ -112,11 +112,11 @@ describe('LoanStatCardsComponent', () => {
       expect(component['proximaDevolucaoText']()).toBe('Hoje');
     });
 
-    it('deve retornar "1 dia" quando diasParaProximaDevolucao é 1', () => {
+    it('deve retornar "Amanhã" quando diasParaProximaDevolucao é 1', () => {
       fixture.componentRef.setInput('stats', createMockStats({diasParaProximaDevolucao: 1}));
       fixture.detectChanges();
 
-      expect(component['proximaDevolucaoText']()).toBe('1 dia');
+      expect(component['proximaDevolucaoText']()).toBe('Amanhã');
     });
 
     it('deve retornar "X dias" para valores maiores que 1', () => {
@@ -126,18 +126,99 @@ describe('LoanStatCardsComponent', () => {
       expect(component['proximaDevolucaoText']()).toBe('5 dias');
     });
 
-    it('deve retornar "X dia(s) atrás" para valores negativos', () => {
+    it('deve retornar "X dias" para atraso (valores negativos)', () => {
       fixture.componentRef.setInput('stats', createMockStats({diasParaProximaDevolucao: -3}));
       fixture.detectChanges();
 
-      expect(component['proximaDevolucaoText']()).toBe('3 dia(s) atrás');
+      expect(component['proximaDevolucaoText']()).toBe('3 dias');
     });
 
-    it('deve retornar "1 dia(s) atrás" para -1', () => {
+    it('deve retornar "1 dia" para atraso de 1 dia', () => {
       fixture.componentRef.setInput('stats', createMockStats({diasParaProximaDevolucao: -1}));
       fixture.detectChanges();
 
-      expect(component['proximaDevolucaoText']()).toBe('1 dia(s) atrás');
+      expect(component['proximaDevolucaoText']()).toBe('1 dia');
+    });
+  });
+
+  describe('proximaDevolucaoTitle computed', () => {
+    it('deve retornar "Nenhum Empréstimo" quando stats é null', () => {
+      fixture.componentRef.setInput('stats', null);
+      fixture.detectChanges();
+
+      expect(component['proximaDevolucaoTitle']()).toBe('Nenhum Empréstimo');
+    });
+
+    it('deve retornar "Nenhum Empréstimo" quando diasParaProximaDevolucao é null', () => {
+      fixture.componentRef.setInput('stats', createMockStats({diasParaProximaDevolucao: null}));
+      fixture.detectChanges();
+
+      expect(component['proximaDevolucaoTitle']()).toBe('Nenhum Empréstimo');
+    });
+
+    it('deve retornar "Devolução Atrasada" quando dias < 0', () => {
+      fixture.componentRef.setInput('stats', createMockStats({diasParaProximaDevolucao: -2}));
+      fixture.detectChanges();
+
+      expect(component['proximaDevolucaoTitle']()).toBe('Devolução Atrasada');
+    });
+
+    it('deve retornar "Devolução Hoje" quando dias === 0', () => {
+      fixture.componentRef.setInput('stats', createMockStats({diasParaProximaDevolucao: 0}));
+      fixture.detectChanges();
+
+      expect(component['proximaDevolucaoTitle']()).toBe('Devolução Hoje');
+    });
+
+    it('deve retornar "Próx. Devolução" quando dias > 0', () => {
+      fixture.componentRef.setInput('stats', createMockStats({diasParaProximaDevolucao: 5}));
+      fixture.detectChanges();
+
+      expect(component['proximaDevolucaoTitle']()).toBe('Próx. Devolução');
+    });
+  });
+
+  describe('proximaDevolucaoColor computed', () => {
+    it('deve retornar verde (#22C55E) quando stats é null (sem empréstimos)', () => {
+      fixture.componentRef.setInput('stats', null);
+      fixture.detectChanges();
+
+      expect(component['proximaDevolucaoColor']()).toBe('#22C55E');
+    });
+
+    it('deve retornar verde (#22C55E) quando diasParaProximaDevolucao é null', () => {
+      fixture.componentRef.setInput('stats', createMockStats({diasParaProximaDevolucao: null}));
+      fixture.detectChanges();
+
+      expect(component['proximaDevolucaoColor']()).toBe('#22C55E');
+    });
+
+    it('deve retornar vermelho (#EF4444) quando atrasado (dias < 0)', () => {
+      fixture.componentRef.setInput('stats', createMockStats({diasParaProximaDevolucao: -1}));
+      fixture.detectChanges();
+
+      expect(component['proximaDevolucaoColor']()).toBe('#EF4444');
+    });
+
+    it('deve retornar amarelo (#F59E0B) quando vence hoje (dias === 0)', () => {
+      fixture.componentRef.setInput('stats', createMockStats({diasParaProximaDevolucao: 0}));
+      fixture.detectChanges();
+
+      expect(component['proximaDevolucaoColor']()).toBe('#F59E0B');
+    });
+
+    it('deve retornar amarelo (#F59E0B) quando vence em breve (dias 1-7)', () => {
+      fixture.componentRef.setInput('stats', createMockStats({diasParaProximaDevolucao: 7}));
+      fixture.detectChanges();
+
+      expect(component['proximaDevolucaoColor']()).toBe('#F59E0B');
+    });
+
+    it('deve retornar verde (#22C55E) quando prazo longo (dias > 7)', () => {
+      fixture.componentRef.setInput('stats', createMockStats({diasParaProximaDevolucao: 15}));
+      fixture.detectChanges();
+
+      expect(component['proximaDevolucaoColor']()).toBe('#22C55E');
     });
   });
 

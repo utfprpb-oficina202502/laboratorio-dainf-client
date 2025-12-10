@@ -20,10 +20,10 @@
   />
   <app-stat-card
     [value]="proximaDevolucaoText()"
-    accentColor="#F59E0B"
+    [accentColor]="proximaDevolucaoColor()"
     icon="calendar"
     iconLibrary="pi"
-    title="Próx. Devolução"
+    [title]="proximaDevolucaoTitle()"
   />
   <app-stat-card
     [value]="stats()?.emprestimosTotal ?? 0"
