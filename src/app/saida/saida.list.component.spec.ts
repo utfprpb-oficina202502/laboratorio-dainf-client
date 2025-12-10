@@ -132,7 +132,6 @@ describe('SaidaListComponent', () => {
         'dataSaida',
         'qtdeTotal',
         'usuarioResponsavelNome',
-        'observacao',
         'actions'
       ]);
     });
@@ -352,11 +351,6 @@ describe('SaidaListComponent', () => {
 
     it('deve ter coluna usuarioResponsavelNome com sortable true', () => {
       const column = component['tableConfig'].columns.find(c => c.field === 'usuarioResponsavelNome');
-      expect(column?.sortable).toBe(true);
-    });
-
-    it('deve ter coluna observacao com sortable true', () => {
-      const column = component['tableConfig'].columns.find(c => c.field === 'observacao');
       expect(column?.sortable).toBe(true);
     });
 
