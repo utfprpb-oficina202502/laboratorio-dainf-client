@@ -1,13 +1,16 @@
-import {ChangeDetectionStrategy, Component, forwardRef, Injector, inject} from '@angular/core';
+import {ChangeDetectionStrategy, Component, forwardRef, inject, Injector} from '@angular/core';
 import {PrimeCrudListComponent} from '../framework/component/prime-crud.list.component';
 import {SolicitacaoCompra} from './solicitacaoCompra';
 import {SolicitacaoCompraService} from './solicitacaoCompra.service';
 import {PrimeTableSharedModule} from '../framework/module/prime-table-shared.module';
 import {TableEmptyStateComponent} from '../framework/component/table-empty-state.component';
 import {TableLoadingStateComponent} from '../framework/component/table-loading-state.component';
-import {createListComponentConfig, ListComponentConfig} from '../framework/utils/table-config.factory';
+import {
+  createListComponentConfig,
+  ListComponentConfig
+} from '../framework/utils/table-config.factory';
 import {MenuItem} from 'primeng/api';
-import { SharedListComponentBase } from '../framework/component/shared-list-base.component';
+import {SharedListComponentBase} from '../framework/component/shared-list-base.component';
 
 @Component({
     selector: 'app-list-solicitacao-compra',
@@ -58,7 +61,7 @@ export class SolicitacaoCompraListComponent extends SharedListComponentBase<Soli
   columnsTable: string[] = [];
   contextMenuItems: MenuItem[] = [];
   readonly service = inject(SolicitacaoCompraService);
-  urlForm = 'solicitacaoCompra/form';
+  urlForm = 'solicitacao-compra/form';
 
   constructor() {
     super({
