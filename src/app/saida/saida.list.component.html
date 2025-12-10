@@ -91,11 +91,6 @@
                 @case ('usuarioResponsavelNome') {
                   <span>{{ rowData?.usuarioResponsavelNome || 'Não informado' }}</span>
                 }
-                @case ('observacao') {
-                  <span class="text-truncate d-block" [title]="rowData?.observacao">
-                    {{ rowData?.observacao || 'Nenhuma observação' }}
-                  </span>
-                }
                 @case ('actions') {
                   <app-action-buttons
                     (delete)="preDelete(rowData)"
@@ -162,21 +157,6 @@
                     </button>
                   } @else {
                     <span>{{ rowData?.usuarioResponsavelNome || 'Não informado' }}</span>
-                  }
-                }
-                @case ('observacao') {
-                  @if (!displayedColumns.includes('actions')) {
-                    <button
-                      type="button"
-                      class="text-left w-full bg-transparent border-none p-0 cursor-pointer hover:underline"
-                      (click)="openOptions($event, rowData)"
-                      [attr.aria-label]="column.header + ': ' + (rowData?.observacao || 'Nenhuma observação')">
-                      {{ rowData?.observacao || 'Nenhuma observação' }}
-                    </button>
-                  } @else {
-                    <span class="text-truncate d-block" [title]="rowData?.observacao">
-                      {{ rowData?.observacao || 'Nenhuma observação' }}
-                    </span>
                   }
                 }
                 @default {

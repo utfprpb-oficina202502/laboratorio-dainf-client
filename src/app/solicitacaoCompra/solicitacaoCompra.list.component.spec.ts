@@ -122,7 +122,7 @@ describe('SolicitacaoCompraListComponent', () => {
     });
 
     it('deve definir urlForm corretamente', () => {
-      expect(component['urlForm']).toBe('solicitacaoCompra/form');
+      expect(component['urlForm']).toBe('solicitacao-compra/form');
     });
 
     it('deve configurar tableConfig corretamente', () => {

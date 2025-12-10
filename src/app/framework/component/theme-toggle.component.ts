@@ -1,8 +1,8 @@
 import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 
-import {ToggleButtonModule} from 'primeng/togglebutton';
+import {ToggleButtonChangeEvent, ToggleButtonModule} from 'primeng/togglebutton';
 import {ThemeService} from '../service/theme.service';
-import {FormsModule} from "@angular/forms";
+import {FormsModule} from '@angular/forms';
 
 @Component({
   selector: 'app-theme-toggle',
@@ -56,9 +56,7 @@ export class ThemeToggleComponent {
     this.checked = themeService.isDarkMode();
   }
 
-  onToggle(event: any): void {
-    // event.checked é boolean, mas pode ser undefined se o evento for disparado incorretamente
-    const checked = event?.checked === true;
-    this.themeService.setTheme(checked ? 'dark' : 'light');
+  onToggle(event: ToggleButtonChangeEvent): void {
+    this.themeService.setTheme(event.checked ? 'dark' : 'light');
   }
 }
