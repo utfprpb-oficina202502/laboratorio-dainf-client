@@ -7,6 +7,7 @@ import {inject, Injectable} from "@angular/core";
 import {StorageService} from "./framework/service/storage.service";
 import {JwtUtil} from "./framework/utils/jwt.util";
 import {isProblemDetail, ProblemDetail} from "./framework/model/problem-detail.interface";
+import {TIMEOUT} from "./framework/constants/app.constants";
 
 @Injectable()
 export class HttpClientInterceptor implements HttpInterceptor {
@@ -14,8 +15,8 @@ export class HttpClientInterceptor implements HttpInterceptor {
   private readonly loginService = inject(LoginService);
   private readonly storageService = inject(StorageService);
 
-  // Timeout para requisições HTTP (30 segundos)
-  private readonly REQUEST_TIMEOUT_MS = 30000;
+  // Timeout para requisições HTTP (2 minutos)
+  private readonly REQUEST_TIMEOUT_MS = TIMEOUT.DEFAULT;
 
   intercept(
     req: HttpRequest<unknown>,
@@ -46,7 +47,7 @@ export class HttpClientInterceptor implements HttpInterceptor {
             this.messageService.add({
               severity: 'warn',
               summary: 'Timeout',
-              detail: 'Requisição excedeu tempo limite de 30 segundos'
+              detail: 'Requisição excedeu tempo limite de 2 minutos'
             });
           }
           return throwError(() => err);
