@@ -8,13 +8,28 @@ A aplicação foi desenvolvida com Angular e se comunica com o backend via uma A
 
 ## 🛠️ Tecnologias Utilizadas
 
-- **Angular v20+**
-- **TypeScript**
-- **PrimeNG** (Biblioteca de Componentes UI)
-- **Tailwind CSS** (Framework CSS Utilitário)
-- **RxJS** para programação reativa
-- **Signals** para gerenciamento de estado
-- **Amcharts** (Biblioteca de gráficos)
+- **Angular 20.3.15** - Framework de aplicações web
+- **TypeScript 5.9** - Linguagem tipada
+- **PrimeNG 20.4.0** (Biblioteca de Componentes UI com tema Aura)
+- **Tailwind CSS 3.4.18** (Framework CSS Utilitário)
+- **RxJS 7.8.1** para programação reativa
+- **Angular Signals** para gerenciamento de estado (223 ocorrências)
+- **amCharts5 5.14.2** (Biblioteca de gráficos)
+- **Jest 30.2.0** (Framework de testes)
+- **Express 5.1.0** (Servidor de produção)
+
+---
+
+## ✨ Funcionalidades Principais
+
+- **Gestão de Empréstimos**: Controle completo do ciclo de empréstimos de equipamentos
+- **Gestão de Itens**: Catálogo de equipamentos com visualização em árvore e catálogo
+- **Reservas**: Sistema de reservas com carrinho de compras integrado
+- **Auditoria**: Histórico completo de alterações com Hibernate Envers (timeline e consulta por entidade)
+- **Relatórios**: Dashboard interativo com gráficos e estatísticas em tempo real
+- **Nada Consta**: Emissão de declarações de nada consta para alunos
+- **PWA**: Aplicação instalável com suporte offline e atualizações automáticas
+- **Tema Escuro/Claro**: Alternância de temas com persistência de preferência
 
 ---
 
@@ -52,8 +67,6 @@ Para iniciar o servidor de desenvolvimento local, execute:
 ```bash
 npm run dev
 ```
-
-A aplicação estará disponível em `http://localhost:4200/`. O servidor recarregará automaticamente a aplicação sempre que houver alterações nos arquivos.
 
 ---
 
@@ -112,21 +125,20 @@ export const environment = {
 
 ---
 
-## 📦 Comandos Úteis
+## 🧪 Testes
 
-- **Build para Produção:**
-  ```bash
-  npm run build
-  ```
-  Este comando compila e otimiza a aplicação para produção, gerando os arquivos na pasta `dist/`.
+A aplicação utiliza **Jest 30** como framework de testes.
 
-- **Executar o Linter:**
-  ```bash
-  npm run lint
-  ```
-  Este comando analisa o código em busca de erros de estilo e potenciais problemas, com base nas regras do ESLint configuradas no projeto.
+```bash
+# Executar todos os testes
+npm test
 
----
+# Executar testes em modo watch (desenvolvimento)
+npm run test:watch
+
+# Executar testes com relatório de cobertura (CI)
+npm run test:ci
+```
 
 ## 📄 Licença
 
